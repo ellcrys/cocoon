@@ -1,0 +1,5 @@
+package: .
+import:
+- package: github.com/spf13/cobra
+  subpackages:
+  - cobra
