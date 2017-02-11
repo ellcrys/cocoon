@@ -15,11 +15,12 @@
 package cmd
 
 import (
+	"github.com/ncodes/cocoon/core/blockchain"
+	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/server"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
-
-var log = logging.MustGetLogger("start")
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
@@ -27,22 +28,23 @@ var startCmd = &cobra.Command{
 	Short: "Start the cocoon engine",
 	Long:  `Start the cocoon engine`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		log.Info("start called")
+		
+		var log = logging.MustGetLogger("start")
+		var done = make(chan bool, 1)
+		var txnChan = make(chan blockchain.Transaction, 100)
+
+		log.Info("Starting Cocoon core")
+		server := server.NewServer()
+		port, _ := cmd.Flags().GetString("port")
+		go server.Start(port)
+
+		go orderer.NewOrderer().Start(done, txnChan)
+
+		<-done
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(startCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// startCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// startCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	startCmd.Flags().StringP("port", "p", "5400", "The port to run core on")
 }
