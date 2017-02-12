@@ -23,10 +23,10 @@
         "Constraints": null,
         "Tasks": [
           {
-            "Name": "alpine",
+            "Name": "cocoon.task.{{ID}}",
             "Driver": "docker",
             "Config": {
-              "image": "alpine:3.5",
+              "image": "{{Image}}",
               "command": "pwd"
             },
             "Env": {},

@@ -67,12 +67,18 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 // Deploy a smart contract to the cluster
 func (cl *Nomad) Deploy(lang, url string) (string, error) {
 
+	var img string
+	if lang == "go" {
+		img = "ncodes/cocoon-go:latest"
+	}
+
 	cocoonData := map[string]interface{}{
 		"ID":       util.Sha1(util.UUID4()),
 		"Count":    1,
 		"CPU":      500,
 		"MemoryMB": 256,
 		"DiskMB":   300,
+		"Image":    img,
 	}
 
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)
