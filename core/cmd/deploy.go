@@ -17,7 +17,6 @@ package cmd
 import (
 	"log"
 
-	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/cluster"
 	"github.com/ncodes/cocoon/core/pod"
 	"github.com/spf13/cobra"
@@ -35,12 +34,6 @@ var deployCmd = &cobra.Command{
 		clusterAddr, _ := cmd.Flags().GetString("cluster_addr")
 		clusterAddrHTTPS, _ := cmd.Flags().GetBool("cluster_addr_https")
 
-		if !util.InStringSlice([]string{"go"}, lang) {
-			log.Fatal("Error: --lang can only have one of these values [go]")
-		} else if url == "" {
-			log.Fatal("Error: --url flag is required")
-		}
-
 		cl := cluster.NewNomad()
 		cl.SetAddr(clusterAddr, clusterAddrHTTPS)
 		cocoonID, err := pod.Deploy(cl, lang, url)
@@ -54,4 +47,7 @@ func init() {
 	deployCmd.Flags().StringP("url", "u", "", "A zip file or github link to the smart contract")
 	deployCmd.Flags().StringP("cluster_addr", "", "127.0.0.1:4646", "The cluster address as host:port")
 	deployCmd.Flags().BoolP("cluster_addr_https", "", false, "Whether to include `https` when accessing cluster APIs")
+
+	deployCmd.MarkFlagRequired("lang")
+	deployCmd.MarkFlagRequired("url")
 }

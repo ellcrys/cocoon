@@ -27,9 +27,11 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "pwd"
+              "command": "env"
             },
-            "Env": {},
+            "Env": {
+              "COCOON_REPO_URL": "{{CocoonRepoURL}}"
+            },
             "Services": [],
             "Meta": {},
             "LogConfig": {

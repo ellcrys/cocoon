@@ -3,13 +3,19 @@ package cluster
 import (
 	"fmt"
 
+	"strings"
+
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/data"
+	"github.com/ncodes/cocoon/core/others"
 	logging "github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("nomad")
+
+// SupportedChaincodeLang defines the supported chaincode language
+var SupportedChaincodeLang = []string{"go"}
 
 // Nomad defines a nomad cluster that implements
 // cluster.Cluster interface. Every interaction with
@@ -67,18 +73,27 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 // Deploy a smart contract to the cluster
 func (cl *Nomad) Deploy(lang, url string) (string, error) {
 
+	if !util.InStringSlice(SupportedChaincodeLang, lang) {
+		return "", fmt.Errorf("Only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
+	} else if url == "" {
+		return "", fmt.Errorf("github repo url is required")
+	} else if !others.IsGithubRepoURL(url) {
+		return "", fmt.Errorf("Invalid chaincode url. Chaincode must be hosted on github.")
+	}
+
 	var img string
 	if lang == "go" {
 		img = "ncodes/cocoon-go:latest"
 	}
 
 	cocoonData := map[string]interface{}{
-		"ID":       util.Sha1(util.UUID4()),
-		"Count":    1,
-		"CPU":      500,
-		"MemoryMB": 256,
-		"DiskMB":   300,
-		"Image":    img,
+		"ID":            util.Sha1(util.UUID4()),
+		"Count":         1,
+		"CPU":           500,
+		"MemoryMB":      256,
+		"DiskMB":        300,
+		"Image":         img,
+		"CocoonRepoURL": url,
 	}
 
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)
