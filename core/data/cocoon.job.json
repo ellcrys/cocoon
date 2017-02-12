@@ -1,0 +1,65 @@
+{
+  "Job": {
+    "Region": "global",
+    "ID": "cocoon.{{ID}}",
+    "Name": "cocoon.{{ID}}",
+    "Type": "service",
+    "Priority": 50,
+    "AllAtOnce": false,
+    "Datacenters": [
+      "dc1"
+    ],
+    "Constraints": [
+      {
+        "LTarget": "${attr.kernel.name}",
+        "RTarget": "linux",
+        "Operand": "="
+      }
+    ],
+    "TaskGroups": [
+      {
+        "Name": "cocoon.{{ID}}",
+        "Count": {{Count}},
+        "Constraints": null,
+        "Tasks": [
+          {
+            "Name": "alpine",
+            "Driver": "docker",
+            "Config": {
+              "image": "alpine:3.5",
+              "command": "pwd"
+            },
+            "Env": {},
+            "Services": [],
+            "Meta": {},
+            "LogConfig": {
+              "MaxFiles": 10,
+              "MaxFileSizeMB": 10
+            },
+            "Templates": [],
+            "Artifacts": [],
+            "DispatchPayload": {}
+          }
+        ],
+        "Resources": {
+          "CPU": {{CPU}},
+          "MemoryMB": {{MemoryMB}},
+          "DiskMB": {{DiskMB}},
+          "IOPS": 0,
+          "Networks": []
+        },
+        "RestartPolicy": {
+          "Interval": 300000000000,
+          "Attempts": 10,
+          "Delay": 25000000000,
+          "Mode": "delay"
+        },
+        "Meta": {}
+      }
+    ],
+    "Update": {
+      "Stagger": 10000000000,
+      "MaxParallel": 1
+    }
+  }
+}
