@@ -5,4 +5,9 @@ RUN apk add bash
 RUN apk add nano
 RUN apk add git
 
-WORKDIR /home
+# install cocoon source code
+WORKDIR src
+WORKDIR github.com
+WORKDIR ncodes
+RUN git clone https://github.com/ncodes/cocoon 
+WORKDIR cocoon
