@@ -1,0 +1,8 @@
+package: github.com/ncodes/cocoon/core/connector
+import:
+- package: github.com/gorilla/mux
+  version: ^1.3.0
+- package: github.com/op/go-logging
+  version: ^1.0.0
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
