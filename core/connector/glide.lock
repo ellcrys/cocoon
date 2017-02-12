@@ -1,5 +1,5 @@
-hash: 49f85a22064a2f3ab922f507d39d246ff2e4d8f8a03262ab300d1546d1aed965
-updated: 2017-02-12T14:56:53.204060571+01:00
+hash: 2913131f76de72212ed530f34eb87d207202cfdcdb4f25668caca7691407be62
+updated: 2017-02-12T18:47:04.256579225+01:00
 imports:
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
@@ -54,6 +54,5 @@ imports:
   - transform
   - unicode/norm
 - name: gopkg.in/yaml.v2
-  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
-  repo: git@github.com:go-yaml/yaml.git
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

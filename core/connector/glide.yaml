@@ -6,6 +6,3 @@ import:
   version: ^1.0.0
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
-- package: gopkg.in/yaml.v2
-  repo: git@github.com:go-yaml/yaml.git
-  vcs: git

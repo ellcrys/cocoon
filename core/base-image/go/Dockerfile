@@ -10,6 +10,7 @@ RUN apk add glide
 WORKDIR src
 WORKDIR github.com
 WORKDIR ncodes
+RUN git config --global http.https://gopkg.in.followRedirects true
 RUN git clone https://github.com/ncodes/cocoon -b master
 
 # install & start the connector
