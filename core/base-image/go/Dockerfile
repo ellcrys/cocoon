@@ -14,6 +14,6 @@ RUN git clone https://github.com/ncodes/cocoon -b master
 
 # install & start the connector
 WORKDIR cocoon/core/connector
-RUN glide install
+RUN glide update
 RUN go build -o /bin/connector connector.go
 CMD connector start
