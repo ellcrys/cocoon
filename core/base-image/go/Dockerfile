@@ -6,12 +6,10 @@ RUN apk add nano
 RUN apk add git
 RUN apk add glide
 
-# install cocoon source code
+# create working directors
 WORKDIR src
 WORKDIR github.com
 WORKDIR ncodes
-RUN git config --global http.https://gopkg.in.followRedirects true
-RUN git clone https://github.com/ncodes/cocoon -b master
 
 # run go cocoon deployment script
-CMD chmod +x cocoon/script/go-cocoon-deploy.sh && ./cocoon/script/go-cocoon-deploy.sh
+CMD chmod +x cocoon/scripts/go-cocoon-deploy.sh && ./cocoon/scripts/go-cocoon-deploy.sh
