@@ -30,7 +30,7 @@
               "command": "connector start"
             },
             "Env": {
-              "COCOON_REPO_URL": "{{CocoonRepoURL}}"
+              "COCOON_REPO_URLS": "{{CocoonRepoURL}}"
             },
             "Services": [],
             "Meta": {},
