@@ -27,7 +27,7 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "ls && pwd"
+              "command": "pwd"
             },
             "Env": {
               "COCOON_REPO_URLS": "{{CocoonRepoURL}}"
