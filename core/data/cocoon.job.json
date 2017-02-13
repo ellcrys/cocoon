@@ -27,9 +27,8 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "ls",
-              "args": [
-                ]
+              "command": "connector",
+              "args": ["start"]
             },
             "Env": {
               "COCOON_REPO_URLS": "{{CocoonRepoURL}}"
@@ -41,7 +40,12 @@
               "MaxFileSizeMB": 10
             },
             "Templates": [],
-            "Artifacts": [],
+            "Artifacts": [
+              {
+                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/go-cocoon-deploy.sh",
+                "RelativeDest": "/home/go-cocoon-deploy.sh"
+              }
+            ],
             "DispatchPayload": {}
           }
         ],
