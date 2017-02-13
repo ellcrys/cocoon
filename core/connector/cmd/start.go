@@ -15,24 +15,52 @@
 package cmd
 
 import (
+	"fmt"
+	"net"
+
+	"time"
+
+	"github.com/ncodes/cocoon/core/connector/ccode"
+	"github.com/ncodes/cocoon/core/connector/config"
+	"github.com/ncodes/cocoon/core/connector/proto"
 	"github.com/ncodes/cocoon/core/connector/server"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
+
+func init() {
+	config.ConfigureLogger()
+}
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the connector",
-	Long:  `Starts the connector. Pulls chaincode specified in COCOON_REPO_URL, builds it and starts it.`,
+	Long:  `Starts the connector. Pulls chaincode specified in COCOON_CODE_URL, builds it and starts it.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var log = logging.MustGetLogger("start")
-		var done = make(chan bool, 1)
 
-		log.Info("Starting Connector")
-		server := server.NewServer()
+		done := make(chan bool, 1)
 		port, _ := cmd.Flags().GetString("port")
-		go server.Start(port)
+		var log = logging.MustGetLogger("connect")
+		var opts []grpc.ServerOption
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+		if err != nil {
+			log.Errorf("Error creating network interface to listen on. %s", err)
+		}
+
+		log.Info("Starting GRPC server")
+		time.AfterFunc(2*time.Second, func() {
+			log.Infof("GRPC server started on port %s", port)
+
+			// install cooncode
+			ccode.Install()
+		})
+
+		// time.AfterFunc()
+		grpcServer := grpc.NewServer(opts...)
+		proto.RegisterConnectorServer(grpcServer, server.NewServer())
+		go grpcServer.Serve(lis)
 
 		<-done
 	},

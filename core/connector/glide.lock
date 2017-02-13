@@ -1,8 +1,13 @@
-hash: 2913131f76de72212ed530f34eb87d207202cfdcdb4f25668caca7691407be62
-updated: 2017-02-12T18:47:04.256579225+01:00
+hash: 7c506ca0afe4805446ac635bcc69499d1e9b7d3470737ed0d72b61c32773049d
+updated: 2017-02-13T14:05:52.382592842+01:00
 imports:
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/golang/protobuf
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  subpackages:
+  - proto
+  - protoc-gen-go
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -53,6 +58,8 @@ imports:
   subpackages:
   - transform
   - unicode/norm
+- name: google.golang.org/grpc
+  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

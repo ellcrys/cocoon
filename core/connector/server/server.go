@@ -1,29 +1,23 @@
 package server
 
 import (
-	"net/http"
-	"time"
-
-	"github.com/gorilla/mux"
+	"github.com/ncodes/cocoon/core/connector/proto"
 	logging "github.com/op/go-logging"
+	"golang.org/x/net/context"
 )
 
 var log = logging.MustGetLogger("connector")
 
-// Server defines a http server
-// accepting commands from authorized admin
+// Server implements the connector grpc interface
 type Server struct {
 }
 
-// NewServer creates a new server
+// NewServer returns a new connector server
 func NewServer() *Server {
 	return new(Server)
 }
 
-// Start starts the http server
-func (s *Server) Start(port string) {
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", hello).Methods("GET")
-	time.AfterFunc(time.Second*1, func() { log.Info("Started http server on port %s", port) })
-	log.Fatal(http.ListenAndServe(":"+port, router))
+func (srv *Server) SayHello(ctx context.Context, req *proto.HelloRequest) (*proto.HelloReply, error) {
+	log.Info("Name:", req.GetName())
+	return &proto.HelloReply{Message: "How are you?"}, nil
 }
