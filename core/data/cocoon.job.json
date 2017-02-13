@@ -40,12 +40,7 @@
               "MaxFileSizeMB": 10
             },
             "Templates": [],
-            "Artifacts": [
-              {
-                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/go-cocoon-deploy.sh",
-                "RelativeDest": "/home/go-cocoon-deploy.sh"
-              }
-            ],
+            "Artifacts": [],
             "DispatchPayload": {}
           }
         ],
