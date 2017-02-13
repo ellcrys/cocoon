@@ -13,8 +13,5 @@ WORKDIR ncodes
 RUN git config --global http.https://gopkg.in.followRedirects true
 RUN git clone https://github.com/ncodes/cocoon -b master
 
-# install & start the connector
-WORKDIR cocoon/core/connector
-RUN glide update
-RUN go build -o /bin/connector connector.go
-CMD connector start
+# run go cocoon deployment script
+CMD chmod +x cocoon/script/go-cocoon-deploy.sh && ./cocoon/script/go-cocoon-deploy.sh
