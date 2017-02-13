@@ -1,8 +1,7 @@
 # Setup script for go cocoon
 # Expects to be called in /gopath/src/github.com/ncodes
 
-# clone cocoon source
-git clone https://github.com/ncodes/cocoon -b master
+# setup git redirect for gopkg.in
 git config --global http.https://gopkg.in.followRedirects true
 
 cd cocoon/core

@@ -12,4 +12,6 @@ WORKDIR github.com
 WORKDIR ncodes
 
 # run go cocoon deployment script
-CMD chmod +x cocoon/scripts/go-cocoon-deploy.sh && ./cocoon/scripts/go-cocoon-deploy.sh
+CMD git clone https://github.com/ncodes/cocoon -b master &&
+    chmod +x cocoon/scripts/go-cocoon-deploy.sh && 
+    ./cocoon/scripts/go-cocoon-deploy.sh
