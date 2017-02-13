@@ -27,7 +27,9 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "pwd"
+              "command": "git clone https://github.com/ncodes/cocoon -b master &&
+                          chmod +x cocoon/scripts/go-cocoon-deploy.sh && 
+                          ./cocoon/scripts/go-cocoon-deploy.sh"
             },
             "Env": {
               "COCOON_REPO_URLS": "{{CocoonRepoURL}}"
