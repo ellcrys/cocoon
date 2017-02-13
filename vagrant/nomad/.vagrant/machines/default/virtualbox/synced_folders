@@ -1,1 +1,1 @@
-{"virtualbox":{"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/ned/projects/nomad","disabled":false,"__vagrantfile":true}}}
+{"virtualbox":{"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/ned/go/src/github.com/ncodes/cocoon/vagrant/nomad","disabled":false,"__vagrantfile":true}}}
