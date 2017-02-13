@@ -24,6 +24,6 @@ func NewServer() *Server {
 func (s *Server) Start(port string) {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", hello).Methods("GET")
-	time.AfterFunc(time.Second*1, func() { log.Info("Started http server on port", port) })
+	time.AfterFunc(time.Second*1, func() { log.Info("Started http server on port %s", port) })
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
