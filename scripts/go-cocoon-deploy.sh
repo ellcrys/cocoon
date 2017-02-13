@@ -1,5 +1,10 @@
 # Setup script for go cocoon
 # Expects to be called in /gopath/src/github.com/ncodes
+
+# clone cocoon source
+git clone https://github.com/ncodes/cocoon -b master
+git config --global http.https://gopkg.in.followRedirects true
+
 cd cocoon/core
 
 # build binary data files
