@@ -31,7 +31,8 @@
               "args": ["start"]
             },
             "Env": {
-              "COCOON_CODE_URL": "{{CocoonRepoURL}}"
+              "COCOON_CODE_URL": "{{CocoonCodeURL}}",
+              "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
             },
             "Services": [],
             "Meta": {},

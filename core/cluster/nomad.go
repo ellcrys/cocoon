@@ -87,13 +87,14 @@ func (cl *Nomad) Deploy(lang, url string) (string, error) {
 	}
 
 	cocoonData := map[string]interface{}{
-		"ID":            util.Sha1(util.UUID4()),
-		"Count":         1,
-		"CPU":           500,
-		"MemoryMB":      256,
-		"DiskMB":        300,
-		"Image":         img,
-		"CocoonRepoURL": url,
+		"ID":             util.Sha1(util.UUID4()),
+		"Count":          1,
+		"CPU":            500,
+		"MemoryMB":       256,
+		"DiskMB":         300,
+		"Image":          img,
+		"CocoonCodeURL":  url,
+		"CocoonCodeLang": lang,
 	}
 
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)
