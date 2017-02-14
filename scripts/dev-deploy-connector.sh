@@ -1,2 +1,1 @@
-echo "Hello captain"
-pwd
+connector start
