@@ -1,5 +1,5 @@
-hash: 7c506ca0afe4805446ac635bcc69499d1e9b7d3470737ed0d72b61c32773049d
-updated: 2017-02-13T14:05:52.382592842+01:00
+hash: 6624f8b17ef20a5d6689cc7d1f50408d8905e1178fda4bf2eb4883743edd0e2c
+updated: 2017-02-13T19:34:48.193080704+01:00
 imports:
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
@@ -8,10 +8,10 @@ imports:
   subpackages:
   - proto
   - protoc-gen-go
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
+- name: github.com/goware/urlx
+  version: 8bb4a2e4339f55b15164907177e96e9faf885504
 - name: github.com/hashicorp/hcl
   version: 80e628d796135357b3d2e33a985c666b9f35eee1
   subpackages:
@@ -29,6 +29,10 @@ imports:
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
+- name: github.com/ncodes/cocoon
+  version: 8393ca995833b2f76fa4b7314a7a855bbc3bc520
+  subpackages:
+  - core/others
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/pelletier/go-buffruneio
@@ -49,6 +53,16 @@ imports:
   version: 25f8b5b07aece3207895bf19f7ab517eb3b22a40
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: golang.org/x/net
+  version: ae05321a78c1401cec22ba7bc203b597ea372496
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
@@ -56,10 +70,23 @@ imports:
 - name: golang.org/x/text
   version: 44f4f658a783b0cee41fe0a23b8fc91d9c120558
   subpackages:
+  - secure/bidirule
   - transform
+  - unicode/bidi
   - unicode/norm
 - name: google.golang.org/grpc
   version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - stats
+  - tap
+  - transport
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

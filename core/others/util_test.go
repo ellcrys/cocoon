@@ -1,8 +1,10 @@
 package others
 
 import (
+	"os"
 	"testing"
 
+	"github.com/ellcrys/util"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,6 +18,50 @@ func TestUtil(t *testing.T) {
 
 			Convey("should fail because url is a github repo url", func() {
 				So(IsGithubRepoURL("https://gitlab.com/ncodes/cocoon"), ShouldEqual, false)
+			})
+		})
+
+		Convey(".GithubGetLatestCommitID", func() {
+			Convey("should return error if github repo url is invalid", func() {
+				_, err := GithubGetLatestCommitID("http://githubs.com/user/repo")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "invalid github repo url")
+			})
+
+			Convey("should successfully return repo sha hash", func() {
+				sha, err := GithubGetLatestCommitID("http://github.com/ncodes/cocoon")
+				So(err, ShouldBeNil)
+				So(len(sha), ShouldEqual, 40)
+			})
+		})
+
+		Convey(".GetGithubRepoRelease", func() {
+			Convey("should return error if github repo url is invalid", func() {
+				_, err := GetGithubRepoRelease("http://githubs.com/user/repo", "tag")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "invalid github repo url")
+			})
+
+			Convey("should return error release is not found", func() {
+				_, err := GetGithubRepoRelease("http://github.com/ncodes/cocoon-example-01", "unknown-tag")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "Not Found")
+			})
+
+			Convey("should successfully return latest release tarball", func() {
+				tarURL, err := GetGithubRepoRelease("http://github.com/ncodes/cocoon-example-01", "")
+				So(err, ShouldBeNil)
+				So(tarURL, ShouldContainSubstring, "tarball")
+			})
+		})
+
+		Convey(".DownloadFile", func() {
+			Convey("should successfully download a file", func() {
+				remoteURL := "https://api.github.com/repos/ncodes/cocoon-example-01/tarball/v0.0.2"
+				destFile := "/tmp/" + util.RandString(5) + ".tar.gz"
+				DownloadFile(remoteURL, destFile, func(b []byte) {})
+				_, err := os.Stat(destFile)
+				So(err, ShouldNotEqual, os.ErrNotExist)
 			})
 		})
 	})

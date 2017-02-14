@@ -40,9 +40,11 @@ var startCmd = &cobra.Command{
 	Long:  `Starts the connector. Pulls chaincode specified in COCOON_CODE_URL, builds it and starts it.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		done := make(chan bool, 1)
+		doneCh := make(chan bool, 1)
+		ccInstallFailedCh := make(chan bool, 1)
+
 		port, _ := cmd.Flags().GetString("port")
-		var log = logging.MustGetLogger("connect")
+		var log = logging.MustGetLogger("connector")
 		var opts []grpc.ServerOption
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 		if err != nil {
@@ -54,7 +56,7 @@ var startCmd = &cobra.Command{
 			log.Infof("GRPC server started on port %s", port)
 
 			// install cooncode
-			ccode.Install()
+			ccode.Install(ccInstallFailedCh)
 		})
 
 		// time.AfterFunc()
@@ -62,7 +64,14 @@ var startCmd = &cobra.Command{
 		proto.RegisterConnectorServer(grpcServer, server.NewServer())
 		go grpcServer.Serve(lis)
 
-		<-done
+		if <-ccInstallFailedCh {
+			log.Fatal("aborting: chaincode installation failed")
+		}
+
+		// start cocoon code
+		ccode.Start()
+
+		<-doneCh
 	},
 }
 

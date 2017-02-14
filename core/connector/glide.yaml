@@ -12,3 +12,4 @@ import:
   subpackages:
   - proto
   - protoc-gen-go
+- package: github.com/goware/urlx

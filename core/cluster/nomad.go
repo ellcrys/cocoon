@@ -71,7 +71,7 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a smart contract to the cluster
-func (cl *Nomad) Deploy(lang, url string) (string, error) {
+func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 
 	if !util.InStringSlice(SupportedChaincodeLang, lang) {
 		return "", fmt.Errorf("Only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
@@ -95,6 +95,7 @@ func (cl *Nomad) Deploy(lang, url string) (string, error) {
 		"Image":          img,
 		"CocoonCodeURL":  url,
 		"CocoonCodeLang": lang,
+		"CocoonCodeTag":  tag,
 	}
 
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)
