@@ -27,8 +27,8 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "connector",
-              "args": ["start"]
+              "command": "bash",
+              "args": ["/local/dev-deploy-connector.sh"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -44,8 +44,8 @@
             },
             "Templates": [],
             "Artifacts": [{
-                "GetterSource": "",
-                "RelativeDest": "/"
+                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/dev-deploy-connector.sh",
+                "RelativeDest": "/local"
             }],
             "DispatchPayload": {}
           }
