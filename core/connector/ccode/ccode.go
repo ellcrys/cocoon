@@ -30,15 +30,30 @@ func GetJob(jobName string) string {
 // in COCOON_CODE_LANG
 func Install(failed chan bool) {
 
-	var ccURL, ccTag, ccLang string
+	var ccID, ccURL, ccTag, ccLang string
 	var err error
 
 	log.Info("Ready to install cocoon code")
 
 	// get cocoon code github link and language
+	ccID = os.Getenv("COCOON_ID")
 	ccURL = os.Getenv("COCOON_CODE_URL")
 	ccTag = os.Getenv("COCOON_CODE_TAG")
 	ccLang = os.Getenv("COCOON_CODE_LANG")
+
+	if ccID == "" {
+		log.Error("Cocoon code id not set @ $COCOON_ID")
+		failed <- true
+		return
+	} else if ccURL == "" {
+		log.Error("Cocoon code url not set @ $COCOON_CODE_URL")
+		failed <- true
+		return
+	} else if ccLang == "" {
+		log.Error("Cocoon code url not set @ $COCOON_CODE_LANG")
+		failed <- true
+		return
+	}
 
 	log.Debugf("Found ccode url=%s and lang=%s", ccURL, ccLang)
 
@@ -64,7 +79,7 @@ func installFromGit(url, tag, lang string) error {
 	ccodeLang = lang
 
 	// checks if job was previously deployed. find a job by the job name.
-	prevJob = GetJob(os.Getenv("NOMAD_JOB_NAME"))
+	prevJob = GetJob(os.Getenv("COCOON_ID"))
 	if prevJob == "" {
 		repoTarURL, err = others.GetGithubRepoRelease(url, tag)
 		if err != nil {
@@ -87,11 +102,11 @@ func installFromGit(url, tag, lang string) error {
 	if lang == "go" {
 		gopath := os.Getenv("GOPATH")
 		downloadDst = fmt.Sprintf("%s/src/github.com/%s", gopath, username)
-		unpackDst = fmt.Sprintf("%s/src/github.com/%s/%s-%s", gopath, username, os.Getenv("NOMAD_JOB_NAME"), tagStr)
+		unpackDst = fmt.Sprintf("%s/src/github.com/%s/%s-%s", gopath, username, os.Getenv("COCOON_ID"), tagStr)
 	}
 
 	log.Info("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
-	filePath := fmt.Sprintf("%s/%s.tar.gz", downloadDst, os.Getenv("NOMAD_JOB_NAME"))
+	filePath := fmt.Sprintf("%s/%s.tar.gz", downloadDst, os.Getenv("COCOON_ID"))
 	err = others.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
 	if err != nil {
 		return err
@@ -125,7 +140,7 @@ func installFromGit(url, tag, lang string) error {
 
 		log.Infof("Successfully installed cocoon code")
 
-		lastBuiltBinary = fmt.Sprintf("%s-%s", os.Getenv("NOMAD_JOB_NAME"), tagStr)
+		lastBuiltBinary = fmt.Sprintf("%s-%s", os.Getenv("COCOON_ID"), tagStr)
 
 	default:
 		return fmt.Errorf("Unsupported cocoon code language: %s", lang)
