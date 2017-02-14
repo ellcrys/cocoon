@@ -1,1 +1,2 @@
+go install
 connector start
