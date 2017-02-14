@@ -173,7 +173,7 @@ func Start() {
 		select {
 		case err := <-done:
 			if err != nil {
-				log.Errorf("Cocoon code ended with error = %v", err)
+				log.Errorf("Cocoon code stopped with error = %v", err)
 			} else {
 				log.Info("Cocoon code has stopped gracefully")
 			}
