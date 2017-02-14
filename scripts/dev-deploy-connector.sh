@@ -1,4 +1,4 @@
 echo "build connector"
-go install
+# go install
 echo "start connector"
-connector start
+# connector start
