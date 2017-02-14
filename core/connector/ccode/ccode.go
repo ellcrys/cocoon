@@ -135,7 +135,7 @@ func installFromGit(url, tag, lang string) error {
 		log.Infof("Installing cocoon code")
 		output, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("cd %s && go install", unpackDst)).Output()
 		if err != nil {
-			return fmt.Errorf("Failed to install cocoon code. Output: %s, Error: %s", string(output), err)
+			return fmt.Errorf("Failed to install cocoon code. Output: %s. Error: %s", string(output), err)
 		}
 
 		log.Infof("Successfully installed cocoon code")

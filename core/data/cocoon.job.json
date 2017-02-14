@@ -43,7 +43,10 @@
               "MaxFileSizeMB": 10
             },
             "Templates": [],
-            "Artifacts": [],
+            "Artifacts": [{
+                "GetterSource": "",
+                "RelativeDest": "/"
+            }],
             "DispatchPayload": {}
           }
         ],
