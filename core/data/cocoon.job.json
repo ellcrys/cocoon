@@ -48,7 +48,7 @@
             "Templates": [],
             "Artifacts": [{
                 "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
-                "RelativeDest": "${meta.SCRIPTS_DIR}"
+                "RelativeDest": "/local/scripts"
             }],
             "Resources": {
               "CPU": {{CPU}},
