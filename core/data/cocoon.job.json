@@ -27,7 +27,7 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "force_pull": "true",
+              "force_pull": true,
               "command": "bash",
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"]
             },
