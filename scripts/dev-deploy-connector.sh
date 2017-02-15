@@ -7,5 +7,5 @@ go get -u github.com/jteeuwen/go-bindata/...
 go-bindata --pkg data ./...
 
 cd ../connector
-glide update
+glide install
 go build -o /bin/connector connector.go
