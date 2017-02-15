@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "ls",
-              "args": []
+              "args": ["."]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
