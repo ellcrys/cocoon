@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "cat",
-              "args": ["/local/scripts_0_0_1/dev-deploy-connector.sh"]
+              "args": ["/local/scripts/dev-deploy-connector-0.0.1.sh"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -44,8 +44,8 @@
             },
             "Templates": [],
             "Artifacts": [{
-                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh",
-                "RelativeDest": "/local/scripts_0_0_1"
+                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector-0.0.1.sh",
+                "RelativeDest": "/local/scripts"
             }],
             "DispatchPayload": {}
           }
