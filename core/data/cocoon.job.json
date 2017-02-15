@@ -28,20 +28,13 @@
             "Config": {
               "image": "{{Image}}",
               "command": "bash",
-              "args": ["/local/scripts/dev-deploy-connector-0.0.3.sh"]
+              "args": ["/local/scripts/dev-deploy-connector-0.0.4.sh"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
               "COCOON_CODE_URL": "{{CocoonCodeURL}}",
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
-            },
-            "Resources": {
-              "CPU": {{CPU}},
-              "MemoryMB": {{MemoryMB}},
-              "DiskMB": {{DiskMB}},
-              "IOPS": 0,
-              "Networks": []
             },
             "Services": [],
             "Meta": {},
@@ -51,12 +44,25 @@
             },
             "Templates": [],
             "Artifacts": [{
-                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector-0.0.3.sh",
+                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector-0.0.4.sh",
                 "RelativeDest": "/local/scripts"
             }],
+            "Resources": {
+              "CPU": {{CPU}},
+              "MemoryMB": {{MemoryMB}},
+              "IOPS": 0,
+              "Networks": []
+            },
             "DispatchPayload": {}
           }
         ],
+        "Resources": {
+          "CPU": {{CPU}},
+          "MemoryMB": {{MemoryMB}},
+          "DiskMB": {{DiskMB}},
+          "IOPS": 0,
+          "Networks": []
+        },
         "RestartPolicy": {
           "Interval": 300000000000,
           "Attempts": 10,
