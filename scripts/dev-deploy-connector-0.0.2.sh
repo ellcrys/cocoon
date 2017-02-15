@@ -5,7 +5,7 @@ git config --global http.https://gopkg.in.followRedirects true
 cd cocoon/core/data
 go get -u -v github.com/jteeuwen/go-bindata/...
 go-bindata --pkg data ./...
-
+ls
 # cd ../connector
 # glide install
 # go build -o /bin/connector connector.go
