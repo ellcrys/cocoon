@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "bash",
-              "args": ["/local/scripts/dev-deploy-connector-0.0.4.sh"]
+              "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -37,15 +37,18 @@
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
             },
             "Services": [],
-            "Meta": {},
+            "Meta": {
+              "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.4.sh",
+              "SCRIPTS_DIR": "/${NOMAD_TASK_DIR}/scripts"
+            },
             "LogConfig": {
               "MaxFiles": 10,
               "MaxFileSizeMB": 10
             },
             "Templates": [],
             "Artifacts": [{
-                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector-0.0.4.sh",
-                "RelativeDest": "/local/scripts"
+                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
+                "RelativeDest": "${NOMAD_META_SCRIPTS_DIR}"
             }],
             "Resources": {
               "CPU": {{CPU}},
