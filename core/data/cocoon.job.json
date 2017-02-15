@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "bash",
-              "args": ["-c","'ls /local'"]
+              "args": ["-c","ls /local"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -43,7 +43,10 @@
               "MaxFileSizeMB": 10
             },
             "Templates": [],
-            "Artifacts": [],
+            "Artifacts": [{
+                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh",
+                "RelativeDest": "/local"
+            }],
             "DispatchPayload": {}
           }
         ],
