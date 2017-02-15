@@ -36,6 +36,13 @@
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
             },
+            "Resources": {
+              "CPU": {{CPU}},
+              "MemoryMB": {{MemoryMB}},
+              "DiskMB": {{DiskMB}},
+              "IOPS": 0,
+              "Networks": []
+            },
             "Services": [],
             "Meta": {},
             "LogConfig": {
@@ -50,13 +57,6 @@
             "DispatchPayload": {}
           }
         ],
-        "Resources": {
-          "CPU": {{CPU}},
-          "MemoryMB": {{MemoryMB}},
-          "DiskMB": {{DiskMB}},
-          "IOPS": 0,
-          "Networks": []
-        },
         "RestartPolicy": {
           "Interval": 300000000000,
           "Attempts": 10,
