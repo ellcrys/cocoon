@@ -102,7 +102,7 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 
 	if err != nil {
 		e := fmt.Errorf("failed to prepare job spec. %s", err)
-		log.Error(e)
+		log.Error(e.Error())
 		return "", e
 	}
 
