@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "bash",
-              "args": ["-c", "'ls /home'"]
+              "args": ["-c", "ls /home"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
