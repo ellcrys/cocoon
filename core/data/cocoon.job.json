@@ -39,7 +39,7 @@
             "Services": [],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.4.sh",
-              "SCRIPTS_DIR": "/${NOMAD_TASK_DIR}/scripts"
+              "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
               "MaxFiles": 10,
