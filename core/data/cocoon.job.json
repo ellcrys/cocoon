@@ -27,8 +27,8 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "bash",
-              "args": ["/local/scripts/dev-deploy-connector.sh"]
+              "command": "cat",
+              "args": ["/local/scripts_0_0_1/dev-deploy-connector.sh"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -45,7 +45,7 @@
             "Templates": [],
             "Artifacts": [{
                 "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh",
-                "RelativeDest": "/local/scripts"
+                "RelativeDest": "/local/scripts_0_0_1"
             }],
             "DispatchPayload": {}
           }
