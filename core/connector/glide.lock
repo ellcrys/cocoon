@@ -1,5 +1,5 @@
 hash: 309f6d3ee547cd8dc06928273328500cdafae87dc0ac0f70d0b9e66bbde02b96
-updated: 2017-02-15T17:51:29.236539801+01:00
+updated: 2017-02-15T19:04:22.259722937+01:00
 imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
@@ -44,13 +44,8 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
 - name: github.com/ncodes/cocoon
-  version: c14f18ca090ed86efe7a9c76f69aa415200ce2dd
+  version: 440f94ba1f15f9897ed27d2639bf2b05b2d219ee
   subpackages:
-  - core/connector/ccode
-  - core/connector/cmd
-  - core/connector/config
-  - core/connector/proto
-  - core/connector/server
   - core/others
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5

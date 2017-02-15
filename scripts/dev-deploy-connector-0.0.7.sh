@@ -10,7 +10,6 @@ go-bindata --pkg data ./...
 # build connector
 cd ../connector
 glide install
-cat ccode/ccode.go
 go build -o /bin/connector connector.go
 
 # start connector
