@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "bash",
-              "args": ["-c 'cat /local/dev-deploy-connector.sh'"]
+              "args": ["-c", "'ls /local/dev-deploy-connector.sh'"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
