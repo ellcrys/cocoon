@@ -38,7 +38,7 @@
             },
             "Services": [],
             "Meta": {
-              "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.5.sh",
+              "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.6.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {

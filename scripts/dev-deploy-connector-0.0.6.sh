@@ -1,5 +1,5 @@
 # pull cocoon source
-git clone https://github.com/ncodes/cocoon
+git clone -b master https://github.com/ncodes/cocoon
 git config --global http.https://gopkg.in.followRedirects true
 
 # compilte data directory to binary
