@@ -109,7 +109,7 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 	resp, status, err := cl.deployJob(string(jobSpec))
 	if err != nil {
 		e := fmt.Errorf("failed to deploy job spec. %s", err)
-		log.Error(e)
+		log.Error(e.Error())
 		return "", e
 	} else if status != 200 {
 		e := fmt.Errorf("failed to deploy job spec. %s", resp)
