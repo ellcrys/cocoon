@@ -27,8 +27,8 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "bash",
-              "args": ["-c", "ls /home"]
+              "command": "ls",
+              "args": ["/home"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
