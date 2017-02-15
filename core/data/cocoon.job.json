@@ -27,7 +27,7 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "pwd",
+              "command": "ls",
               "args": []
             },
             "Env": {
@@ -45,7 +45,7 @@
             "Templates": [],
             "Artifacts": [{
                 "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh",
-                "RelativeDest": "/home/stuff.sh"
+                "RelativeDest": "/go/src/github.com/ncodes/stuff.sh"
             }],
             "DispatchPayload": {}
           }
