@@ -91,7 +91,7 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 		"Count":          1,
 		"CPU":            500,
 		"MemoryMB":       1024,
-		"DiskMB":         300,
+		"DiskMB":         1024,
 		"Image":          img,
 		"CocoonCodeURL":  url,
 		"CocoonCodeLang": lang,
