@@ -27,8 +27,8 @@
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
-              "command": "connector",
-              "args": ["start"]
+              "command": "bash",
+              "args": ["/local/dev-deploy-connector.sh"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
