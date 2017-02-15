@@ -28,7 +28,7 @@
             "Config": {
               "image": "{{Image}}",
               "command": "ls",
-              "args": ["."]
+              "args": ["/alloc"]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -44,8 +44,7 @@
             },
             "Templates": [],
             "Artifacts": [{
-                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh",
-                "RelativeDest": "/go/src/github.com/ncodes/stuff.sh"
+                "GetterSource": "https://storage.googleapis.com/krogan/dev-deploy-connector.sh"
             }],
             "DispatchPayload": {}
           }
