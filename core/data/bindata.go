@@ -84,7 +84,7 @@ func bindataGo() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "bindata.go", size: 0, mode: os.FileMode(420), modTime: time.Unix(1487167091, 0)}
+	info := bindataFileInfo{name: "bindata.go", size: 0, mode: os.FileMode(420), modTime: time.Unix(1487169984, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -104,7 +104,7 @@ func cocoonJobJson() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cocoon.job.json", size: 1868, mode: os.FileMode(420), modTime: time.Unix(1487166667, 0)}
+	info := bindataFileInfo{name: "cocoon.job.json", size: 1868, mode: os.FileMode(420), modTime: time.Unix(1487169893, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
