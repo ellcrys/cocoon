@@ -15,12 +15,19 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/ncodes/cocoon/core/cluster"
-	"github.com/ncodes/cocoon/core/pod"
+	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
+
+var log = logging.MustGetLogger("deploy")
+
+// Deploy calls the clusters Deploy method to
+// start a new cocoon.
+func Deploy(cluster cluster.Cluster, lang, url, tag string) (string, error) {
+	log.Debugf("Deploying app with language=%s and url=%s", lang, url)
+	return cluster.Deploy(lang, url, tag)
+}
 
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
@@ -37,8 +44,8 @@ var deployCmd = &cobra.Command{
 
 		cl := cluster.NewNomad()
 		cl.SetAddr(clusterAddr, clusterAddrHTTPS)
-		cocoonID, err := pod.Deploy(cl, lang, url, tag)
-		log.Println(cocoonID, err)
+		cocoonID, err := Deploy(cl, lang, url, tag)
+		log.Debug(cocoonID, err)
 	},
 }
 
@@ -47,7 +54,7 @@ func init() {
 	deployCmd.Flags().StringP("lang", "l", "go", "The smart contract language")
 	deployCmd.Flags().StringP("url", "u", "", "A zip file or github link to the smart contract")
 	deployCmd.Flags().StringP("tag", "t", "", "The github release tag")
-	deployCmd.Flags().StringP("cluster_addr", "", "104.199.18.198:4646", "The cluster address as host:port")
+	deployCmd.Flags().StringP("cluster_addr", "", "104.198.229.50:4646", "The cluster address as host:port")
 	deployCmd.Flags().BoolP("cluster_addr_https", "", false, "Whether to include `https` when accessing cluster APIs")
 
 	deployCmd.MarkFlagRequired("lang")
