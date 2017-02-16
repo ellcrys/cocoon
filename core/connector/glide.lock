@@ -43,10 +43,6 @@ imports:
   version: 281032e84ae07510239465db46bf442aa44b953a
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
-- name: github.com/ncodes/cocoon
-  version: 440f94ba1f15f9897ed27d2639bf2b05b2d219ee
-  subpackages:
-  - core/others
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/pelletier/go-buffruneio
