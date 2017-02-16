@@ -29,7 +29,8 @@
               "image": "{{Image}}",
               "force_pull": true,
               "command": "bash",
-              "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"]
+              "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
+              "port_map": []
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -37,7 +38,11 @@
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
             },
-            "Services": [],
+            "Services": [{
+              "Name": "cocoon-{{ID}}",
+              "Tags": ["cocoon-{{ID}}"],
+              "PortLabel": "connector"   
+            }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.7.sh",
               "SCRIPTS_DIR": "/local/scripts"
@@ -55,7 +60,13 @@
               "CPU": {{CPU}},
               "MemoryMB": {{MemoryMB}},
               "IOPS": 0,
-              "Networks": []
+              "Networks": [
+                "DynamicPorts":[
+                  {
+                    "Label":"connector"
+                  }
+                ]
+              ]
             },
             "DispatchPayload": {}
           }
