@@ -13,3 +13,6 @@ import:
   - proto
   - protoc-gen-go
 - package: github.com/goware/urlx
+- package: github.com/ncodes/cocoon
+  subpackages:
+  - core/others
