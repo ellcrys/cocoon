@@ -39,8 +39,8 @@
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
             },
             "Services": [{
-              "Name": "cocoon-{{ID}}",
-              "Tags": ["cocoon-{{ID}}"],
+              "Name": "cocoons",
+              "Tags": ["{{ID}}"],
               "PortLabel": "connector"   
             }],
             "Meta": {
@@ -61,11 +61,12 @@
               "MemoryMB": {{MemoryMB}},
               "IOPS": 0,
               "Networks": [
-                "DynamicPorts":[
-                  {
-                    "Label":"connector"
-                  }
-                ]
+                {
+                  "MBits": 200,
+                  "DynamicPorts":[
+                    { "Label":"connector"}
+                  ]
+                }
               ]
             },
             "DispatchPayload": {}
