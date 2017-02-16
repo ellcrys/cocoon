@@ -30,7 +30,9 @@
               "force_pull": true,
               "command": "bash",
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
-              "port_map": []
+              "port_map": [{
+                "connector-http": 3000
+              }]
             },
             "Env": {
               "COCOON_ID": "cocoon-{{ID}}",
@@ -41,7 +43,7 @@
             "Services": [{
               "Name": "cocoons",
               "Tags": ["{{ID}}"],
-              "PortLabel": "connector"   
+              "PortLabel": "connector-http"   
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.7.sh",
@@ -64,7 +66,7 @@
                 {
                   "MBits": 200,
                   "DynamicPorts":[
-                    { "Label":"connector"}
+                    { "Label":"connector-http"}
                   ]
                 }
               ]
