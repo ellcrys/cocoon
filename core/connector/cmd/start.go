@@ -64,6 +64,9 @@ var startCmd = &cobra.Command{
 		proto.RegisterConnectorServer(grpcServer, server.NewServer())
 		go grpcServer.Serve(lis)
 
+		httpServer := server.NewHTTPServer()
+		go httpServer.Start("3000")
+
 		if <-ccInstallFailedCh {
 			log.Fatal("aborting: chaincode installation failed")
 		}
