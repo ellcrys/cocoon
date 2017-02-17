@@ -30,6 +30,7 @@
               "force_pull": true,
               "command": "bash",
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
+              "network_mode": "host",
               "port_map": [{
                 "connector-http": 3000
               }]
