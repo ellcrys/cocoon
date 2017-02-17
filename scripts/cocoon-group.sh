@@ -12,7 +12,7 @@ iptables -A OUTPUT -o lo -p tcp --dport 3001 -m owner --gid-owner cocoon -j ACCE
 iptables -A OUTPUT -m owner --gid-owner cocoon -j DROP
 
 # This cocoon group allows access to the public internet
-groupdel cocoon-open && groupdel cocoon-open
+groupdel cocoon-open && groupadd cocoon-open
 iptables -A OUTPUT -o lo -p tcp --dport 3000 -m owner --gid-owner cocoon-open -j DROP
 iptables -A OUTPUT -o lo -p udp --dport 3000 -m owner --gid-owner cocoon-open -j DROP
 iptables -A OUTPUT -o lo -p tcp --dport 3001 -m owner --gid-owner cocoon-open -j ACCEPT
