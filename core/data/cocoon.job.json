@@ -47,7 +47,7 @@
               "PortLabel": "connector-http"   
             }],
             "Meta": {
-              "DEPLOY_SCRIPT_NAME": "dev-deploy-connector-0.0.7.sh",
+              "DEPLOY_SCRIPT_NAME": "dev-deploy-connector.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
