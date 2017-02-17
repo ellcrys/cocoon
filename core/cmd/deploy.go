@@ -54,7 +54,7 @@ func init() {
 	deployCmd.Flags().StringP("lang", "l", "go", "The smart contract language")
 	deployCmd.Flags().StringP("url", "u", "", "A zip file or github link to the smart contract")
 	deployCmd.Flags().StringP("tag", "t", "", "The github release tag")
-	deployCmd.Flags().StringP("cluster_addr", "", "35.187.12.109:4646", "The cluster address as host:port")
+	deployCmd.Flags().StringP("cluster_addr", "", "104.199.56.58:4646", "The cluster address as host:port")
 	deployCmd.Flags().BoolP("cluster_addr_https", "", false, "Whether to include `https` when accessing cluster APIs")
 
 	deployCmd.MarkFlagRequired("lang")

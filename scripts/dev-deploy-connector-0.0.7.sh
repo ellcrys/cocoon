@@ -12,5 +12,10 @@ cd ../connector
 glide install
 go build -o /bin/connector connector.go
 
+# add firewall
+sudo groupadd cocoon
+sudo iptables -A OUTPUT -o lo -p tcp -m owner --gid-owner cocoon -j DROP
+sudo iptables -A OUTPUT -o lo -p udp -m owner --gid-owner cocoon -j DROP
+
 # start connector
 connector start
