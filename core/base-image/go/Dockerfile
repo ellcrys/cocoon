@@ -1,4 +1,4 @@
-FROM docker:dind
+FROM golang:1.7.5-wheezy
 
 RUN apt-get update
 RUN apt-get install -y apt-utils

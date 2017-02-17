@@ -2,9 +2,12 @@ FROM docker:dind
 
 RUN apk add --no-cache ca-certificates
 
-ENV GOLANG_VERSION 1.7.5
+ENV GOLANG_VERSION 1.8
 ENV GOLANG_SRC_URL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz
-ENV GOLANG_SRC_SHA256 4e834513a2079f8cbbd357502cccaac9507fd00a1efe672375798858ff291815
+ENV GOLANG_SRC_SHA256 406865f587b44be7092f206d73fc1de252600b79b3cacc587b74b5ef5c623596
+
+# https://golang.org/issue/14851
+COPY no-pic.patch /
 
 RUN set -ex \
 	&& apk add --no-cache --virtual .build-deps \
@@ -21,7 +24,10 @@ RUN set -ex \
 	&& tar -C /usr/local -xzf golang.tar.gz \
 	&& rm golang.tar.gz \
 	&& cd /usr/local/go/src \
+	&& patch -p2 -i /no-pic.patch \
 	&& ./make.bash \
+	\
+	&& rm -rf /*.patch \
 	&& apk del .build-deps
 
 ENV GOPATH /go
