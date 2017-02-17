@@ -65,7 +65,7 @@ var startCmd = &cobra.Command{
 		go grpcServer.Serve(lis)
 
 		httpServer := server.NewHTTPServer()
-		go httpServer.Start("3001")
+		go httpServer.Start("3000")
 
 		if <-ccInstallFailedCh {
 			log.Fatal("aborting: chaincode installation failed")
