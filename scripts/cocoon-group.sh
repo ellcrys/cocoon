@@ -13,3 +13,6 @@ iptables -A OUTPUT -m owner --gid-owner cocoon -j DROP
 groupdel cocoon-open && groupdel cocoon-open
 iptables -A OUTPUT -o lo -dport 3000 -m owner --gid-owner cocoon-open -j DROP
 iptables -A OUTPUT -o lo -dport 3001 -m owner --gid-owner cocoon-open -j ACCEPT
+
+# save
+iptables-save > /etc/iptables/rules.v4
