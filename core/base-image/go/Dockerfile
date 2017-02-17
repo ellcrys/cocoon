@@ -1,10 +1,10 @@
-FROM golang:1.7.5-alpine3.5
+FROM golang:1.7.5-wheezy
 
-RUN apk update
-RUN apk add bash
-RUN apk add nano
-RUN apk add git
-RUN apk add glide
+RUN apt-get update
+RUN apt-get install -y apt-utils
+RUN apt-get -y install sudo
+RUN apt-get -y install iptables
+RUN apt-get -y install iptables-persistent
 
 # create working directors
 WORKDIR src
