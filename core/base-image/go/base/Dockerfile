@@ -1,4 +1,4 @@
-FROM docker:dind
+FROM alpine:3.4
 
 RUN apk add --no-cache ca-certificates
 
@@ -7,9 +7,9 @@ ENV GOLANG_SRC_URL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz
 ENV GOLANG_SRC_SHA256 4e834513a2079f8cbbd357502cccaac9507fd00a1efe672375798858ff291815
 
 # https://golang.org/issue/14851
-#COPY no-pic.patch /
+COPY no-pic.patch /
 # https://golang.org/issue/17847
-#COPY 17847.patch /
+COPY 17847.patch /
 
 RUN set -ex \
 	&& apk add --no-cache --virtual .build-deps \
