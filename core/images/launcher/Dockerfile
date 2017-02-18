@@ -1,4 +1,4 @@
-FROM ncodes/cocoon-go:dind
+FROM ncodes/cocoon:latest
 
 # add dependencies
 RUN apk update
