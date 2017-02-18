@@ -49,7 +49,7 @@
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-launcher.sh",
-              "COCOON_GROUPS_SCRIPT_NAME": "cocoon-groups.sh",
+              "COCOON_GROUPS_SCRIPT_NAME": "cocoon-fw.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
