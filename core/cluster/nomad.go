@@ -87,7 +87,7 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 	}
 
 	cocoonData := map[string]interface{}{
-		"ID":             util.Sha1(util.UUID4()),
+		"ID":             util.Sha1(util.UUID4())[0:10],
 		"Count":          1,
 		"CPU":            500,
 		"MemoryMB":       512,

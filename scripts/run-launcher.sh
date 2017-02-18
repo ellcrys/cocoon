@@ -7,10 +7,10 @@ cd cocoon/core/data
 go get -u -v github.com/jteeuwen/go-bindata/...
 go-bindata --pkg data ./...
 
-# build connector
-cd ../connector
+# launcher launcher
+cd ../launcher
 glide install
-go build -o /bin/connector connector.go
+go build -o /bin/launcher launcher.go
 
-# start connector
-connector start
+# start launcher
+launcher start
