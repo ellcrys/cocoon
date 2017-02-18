@@ -29,6 +29,7 @@
               "image": "{{Image}}",
               "force_pull": true,
               "command": "bash",
+              "network_mode": "host",
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
               "privileged": true,
               "port_map": [{
