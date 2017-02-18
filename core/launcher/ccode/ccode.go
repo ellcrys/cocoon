@@ -12,7 +12,7 @@ import (
 	logging "github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("connector")
+var log = logging.MustGetLogger("launcher")
 var lastBuiltBinary = ""
 var ccodeLang = ""
 var cmdCCode *exec.Cmd
