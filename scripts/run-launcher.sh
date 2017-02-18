@@ -1,5 +1,5 @@
 # set coccon firewall and groups
-bash ${NOMAD_META_SCRIPTS_DIR}/${COCOON_GRPS_SCRIPT_NAME}
+bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_GROUPS_SCRIPT_NAME}
 
 # pull cocoon source
 git clone -b master https://github.com/ncodes/cocoon

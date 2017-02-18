@@ -48,7 +48,7 @@
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-launcher.sh",
-              "COCOON_GRPS_SCRIPT_NAME": "cocoon-groups.sh",
+              "COCOON_GROUPS_SCRIPT_NAME": "cocoon-groups.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
@@ -61,7 +61,7 @@
                 "RelativeDest": "/local/scripts"
             },
             {
-                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${COCOON_GRPS_SCRIPT_NAME}",
+                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_COCOON_GROUPS_SCRIPT_NAME}",
                 "RelativeDest": "/local/scripts"
             }],
             "Resources": {
