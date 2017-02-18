@@ -7,7 +7,7 @@ ENV GOLANG_SRC_URL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz
 ENV GOLANG_SRC_SHA256 406865f587b44be7092f206d73fc1de252600b79b3cacc587b74b5ef5c623596
 
 # https://golang.org/issue/14851
-COPY no-pic.patch /
+COPY go/no-pic.patch /
 
 RUN set -ex \
 	&& apk add --no-cache --virtual .build-deps \
@@ -36,4 +36,4 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 WORKDIR $GOPATH
 
-COPY go-wrapper /usr/local/bin/
+COPY go/go-wrapper /usr/local/bin/
