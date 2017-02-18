@@ -82,8 +82,9 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 	}
 
 	var img string
-	if lang == "go" {
-		img = "ncodes/cocoon-go:latest"
+	switch lang {
+	case "go":
+		img = "ncodes/cocoon-launcher:latest"
 	}
 
 	cocoonData := map[string]interface{}{
