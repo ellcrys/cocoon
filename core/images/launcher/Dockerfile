@@ -2,7 +2,7 @@ FROM ncodes/cocoon-go:dind
 
 # add dependencies
 RUN apk update
-RUN apk add git bash glide
+RUN apk add git bash glide shadow
 
 # create working directorys
 WORKDIR src
