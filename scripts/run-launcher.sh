@@ -1,3 +1,9 @@
+# start dockerd
+docker-entrypoint.sh dockerd &
+
+# give dockerd time to start
+sleep 10
+
 # set coccon firewall and groups
 bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_GROUPS_SCRIPT_NAME}
 
