@@ -16,6 +16,9 @@ cd cocoon/core/data
 go get -u -v github.com/jteeuwen/go-bindata/...
 go-bindata --pkg data ./...
 
+# pull launch-go image
+docker pull ncodes/launch-go:latest
+
 # launcher launcher
 cd ../launcher
 glide install
