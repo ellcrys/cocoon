@@ -1,8 +1,8 @@
 {
   "Job": {
     "Region": "global",
-    "ID": "cocoon-{{ID}}",
-    "Name": "cocoon-{{ID}}",
+    "ID": "{{ID}}",
+    "Name": "{{ID}}",
     "Type": "service",
     "Priority": 50,
     "AllAtOnce": false,
@@ -18,12 +18,12 @@
     ],
     "TaskGroups": [
       {
-        "Name": "cocoon-{{ID}}",
+        "Name": "{{ID}}",
         "Count": {{Count}},
         "Constraints": null,
         "Tasks": [
           {
-            "Name": "cocoon-task-{{ID}}",
+            "Name": "task-{{ID}}",
             "Driver": "docker",
             "Config": {
               "image": "{{Image}}",
@@ -37,7 +37,7 @@
               }]
             },
             "Env": {
-              "COCOON_ID": "cocoon-{{ID}}",
+              "COCOON_ID": "{{ID}}",
               "COCOON_CODE_URL": "{{CocoonCodeURL}}",
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
