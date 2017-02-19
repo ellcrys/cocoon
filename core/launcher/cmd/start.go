@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/launcher/ccode"
 	"github.com/ncodes/cocoon/core/launcher/config"
+	"github.com/ncodes/cocoon/core/launcher/launch"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -33,19 +33,16 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		doneCh := make(chan bool, 1)
-		ccInstallFailedCh := make(chan bool, 1)
+		launchFailedCh := make(chan bool, 1)
 
 		var log = logging.MustGetLogger("launcher")
 
 		// install cooncode
-		ccode.Install(ccInstallFailedCh)
+		launch.Launch(launchFailedCh)
 
-		if <-ccInstallFailedCh {
-			log.Fatal("aborting: cocoon code installation failed")
+		if <-launchFailedCh {
+			log.Fatal("aborting: cocoon code launch failed")
 		}
-
-		// start cocoon code
-		ccode.Start()
 
 		<-doneCh
 	},
