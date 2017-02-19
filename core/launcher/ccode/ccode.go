@@ -13,7 +13,7 @@ import (
 )
 
 var log = logging.MustGetLogger("launcher")
-var lastBuiltBinary = ""
+var ccodeUnpackDir = ""
 var ccodeLang = ""
 var cmdCCode *exec.Cmd
 
@@ -87,7 +87,6 @@ func installFromGit(url, tag, lang string) error {
 		}
 	} else {
 		// repoID = prevRepoID
-		// log.Debugf("cocoon was previously deployed. Using previous repo commit: %", prevRepoID)
 		return fmt.Errorf("Job previously deployed. Redeployment not implemented yet")
 	}
 
@@ -127,20 +126,22 @@ func installFromGit(url, tag, lang string) error {
 	}
 
 	log.Infof("Successfully unpacked cocoon code to %s", unpackDst)
+
 	os.Remove(filePath)
+	log.Info("Deleted the cocoon code tarball")
 
 	// build binary
 	switch lang {
 	case "go":
 		log.Infof("Installing cocoon code")
-		output, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("cd %s && go install", unpackDst)).Output()
+		output, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("cd %s && go build -o cc", unpackDst)).Output()
 		if err != nil {
 			return fmt.Errorf("Failed to install cocoon code. Output: %s. Error: %s", string(output), err)
 		}
 
-		log.Infof("Successfully installed cocoon code")
+		ccodeUnpackDir = unpackDst
 
-		lastBuiltBinary = fmt.Sprintf("%s-%s", os.Getenv("COCOON_ID"), tagStr)
+		log.Infof("Successfully installed cocoon code")
 
 	default:
 		return fmt.Errorf("Unsupported cocoon code language: %s", lang)
@@ -151,15 +152,12 @@ func installFromGit(url, tag, lang string) error {
 
 // Start the recently installed cocoon code
 func Start() {
-
 	switch ccodeLang {
 	case "go":
 
-		if lastBuiltBinary == "" {
-			log.Error("Attempting to start cocoon code when binary has not been built. This is odd! Did you call Install() before calling this?")
-		}
-
-		cmdCCode := exec.Command(lastBuiltBinary)
+		// runScript := `docker run -it ncodes/launch-go:latest bash`
+		cmdCCode := exec.Command("bash", "-c", "docker run ncodes/launch-go")
+		// cmdCCode := exec.Command("/bin/bash", "-c", runScript)
 		cmdCCReader, err := cmdCCode.StdoutPipe()
 		if err != nil {
 			log.Errorf("Failed to create StdoutPipe from cocoon code command. %s", err)
@@ -172,7 +170,7 @@ func Start() {
 			return
 		}
 
-		ccLog := logging.MustGetLogger(lastBuiltBinary)
+		ccLog := logging.MustGetLogger("ccode")
 		scanner := bufio.NewScanner(cmdCCReader)
 		go func() {
 			for scanner.Scan() {
@@ -188,7 +186,7 @@ func Start() {
 		select {
 		case err := <-done:
 			if err != nil {
-				log.Errorf("Cocoon code stopped with error = %v", err)
+				log.Errorf("Cocoon code stopped with error = %s", err)
 			} else {
 				log.Info("Cocoon code has stopped gracefully")
 			}
