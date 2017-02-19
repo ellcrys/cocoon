@@ -1,6 +1,6 @@
 # Cocoon firewall directives
 
-bridgeName=${BRIDE_NAME}
+bridgeName=${BRIDGE_NAME}
 
 # Drop all outgoing connections
 iptables -C DOCKER -o $bridgeName -p tcp -j DROP
