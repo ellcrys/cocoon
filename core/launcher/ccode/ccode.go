@@ -156,7 +156,7 @@ func Start() {
 	case "go":
 
 		// runScript := `docker run -it ncodes/launch-go:latest bash`
-		cmdCCode := exec.Command("bash", "-c", "docker run ncodes/launch-go")
+		cmdCCode := exec.Command("bash", "-c", "docker run ncodes/launch-go:latest ls")
 		// cmdCCode := exec.Command("/bin/bash", "-c", runScript)
 		cmdCCReader, err := cmdCCode.StdoutPipe()
 		if err != nil {
