@@ -1,5 +1,5 @@
-hash: b22c842c4093467164fea25064f6634f862de87e507e56815b4d3bde878743ec
-updated: 2017-02-19T09:42:49.840579896+01:00
+hash: 4014eb646d6b169ab044db0ed92094529c6849df2139cfd7b8e87571bcd75533
+updated: 2017-02-19T15:08:58.925624754+01:00
 imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
@@ -48,7 +48,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
 - name: github.com/ncodes/cocoon
-  version: 3745ef6414e2f3f636cc11c96a7cb97ed972646b
+  version: eb52e64cc241f83409d5875b180214746e681b47
   subpackages:
   - core/others
 - name: github.com/op/go-logging
