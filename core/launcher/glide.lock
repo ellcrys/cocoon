@@ -1,12 +1,12 @@
-hash: 309f6d3ee547cd8dc06928273328500cdafae87dc0ac0f70d0b9e66bbde02b96
-updated: 2017-02-15T19:04:22.259722937+01:00
+hash: b22c842c4093467164fea25064f6634f862de87e507e56815b4d3bde878743ec
+updated: 2017-02-19T09:42:49.840579896+01:00
 imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
 - name: github.com/ellcrys/util
   version: 5a02fdaf1126ed792c8c1fc1bfc20735e1769ff1
 - name: github.com/fatih/color
-  version: 5ec5d9d3c2cf82e9688b34e9bc27a94d616a7193
+  version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
 - name: github.com/franela/goreq
   version: fc08df6ca2d4a0d1a5ae24739aa268863943e723
 - name: github.com/fsnotify/fsnotify
@@ -16,6 +16,8 @@ imports:
   subpackages:
   - proto
   - protoc-gen-go
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/goware/urlx
@@ -39,12 +41,14 @@ imports:
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: 281032e84ae07510239465db46bf442aa44b953a
+  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mitchellh/mapstructure
   version: bfdb1a85537d60bc7e954e600c250219ea497417
 - name: github.com/ncodes/cocoon
-  version: ae6db846a80016c9e852c92f784c63d095666c34
+  version: 3745ef6414e2f3f636cc11c96a7cb97ed972646b
   subpackages:
   - core/others
 - name: github.com/op/go-logging
@@ -68,7 +72,7 @@ imports:
 - name: github.com/spf13/cast
   version: 56a7ecbeb18dde53c6db4bd96b541fd9741b8d44
 - name: github.com/spf13/cobra
-  version: b5d8e8f46a2f829f755b6e33b454e25c61c935e1
+  version: ee4055870c2d5f7ce112642377e32c9929c3bbaf
 - name: github.com/spf13/jwalterweatherman
   version: bccdd23ae5e51bd2b081814db093646c7af3d34d
 - name: github.com/spf13/pflag
