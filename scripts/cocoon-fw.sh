@@ -18,10 +18,13 @@ done
 # create new bridge
 ip addr add dev $bridgeName
 ip link set dev $bridgeName up
-export BRIDGE_NAME=$bridgeName
 echo "Create new bridge named: $bridgeName"
 
 ################### END DOCKER BRIDE SETUP #######################
+
+# start docker daemon
+docker-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
+echo "Started docker daemon"
 
 # Drop all outgoing connections
 iptables -C DOCKER -o $bridgeName -p tcp -j DROP

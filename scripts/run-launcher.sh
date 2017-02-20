@@ -3,10 +3,6 @@
 # Run cocoon firewall script
 bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}
 
-# start docker daemon
-docker-entrypoint.sh dockerd -b=${BRIDGE_NAME} --iptables=false & 
-echo "Started docker daemon"
-
 # pull cocoon source
 git clone -b master https://github.com/ncodes/cocoon
 git config --global http.https://gopkg.in.followRedirects true
