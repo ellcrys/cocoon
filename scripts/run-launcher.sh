@@ -1,12 +1,12 @@
 # Launch Script
 
 # #################### Docker Bridge Setup ################
-ip addr show docker0
-if [ $? -eq 0 ]; then
+# ip addr show docker0
+# if [ $? -eq 0 ]; then
     # ip link set dev docker0 down
     #brctl delbr docker0
     # iptables -t nat -F POSTROUTING
-fi
+# fi
 
 # Create bridge. Attempt to use the cocoon id as the bridge bridgeName
 # otherwise, continusly create new names till we find a unique one
