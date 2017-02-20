@@ -49,7 +49,7 @@
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-launcher.sh",
-              "COCOON_GROUPS_SCRIPT_NAME": "cocoon-fw.sh",
+              "COCOON_FIREWALL_SCRIPT_NAME": "cocoon-fw.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
@@ -62,7 +62,7 @@
                 "RelativeDest": "/local/scripts"
             },
             {
-                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_COCOON_GROUPS_SCRIPT_NAME}",
+                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}",
                 "RelativeDest": "/local/scripts"
             }],
             "Resources": {
