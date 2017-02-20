@@ -3,9 +3,9 @@
 # #################### Docker Bridge Setup ################
 ip addr show docker0
 if [ $? -eq 0 ]; then
-    ip link set dev docker0 down
+    # ip link set dev docker0 down
     #brctl delbr docker0
-    iptables -t nat -F POSTROUTING
+    # iptables -t nat -F POSTROUTING
 fi
 
 # Create bridge. Attempt to use the cocoon id as the bridge bridgeName
