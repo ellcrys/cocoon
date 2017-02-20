@@ -25,7 +25,7 @@ echo "Bridge Name: $bridgeName"
 
 export BRIDGE_NAME=$bridgeName
 
-ip addr add 192.168.5.1/24 dev $bridgeName
+ip addr add dev $bridgeName
 ip link set dev $bridgeName up
 
 docker-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
