@@ -28,7 +28,7 @@ export BRIDGE_NAME=$bridgeName
 ip addr add dev $bridgeName
 ip link set dev $bridgeName up
 
-docker-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
+docker-entrypoint.sh dockerd -b=$bridgeName  & 
 ################### END DOCKER BRIDE SETUP #######################
 
 # give dockerd time to start
