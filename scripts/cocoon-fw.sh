@@ -40,5 +40,5 @@ iptables -A FORWARD -i $bridgeName ! -o $bridgeName -j ACCEPT
 iptables -A FORWARD -i $bridgeName -o $bridgeName -j ACCEPT
 
 # set postrouting rule
-iface="$(docker network inspect bridge | jq '.[0].IPAM.Config[0].Subnet')"
+iface="$(docker network inspect bridge | jq --raw-output '.[0].IPAM.Config[0].Subnet')"
 iptables -t nat -A POSTROUTING -s $iface -j MASQUERADE
