@@ -24,6 +24,7 @@ echo "Create new bridge named: $bridgeName"
 
 # start docker daemon
 docker-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
+sleep 5
 echo "Started docker daemon"
 
 # Drop all outgoing connections
