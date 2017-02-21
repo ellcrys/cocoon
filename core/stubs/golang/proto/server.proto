@@ -1,0 +1,15 @@
+syntax = "proto3";
+package proto;
+
+service Stub {
+    rpc GetState(Key) returns (State);
+}
+
+message Key {
+    string name = 1;
+}
+
+message State {
+    string key = 1;
+    bytes value = 2;
+}
