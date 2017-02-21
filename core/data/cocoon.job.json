@@ -48,7 +48,7 @@
               "PortLabel": "connector-http"   
             }],
             "Meta": {
-              "DEPLOY_SCRIPT_NAME": "run-launcher.sh",
+              "DEPLOY_SCRIPT_NAME": "run-connector.sh",
               "COCOON_FIREWALL_SCRIPT_NAME": "cocoon-fw.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },

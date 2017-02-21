@@ -15,10 +15,10 @@ go-bindata --pkg data ./...
 # pull launch-go image
 docker pull ncodes/launch-go:latest
 
-# launcher launcher
-cd ../launcher
+# build the connector
+cd ../connector
 glide install
-go build -o /bin/launcher launcher.go
+go build -o /bin/connector connector.go
 
-# start launcher
-launcher start
+# start connector 
+connector start

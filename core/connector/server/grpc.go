@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/ncodes/cocoon/core/launcher/proto"
+	"github.com/ncodes/cocoon/core/connector/proto"
 	logging "github.com/op/go-logging"
 	"golang.org/x/net/context"
 )

@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/launcher/config"
-	"github.com/ncodes/cocoon/core/launcher/launch"
+	"github.com/ncodes/cocoon/core/connector/config"
+	"github.com/ncodes/cocoon/core/connector/launcher"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -35,10 +35,11 @@ var startCmd = &cobra.Command{
 		doneCh := make(chan bool, 1)
 		launchFailedCh := make(chan bool, 1)
 
-		var log = logging.MustGetLogger("launcher")
+		var log = logging.MustGetLogger("connector")
+		log.Info("Connector started. Initiating cocoon code launch procedure.")
 
 		// install cooncode
-		launch.Launch(launchFailedCh)
+		launcher.Launch(launchFailedCh)
 
 		if <-launchFailedCh {
 			log.Fatal("aborting: cocoon code launch failed")

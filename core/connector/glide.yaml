@@ -1,4 +1,4 @@
-package: github.com/ncodes/cocoon/core/launcher
+package: github.com/ncodes/cocoon/core/connector
 import:
 - package: github.com/gorilla/mux
   version: ^1.3.0

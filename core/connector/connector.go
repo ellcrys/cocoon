@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/ncodes/cocoon/core/launcher/cmd"
+import "github.com/ncodes/cocoon/core/connector/cmd"
 
 func main() {
 	cmd.Execute()
