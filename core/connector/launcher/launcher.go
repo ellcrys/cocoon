@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	docker "github.com/fsouza/go-dockerclient"
 	"github.com/ncodes/cocoon/core/others"
+	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
 
@@ -100,7 +100,7 @@ func (lc *Launcher) Launch(req *Request) {
 		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
-	log.Info(newContainer)
+	log.Info(newContainer.ID)
 }
 
 // AddLanguage adds a new langauge to the launcher.
@@ -232,9 +232,16 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
-			Image:      image,
-			Labels:     map[string]string{"name": name, "type": "cocoon_code"},
-			Volumes:    map[string]struct{}{sourceDir: struct{}{}},
+			Image:  image,
+			Labels: map[string]string{"name": name, "type": "cocoon_code"},
+			Mounts: []docker.Mount{
+				docker.Mount{
+					Type:     "bind",
+					Source:   sourceDir,
+					Target:   sourceDir,
+					ReadOnly: true,
+				},
+			},
 			WorkingDir: sourceDir,
 			Tty:        true,
 			Cmd:        []string{"bash"},

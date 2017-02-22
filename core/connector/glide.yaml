@@ -12,5 +12,6 @@ import:
   subpackages:
   - proto
   - protoc-gen-go
-- package: github.com/goware/urlx
-
+- package: github.com/docker/docker
+  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
+- package: github.com/ncodes/go-dockerclient

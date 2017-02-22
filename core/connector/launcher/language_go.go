@@ -65,6 +65,5 @@ func (g *Go) RequiresBuild() bool {
 // GetBuildScript will return the script required
 // to create an executable
 func (g *Go) GetBuildScript() string {
-	// return "go build -v -o /bin/cc"
-	return "pwd"
+	return "go build -v -o /bin/cc"
 }
