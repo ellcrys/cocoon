@@ -250,7 +250,7 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 					Type:     "bind",
 					Source:   sourceDir,
 					Target:   sourceDir,
-					ReadOnly: true,
+					ReadOnly: false,
 				},
 			},
 			WorkingDir: sourceDir,
