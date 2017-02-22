@@ -5,5 +5,5 @@ package launcher
 type Language interface {
 	GetName() string
 	GetImage() string
-	GetDownloadDestination() string
+	GetDownloadDestination(string) string
 }

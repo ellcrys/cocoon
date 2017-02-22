@@ -15,7 +15,7 @@ func (ml *MyLang) GetName() string {
 func (ml *MyLang) GetImage() string {
 	return ""
 }
-func (ml *MyLang) GetDownloadDestination() string {
+func (ml *MyLang) GetDownloadDestination(url string) string {
 	return ""
 }
 

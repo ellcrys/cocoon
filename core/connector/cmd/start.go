@@ -76,8 +76,9 @@ var startCmd = &cobra.Command{
 		}
 
 		// install cooncode
-		launcher := launcher.NewLauncher(launchFailedCh)
-		launcher.Launch(req)
+		lchr := launcher.NewLauncher(launchFailedCh)
+		lchr.AddLanguage(launcher.NewGo())
+		lchr.Launch(req)
 
 		if <-launchFailedCh {
 			log.Fatal("aborting: cocoon code launch failed")
