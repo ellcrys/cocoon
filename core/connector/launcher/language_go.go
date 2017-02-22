@@ -11,18 +11,20 @@ import (
 
 // Go defines a deployment helper for go cocoon.
 type Go struct {
-	name     string
-	image    string
-	userHome string
+	name      string
+	image     string
+	userHome  string
+	imgGoPath string
 }
 
 // NewGo returns a new instance a golang
 // cocoon code deployment helper.
 func NewGo() *Go {
 	g := &Go{
-		name:     "go",
-		image:    "ncodes/launch-go",
-		userHome: os.Getenv("HOME"),
+		name:      "go",
+		image:     "ncodes/launch-go",
+		userHome:  os.Getenv("HOME"),
+		imgGoPath: "/go",
 	}
 	g.setUserHomeDir()
 	return g
@@ -54,6 +56,14 @@ func (g *Go) GetDownloadDestination(url string) string {
 	u, _ := urlx.Parse(url)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.userHome, "/ccode/source", repoID)
+}
+
+// GetMountDestination returns the location in
+// the container where the source code root will be mounted
+func (g *Go) GetMountDestination(url string) string {
+	u, _ := urlx.Parse(url)
+	repoID := strings.Trim(u.Path, "/")
+	return path.Join(g.imgGoPath, "src/github.com/", repoID)
 }
 
 // RequiresBuild returns true if cocoon codes written in

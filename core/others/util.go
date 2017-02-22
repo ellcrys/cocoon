@@ -72,6 +72,10 @@ func GetGithubRepoRelease(repoURL, tag string) (string, error) {
 		Uri: endpoint,
 	}.Do()
 
+	if err != nil {
+		return "", fmt.Errorf("failed to get repo release. %s", err)
+	}
+
 	body, _ := res.Body.ToString()
 	if res.StatusCode != 200 {
 		return "", fmt.Errorf("failed to fetch repo release. %s", body)
@@ -97,6 +101,10 @@ func DownloadFile(url, destFilename string, cb func([]byte)) error {
 	defer f.Close()
 
 	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to download remote resource. %s", err)
+	}
+
 	defer resp.Body.Close()
 
 	util.ReadReader(resp.Body, 32000, func(err error, buf []byte, done bool) bool {

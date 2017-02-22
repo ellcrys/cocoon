@@ -81,7 +81,11 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	newContainer, err := lc.createContainer(req.ID, lang.GetImage(), lang.GetDownloadDestination(req.URL))
+	newContainer, err := lc.createContainer(
+		req.ID,
+		lang.GetImage(),
+		lang.GetDownloadDestination(req.URL),
+		lang.GetMountDestination(req.URL))
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
 		lc.setFailed(true)
@@ -238,8 +242,10 @@ func (lc *Launcher) getContainer(name string) (*docker.APIContainers, error) {
 	return nil, nil
 }
 
-// createContainer creates a brand new container
-func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Container, error) {
+// createContainer creates a brand new container,
+// mounts the source directory and set the mount
+// directory as the work directory
+func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string) (*docker.Container, error) {
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -249,11 +255,11 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 				docker.Mount{
 					Type:     "bind",
 					Source:   sourceDir,
-					Target:   sourceDir,
+					Target:   mountDir,
 					ReadOnly: false,
 				},
 			},
-			WorkingDir: sourceDir,
+			WorkingDir: mountDir,
 			Tty:        true,
 			Cmd:        []string{"bash"},
 		},
@@ -293,10 +299,18 @@ func (lc *Launcher) build(container *docker.Container, lang Language, buildParam
 
 	outStream := NewLogStreamer()
 	outStream.SetLogger(buildLog)
-	err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
-		OutputStream: outStream.GetWriter(),
-		ErrorStream:  outStream.GetWriter(),
-	})
+
+	log.Info("Building cocoon code...")
+
+	go func() {
+		err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
+			OutputStream: outStream.GetWriter(),
+			ErrorStream:  outStream.GetWriter(),
+		})
+		if err != nil {
+			log.Infof("failed to execute build command. %s", err)
+		}
+	}()
 
 	go func() {
 		err := outStream.Start()
@@ -305,19 +319,27 @@ func (lc *Launcher) build(container *docker.Container, lang Language, buildParam
 		}
 	}()
 
-	execIns, err := dckClient.InspectExec(exec.ID)
-	if err != nil {
-		log.Errorf("failed to inspect build exec op. %s", err)
-	}
+	execExitCode := 0
 
-	for execIns.Running {
-		time.Sleep(500 * time.Millisecond)
+	for {
+		execIns, err := dckClient.InspectExec(exec.ID)
+		if err != nil {
+			return fmt.Errorf("failed to inspect build exec op. %s", err)
+		}
+
+		if execIns.Running {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		execExitCode = execIns.ExitCode
+		break
 	}
 
 	outStream.Stop()
 
-	if execIns.ExitCode != 0 {
-		return fmt.Errorf("Build has failed with exit code=%d", execIns.ExitCode)
+	if execExitCode != 0 {
+		return fmt.Errorf("Build has failed with exit code=%d", execExitCode)
 	}
 
 	log.Info("Build succeeded!")
