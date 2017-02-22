@@ -266,6 +266,7 @@ func (lc *Launcher) build(container *docker.Container, lang Language) error {
 	outStream.SetLogger(buildLog)
 	err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
 		OutputStream: outStream.GetWriter(),
+		ErrorStream:  outStream.GetWriter(),
 	})
 
 	go func() {
