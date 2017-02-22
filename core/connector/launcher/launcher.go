@@ -88,11 +88,16 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	err = lc.build(newContainer, lang)
-	if err != nil {
-		log.Errorf(err.Error())
-		lc.setFailed(true)
-		return
+	if lang.RequiresBuild() {
+		err = lc.build(newContainer, lang)
+		if err != nil {
+			log.Errorf(err.Error())
+			lc.setFailed(true)
+			lc.stopContainer(newContainer.ID)
+			return
+		}
+	} else {
+		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
 	log.Info(newContainer)
@@ -240,6 +245,12 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 	}
 
 	return container, nil
+}
+
+// stopContainer stop container. Kill it if it doesn't
+// end after 5 seconds.
+func (lc *Launcher) stopContainer(id string) error {
+	return dckClient.StopContainer(id, uint((5 * time.Second).Seconds()))
 }
 
 // build starts up the container and builds the cocoon code

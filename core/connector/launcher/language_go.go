@@ -9,6 +9,7 @@ import (
 	"github.com/goware/urlx"
 )
 
+// Go defines a deployment helper for go cocoon.
 type Go struct {
 	name     string
 	image    string
@@ -55,8 +56,15 @@ func (g *Go) GetDownloadDestination(url string) string {
 	return path.Join(g.userHome, "/ccode/source", repoID)
 }
 
+// RequiresBuild returns true if cocoon codes written in
+// go langugage requires a build process.
+func (g *Go) RequiresBuild() bool {
+	return true
+}
+
 // GetBuildScript will return the script required
 // to create an executable
 func (g *Go) GetBuildScript() string {
-	return "ls"
+	// return "go build -v -o /bin/cc"
+	return "pwd"
 }
