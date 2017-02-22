@@ -6,4 +6,5 @@ type Language interface {
 	GetName() string
 	GetImage() string
 	GetDownloadDestination(string) string
+	GetBuildScript() string
 }
