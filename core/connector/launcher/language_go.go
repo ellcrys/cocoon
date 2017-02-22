@@ -21,7 +21,7 @@ type Go struct {
 func NewGo() *Go {
 	g := &Go{
 		name:     "go",
-		image:    "ncodes/cocoon-go",
+		image:    "ncodes/launch-go",
 		userHome: os.Getenv("HOME"),
 	}
 	g.setUserHomeDir()
@@ -64,6 +64,16 @@ func (g *Go) RequiresBuild() bool {
 
 // GetBuildScript will return the script required
 // to create an executable
-func (g *Go) GetBuildScript() string {
-	return "go build -v -o /bin/cc"
+func (g *Go) GetBuildScript(buildParams map[string]interface{}) string {
+
+	// run known package manager fetch routine
+	pkgFetchCmd := ""
+	if pkgMgr := buildParams["pkg_mgr"]; pkgMgr != nil {
+		switch pkgMgr {
+		case "glide":
+			pkgFetchCmd = "glide install"
+		}
+	}
+
+	return strings.Join([]string{pkgFetchCmd, "go build -v -o /bin/cc"}, " && ")
 }

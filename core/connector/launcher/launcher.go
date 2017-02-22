@@ -89,7 +89,18 @@ func (lc *Launcher) Launch(req *Request) {
 	}
 
 	if lang.RequiresBuild() {
-		err = lc.build(newContainer, lang)
+
+		var buildParams map[string]interface{}
+		var buildParamStr = os.Getenv("COCOON_BUILD_PARAMS")
+		if len(buildParamStr) > 0 {
+			if err = util.FromJSON([]byte(buildParamStr), &buildParams); err != nil {
+				log.Errorf("failed to parse build parameter. %s", err)
+				lc.setFailed(true)
+				return
+			}
+		}
+
+		err = lc.build(newContainer, lang, buildParams)
 		if err != nil {
 			log.Errorf(err.Error())
 			lc.setFailed(true)
@@ -262,7 +273,7 @@ func (lc *Launcher) stopContainer(id string) error {
 
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the languaged.
-func (lc *Launcher) build(container *docker.Container, lang Language) error {
+func (lc *Launcher) build(container *docker.Container, lang Language, buildParams map[string]interface{}) error {
 
 	err := dckClient.StartContainer(container.ID, nil)
 	if err != nil {
@@ -273,7 +284,7 @@ func (lc *Launcher) build(container *docker.Container, lang Language) error {
 		Container:    container.ID,
 		AttachStderr: true,
 		AttachStdout: true,
-		Cmd:          []string{"bash", "-c", lang.GetBuildScript()},
+		Cmd:          []string{"bash", "-c", lang.GetBuildScript(buildParams)},
 	})
 
 	if err != nil {

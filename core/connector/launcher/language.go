@@ -7,5 +7,5 @@ type Language interface {
 	GetImage() string
 	GetDownloadDestination(string) string
 	RequiresBuild() bool
-	GetBuildScript() string
+	GetBuildScript(map[string]interface{}) string
 }
