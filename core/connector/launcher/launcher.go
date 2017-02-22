@@ -78,7 +78,7 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	newContainer, err := lc.createContainer(req.ID, lang.GetImage())
+	newContainer, err := lc.createContainer(req.ID, lang.GetImage(), lang.GetDownloadDestination(req.URL))
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
 		lc.setFailed(true)
@@ -213,13 +213,15 @@ func (lc *Launcher) getContainer(name string) (*docker.APIContainers, error) {
 }
 
 // createContainer creates a brand new container
-func (lc *Launcher) createContainer(name, image string) (*docker.Container, error) {
+func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Container, error) {
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
-			Image:  image,
-			Labels: map[string]string{"name": name, "type": "cocoon_code"},
-			Cmd:    []string{"bash"},
+			Image:      image,
+			Labels:     map[string]string{"name": name, "type": "cocoon_code"},
+			Volumes:    map[string]struct{}{sourceDir: struct{}{}},
+			WorkingDir: sourceDir,
+			Cmd:        []string{"bash"},
 		},
 	})
 	if err != nil {
