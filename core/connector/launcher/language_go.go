@@ -54,3 +54,9 @@ func (g *Go) GetDownloadDestination(url string) string {
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.userHome, "/ccode/source", repoID)
 }
+
+// GetBuildScript will return the script required
+// to create an executable
+func (g *Go) GetBuildScript() string {
+	return "ls"
+}
