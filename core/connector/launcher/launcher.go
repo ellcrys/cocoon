@@ -89,9 +89,7 @@ func (lc *Launcher) fetchSource(req *Request, lang Language) (string, error) {
 		return "", fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
-	lc.fetchFromGit(req, lang)
-
-	return "", nil
+	return lc.fetchFromGit(req, lang)
 }
 
 // findLaunch looks for a previous stored launch/Redeployment by id
@@ -104,7 +102,7 @@ func (lc *Launcher) findLaunch(id string) interface{} {
 // and returns the download directory.
 func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 
-	var repoTarURL, downloadDst, unpackDst string
+	var repoTarURL, downloadDst string
 	var err error
 
 	// checks if job was previously deployed. find a job by the job name.
@@ -125,18 +123,22 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 
 	// determine download directory
 	downloadDst = lang.GetDownloadDestination(req.URL)
-	unpackDst = downloadDst
 
 	// delete download directory if it exists
 	if _, err := os.Stat(downloadDst); err == nil {
-		// log.Info("Download destination is not empty. Deleting content")
-		// if err = os.RemoveAll(downloadDst); err != nil {
-		// 	return "", fmt.Errorf("failed to delete contents of download directory")
-		// }
-		// log.Info("Download directory has been deleted")
+		log.Info("Download destination is not empty. Deleting content")
+		if err = os.RemoveAll(downloadDst); err != nil {
+			return "", fmt.Errorf("failed to delete contents of download directory")
+		}
+		log.Info("Download directory has been deleted")
 	}
 
-	log.Info("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
+	// create the download directory
+	if err = os.MkdirAll(downloadDst, os.ModePerm); err != nil {
+		return "", fmt.Errorf("Failed to create download directory. %s", err)
+	}
+
+	log.Infof("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", req.ID))
 	err = others.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
 	if err != nil {
@@ -146,21 +148,17 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 	log.Info("Successfully downloaded cocoon code")
 	log.Debugf("Unpacking cocoon code to %s", filePath)
 
-	if err = os.MkdirAll(unpackDst, os.ModePerm); err != nil {
-		return "", fmt.Errorf("Failed to create unpack directory. %s", err)
-	}
-
 	// unpack tarball
 	cmd := "tar"
-	args := []string{"-xf", filePath, "-C", unpackDst, "--strip-components", "1"}
+	args := []string{"-xf", filePath, "-C", downloadDst, "--strip-components", "1"}
 	if err = exec.Command(cmd, args...).Run(); err != nil {
 		return "", fmt.Errorf("Failed to unpack cocoon code repo tarball. %s", err)
 	}
 
-	log.Infof("Successfully unpacked cocoon code to %s", unpackDst)
+	log.Infof("Successfully unpacked cocoon code to %s", downloadDst)
 
 	os.Remove(filePath)
 	log.Info("Deleted the cocoon code tarball")
 
-	return unpackDst, nil
+	return downloadDst, nil
 }
