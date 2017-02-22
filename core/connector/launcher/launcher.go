@@ -7,11 +7,14 @@ import (
 
 	"path"
 
+	"github.com/ellcrys/util"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/ncodes/cocoon/core/others"
 	logging "github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("launcher")
+var dckClient *docker.Client
 
 // Launcher defines cocoon code
 // deployment service.
@@ -36,6 +39,16 @@ func (lc *Launcher) setFailed(v bool) {
 // Launch starts a cocoon code
 func (lc *Launcher) Launch(req *Request) {
 
+	endpoint := "unix:///var/run/docker.sock"
+	client, err := docker.NewClient(endpoint)
+	if err != nil {
+		log.Errorf("failed to create docker client. Is dockerd running locally?. %s", err)
+		lc.setFailed(true)
+		return
+	}
+
+	dckClient = client
+
 	log.Info("Ready to install cocoon code")
 	log.Debugf("Found ccode url=%s and lang=%s", req.URL, req.Lang)
 
@@ -46,14 +59,33 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	_, err := lc.fetchSource(req, lang)
+	_, err = lc.fetchSource(req, lang)
 	if err != nil {
 		log.Error(err.Error())
 		lc.setFailed(true)
 		return
 	}
 
-	log.Info(lang)
+	// ensure cocoon code isn't already launched on a container
+	c, err := lc.getContainer(req.ID)
+	if err != nil {
+		log.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
+		lc.setFailed(true)
+		return
+	} else if c != nil {
+		log.Error("cocoon code is already exists on a container")
+		lc.setFailed(true)
+		return
+	}
+
+	newContainer, err := lc.createContainer(req.ID, lang.GetImage())
+	if err != nil {
+		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
+		lc.setFailed(true)
+		return
+	}
+
+	log.Info(newContainer)
 }
 
 // AddLanguage adds a new langauge to the launcher.
@@ -161,4 +193,38 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 	log.Info("Deleted the cocoon code tarball")
 
 	return downloadDst, nil
+}
+
+// getContainer returns a container with a
+// matching name or nil if not found.
+func (lc *Launcher) getContainer(name string) (*docker.APIContainers, error) {
+	apiContainers, err := dckClient.ListContainers(docker.ListContainersOptions{All: true})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, c := range apiContainers {
+		if util.InStringSlice(c.Names, "/"+name) {
+			return &c, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// createContainer creates a brand new container
+func (lc *Launcher) createContainer(name, image string) (*docker.Container, error) {
+	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
+		Name: name,
+		Config: &docker.Config{
+			Image:  image,
+			Labels: map[string]string{"name": name, "type": "cocoon_code"},
+			Cmd:    []string{"bash"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return container, nil
 }
