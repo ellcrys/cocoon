@@ -7,6 +7,8 @@ import (
 
 	"path"
 
+	"time"
+
 	"github.com/ellcrys/util"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/ncodes/cocoon/core/others"
@@ -14,6 +16,7 @@ import (
 )
 
 var log = logging.MustGetLogger("launcher")
+var buildLog = logging.MustGetLogger("ccode.build")
 var dckClient *docker.Client
 
 // Launcher defines cocoon code
@@ -73,7 +76,7 @@ func (lc *Launcher) Launch(req *Request) {
 		lc.setFailed(true)
 		return
 	} else if c != nil {
-		log.Error("cocoon code is already exists on a container")
+		log.Error("cocoon code already exists on a container")
 		lc.setFailed(true)
 		return
 	}
@@ -81,6 +84,13 @@ func (lc *Launcher) Launch(req *Request) {
 	newContainer, err := lc.createContainer(req.ID, lang.GetImage(), lang.GetDownloadDestination(req.URL))
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
+		lc.setFailed(true)
+		return
+	}
+
+	err = lc.build(newContainer, lang)
+	if err != nil {
+		log.Errorf(err.Error())
 		lc.setFailed(true)
 		return
 	}
@@ -221,6 +231,7 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 			Labels:     map[string]string{"name": name, "type": "cocoon_code"},
 			Volumes:    map[string]struct{}{sourceDir: struct{}{}},
 			WorkingDir: sourceDir,
+			Tty:        true,
 			Cmd:        []string{"bash"},
 		},
 	})
@@ -229,4 +240,57 @@ func (lc *Launcher) createContainer(name, image, sourceDir string) (*docker.Cont
 	}
 
 	return container, nil
+}
+
+// build starts up the container and builds the cocoon code
+// according to the build script provided by the languaged.
+func (lc *Launcher) build(container *docker.Container, lang Language) error {
+
+	err := dckClient.StartContainer(container.ID, nil)
+	if err != nil {
+		return err
+	}
+
+	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
+		Container:    container.ID,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          []string{"bash", "-c", lang.GetBuildScript()},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create exec object. %s", err)
+	}
+
+	outStream := NewLogStreamer()
+	outStream.SetLogger(buildLog)
+	err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
+		OutputStream: outStream.GetWriter(),
+	})
+
+	go func() {
+		err := outStream.Start()
+		if err != nil {
+			log.Errorf("failed to start output stream logger. %s", err)
+		}
+	}()
+
+	execIns, err := dckClient.InspectExec(exec.ID)
+	if err != nil {
+		log.Errorf("failed to inspect build exec op. %s", err)
+	}
+
+	for execIns.Running {
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	outStream.Stop()
+
+	if execIns.ExitCode != 0 {
+		return fmt.Errorf("Build has failed with exit code=%d", execIns.ExitCode)
+	}
+
+	log.Info("Build succeeded!")
+
+	return nil
 }
