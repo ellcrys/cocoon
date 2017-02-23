@@ -17,6 +17,7 @@ import (
 
 var log = logging.MustGetLogger("launcher")
 var buildLog = logging.MustGetLogger("ccode.build")
+var ccodeLog = logging.MustGetLogger("ccode")
 var dckClient *docker.Client
 
 // Launcher defines cocoon code
@@ -24,6 +25,7 @@ var dckClient *docker.Client
 type Launcher struct {
 	failed    chan bool
 	languages []Language
+	container *docker.Container
 }
 
 // NewLauncher creates a new launcher
@@ -92,6 +94,8 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
+	// lc.container = newContainer
+
 	if lang.RequiresBuild() {
 
 		var buildParams map[string]interface{}
@@ -115,7 +119,28 @@ func (lc *Launcher) Launch(req *Request) {
 		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
-	log.Info(newContainer.ID)
+	// if err = lc.run(newContainer, lang); err != nil {
+	// 	log.Error(err.Error())
+	// }
+
+	// lc.Stop()
+}
+
+// Stop stops the launcher and the container it is running
+func (lc *Launcher) Stop() error {
+
+	containerStatus, err := dckClient.InspectContainer(lc.container.ID)
+	if err != nil {
+		return fmt.Errorf("failed to inspect container before running. %s", err)
+	}
+
+	if !containerStatus.State.Running {
+		if err = lc.stopContainer(lc.container.ID); err != nil {
+			return fmt.Errorf("failed to stop container")
+		}
+	}
+
+	return nil
 }
 
 // AddLanguage adds a new langauge to the launcher.
@@ -320,8 +345,10 @@ func (lc *Launcher) build(container *docker.Container, lang Language, buildParam
 	}()
 
 	execExitCode := 0
+	time.Sleep(1 * time.Second)
 
 	for {
+
 		execIns, err := dckClient.InspectExec(exec.ID)
 		if err != nil {
 			return fmt.Errorf("failed to inspect build exec op. %s", err)
@@ -343,6 +370,82 @@ func (lc *Launcher) build(container *docker.Container, lang Language, buildParam
 	}
 
 	log.Info("Build succeeded!")
+
+	return nil
+}
+
+// Run the cocoon code. Start the container if it is not
+// currently running (this will be true if cocoon build process was not ran)
+func (lc *Launcher) run(container *docker.Container, lang Language) error {
+
+	containerStatus, err := dckClient.InspectContainer(container.ID)
+	if err != nil {
+		return fmt.Errorf("failed to inspect container before running. %s", err)
+	}
+
+	if !containerStatus.State.Running {
+		err := dckClient.StartContainer(container.ID, nil)
+		if err != nil {
+			return fmt.Errorf("failed to start container. %s", err.Error())
+		}
+	}
+
+	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
+		Container:    container.ID,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          []string{lang.GetRunScript()},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create run exec object. %s", err)
+	}
+
+	log.Info("Starting cocoon code")
+	outStream := NewLogStreamer()
+	outStream.SetLogger(ccodeLog)
+
+	go func() {
+		err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
+			OutputStream: outStream.GetWriter(),
+			ErrorStream:  outStream.GetWriter(),
+		})
+		if err != nil {
+			log.Infof("failed to execute run command. %s", err)
+		}
+	}()
+
+	go func() {
+		err := outStream.Start()
+		if err != nil {
+			log.Errorf("failed to start output stream logger. %s", err)
+		}
+	}()
+
+	execExitCode := 0
+
+	for {
+		execIns, err := dckClient.InspectExec(exec.ID)
+		if err != nil {
+			return fmt.Errorf("failed to inspect run exec op. %s", err)
+		}
+
+		if execIns.Running {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		execExitCode = execIns.ExitCode
+		break
+	}
+
+	outStream.Stop()
+
+	if execExitCode != 0 {
+		return fmt.Errorf("Cocoon code has failed with exit code=%d", execExitCode)
+	}
+
+	log.Info("Cocoon code successfully stop")
 
 	return nil
 }
