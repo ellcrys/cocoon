@@ -29,7 +29,7 @@ RUN apt-get -y update && apt-get -y install \
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
 RUN set -x \
 	&& addgroup -S dockremap \
-	&& adduser -S -G dockremap dockremap \
+	&& adduser -G dockremap dockremap \
 	&& echo 'dockremap:165536:65536' >> /etc/subuid \
 	&& echo 'dockremap:165536:65536' >> /etc/subgid
     
