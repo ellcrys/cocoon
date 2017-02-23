@@ -16,9 +16,6 @@ RUN set -x \
 
 COPY docker-entrypoint.sh /usr/local/bin/
 
-# ENTRYPOINT ["docker-entrypoint.sh"]
-# CMD ["bash"]
-
 # Setup Docker DinD
 RUN apt-get -y update && apt-get -y install \
         sudo \
@@ -43,6 +40,6 @@ COPY dockerd-entrypoint.sh /usr/local/bin/
 VOLUME /var/lib/docker
 EXPOSE 2375
 
-# ENTRYPOINT ["dockerd-entrypoint.sh"]
+ENTRYPOINT ["dockerd-entrypoint.sh"]
 
-CMD []
+CMD ["bash"]
