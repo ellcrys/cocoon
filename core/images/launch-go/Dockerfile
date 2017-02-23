@@ -1,7 +1,7 @@
 FROM golang:1.7.5-wheezy
 
 # add dependencies
-RUN apt-get install update
+RUN apt-get update
 RUN curl https://glide.sh/get | sh
 
 # for testing
