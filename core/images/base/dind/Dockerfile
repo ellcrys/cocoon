@@ -20,7 +20,8 @@ COPY docker-entrypoint.sh /usr/local/bin/
 # CMD ["bash"]
 
 # Setup Docker DinD
-RUN sudo install \
+RUN apt-get install \
+        sudo \
 		e2fsprogs \
 		iptables
 
