@@ -20,9 +20,10 @@ COPY docker-entrypoint.sh /usr/local/bin/
 # CMD ["bash"]
 
 # Setup Docker DinD
-RUN apt-get install \
+RUN apt-get update && apt-get install \
         sudo \
 		e2fsprogs \
+        xfsprogs \
 		iptables
 
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
