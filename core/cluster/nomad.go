@@ -7,8 +7,8 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
+	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/data"
-	"github.com/ncodes/cocoon/core/others"
 	logging "github.com/op/go-logging"
 )
 
@@ -77,7 +77,7 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 		return "", fmt.Errorf("Only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
 	} else if url == "" {
 		return "", fmt.Errorf("github repo url is required")
-	} else if !others.IsGithubRepoURL(url) {
+	} else if !cutil.IsGithubRepoURL(url) {
 		return "", fmt.Errorf("Invalid chaincode url. Chaincode must be hosted on github.")
 	}
 

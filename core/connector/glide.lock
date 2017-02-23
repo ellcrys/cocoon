@@ -1,5 +1,5 @@
-hash: a65b024e63668810a83055c513ea00bb98e90f176965054f81e75e8970ef4751
-updated: 2017-02-22T20:52:41.587396272+01:00
+hash: e7bf2a337d34b6a73ec5cc37510b69f15be19d8262fa026cfcd7c9b5c9ac6b53
+updated: 2017-02-23T11:33:07.720525297+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -36,7 +36,7 @@ imports:
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-connections
-  version: d217f8e36aba4dbc397981e692a65d3f13b9a46d
+  version: 1b14b2d192e2f91cdc2bc6bf9aee0b0e116eed42
   subpackages:
   - nat
 - name: github.com/docker/go-units
@@ -49,10 +49,8 @@ imports:
   version: fc08df6ca2d4a0d1a5ae24739aa268863943e723
 - name: github.com/fsnotify/fsnotify
   version: a904159b9206978bb6d53fcc7a769e5cd726c737
-- name: github.com/fsouza/go-dockerclient
-  version: 54fbd1ff920ca5fd5ec53068d513c14c3a25bba9
 - name: github.com/golang/protobuf
-  version: 69b215d01a5606c843240eab4937eab3acee6530
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
   - protoc-gen-go
@@ -91,14 +89,8 @@ imports:
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
-- name: github.com/ncodes/cocoon
-  version: 839f9af1f131d7d2c6cda1184995e2025ef84340
-  subpackages:
-  - core/connector/cmd
-  - core/connector/config
-  - core/connector/launcher
-  - core/connector/proto
-  - core/others
+- name: github.com/ncodes/cocoon-util
+  version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: 18dda516ac74a7fb810cc344de5bd13bd93bdf8d
 - name: github.com/op/go-logging
@@ -139,7 +131,7 @@ imports:
   subpackages:
   - codec
 - name: golang.org/x/net
-  version: 6b27048ae5e6ad1ef927e72e437531493de612fe
+  version: ae05321a78c1401cec22ba7bc203b597ea372496
   subpackages:
   - context
   - context/ctxhttp
@@ -155,9 +147,11 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 767daa157b4d460bba02409ff856ddeeb8e76ab7
+  version: 44f4f658a783b0cee41fe0a23b8fc91d9c120558
   subpackages:
+  - secure/bidirule
   - transform
+  - unicode/bidi
   - unicode/norm
   - width
 - name: google.golang.org/grpc

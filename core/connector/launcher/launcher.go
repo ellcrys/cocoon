@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/others"
+	cutil "github.com/ncodes/cocoon-util"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
@@ -94,7 +94,7 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	// lc.container = newContainer
+	lc.container = newContainer
 
 	if lang.RequiresBuild() {
 
@@ -172,7 +172,7 @@ func (lc *Launcher) GetLanguages() []Language {
 // a remote address
 func (lc *Launcher) fetchSource(req *Request, lang Language) (string, error) {
 
-	if !others.IsGithubRepoURL(req.URL) {
+	if !cutil.IsGithubRepoURL(req.URL) {
 		return "", fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
@@ -197,7 +197,7 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 		return "", fmt.Errorf("cocoon code was previously launched") // TODO: fetch last launch tag and use it
 	}
 
-	repoTarURL, err = others.GetGithubRepoRelease(req.URL, req.Tag)
+	repoTarURL, err = cutil.GetGithubRepoRelease(req.URL, req.Tag)
 	if err != nil {
 		return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 	}
@@ -227,7 +227,7 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 
 	log.Infof("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", req.ID))
-	err = others.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
+	err = cutil.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
 	if err != nil {
 		return "", err
 	}
