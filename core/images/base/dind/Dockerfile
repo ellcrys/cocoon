@@ -20,7 +20,7 @@ COPY docker-entrypoint.sh /usr/local/bin/
 # CMD ["bash"]
 
 # Setup Docker DinD
-RUN apt-get update && apt-get install \
+RUN apt-get -y update && apt-get install \
         sudo \
 		e2fsprogs \
         xfsprogs \
