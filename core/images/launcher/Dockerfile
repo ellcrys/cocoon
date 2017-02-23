@@ -1,8 +1,10 @@
 FROM ncodes/cocoon:latest
 
 # add dependencies
-RUN apk update
-RUN apk add git bash glide shadow jq
+RUN echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
+RUN apt-get update
+RUN apt-get install jq
+RUN curl https://glide.sh/get | sh
 
 # create working directorys
 WORKDIR src
