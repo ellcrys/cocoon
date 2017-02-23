@@ -119,11 +119,11 @@ func (lc *Launcher) Launch(req *Request) {
 		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
-	// if err = lc.run(newContainer, lang); err != nil {
-	// 	log.Error(err.Error())
-	// }
+	if err = lc.run(newContainer, lang); err != nil {
+		log.Error(err.Error())
+	}
 
-	// lc.Stop()
+	lc.Stop()
 }
 
 // Stop stops the launcher and the container it is running
