@@ -85,12 +85,12 @@ func (g *Go) GetBuildScript(buildParams map[string]interface{}) string {
 		}
 	}
 
-	return strings.Join([]string{pkgFetchCmd, "go build -v -o /bin/cc"}, " && ")
+	return strings.Join([]string{pkgFetchCmd, "go build -v -o /bin/ccode"}, " && ")
 }
 
 // GetRunScript returns the script required to start the
-// cocoon code according to the build and installation process
+// cocoon code accodeording to the build and installation process
 // of the language.
 func (g *Go) GetRunScript() string {
-	return strings.Join([]string{"cc"}, " && ")
+	return strings.Join([]string{"ccode"}, " && ")
 }
