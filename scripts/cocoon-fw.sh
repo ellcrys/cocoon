@@ -1,5 +1,7 @@
+#!/bin/bash
 # Cocoon firewall directives
 #TODO: find a way to delete this rules when the container shuts down
+set -e
 
 # Determine new bridge name. Use cocoon id as default bridge name
 # but continously find a bridge name if the default has been used.
@@ -23,8 +25,7 @@ echo "Create new bridge named: $bridgeName"
 
 
 # start docker daemon
-docker-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
-sleep 5
+dockerd-entrypoint.sh dockerd -b=$bridgeName --iptables=false & 
 echo "Started docker daemon"
 
 # forward bride packets to DOCKER chain
