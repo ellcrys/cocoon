@@ -2,7 +2,7 @@ FROM golang:1.7.5-wheezy
 
 # add dependencies
 RUN apt-get update
-RUN apt-get install aufs-tools iptables
+RUN apt-get -y install aufs-tools iptables
 RUN curl https://glide.sh/get | sh
 
 # for testing
