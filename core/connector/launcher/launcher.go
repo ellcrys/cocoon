@@ -472,7 +472,9 @@ func (lc *Launcher) configFirewall(container *docker.Container, req *Request) er
 		case "before":
 			log.Info("Configuring firewall for cocoon")
 		case "end":
-			log.Info("Firewall configured for cocoon")
+			if val.(int) == 0 {
+				log.Info("Firewall configured for cocoon")
+			}
 		}
 		return nil
 	})
