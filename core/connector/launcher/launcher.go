@@ -9,6 +9,8 @@ import (
 
 	"time"
 
+	"strings"
+
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/connector/client"
@@ -458,10 +460,19 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 // getDefaultFirewall returns the default firewall rules
 // for a cocoon container.
 func (lc *Launcher) getDefaultFirewall() string {
-	return `iptables -F && 
+	return strings.TrimSpace(`iptables -F && 
 			iptables -P INPUT ACCEPT && 
 			iptables -P FORWARD DROP &&
-			iptables -P OUTPUT DROP`
+			iptables -P OUTPUT DROP &&
+			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
+			for ip in $dnsIPs;
+			do 
+				iptables -A OUTPUT -m state --state NEW,ESTABLISHED -d ${ip} -p udp --dport 53 -j ACCEPT;
+				iptables -A OUTPUT -m state --state ESTABLISHED -p udp -s ${ip} --sport 53 -j ACCEPT;
+				iptables -A OUTPUT -m state --state NEW,ESTABLISHED -d ${ip} -p tcp --dport 53 -j ACCEPT;
+				iptables -A OUTPUT -m state --state ESTABLISHED -p tcp -s ${ip} --sport 53 -j ACCEPT;
+			done`)
 }
 
 // configFirewall configures the container firewall.
