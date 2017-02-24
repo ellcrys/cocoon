@@ -13,6 +13,7 @@ do
     fi
     randStr=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
     bridgeName="$(echo -n $randStr | sha1sum | awk '{print $1}' | cut -c1-15)"
+    echo "randomly generating bridge name"
 done
 
 export BRIDGE_NAME=$bridgeName
