@@ -1,12 +1,10 @@
 # Launch Script
-set -e
 
 # Run cocoon firewall script
 bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}
 
 # pull cocoon source
 git clone -b master https://github.com/ncodes/cocoon
-git config --global http.https://gopkg.in.followRedirects true
 
 # compilte data directory to binary
 cd cocoon/core/data
