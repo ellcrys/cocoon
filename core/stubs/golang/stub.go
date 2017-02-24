@@ -54,14 +54,14 @@ func Stop() {
 
 // StubServer defines the services of the stub's GRPC connection
 type stubServer struct {
-	port int
+	port   int
+	stream proto.Stub_TransactServer
 }
 
 // GetState fetches the value of a blockchain state
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
+	s.stream = stream
 	for {
-
-		log.Debug("Waiting for message from connector")
 
 		in, err := stream.Recv()
 		if err != nil {
