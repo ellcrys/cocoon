@@ -1,4 +1,5 @@
 # Launch Script
+set -e
 
 # Run cocoon firewall script
 bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}
