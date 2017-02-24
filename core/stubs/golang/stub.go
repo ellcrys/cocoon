@@ -6,8 +6,6 @@ import (
 
 	"os"
 
-	"time"
-
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
 	"github.com/op/go-logging"
@@ -62,12 +60,16 @@ type stubServer struct {
 // GetState fetches the value of a blockchain state
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 	for {
-		_, err := stream.Recv()
+
+		log.Debug("Waiting for message from connector")
+
+		in, err := stream.Recv()
 		if err != nil {
 			return fmt.Errorf("failed to read message from connector. %s", err)
 		}
 
-		time.Sleep(2 * time.Second)
+		log.Debug("New message from connector = %s", in.String())
+
 		stream.Send(&proto.Tx{
 			Id:   "sample",
 			Name: "do something",

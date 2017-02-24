@@ -27,14 +27,14 @@ type Launcher struct {
 	failed    chan bool
 	languages []Language
 	container *docker.Container
-	ccClient  *client.CCClient
+	client    *client.Client
 }
 
 // NewLauncher creates a new launcher
 func NewLauncher(failed chan bool) *Launcher {
 	return &Launcher{
-		failed:   failed,
-		ccClient: client.NewCCClient(8000),
+		failed: failed,
+		client: client.NewClient(8000),
 	}
 }
 
@@ -439,7 +439,7 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 	time.Sleep(1 * time.Second)
 
 	// start cocoon code client
-	if err = lc.ccClient.Connect(); err != nil {
+	if err = lc.client.Connect(); err != nil {
 		return err
 	}
 
