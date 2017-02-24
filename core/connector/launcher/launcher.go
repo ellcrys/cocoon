@@ -394,7 +394,7 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 		Container:    container.ID,
 		AttachStderr: true,
 		AttachStdout: true,
-		Cmd:          []string{lang.GetRunScript()},
+		Cmd:          lang.GetRunScript(),
 	})
 
 	if err != nil {
@@ -423,6 +423,7 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 	}()
 
 	execExitCode := 0
+	time.Sleep(1 * time.Second)
 
 	for {
 		execIns, err := dckClient.InspectExec(exec.ID)

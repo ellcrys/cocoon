@@ -6,6 +6,8 @@ import (
 	"path"
 	"strings"
 
+	"fmt"
+
 	"github.com/goware/urlx"
 )
 
@@ -15,6 +17,7 @@ type Go struct {
 	image     string
 	userHome  string
 	imgGoPath string
+	repoURL   string
 }
 
 // NewGo returns a new instance a golang
@@ -53,6 +56,7 @@ func (g *Go) setUserHomeDir() error {
 // GetDownloadDestination returns the location to save
 // the downloaded go cocoon code to.
 func (g *Go) GetDownloadDestination(url string) string {
+	g.repoURL = url
 	u, _ := urlx.Parse(url)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.userHome, "/ccode/source", repoID)
@@ -68,7 +72,12 @@ func (g *Go) GetMountDestination(url string) string {
 
 // RequiresBuild returns true if cocoon codes written in
 // go langugage requires a build process.
+// During development, If RUN_ROOT_BIN env is set, it will return false as
+// the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
+	if len(os.Getenv("RUN_ROOT_BIN")) > 0 {
+		return false
+	}
 	return true
 }
 
@@ -90,7 +99,15 @@ func (g *Go) GetBuildScript(buildParams map[string]interface{}) string {
 
 // GetRunScript returns the script required to start the
 // cocoon code accodeording to the build and installation process
-// of the language.
-func (g *Go) GetRunScript() string {
-	return strings.Join([]string{"ccode"}, " && ")
+// of the language. If RUN_ROOT_BIN env is set, it will run the
+// ccode binary located in the mount destination.
+func (g *Go) GetRunScript() []string {
+	script := []string{strings.Join([]string{"ccode"}, " && ")}
+
+	// run ccode in the repo root if RUN_ROOT_BIN is set (for development only)
+	if len(os.Getenv("RUN_ROOT_BIN")) > 0 {
+		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetMountDestination(g.repoURL))}
+	}
+
+	return script
 }

@@ -9,5 +9,5 @@ type Language interface {
 	GetMountDestination(string) string
 	RequiresBuild() bool
 	GetBuildScript(map[string]interface{}) string
-	GetRunScript() string
+	GetRunScript() []string
 }
