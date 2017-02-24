@@ -465,6 +465,8 @@ func (lc *Launcher) getDefaultFirewall() string {
 			iptables -P FORWARD DROP &&
 			iptables -P OUTPUT DROP &&
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -A INPUT -p tcp --sport 8000 -j ACCEPT
+			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
 			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
 			for ip in $dnsIPs;
 			do 
