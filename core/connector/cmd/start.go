@@ -82,6 +82,7 @@ var startCmd = &cobra.Command{
 
 		if <-launchFailedCh {
 			log.Fatal("aborting: cocoon code launch failed")
+			lchr.Stop()
 		}
 
 		<-doneCh

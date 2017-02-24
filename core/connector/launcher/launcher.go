@@ -11,6 +11,7 @@ import (
 
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
+	"github.com/ncodes/cocoon/core/connector/client"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
@@ -26,12 +27,14 @@ type Launcher struct {
 	failed    chan bool
 	languages []Language
 	container *docker.Container
+	ccClient  *client.CCClient
 }
 
 // NewLauncher creates a new launcher
 func NewLauncher(failed chan bool) *Launcher {
 	return &Launcher{
-		failed: failed,
+		failed:   failed,
+		ccClient: client.NewCCClient(8000),
 	}
 }
 
@@ -121,9 +124,9 @@ func (lc *Launcher) Launch(req *Request) {
 
 	if err = lc.run(newContainer, lang); err != nil {
 		log.Error(err.Error())
+		lc.setFailed(true)
+		return
 	}
-
-	lc.Stop()
 }
 
 // Stop stops the launcher and the container it is running
@@ -274,8 +277,21 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string) (*d
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
-			Image:  image,
-			Labels: map[string]string{"name": name, "type": "cocoon_code"},
+			Image:      image,
+			Labels:     map[string]string{"name": name, "type": "cocoon_code"},
+			WorkingDir: mountDir,
+			Tty:        true,
+			ExposedPorts: map[docker.Port]struct{}{
+				"8000/tcp": struct{}{},
+			},
+			Cmd: []string{"bash"},
+		},
+		HostConfig: &docker.HostConfig{
+			PortBindings: map[docker.Port][]docker.PortBinding{
+				"8000/tcp": []docker.PortBinding{
+					docker.PortBinding{HostIP: "127.0.0.1", HostPort: "8000"},
+				},
+			},
 			Mounts: []docker.Mount{
 				docker.Mount{
 					Type:     "bind",
@@ -284,9 +300,6 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string) (*d
 					ReadOnly: false,
 				},
 			},
-			WorkingDir: mountDir,
-			Tty:        true,
-			Cmd:        []string{"bash"},
 		},
 	})
 	if err != nil {
@@ -424,6 +437,11 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 
 	execExitCode := 0
 	time.Sleep(1 * time.Second)
+
+	// start cocoon code client
+	if err = lc.ccClient.Connect(); err != nil {
+		return err
+	}
 
 	for {
 		execIns, err := dckClient.InspectExec(exec.ID)
