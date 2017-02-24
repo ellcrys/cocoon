@@ -9,8 +9,8 @@ It is generated from these files:
 	server.proto
 
 It has these top-level messages:
-	Key
-	State
+	Tx
+	Op
 */
 package proto
 
@@ -34,49 +34,65 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto1.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Key struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+type Tx struct {
+	Id    string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name  string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Value string `protobuf:"bytes,3,opt,name=value" json:"value,omitempty"`
 }
 
-func (m *Key) Reset()                    { *m = Key{} }
-func (m *Key) String() string            { return proto1.CompactTextString(m) }
-func (*Key) ProtoMessage()               {}
-func (*Key) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *Tx) Reset()                    { *m = Tx{} }
+func (m *Tx) String() string            { return proto1.CompactTextString(m) }
+func (*Tx) ProtoMessage()               {}
+func (*Tx) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Key) GetName() string {
+func (m *Tx) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Tx) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-type State struct {
-	Key   string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
-	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-}
-
-func (m *State) Reset()                    { *m = State{} }
-func (m *State) String() string            { return proto1.CompactTextString(m) }
-func (*State) ProtoMessage()               {}
-func (*State) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *State) GetKey() string {
+func (m *Tx) GetValue() string {
 	if m != nil {
-		return m.Key
+		return m.Value
 	}
 	return ""
 }
 
-func (m *State) GetValue() []byte {
+type Op struct {
+	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Value string `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
+}
+
+func (m *Op) Reset()                    { *m = Op{} }
+func (m *Op) String() string            { return proto1.CompactTextString(m) }
+func (*Op) ProtoMessage()               {}
+func (*Op) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Op) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Op) GetValue() string {
 	if m != nil {
 		return m.Value
 	}
-	return nil
+	return ""
 }
 
 func init() {
-	proto1.RegisterType((*Key)(nil), "proto.Key")
-	proto1.RegisterType((*State)(nil), "proto.State")
+	proto1.RegisterType((*Tx)(nil), "proto.Tx")
+	proto1.RegisterType((*Op)(nil), "proto.Op")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -90,7 +106,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Stub service
 
 type StubClient interface {
-	GetState(ctx context.Context, in *Key, opts ...grpc.CallOption) (*State, error)
+	Transact(ctx context.Context, opts ...grpc.CallOption) (Stub_TransactClient, error)
 }
 
 type stubClient struct {
@@ -101,67 +117,100 @@ func NewStubClient(cc *grpc.ClientConn) StubClient {
 	return &stubClient{cc}
 }
 
-func (c *stubClient) GetState(ctx context.Context, in *Key, opts ...grpc.CallOption) (*State, error) {
-	out := new(State)
-	err := grpc.Invoke(ctx, "/proto.Stub/GetState", in, out, c.cc, opts...)
+func (c *stubClient) Transact(ctx context.Context, opts ...grpc.CallOption) (Stub_TransactClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Stub_serviceDesc.Streams[0], c.cc, "/proto.Stub/Transact", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &stubTransactClient{stream}
+	return x, nil
+}
+
+type Stub_TransactClient interface {
+	Send(*Op) error
+	Recv() (*Tx, error)
+	grpc.ClientStream
+}
+
+type stubTransactClient struct {
+	grpc.ClientStream
+}
+
+func (x *stubTransactClient) Send(m *Op) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *stubTransactClient) Recv() (*Tx, error) {
+	m := new(Tx)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // Server API for Stub service
 
 type StubServer interface {
-	GetState(context.Context, *Key) (*State, error)
+	Transact(Stub_TransactServer) error
 }
 
 func RegisterStubServer(s *grpc.Server, srv StubServer) {
 	s.RegisterService(&_Stub_serviceDesc, srv)
 }
 
-func _Stub_GetState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Key)
-	if err := dec(in); err != nil {
+func _Stub_Transact_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StubServer).Transact(&stubTransactServer{stream})
+}
+
+type Stub_TransactServer interface {
+	Send(*Tx) error
+	Recv() (*Op, error)
+	grpc.ServerStream
+}
+
+type stubTransactServer struct {
+	grpc.ServerStream
+}
+
+func (x *stubTransactServer) Send(m *Tx) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *stubTransactServer) Recv() (*Op, error) {
+	m := new(Op)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(StubServer).GetState(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.Stub/GetState",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StubServer).GetState(ctx, req.(*Key))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 var _Stub_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Stub",
 	HandlerType: (*StubServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "GetState",
-			Handler:    _Stub_GetState_Handler,
+			StreamName:    "Transact",
+			Handler:       _Stub_Transact_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "server.proto",
 }
 
 func init() { proto1.RegisterFile("server.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 137 bytes of a gzipped FileDescriptorProto
+	// 147 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x4e, 0x2d, 0x2a,
-	0x4b, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x92, 0x5c, 0xcc,
-	0xde, 0xa9, 0x95, 0x42, 0x42, 0x5c, 0x2c, 0x79, 0x89, 0xb9, 0xa9, 0x12, 0x8c, 0x0a, 0x8c, 0x1a,
-	0x9c, 0x41, 0x60, 0xb6, 0x92, 0x3e, 0x17, 0x6b, 0x70, 0x49, 0x62, 0x49, 0xaa, 0x90, 0x00, 0x17,
-	0x73, 0x76, 0x6a, 0x25, 0x54, 0x0e, 0xc4, 0x14, 0x12, 0xe1, 0x62, 0x2d, 0x4b, 0xcc, 0x29, 0x4d,
-	0x95, 0x60, 0x52, 0x60, 0xd4, 0xe0, 0x09, 0x82, 0x70, 0x8c, 0x74, 0xb8, 0x58, 0x82, 0x4b, 0x4a,
-	0x93, 0x84, 0x54, 0xb8, 0x38, 0xdc, 0x53, 0x4b, 0x20, 0x7a, 0xb9, 0x20, 0xd6, 0xe9, 0x79, 0xa7,
-	0x56, 0x4a, 0xf1, 0x40, 0xd9, 0x60, 0x99, 0x24, 0x36, 0x30, 0xc7, 0x18, 0x10, 0x00, 0x00, 0xff,
-	0xff, 0xfe, 0xbf, 0x63, 0xdd, 0x97, 0x00, 0x00, 0x00,
+	0x4b, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x76, 0x5c, 0x4c,
+	0x21, 0x15, 0x42, 0x7c, 0x5c, 0x4c, 0x99, 0x29, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x4c,
+	0x99, 0x29, 0x42, 0x42, 0x5c, 0x2c, 0x79, 0x89, 0xb9, 0xa9, 0x12, 0x4c, 0x60, 0x11, 0x30, 0x5b,
+	0x48, 0x84, 0x8b, 0xb5, 0x2c, 0x31, 0xa7, 0x34, 0x55, 0x82, 0x19, 0x2c, 0x08, 0xe1, 0x28, 0xe9,
+	0x71, 0x31, 0xf9, 0x17, 0xc0, 0xd5, 0x33, 0x62, 0x53, 0xcf, 0x84, 0xa4, 0xde, 0x48, 0x87, 0x8b,
+	0x25, 0xb8, 0xa4, 0x34, 0x49, 0x48, 0x85, 0x8b, 0x23, 0xa4, 0x28, 0x31, 0xaf, 0x38, 0x31, 0xb9,
+	0x44, 0x88, 0x13, 0xe2, 0x24, 0x3d, 0xff, 0x02, 0x29, 0x18, 0x33, 0xa4, 0x42, 0x83, 0xd1, 0x80,
+	0x31, 0x89, 0x0d, 0xcc, 0x33, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x9b, 0x91, 0x90, 0x1e, 0xbb,
+	0x00, 0x00, 0x00,
 }

@@ -2,14 +2,16 @@ syntax = "proto3";
 package proto;
 
 service Stub {
-    rpc GetState(Key) returns (State);
+    rpc Transact(stream Op) returns (stream Tx);
 }
 
-message Key {
+message Tx {
+    string id = 1;
+    string name = 2;
+    string value = 3;
+}
+
+message Op {
     string name = 1;
-}
-
-message State {
-    string key = 1;
-    bytes value = 2;
+    string value = 2;
 }

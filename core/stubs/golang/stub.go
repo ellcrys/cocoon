@@ -6,10 +6,11 @@ import (
 
 	"os"
 
+	"time"
+
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
 	"github.com/op/go-logging"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -21,7 +22,7 @@ var serverDone chan bool
 func init() {
 	defaultServer = new(stubServer)
 	config.ConfigureLogger()
-	log = logging.MustGetLogger("stub")
+	log = logging.MustGetLogger("ccode.stub")
 }
 
 // StartServer starts the stub server and
@@ -59,6 +60,17 @@ type stubServer struct {
 }
 
 // GetState fetches the value of a blockchain state
-func (s *stubServer) GetState(ctx context.Context, key *proto.Key) (*proto.State, error) {
-	return nil, nil
+func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
+	for {
+		_, err := stream.Recv()
+		if err != nil {
+			return fmt.Errorf("failed to read message from connector. %s", err)
+		}
+
+		time.Sleep(2 * time.Second)
+		stream.Send(&proto.Tx{
+			Id:   "sample",
+			Name: "do something",
+		})
+	}
 }
