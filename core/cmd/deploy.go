@@ -39,8 +39,8 @@ var deployCmd = &cobra.Command{
 		lang, _ := cmd.Flags().GetString("lang")
 		url, _ := cmd.Flags().GetString("url")
 		tag, _ := cmd.Flags().GetString("tag")
-		clusterAddr, _ := cmd.Flags().GetString("cluster_addr")
-		clusterAddrHTTPS, _ := cmd.Flags().GetBool("cluster_addr_https")
+		clusterAddr, _ := cmd.Flags().GetString("cluster-addr")
+		clusterAddrHTTPS, _ := cmd.Flags().GetBool("cluster-addr-https")
 
 		cl := cluster.NewNomad()
 		cl.SetAddr(clusterAddr, clusterAddrHTTPS)
@@ -54,8 +54,8 @@ func init() {
 	deployCmd.Flags().StringP("lang", "l", "go", "The smart contract language")
 	deployCmd.Flags().StringP("url", "u", "", "A zip file or github link to the smart contract")
 	deployCmd.Flags().StringP("tag", "t", "", "The github release tag")
-	deployCmd.Flags().StringP("cluster_addr", "", "104.155.91.206:4646", "The cluster address as host:port")
-	deployCmd.Flags().BoolP("cluster_addr_https", "", false, "Whether to include `https` when accessing cluster APIs")
+	deployCmd.Flags().StringP("cluster-addr", "", "127.0.0.1:4646", "The cluster address as host:port")
+	deployCmd.Flags().BoolP("cluster-addr-https", "", false, "Whether to include `https` when accessing cluster APIs")
 
 	deployCmd.MarkFlagRequired("lang")
 	deployCmd.MarkFlagRequired("url")
