@@ -122,6 +122,12 @@ func (lc *Launcher) Launch(req *Request) {
 		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
+	if err = lc.configFirewall(newContainer, req); err != nil {
+		log.Error(err.Error())
+		lc.setFailed(true)
+		return
+	}
+
 	if err = lc.run(newContainer, lang); err != nil {
 		log.Error(err.Error())
 		lc.setFailed(true)
@@ -315,91 +321,24 @@ func (lc *Launcher) stopContainer(id string) error {
 	return dckClient.StopContainer(id, uint((5 * time.Second).Seconds()))
 }
 
-// build starts up the container and builds the cocoon code
-// according to the build script provided by the languaged.
-func (lc *Launcher) build(container *docker.Container, lang Language, buildParams map[string]interface{}) error {
-
-	err := dckClient.StartContainer(container.ID, nil)
-	if err != nil {
-		return err
-	}
-
-	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
-		Container:    container.ID,
-		AttachStderr: true,
-		AttachStdout: true,
-		Cmd:          []string{"bash", "-c", lang.GetBuildScript(buildParams)},
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create exec object. %s", err)
-	}
-
-	outStream := NewLogStreamer()
-	outStream.SetLogger(buildLog)
-
-	log.Info("Building cocoon code...")
-
-	go func() {
-		err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
-			OutputStream: outStream.GetWriter(),
-			ErrorStream:  outStream.GetWriter(),
-		})
-		if err != nil {
-			log.Infof("failed to execute build command. %s", err)
-		}
-	}()
-
-	go func() {
-		err := outStream.Start()
-		if err != nil {
-			log.Errorf("failed to start output stream logger. %s", err)
-		}
-	}()
-
-	execExitCode := 0
-	time.Sleep(1 * time.Second)
-
-	for {
-
-		execIns, err := dckClient.InspectExec(exec.ID)
-		if err != nil {
-			return fmt.Errorf("failed to inspect build exec op. %s", err)
-		}
-
-		if execIns.Running {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-
-		execExitCode = execIns.ExitCode
-		break
-	}
-
-	outStream.Stop()
-
-	if execExitCode != 0 {
-		return fmt.Errorf("Build has failed with exit code=%d", execExitCode)
-	}
-
-	log.Info("Build succeeded!")
-
-	return nil
-}
-
-// Run the cocoon code. Start the container if it is not
-// currently running (this will be true if cocoon build process was not ran)
-func (lc *Launcher) run(container *docker.Container, lang Language) error {
+// Executes is a general purpose function
+// to execute a command in a running container. If container is not running, it starts it.
+// It accepts the container, a unique name for the execution
+// and a callback function that is passed a lifecycle status and a value.
+// If priviledged is set to true, command will attain root powers.
+// Supported statuses are before (before command is executed), after (after command is executed)
+// and end (when command exits).
+func (lc *Launcher) execInContainer(container *docker.Container, name string, command []string, priviledged bool, cb func(string, interface{}) error) error {
 
 	containerStatus, err := dckClient.InspectContainer(container.ID)
 	if err != nil {
-		return fmt.Errorf("failed to inspect container before running. %s", err)
+		return fmt.Errorf("failed to inspect container before executing command [%s]. %s", name, err)
 	}
 
 	if !containerStatus.State.Running {
 		err := dckClient.StartContainer(container.ID, nil)
 		if err != nil {
-			return fmt.Errorf("failed to start container. %s", err.Error())
+			return fmt.Errorf("failed start container for exec [%s]. %s", name, err.Error())
 		}
 	}
 
@@ -407,14 +346,18 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 		Container:    container.ID,
 		AttachStderr: true,
 		AttachStdout: true,
-		Cmd:          lang.GetRunScript(),
+		Cmd:          command,
+		Privileged:   priviledged,
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to create run exec object. %s", err)
+		return fmt.Errorf("failed to create exec [%s] object. %s", name, err)
 	}
 
-	log.Info("Starting cocoon code")
+	if err = cb("before", nil); err != nil {
+		return err
+	}
+
 	outStream := NewLogStreamer()
 	outStream.SetLogger(ccodeLog)
 
@@ -424,29 +367,29 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 			ErrorStream:  outStream.GetWriter(),
 		})
 		if err != nil {
-			log.Infof("failed to execute run command. %s", err)
+			log.Infof("failed to start exec [%s] command. %s", name, err)
 		}
 	}()
 
 	go func() {
 		err := outStream.Start()
 		if err != nil {
-			log.Errorf("failed to start output stream logger. %s", err)
+			log.Errorf("failed to start exec [%s] output stream logger. %s", name, err)
 		}
 	}()
 
 	execExitCode := 0
 	time.Sleep(1 * time.Second)
 
-	// start cocoon code client
-	if err = lc.client.Connect(); err != nil {
+	if err = cb("after", nil); err != nil {
+		outStream.Stop()
 		return err
 	}
 
 	for {
 		execIns, err := dckClient.InspectExec(exec.ID)
 		if err != nil {
-			return fmt.Errorf("failed to inspect run exec op. %s", err)
+			return fmt.Errorf("failed to inspect run exec [%s] op. %s", name, err)
 		}
 
 		if execIns.Running {
@@ -460,11 +403,77 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 
 	outStream.Stop()
 
-	if execExitCode != 0 {
-		return fmt.Errorf("Cocoon code has failed with exit code=%d", execExitCode)
+	if err = cb("end", execExitCode); err != nil {
+		return err
 	}
 
-	log.Info("Cocoon code successfully stop")
+	if execExitCode != 0 {
+		return fmt.Errorf("Exec [%s] exited with code=%d", name, execExitCode)
+	}
 
 	return nil
+}
+
+// build starts up the container and builds the cocoon code
+// according to the build script provided by the languaged.
+func (lc *Launcher) build(container *docker.Container, lang Language, buildParams map[string]interface{}) error {
+	cmd := []string{"bash", "-c", lang.GetBuildScript(buildParams)}
+	return lc.execInContainer(container, "BUILD", cmd, false, func(state string, val interface{}) error {
+		switch state {
+		case "before":
+			log.Info("Building cocoon code...")
+		case "end":
+			if val.(int) == 0 {
+				log.Info("Build succeeded!")
+			} else {
+				return fmt.Errorf("Build has failed with exit code=%d", val.(int))
+			}
+		}
+		return nil
+	})
+}
+
+// Run the cocoon code. Start the container if it is not
+// currently running (this will be true if cocoon build process was not ran).
+// Also connects the client to the cocoon code
+func (lc *Launcher) run(container *docker.Container, lang Language) error {
+	return lc.execInContainer(container, "RUN", lang.GetRunScript(), false, func(state string, val interface{}) error {
+		switch state {
+		case "before":
+			log.Info("Starting cocoon code")
+		case "after":
+			if err := lc.client.Connect(); err != nil {
+				return err
+			}
+		case "end":
+			if val.(int) == 0 {
+				log.Info("Cocoon code successfully stop")
+				return nil
+			}
+		}
+		return nil
+	})
+}
+
+// getDefaultFirewall returns the default firewall rules
+// for a cocoon container.
+func (lc *Launcher) getDefaultFirewall() string {
+	return `iptables -F && 
+			iptables -P INPUT ACCEPT && 
+			iptables -P FORWARD DROP &&
+			iptables -P OUTPUT DROP`
+}
+
+// configFirewall configures the container firewall.
+func (lc *Launcher) configFirewall(container *docker.Container, req *Request) error {
+	cmd := []string{"bash", "-c", lc.getDefaultFirewall()}
+	return lc.execInContainer(container, "CONFIG-FIREWALL", cmd, true, func(state string, val interface{}) error {
+		switch state {
+		case "before":
+			log.Info("Configuring firewall for cocoon")
+		case "end":
+			log.Info("Firewall configured for cocoon")
+		}
+		return nil
+	})
 }
