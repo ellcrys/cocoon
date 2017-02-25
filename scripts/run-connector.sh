@@ -17,5 +17,5 @@ go build -o /bin/connector connector.go || { echo 'failed to build connector' ; 
 
 # start connector 
 repoHash=$(git rev-parse HEAD)
-echo "Cocoon Code Version: $repoHash"
+echo "Cocoon Version: $repoHash"
 connector start
