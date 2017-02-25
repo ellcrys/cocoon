@@ -15,11 +15,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
-	"fmt"
-
-	"github.com/ncodes/cocoon/core/connector/config"
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -55,11 +54,11 @@ func getRequest() (*launcher.Request, error) {
 	}, nil
 }
 
-// startCmd represents the start command
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start the launcher",
-	Long:  `Starts the launcher. Pulls cocoon code specified in COCOON_CODE_URL, builds it and runs it.`,
+// connectorCmd represents the connector command
+var connectorCmd = &cobra.Command{
+	Use:   "connector",
+	Short: "Start the connector",
+	Long:  `Starts the connector and launches a cocoon code.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		doneCh := make(chan bool, 1)
@@ -90,6 +89,16 @@ var startCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(startCmd)
-	// startCmd.Flags().StringP("port", "p", "5500", "The port to run bind to")
+	RootCmd.AddCommand(connectorCmd)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// connectorCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// connectorCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }

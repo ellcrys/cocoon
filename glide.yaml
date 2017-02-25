@@ -1,4 +1,4 @@
-package: .
+package: github.com/ncodes/cocoon
 import:
 - package: github.com/spf13/cobra
   subpackages:

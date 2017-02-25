@@ -1,5 +1,5 @@
-hash: 3bfdb555bd67486ad6f20987f0171b13c355c56d93d78bca76f13e12417a8337
-updated: 2017-02-23T10:25:14.01261919+01:00
+hash: b1f4780888e29c2901cfc63421f50f03f8ed9e45b2a7e0da8b9e3745889b0e4a
+updated: 2017-02-25T12:00:10.049694846+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -8,7 +8,7 @@ imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
 - name: github.com/docker/docker
-  version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
+  version: 55fcd6f4db6088be90eef1e521e5e2e89d0b71a1
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -40,7 +40,7 @@ imports:
   subpackages:
   - nat
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/ellcrys/util
   version: c48cc9de357f0009167fbd987f09b2958a6a8dc2
 - name: github.com/fatih/color
@@ -50,13 +50,13 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: a904159b9206978bb6d53fcc7a769e5cd726c737
 - name: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
+  version: 999ef73f5d50979cf6d12afed1726325b63f9570
 - name: github.com/goware/urlx
   version: 8bb4a2e4339f55b15164907177e96e9faf885504
 - name: github.com/hashicorp/go-cleanhttp
@@ -89,11 +89,13 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
 - name: github.com/ncodes/go-dockerclient
-  version: 18dda516ac74a7fb810cc344de5bd13bd93bdf8d
+  version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
+- name: github.com/Nvveen/Gotty
+  version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/op/go-logging
-  version: b2cb9fa56473e98db8caba80237377e83fe44db5
+  version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: bd2f9c52cd3b766d993924ae6eba72b82998f3bd
+  version: cf883a87e762961a5b97fad993aa377750512b28
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -106,7 +108,7 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/satori/go.uuid
-  version: 242673bbc820e051ef00033e274d32e08ece9e15
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: 7f4b1adc791766938c29457bed0703fb9134421a
 - name: github.com/spf13/afero
@@ -116,7 +118,7 @@ imports:
 - name: github.com/spf13/cast
   version: f820543c3592e283e311a60d2a600a664e39f6f7
 - name: github.com/spf13/cobra
-  version: ee4055870c2d5f7ce112642377e32c9929c3bbaf
+  version: 92ea23a837e66f46ac9e7d04fa826602b7b0a42d
   subpackages:
   - cobra
 - name: github.com/spf13/jwalterweatherman
@@ -126,11 +128,11 @@ imports:
 - name: github.com/spf13/viper
   version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
 - name: github.com/ugorji/go
-  version: a396ed22fc049df733440d90efe17475e3929ccb
+  version: c88ee250d0221a57af388746f5cf03768c21d6e2
   subpackages:
   - codec
 - name: golang.org/x/net
-  version: ae05321a78c1401cec22ba7bc203b597ea372496
+  version: 10c134ea0df15f7e34d789338c7a2d76cc7a3ab9
   subpackages:
   - context
   - context/ctxhttp
@@ -141,20 +143,18 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  version: e4594059fe4cde2daf423055a596c2cd1e6c9adf
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 44f4f658a783b0cee41fe0a23b8fc91d9c120558
+  version: 4687d739464a2d0af89a25be0318456e0776f3ef
   subpackages:
-  - secure/bidirule
   - transform
-  - unicode/bidi
   - unicode/norm
   - width
 - name: google.golang.org/grpc
-  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+  version: 34384f34de585705f1a6783a158d2ec8af29f618
   subpackages:
   - codes
   - credentials
