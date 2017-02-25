@@ -42,7 +42,7 @@ imports:
 - name: github.com/docker/go-units
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/ellcrys/util
-  version: 5a02fdaf1126ed792c8c1fc1bfc20735e1769ff1
+  version: c48cc9de357f0009167fbd987f09b2958a6a8dc2
 - name: github.com/fatih/color
   version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
 - name: github.com/franela/goreq
