@@ -1,5 +1,5 @@
-hash: b9bc615fbc56b8f8e414126d75cbf611f74c01c38fccd253eb2b783c51fd672f
-updated: 2017-02-25T12:34:45.475242858+01:00
+hash: 78bc08c5da25fc1cadee10d32fb1c30b075c23899561fba9b8e16cd46eefac57
+updated: 2017-02-25T16:59:47.052105383+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -7,6 +7,8 @@ imports:
   - winterm
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
+- name: github.com/dgrijalva/jwt-go
+  version: 9fe8afe96d32468fba230b8b22acea86251f0506
 - name: github.com/docker/docker
   version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
   subpackages:
@@ -41,6 +43,8 @@ imports:
   - nat
 - name: github.com/docker/go-units
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- name: github.com/ellcrys/crypto
+  version: 4260838a35589024ba32fad882cbc4520df31a58
 - name: github.com/ellcrys/util
   version: c48cc9de357f0009167fbd987f09b2958a6a8dc2
 - name: github.com/fatih/color
@@ -127,6 +131,11 @@ imports:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
   version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
+- name: github.com/square/go-jose
+  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
+  subpackages:
+  - cipher
+  - json
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
@@ -171,6 +180,8 @@ imports:
   subpackages:
   - bson
   - internal/json
+- name: gopkg.in/square/go-jose.v1
+  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
 - name: gopkg.in/yaml.v2
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:

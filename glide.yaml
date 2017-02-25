@@ -4,3 +4,4 @@ import:
   subpackages:
   - cobra
 - package: github.com/ncodes/cocoon-util
+- package: github.com/ellcrys/crypto
