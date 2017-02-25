@@ -3,3 +3,4 @@ import:
 - package: github.com/spf13/cobra
   subpackages:
   - cobra
+- package: github.com/ncodes/cocoon-util

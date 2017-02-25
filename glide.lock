@@ -1,5 +1,5 @@
-hash: b1f4780888e29c2901cfc63421f50f03f8ed9e45b2a7e0da8b9e3745889b0e4a
-updated: 2017-02-25T12:00:10.049694846+01:00
+hash: b9bc615fbc56b8f8e414126d75cbf611f74c01c38fccd253eb2b783c51fd672f
+updated: 2017-02-25T12:34:45.475242858+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -8,7 +8,7 @@ imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
 - name: github.com/docker/docker
-  version: 55fcd6f4db6088be90eef1e521e5e2e89d0b71a1
+  version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -40,7 +40,7 @@ imports:
   subpackages:
   - nat
 - name: github.com/docker/go-units
-  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/ellcrys/util
   version: c48cc9de357f0009167fbd987f09b2958a6a8dc2
 - name: github.com/fatih/color
@@ -88,10 +88,10 @@ imports:
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
+- name: github.com/ncodes/cocoon-util
+  version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
-- name: github.com/Nvveen/Gotty
-  version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
@@ -108,7 +108,7 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/satori/go.uuid
-  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
+  version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
   version: 7f4b1adc791766938c29457bed0703fb9134421a
 - name: github.com/spf13/afero
@@ -128,7 +128,7 @@ imports:
 - name: github.com/spf13/viper
   version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
 - name: github.com/ugorji/go
-  version: c88ee250d0221a57af388746f5cf03768c21d6e2
+  version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
   - codec
 - name: golang.org/x/net
