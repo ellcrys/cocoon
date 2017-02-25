@@ -15,7 +15,7 @@ git clone --depth=1 https://github.com/ncodes/cocoon
 cd cocoon
 glide install
 echo "Building cocoon source"
-go build -o /bin/cocoon core/main.go 
+go build -v -o /bin/cocoon core/main.go 
 
 # start connector 
 repoHash=$(git rev-parse HEAD)
