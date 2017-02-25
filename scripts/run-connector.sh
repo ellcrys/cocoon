@@ -16,4 +16,6 @@ glide install || { echo 'glide install has failed' ; exit 1; }
 go build -o /bin/connector connector.go || { echo 'failed to build connector' ; exit 1; }
 
 # start connector 
+repoHash=$(git rev-parse HEAD)
+echo "Cocoon Code Version: $repoHash"
 connector start
