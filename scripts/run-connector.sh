@@ -1,7 +1,7 @@
 # Launch Script
 
 # start docker daemon
-dockerd-entrypoint.sh dockerd --iptables=false || { echo 'failed to start dockerd' ; exit 1; } & 
+bash dockerd-entrypoint.sh dockerd --iptables=false || { echo 'failed to start dockerd' ; exit 1; } & 
 echo "Started docker daemon"
 
 # pull cocoon source
