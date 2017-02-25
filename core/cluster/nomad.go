@@ -87,6 +87,14 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 		img = "ncodes/cocoon-launcher:latest"
 	}
 
+	// Attempt to parse build parameters if provided
+	if len(buildParams) > 0 {
+		err := util.FromJSON([]byte(buildParams), &map[string]interface{}{})
+		if err != nil {
+			return "", fmt.Errorf("failed to parse build script. Must be a valid json string")
+		}
+	}
+
 	cocoonData := map[string]interface{}{
 		"ID":                util.Sha1(util.UUID4())[0:15],
 		"Count":             1,
