@@ -1,7 +1,22 @@
 package: github.com/ncodes/cocoon
 import:
-- package: github.com/spf13/cobra
-  subpackages:
-  - cobra
-- package: github.com/ncodes/cocoon-util
 - package: github.com/ellcrys/crypto
+- package: github.com/ellcrys/util
+- package: github.com/franela/goreq
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/gorilla/mux
+- package: github.com/goware/urlx
+- package: github.com/ncodes/go-dockerclient
+- package: github.com/op/go-logging
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+testImport:
+- package: github.com/smartystreets/goconvey
+  subpackages:
+  - convey
