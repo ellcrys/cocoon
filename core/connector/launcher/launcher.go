@@ -14,14 +14,21 @@ import (
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/connector/client"
+	"github.com/ncodes/cocoon/core/connector/config"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("launcher")
 var buildLog = logging.MustGetLogger("ccode.build")
+var runLog = logging.MustGetLogger("ccode.run")
+var configLog = logging.MustGetLogger("ccode.config")
 var ccodeLog = logging.MustGetLogger("ccode")
 var dckClient *docker.Client
+
+func init() {
+	runLog.SetBackend(config.MessageOnlyBackend)
+}
 
 // Launcher defines cocoon code
 // deployment service.
@@ -330,7 +337,7 @@ func (lc *Launcher) stopContainer(id string) error {
 // If priviledged is set to true, command will attain root powers.
 // Supported statuses are before (before command is executed), after (after command is executed)
 // and end (when command exits).
-func (lc *Launcher) execInContainer(container *docker.Container, name string, command []string, priviledged bool, cb func(string, interface{}) error) error {
+func (lc *Launcher) execInContainer(container *docker.Container, name string, command []string, priviledged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
 
 	containerStatus, err := dckClient.InspectContainer(container.ID)
 	if err != nil {
@@ -361,7 +368,7 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 	}
 
 	outStream := NewLogStreamer()
-	outStream.SetLogger(ccodeLog)
+	outStream.SetLogger(logger)
 
 	go func() {
 		err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
@@ -420,7 +427,7 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 // according to the build script provided by the languaged.
 func (lc *Launcher) build(container *docker.Container, lang Language, buildParams map[string]interface{}) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript(buildParams)}
-	return lc.execInContainer(container, "BUILD", cmd, false, func(state string, val interface{}) error {
+	return lc.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Building cocoon code...")
@@ -439,7 +446,7 @@ func (lc *Launcher) build(container *docker.Container, lang Language, buildParam
 // currently running (this will be true if cocoon build process was not ran).
 // Also connects the client to the cocoon code
 func (lc *Launcher) run(container *docker.Container, lang Language) error {
-	return lc.execInContainer(container, "RUN", lang.GetRunScript(), false, func(state string, val interface{}) error {
+	return lc.execInContainer(container, "RUN", lang.GetRunScript(), false, runLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Starting cocoon code")
@@ -480,7 +487,7 @@ func (lc *Launcher) getDefaultFirewall() string {
 // configFirewall configures the container firewall.
 func (lc *Launcher) configFirewall(container *docker.Container, req *Request) error {
 	cmd := []string{"bash", "-c", lc.getDefaultFirewall()}
-	return lc.execInContainer(container, "CONFIG-FIREWALL", cmd, true, func(state string, val interface{}) error {
+	return lc.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Configuring firewall for cocoon")
