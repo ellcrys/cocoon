@@ -3,6 +3,7 @@
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd --iptables=false || { echo 'failed to start dockerd' ; exit 1; } & 
 echo "Started docker daemon"
+sleep 5
 
 # pull launch-go image
 docker pull ncodes/launch-go:latest || { echo 'failed to pull ncodes/launch-go image' ; exit 1; }
