@@ -120,7 +120,13 @@ func (lc *Launcher) Launch(req *Request) {
 			}
 		}
 
-		err = lc.build(newContainer, lang, buildParams)
+		if err = lang.SetBuildParams(buildParams); err != nil {
+			log.Errorf("failed to set and validate build parameter. %s", err)
+			lc.setFailed(true)
+			return
+		}
+
+		err = lc.build(newContainer, lang)
 		if err != nil {
 			log.Errorf(err.Error())
 			lc.setFailed(true)
@@ -425,8 +431,8 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the languaged.
-func (lc *Launcher) build(container *docker.Container, lang Language, buildParams map[string]interface{}) error {
-	cmd := []string{"bash", "-c", lang.GetBuildScript(buildParams)}
+func (lc *Launcher) build(container *docker.Container, lang Language) error {
+	cmd := []string{"bash", "-c", lang.GetBuildScript()}
 	return lc.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":

@@ -8,6 +8,7 @@ type Language interface {
 	GetDownloadDestination(string) string
 	GetMountDestination(string) string
 	RequiresBuild() bool
-	GetBuildScript(map[string]interface{}) string
+	SetBuildParams(map[string]interface{}) error
+	GetBuildScript() string
 	GetRunScript() []string
 }

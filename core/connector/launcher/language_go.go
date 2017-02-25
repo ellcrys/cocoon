@@ -8,16 +8,18 @@ import (
 
 	"fmt"
 
+	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
 )
 
 // Go defines a deployment helper for go cocoon.
 type Go struct {
-	name      string
-	image     string
-	userHome  string
-	imgGoPath string
-	repoURL   string
+	name        string
+	image       string
+	userHome    string
+	imgGoPath   string
+	repoURL     string
+	buildParams map[string]interface{}
 }
 
 // NewGo returns a new instance a golang
@@ -81,13 +83,24 @@ func (g *Go) RequiresBuild() bool {
 	return true
 }
 
+// SetBuildParams sets and validates build parameters
+func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
+	g.buildParams = buildParams
+	if pkgMgr := g.buildParams["pkg_mgr"]; pkgMgr != nil {
+		if !util.InStringSlice([]string{"glide"}, pkgMgr.(string)) {
+			return fmt.Errorf("invalid pkg_mgr value in build script")
+		}
+	}
+	return nil
+}
+
 // GetBuildScript will return the script required
 // to create an executable
-func (g *Go) GetBuildScript(buildParams map[string]interface{}) string {
+func (g *Go) GetBuildScript() string {
 
 	// run known package manager fetch routine
 	pkgFetchCmd := ""
-	if pkgMgr := buildParams["pkg_mgr"]; pkgMgr != nil {
+	if pkgMgr := g.buildParams["pkg_mgr"]; pkgMgr != nil {
 		switch pkgMgr {
 		case "glide":
 			pkgFetchCmd = "glide install"
