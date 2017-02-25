@@ -9,7 +9,7 @@ sleep 5
 docker pull ncodes/launch-go:latest
 
 # pull cocoon source
-git clone -b master https://github.com/ncodes/cocoon
+git clone --depth=1 https://github.com/ncodes/cocoon
 
 # build the binary
 cd cocoon
