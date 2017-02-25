@@ -1,20 +1,20 @@
 # Launch Script
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --iptables=false || { echo 'failed to start dockerd' ; exit 1; } & 
+bash dockerd-entrypoint.sh dockerd --iptables=false &
 echo "Started docker daemon"
 sleep 5
 
 # pull launch-go image
-docker pull ncodes/launch-go:latest || { echo 'failed to pull ncodes/launch-go image' ; exit 1; }
+docker pull ncodes/launch-go:latest
 
 # pull cocoon source
-git clone -b master https://github.com/ncodes/cocoon || { echo 'failed to pull cocoon repository' ; exit 1; }
+git clone -b master https://github.com/ncodes/cocoon
 
 # build the binary
 cd cocoon
-glide install || { echo 'glide install has failed' ; exit 1; }
-go build -o /bin/cocoon core/main.go || { echo 'failed to build cocoon binary' ; exit 1; }
+glide install
+go build -o /bin/cocoon core/main.go 
 
 # start connector 
 repoHash=$(git rev-parse HEAD)
