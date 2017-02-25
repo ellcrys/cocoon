@@ -440,7 +440,7 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 // according to the build script provided by the languaged.
 func (lc *Launcher) build(container *docker.Container, lang Language) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript()}
-	return lc.execInContainer(container, "BUILD", cmd, true, buildLog, func(state string, val interface{}) error {
+	return lc.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Building cocoon code...")
