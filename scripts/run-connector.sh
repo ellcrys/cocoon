@@ -1,7 +1,7 @@
 # Launch Script
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --iptables=false &
+bash dockerd-entrypoint.sh dockerd &
 echo "Started docker daemon"
 sleep 5
 
