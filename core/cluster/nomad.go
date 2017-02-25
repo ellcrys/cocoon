@@ -14,8 +14,8 @@ import (
 
 var log = logging.MustGetLogger("nomad")
 
-// SupportedChaincodeLang defines the supported chaincode language
-var SupportedChaincodeLang = []string{"go"}
+// SupportedCocoonCodeLang defines the supported chaincode language
+var SupportedCocoonCodeLang = []string{"go"}
 
 // Nomad defines a nomad cluster that implements
 // cluster.Cluster interface. Every interaction with
@@ -70,11 +70,11 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 	return respStr, res.StatusCode, nil
 }
 
-// Deploy a smart contract to the cluster
+// Deploy a cocoon code to the cluster
 func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 
-	if !util.InStringSlice(SupportedChaincodeLang, lang) {
-		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
+	if !util.InStringSlice(SupportedCocoonCodeLang, lang) {
+		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedCocoonCodeLang, ","))
 	} else if url == "" {
 		return "", fmt.Errorf("github repo url is required")
 	} else if !cutil.IsGithubRepoURL(url) {

@@ -11,6 +11,7 @@ import (
 
 	"strings"
 
+	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/connector/client"
@@ -109,12 +110,18 @@ func (lc *Launcher) Launch(req *Request) {
 	lc.container = newContainer
 
 	if lang.RequiresBuild() {
-
 		var buildParams map[string]interface{}
-		var buildParamStr = os.Getenv("COCOON_BUILD_PARAMS")
-		if len(buildParamStr) > 0 {
-			if err = util.FromJSON([]byte(buildParamStr), &buildParams); err != nil {
-				log.Errorf("failed to parse build parameter. %s", err)
+		if len(req.BuildParams) > 0 {
+
+			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
+			if err != nil {
+				log.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
+				lc.setFailed(true)
+				return
+			}
+
+			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
+				log.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 				lc.setFailed(true)
 				return
 			}

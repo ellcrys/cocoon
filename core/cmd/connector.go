@@ -37,6 +37,7 @@ func getRequest() (*launcher.Request, error) {
 	ccURL := os.Getenv("COCOON_CODE_URL")
 	ccTag := os.Getenv("COCOON_CODE_TAG")
 	ccLang := os.Getenv("COCOON_CODE_LANG")
+	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -47,10 +48,11 @@ func getRequest() (*launcher.Request, error) {
 	}
 
 	return &launcher.Request{
-		ID:   ccID,
-		URL:  ccURL,
-		Tag:  ccTag,
-		Lang: ccLang,
+		ID:          ccID,
+		URL:         ccURL,
+		Tag:         ccTag,
+		Lang:        ccLang,
+		BuildParams: buildParam,
 	}, nil
 }
 
