@@ -49,7 +49,6 @@
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-connector.sh",
-              "COCOON_FIREWALL_SCRIPT_NAME": "cocoon-fw.sh",
               "SCRIPTS_DIR": "/local/scripts"
             },
             "LogConfig": {
@@ -59,10 +58,6 @@
             "Templates": [],
             "Artifacts": [{
                 "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
-                "RelativeDest": "/local/scripts"
-            },
-            {
-                "GetterSource": "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}",
                 "RelativeDest": "/local/scripts"
             }],
             "Resources": {

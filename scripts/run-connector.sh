@@ -1,12 +1,13 @@
 # Launch Script
 
-# Run cocoon firewall script
-bash ${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_COCOON_FIREWALL_SCRIPT_NAME}
+# start docker daemon
+dockerd-entrypoint.sh dockerd --iptables=false || { echo 'failed to start dockerd' ; exit 1; } & 
+echo "Started docker daemon"
 
 # pull cocoon source
 git clone -b master https://github.com/ncodes/cocoon
 
-# compilte data directory to binary
+# compile data directory to binary
 cd cocoon/core/data
 go get -u -v github.com/jteeuwen/go-bindata/...
 go-bindata --pkg data ./...
