@@ -40,7 +40,8 @@
               "COCOON_ID": "{{ID}}",
               "COCOON_CODE_URL": "{{CocoonCodeURL}}",
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
-              "COCOON_CODE_LANG": "{{CocoonCodeLang}}"
+              "COCOON_CODE_LANG": "{{CocoonCodeLang}}",
+              "COCOON_BUILD_PRAMS": "{{CocoonBuildParams}}"
             },
             "Services": [{
               "Name": "cocoons",

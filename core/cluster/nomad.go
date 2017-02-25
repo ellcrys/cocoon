@@ -71,14 +71,14 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a smart contract to the cluster
-func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
+func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 
 	if !util.InStringSlice(SupportedChaincodeLang, lang) {
-		return "", fmt.Errorf("Only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
+		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedChaincodeLang, ","))
 	} else if url == "" {
 		return "", fmt.Errorf("github repo url is required")
 	} else if !cutil.IsGithubRepoURL(url) {
-		return "", fmt.Errorf("Invalid chaincode url. Chaincode must be hosted on github.")
+		return "", fmt.Errorf("invalid chaincode url. Chaincode must be hosted on github")
 	}
 
 	var img string
@@ -88,15 +88,16 @@ func (cl *Nomad) Deploy(lang, url, tag string) (string, error) {
 	}
 
 	cocoonData := map[string]interface{}{
-		"ID":             util.Sha1(util.UUID4())[0:15],
-		"Count":          1,
-		"CPU":            500,
-		"MemoryMB":       512,
-		"DiskMB":         300,
-		"Image":          img,
-		"CocoonCodeURL":  url,
-		"CocoonCodeLang": lang,
-		"CocoonCodeTag":  tag,
+		"ID":                util.Sha1(util.UUID4())[0:15],
+		"Count":             1,
+		"CPU":               500,
+		"MemoryMB":          512,
+		"DiskMB":            300,
+		"Image":             img,
+		"CocoonCodeURL":     url,
+		"CocoonCodeLang":    lang,
+		"CocoonCodeTag":     tag,
+		"CocoonBuildParams": buildParams,
 	}
 
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)

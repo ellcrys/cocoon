@@ -24,9 +24,9 @@ var log = logging.MustGetLogger("deploy")
 
 // Deploy calls the clusters Deploy method to
 // start a new cocoon.
-func Deploy(cluster cluster.Cluster, lang, url, tag string) (string, error) {
+func Deploy(cluster cluster.Cluster, lang, url, tag, buildParams string) (string, error) {
 	log.Debugf("Deploying app with language=%s and url=%s", lang, url)
-	return cluster.Deploy(lang, url, tag)
+	return cluster.Deploy(lang, url, tag, buildParams)
 }
 
 // deployCmd represents the deploy command
@@ -39,12 +39,13 @@ var deployCmd = &cobra.Command{
 		lang, _ := cmd.Flags().GetString("lang")
 		url, _ := cmd.Flags().GetString("url")
 		tag, _ := cmd.Flags().GetString("tag")
+		buildParams, _ := cmd.Flags().GetString("build-params")
 		clusterAddr, _ := cmd.Flags().GetString("cluster-addr")
 		clusterAddrHTTPS, _ := cmd.Flags().GetBool("cluster-addr-https")
 
 		cl := cluster.NewNomad()
 		cl.SetAddr(clusterAddr, clusterAddrHTTPS)
-		cocoonID, err := Deploy(cl, lang, url, tag)
+		cocoonID, err := Deploy(cl, lang, url, tag, buildParams)
 		log.Debug(cocoonID, err)
 	},
 }
@@ -56,6 +57,7 @@ func init() {
 	deployCmd.Flags().StringP("tag", "t", "", "The github release tag")
 	deployCmd.Flags().StringP("cluster-addr", "", "127.0.0.1:4646", "The cluster address as host:port")
 	deployCmd.Flags().BoolP("cluster-addr-https", "", false, "Whether to include `https` when accessing cluster APIs")
+	deployCmd.Flags().StringP("build-params", "", "", "Specify build parameters")
 
 	deployCmd.MarkFlagRequired("lang")
 	deployCmd.MarkFlagRequired("url")
