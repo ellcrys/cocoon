@@ -107,7 +107,7 @@ func (g *Go) GetBuildScript() string {
 		}
 	}
 
-	return strings.Join([]string{pkgFetchCmd, "go build -v -o /bin/ccode"}, " && ")
+	return strings.Join(util.RemoveEmptyInStringSlice([]string{pkgFetchCmd, "go build -v -o /bin/ccode"}), " && ")
 }
 
 // GetRunScript returns the script required to start the
