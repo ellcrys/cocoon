@@ -14,6 +14,7 @@ git clone -b master https://github.com/ncodes/cocoon
 # build the binary
 cd cocoon
 glide install
+echo "Building cocoon soruce"
 go build -o /bin/cocoon core/main.go 
 
 # start connector 
