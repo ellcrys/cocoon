@@ -16,6 +16,8 @@ import:
   subpackages:
   - context
 - package: google.golang.org/grpc
+- package: github.com/jinzhu/gorm
+  version: ^1.0.0
 testImport:
 - package: github.com/smartystreets/goconvey
   subpackages:

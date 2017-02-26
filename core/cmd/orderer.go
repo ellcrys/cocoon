@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/blockchain/chain"
 	"github.com/ncodes/cocoon/core/blockchain/orderer"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ var ordererCmd = &cobra.Command{
 		port := util.Env("ORDERER_PORT", "9000")
 		log.Infof("Starting orderer GRPC server on port %s", port)
 		newOrderer := orderer.NewOrderer()
+		newOrderer.SetChain(new(chain.PostgresChain))
 		newOrderer.Start(port)
 	},
 }

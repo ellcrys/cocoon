@@ -8,6 +8,7 @@ import (
 
 	"time"
 
+	"github.com/ncodes/cocoon/core/blockchain/chain"
 	"github.com/ncodes/cocoon/core/blockchain/orderer/proto"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
@@ -19,6 +20,7 @@ var log = logging.MustGetLogger("orderer")
 // and inclusion module
 type Orderer struct {
 	server *grpc.Server
+	chain  chain.Chain
 }
 
 // NewOrderer creates a new Orderer object
@@ -41,6 +43,11 @@ func (od *Orderer) Start(port string) {
 	od.server = grpc.NewServer()
 	proto.RegisterOrdererServer(od.server, od)
 	od.server.Serve(lis)
+}
+
+// SetChain sets the blockchain implementation to use.
+func (od *Orderer) SetChain(ch chain.Chain) {
+	od.chain = ch
 }
 
 // Put adds a new record to the chain

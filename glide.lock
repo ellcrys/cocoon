@@ -1,5 +1,5 @@
-hash: 78bc08c5da25fc1cadee10d32fb1c30b075c23899561fba9b8e16cd46eefac57
-updated: 2017-02-25T16:59:47.052105383+01:00
+hash: fcf18f78e239d5a5d30e4d162d24b3b3cea6fadd8a6475130f8eedb3c5f18701
+updated: 2017-02-26T16:57:14.108448565+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -80,6 +80,8 @@ imports:
   version: e6b9231a2b1cc5798b336fdbf99c16cd8ad1e0c9
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jinzhu/gorm
+  version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
@@ -92,8 +94,6 @@ imports:
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
-- name: github.com/ncodes/cocoon-util
-  version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
 - name: github.com/op/go-logging
@@ -123,8 +123,6 @@ imports:
   version: f820543c3592e283e311a60d2a600a664e39f6f7
 - name: github.com/spf13/cobra
   version: 92ea23a837e66f46ac9e7d04fa826602b7b0a42d
-  subpackages:
-  - cobra
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
@@ -186,7 +184,7 @@ imports:
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: b9bcb1da229a59cc1e1d168401662cb6450aae08
+  version: 9853efbdabb6f7d649916cb4bb77e5059514548a
   subpackages:
   - js
 - name: github.com/jtolds/gls
