@@ -92,15 +92,9 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 
 	// Attempt to parse build parameters if provided
 	if len(buildParams) > 0 {
-
-		buildParams, err = crypto.FromBase64(buildParams)
+		_, err = crypto.FromBase64(buildParams)
 		if err != nil {
-			return "", fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
-		}
-
-		err := util.FromJSON([]byte(buildParams), &map[string]interface{}{})
-		if err != nil {
-			return "", fmt.Errorf("failed to parse build param. Must be a valid json string. %s", err)
+			return "", fmt.Errorf("Invalid build params. Expects a base 64 encoded string. %s", err)
 		}
 	}
 
@@ -124,6 +118,8 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 		log.Error(e.Error())
 		return "", e
 	}
+
+	return "", nil
 
 	resp, status, err := cl.deployJob(string(jobSpec))
 	if err != nil {
