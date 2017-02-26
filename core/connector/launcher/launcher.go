@@ -48,7 +48,7 @@ func NewLauncher(failed chan bool) *Launcher {
 	}
 }
 
-// failed sends true or false to the
+// setFailed sends true or false to the
 // launch failed channel to indicate success or failure
 func (lc *Launcher) setFailed(v bool) {
 	lc.failed <- v
