@@ -1,0 +1,49 @@
+package orderer
+
+import (
+	"fmt"
+	"net"
+
+	context "golang.org/x/net/context"
+
+	"time"
+
+	"github.com/ncodes/cocoon/core/blockchain/orderer/proto"
+	logging "github.com/op/go-logging"
+	"google.golang.org/grpc"
+)
+
+var log = logging.MustGetLogger("orderer")
+
+// Orderer defines a transaction ordering, block creation
+// and inclusion module
+type Orderer struct {
+	server *grpc.Server
+}
+
+// NewOrderer creates a new Orderer object
+func NewOrderer() *Orderer {
+	return new(Orderer)
+}
+
+// Start starts the order service
+func (od *Orderer) Start(port string) {
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		log.Fatalf("failed to listen on port=%s. Err: %s", port, err)
+	}
+
+	time.AfterFunc(2*time.Second, func() {
+		log.Info("GRPC server started with no wahala")
+	})
+
+	od.server = grpc.NewServer()
+	proto.RegisterOrdererServer(od.server, od)
+	od.server.Serve(lis)
+}
+
+// Put adds a new record to the chain
+func (od *Orderer) Put(ctx context.Context, tx *proto.OrdererTx) (*proto.Response, error) {
+	return nil, nil
+}
