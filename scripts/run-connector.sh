@@ -2,7 +2,7 @@
 
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd &
-echo "Started docker daemon"
+printf "Started docker daemon \n"
 sleep 5
 
 # pull launch-go image
@@ -14,10 +14,10 @@ git clone --depth=1 https://github.com/ncodes/cocoon
 # build the binary
 cd cocoon
 glide install
-echo "Building cocoon source"
+printf "Building cocoon source \n"
 go build -v -o /bin/cocoon core/main.go 
 
 # start connector 
 repoHash=$(git rev-parse HEAD)
-echo "Cocoon Version: $repoHash"
+printf "Cocoon Version: $repoHash \n"
 cocoon connector
