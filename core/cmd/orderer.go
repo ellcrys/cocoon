@@ -14,12 +14,23 @@ var ordererCmd = &cobra.Command{
 	Short: "The orderer is the gateway to the immutable data store",
 	Long:  `The orderer manages interaction between the data store and the rest of the cluster.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		var log = logging.MustGetLogger("orderer")
 		port := util.Env("ORDERER_PORT", "9000")
 		log.Infof("Starting orderer GRPC server on port %s", port)
+
+		// start the orderer
+		startedCh := make(chan bool)
+		endedCh := make(chan bool)
+
 		newOrderer := orderer.NewOrderer()
+		go newOrderer.Start(port, startedCh, endedCh)
+
+		// set chain implementation after orderer starts
+		<-startedCh
 		newOrderer.SetChain(new(chain.PostgresChain))
-		newOrderer.Start(port)
+
+		<-endedCh
 	},
 }
 

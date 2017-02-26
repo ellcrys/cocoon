@@ -29,7 +29,7 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(port string) {
+func (od *Orderer) Start(port string, startedCh, endedCh chan bool) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
@@ -38,6 +38,7 @@ func (od *Orderer) Start(port string) {
 
 	time.AfterFunc(2*time.Second, func() {
 		log.Info("GRPC server started with no wahala")
+		startedCh <- true
 	})
 
 	od.server = grpc.NewServer()
@@ -47,6 +48,7 @@ func (od *Orderer) Start(port string) {
 
 // SetChain sets the blockchain implementation to use.
 func (od *Orderer) SetChain(ch chain.Chain) {
+	log.Infof("Setting blockchain backend to %s", ch.GetBackend())
 	od.chain = ch
 }
 
