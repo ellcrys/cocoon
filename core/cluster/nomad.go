@@ -99,7 +99,7 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 		"ID":                util.Sha1(util.UUID4())[0:15],
 		"Count":             1,
 		"CPU":               500,
-		"MemoryMB":          512,
+		"MemoryMB":          50,
 		"DiskMB":            300,
 		"Image":             img,
 		"CocoonCodeURL":     url,
