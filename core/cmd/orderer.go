@@ -16,19 +16,15 @@ var ordererCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var log = logging.MustGetLogger("orderer")
+		log.Info("Orderer has started")
 		port := util.Env("ORDERER_PORT", "9000")
-		log.Infof("Starting orderer GRPC server on port %s", port)
 
 		// start the orderer
-		startedCh := make(chan bool)
 		endedCh := make(chan bool)
 
 		newOrderer := orderer.NewOrderer()
-		go newOrderer.Start(port, startedCh, endedCh)
-
-		// set chain implementation after orderer starts
-		<-startedCh
 		newOrderer.SetChain(new(chain.PostgresChain))
+		go newOrderer.Start(port, endedCh)
 
 		<-endedCh
 	},

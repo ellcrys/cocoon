@@ -19,8 +19,9 @@ var log = logging.MustGetLogger("orderer")
 // Orderer defines a transaction ordering, block creation
 // and inclusion module
 type Orderer struct {
-	server *grpc.Server
-	chain  chain.Chain
+	server  *grpc.Server
+	chain   chain.Chain
+	endedCh chan bool
 }
 
 // NewOrderer creates a new Orderer object
@@ -29,7 +30,9 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(port string, startedCh, endedCh chan bool) {
+func (od *Orderer) Start(port string, endedCh chan bool) {
+
+	od.endedCh = endedCh
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
@@ -37,13 +40,30 @@ func (od *Orderer) Start(port string, startedCh, endedCh chan bool) {
 	}
 
 	time.AfterFunc(2*time.Second, func() {
-		log.Info("GRPC server started with no wahala")
-		startedCh <- true
+
+		log.Infof("Started orderer GRPC server on port %s", port)
+
+		// establish connection to chain backend
+		_, err := od.chain.Connect("")
+		if err != nil {
+			log.Info(err)
+			od.Stop(1)
+		}
+
+		log.Info("Backend successfully connnected")
 	})
 
 	od.server = grpc.NewServer()
 	proto.RegisterOrdererServer(od.server, od)
 	od.server.Serve(lis)
+}
+
+// Stop stops the orderer and returns an exit code.
+func (od *Orderer) Stop(exitCode int) int {
+	od.server.Stop()
+	od.chain.Close()
+	close(od.endedCh)
+	return exitCode
 }
 
 // SetChain sets the blockchain implementation to use.
