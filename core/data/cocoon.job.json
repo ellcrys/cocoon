@@ -41,7 +41,7 @@
               "COCOON_CODE_URL": "{{CocoonCodeURL}}",
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}",
-              "COCOON_BUILD_PRAMS": "{{CocoonBuildParams}}"
+              "COCOON_BUILD_PARAMS": "{{CocoonBuildParams}}"
             },
             "Services": [{
               "Name": "cocoons",
