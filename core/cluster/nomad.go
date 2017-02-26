@@ -5,6 +5,7 @@ import (
 
 	"strings"
 
+	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	cutil "github.com/ncodes/cocoon-util"
@@ -73,6 +74,8 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 // Deploy a cocoon code to the cluster
 func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 
+	var err error
+
 	if !util.InStringSlice(SupportedCocoonCodeLang, lang) {
 		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedCocoonCodeLang, ","))
 	} else if url == "" {
@@ -89,9 +92,15 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 
 	// Attempt to parse build parameters if provided
 	if len(buildParams) > 0 {
+
+		buildParams, err = crypto.FromBase64(buildParams)
+		if err != nil {
+			return "", fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
+		}
+
 		err := util.FromJSON([]byte(buildParams), &map[string]interface{}{})
 		if err != nil {
-			return "", fmt.Errorf("failed to parse build script. Must be a valid json string")
+			return "", fmt.Errorf("failed to parse build param. Must be a valid json string. %s", err)
 		}
 	}
 
@@ -99,7 +108,7 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 		"ID":                util.Sha1(util.UUID4())[0:15],
 		"Count":             1,
 		"CPU":               500,
-		"MemoryMB":          50,
+		"MemoryMB":          512,
 		"DiskMB":            300,
 		"Image":             img,
 		"CocoonCodeURL":     url,
