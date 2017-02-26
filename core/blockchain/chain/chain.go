@@ -5,4 +5,5 @@ type Chain interface {
 	Connect(dbAddr string) (interface{}, error)
 	GetBackend() string
 	CreateChain(name string) error
+	Close() error
 }
