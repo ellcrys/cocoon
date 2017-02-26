@@ -11,6 +11,12 @@ var ErrChainExist = errors.New("chain already exists")
 type PostgresChain struct {
 }
 
+// GetBackend returns the database backend this chain
+// implementation depends on.
+func (ch *PostgresChain) GetBackend() string {
+	return "postgres"
+}
+
 // Connect connects to a postgress server and returns a client
 // or error if connection failed.
 func (ch *PostgresChain) Connect(dbAddr string) (interface{}, error) {
