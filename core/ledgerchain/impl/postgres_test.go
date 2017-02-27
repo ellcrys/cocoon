@@ -12,32 +12,27 @@ import (
 func TestPosgresLedgerChain(t *testing.T) {
 	Convey("PostgresLedgerChain", t, func() {
 
+		var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
 		pgChain := new(PostgresLedgerChain)
+		db, err := pgChain.Connect(conStr)
+		So(err, ShouldBeNil)
+		So(db, ShouldNotBeNil)
 
 		Convey(".Connect", func() {
 			Convey("should return error when unable to connect to a postgres server", func() {
 				var conStr = "host=localhost user=wrong dbname=test sslmode=disable password=abc"
+				pgChain := new(PostgresLedgerChain)
 				db, err := pgChain.Connect(conStr)
 				So(db, ShouldBeNil)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "failed to connect to ledgerchain backend")
 			})
-
-			Convey("should successfully connect to postgres server", func() {
-				var conStr = "host=localhost user=ned dbname=cocoonchain sslmode=disable password="
-				db, err := pgChain.Connect(conStr)
-				So(err, ShouldBeNil)
-				So(db, ShouldNotBeNil)
-			})
 		})
 
 		Convey(".Init", func() {
 
-			var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
-			db, err := pgChain.Connect(conStr)
-			So(err, ShouldBeNil)
-
 			Convey("when ledger table does not exists", func() {
+
 				Convey("should create ledger table and create a global ledger entry", func() {
 
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerListName)
@@ -56,11 +51,15 @@ func TestPosgresLedgerChain(t *testing.T) {
 						So(len(entries), ShouldEqual, 1)
 						So(entries[0].Name, ShouldEqual, "general")
 					})
+
+					Reset(func() {
+						db.(*gorm.DB).DropTable(LedgerListName)
+					})
 				})
 			})
 
 			Convey("when ledger table exists", func() {
-				Convey("should return error return nil with no effect", func() {
+				Convey("should return nil with no effect", func() {
 					err := pgChain.Init()
 					So(err, ShouldBeNil)
 
@@ -73,10 +72,10 @@ func TestPosgresLedgerChain(t *testing.T) {
 					So(len(entries), ShouldEqual, 1)
 					So(entries[0].Name, ShouldEqual, "general")
 				})
-			})
 
-			Reset(func() {
-				db.(*gorm.DB).DropTable(LedgerListName)
+				Reset(func() {
+					db.(*gorm.DB).DropTable(LedgerListName)
+				})
 			})
 		})
 
@@ -98,23 +97,34 @@ func TestPosgresLedgerChain(t *testing.T) {
 		Convey(".CreateLedger", func() {
 
 			var ledgerName = util.RandString(10)
-			var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
-			db, err := pgChain.Connect(conStr)
+			err := pgChain.Init()
 			So(err, ShouldBeNil)
-			err = pgChain.Init()
-			So(err, ShouldBeNil)
-			db.(*gorm.DB).LogMode(false)
 
-			Convey("should successfully create a ledger list entry", func() {
-				ledger, err := pgChain.CreateLedger(ledgerName, "cocoon_id", true)
+			Convey("should successfully create a ledger entry", func() {
+				ledger, err := pgChain.CreateLedger(ledgerName, util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
-				Convey("should fail since a ledger with same name already exists", func() {
-					_, err := pgChain.CreateLedger(ledgerName, "cocoon_id", true)
+				ledger, err = pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				So(err, ShouldBeNil)
+				So(ledger, ShouldNotBeNil)
+
+				Convey("should return error since a ledger with same name already exists", func() {
+					_, err := pgChain.CreateLedger(ledgerName, util.RandString(10), true)
 					So(err, ShouldNotBeNil)
-					So(err.Error(), ShouldEqual, `pq: duplicate key value violates unique constraint "uix_ledgers_hash"`)
+					So(err.Error(), ShouldEqual, `pq: duplicate key value violates unique constraint "uix_ledgers_name"`)
 				})
+			})
+
+			Convey("should successfully add a new ledger entry but PrevLedgerHash column must reference the previous ledger", func() {
+				ledger, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				So(err, ShouldBeNil)
+				So(ledger, ShouldNotBeNil)
+
+				ledger2, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				So(err, ShouldBeNil)
+				So(ledger2, ShouldNotBeNil)
+				So(ledger2.PrevLedgerHash, ShouldEqual, ledger.Hash)
 			})
 
 			Reset(func() {
@@ -122,5 +132,8 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
+		Reset(func() {
+			db.(*gorm.DB).DropTable(LedgerListName)
+		})
 	})
 }

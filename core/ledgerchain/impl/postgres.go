@@ -22,7 +22,8 @@ const GenesisLedgerHash = "00000000000000000000000000000000000000000000000000000
 
 // Ledger represents a group of linked transactions
 type Ledger struct {
-	Hash           string `json:"string" gorm:"type:varchar(64);unique_index"`
+	Number         uint   `gorm:"primary_key"`
+	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index"`
 	PrevLedgerHash string `json:"prev_ledger_hash" gorm:"type:varchar(100);unique_index"`
 	Name           string `json:"name" gorm:"type:varchar(100);unique_index"`
 	CocoonCodeID   string `json:"cocoon_code_id"`
@@ -50,6 +51,7 @@ func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to ledgerchain backend")
 	}
+	ch.db.LogMode(false)
 	return ch.db, nil
 }
 
