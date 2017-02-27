@@ -18,6 +18,25 @@ func (ml *MyLang) GetImage() string {
 func (ml *MyLang) GetDownloadDestination(url string) string {
 	return ""
 }
+func (ml *MyLang) GetBuildScript() string {
+	return ""
+}
+
+func (ml *MyLang) GetMountDestination(string) string {
+	return ""
+}
+
+func (ml *MyLang) GetRunScript() []string {
+	return nil
+}
+
+func (ml *MyLang) RequiresBuild() bool {
+	return false
+}
+
+func (ml *MyLang) SetBuildParams(map[string]interface{}) error {
+	return nil
+}
 
 func TestLauncher(t *testing.T) {
 	Convey("Launcher", t, func() {

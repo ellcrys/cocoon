@@ -8,8 +8,8 @@ import (
 
 	"time"
 
-	"github.com/ncodes/cocoon/core/ledgerchain/orderer/proto"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
+	"github.com/ncodes/cocoon/core/orderer/proto"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
@@ -44,7 +44,7 @@ func (od *Orderer) Start(port string, endedCh chan bool) {
 		log.Infof("Started orderer GRPC server on port %s", port)
 
 		// establish connection to chain backend
-		_, err := od.chain.Connect("")
+		_, err := od.chain.Connect("host=localhost user=ned dbname=cocoonchain sslmode=disable password=")
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)

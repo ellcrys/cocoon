@@ -1,3 +1,0 @@
-package chain
-
-func PosgresChainTest

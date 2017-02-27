@@ -1,5 +1,5 @@
-hash: fcf18f78e239d5a5d30e4d162d24b3b3cea6fadd8a6475130f8eedb3c5f18701
-updated: 2017-02-27T10:31:22.455667164+01:00
+hash: a5c107621e1ab7ad0dca733641885d2cecad5e8375fc3b272adf4b4752ca1ee7
+updated: 2017-02-27T11:17:22.420229204+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -124,6 +124,12 @@ imports:
   version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
   version: 7f4b1adc791766938c29457bed0703fb9134421a
+- name: github.com/smartystreets/goconvey
+  version: 3bd662eac601ad6436e64776af2e112069eb2edc
+  subpackages:
+  - convey
+  - convey/gotest
+  - convey/reporting
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -203,9 +209,3 @@ testImports:
   subpackages:
   - internal/go-render/render
   - internal/oglematchers
-- name: github.com/smartystreets/goconvey
-  version: 3bd662eac601ad6436e64776af2e112069eb2edc
-  subpackages:
-  - convey
-  - convey/gotest
-  - convey/reporting
