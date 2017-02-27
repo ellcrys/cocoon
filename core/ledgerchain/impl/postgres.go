@@ -13,15 +13,18 @@ import (
 // ErrChainExist represents an error about an existing chain
 var ErrChainExist = errors.New("chain already exists")
 
-// LedgerEntryName represents the name of the table where all
+// LedgerListName represents the name of the table where all
 // known ledger info are stored.
-const LegderEntryName = "ledgers"
+const LedgerListName = "ledgers"
+
+// GenesisLedgerHash is the first hash assigned to the first ledger list entry
+const GenesisLedgerHash = "0000000000000000000000000000000000000000000000000000000000000000"
 
 // Ledger represents a group of linked transactions
 type Ledger struct {
-	Hash           string `json:"string"`
-	PrevLedgerHash string `json:"prev_ledger_hash"`
-	Name           string `json:"name"`
+	Hash           string `json:"string" gorm:"type:varchar(64);unique_index"`
+	PrevLedgerHash string `json:"prev_ledger_hash" gorm:"type:varchar(100);unique_index"`
+	Name           string `json:"name" gorm:"type:varchar(100);unique_index"`
 	CocoonCodeID   string `json:"cocoon_code_id"`
 	Public         bool   `json:"public"`
 	CreatedAt      int64  `json:"created_at"`
@@ -59,30 +62,23 @@ func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
 // the table holding records of all ledgers.
 func (ch *PostgresLedgerChain) Init() error {
 
-	// create ledger entry table if not existing
-	if !ch.db.HasTable(LegderEntryName) {
+	// create ledger list entry table if not existing
+	if !ch.db.HasTable(LedgerListName) {
 		if err := ch.db.CreateTable(&Ledger{}).Error; err != nil {
 			return fmt.Errorf("failed to create `ledgers` table. %s", err)
 		}
 	}
 
-	// Create general ledger entry if it does not exists
+	// Create general ledger list entry if it does not exists
 	var c int
 	if err := ch.db.Model(&Ledger{}).Count(&c).Error; err != nil {
-		return fmt.Errorf("failed to check whether general ledger entry exists in the ledger entry table. %s", err)
+		return fmt.Errorf("failed to check whether general ledger list entry exists in the ledger list table. %s", err)
 	}
 
 	if c == 0 {
-		globalLedger := &Ledger{
-			PrevLedgerHash: "genesis",
-			Name:           "general",
-			Public:         true,
-			CreatedAt:      time.Now().Unix(),
-		}
-
-		globalLedger.Hash = ch.MakeLegderHash(globalLedger)
-		if err := ch.db.Create(globalLedger).Error; err != nil {
-			return fmt.Errorf("failed to create global ledger entry in ledgers table. %s", err)
+		_, err := ch.CreateLedger("general", "", true)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -90,8 +86,38 @@ func (ch *PostgresLedgerChain) Init() error {
 }
 
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name string) error {
-	return nil
+func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (*Ledger, error) {
+
+	tx := ch.db.Begin()
+	newLedger := &Ledger{
+		Name:         name,
+		CocoonCodeID: cocoonCodeID,
+		Public:       public,
+		CreatedAt:    time.Now().Unix(),
+	}
+
+	var prevLedger Ledger
+	err := tx.Last(&prevLedger).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		newLedger.PrevLedgerHash = GenesisLedgerHash
+	} else {
+		newLedger.PrevLedgerHash = prevLedger.Hash
+	}
+
+	newLedger.Hash = ch.MakeLegderHash(newLedger)
+
+	if err := ch.db.Create(newLedger).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+	return newLedger, nil
 }
 
 // Close releases any resource held
