@@ -1,5 +1,5 @@
 hash: fcf18f78e239d5a5d30e4d162d24b3b3cea6fadd8a6475130f8eedb3c5f18701
-updated: 2017-02-26T16:57:14.108448565+01:00
+updated: 2017-02-27T10:31:22.455667164+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -46,7 +46,7 @@ imports:
 - name: github.com/ellcrys/crypto
   version: 4260838a35589024ba32fad882cbc4520df31a58
 - name: github.com/ellcrys/util
-  version: c48cc9de357f0009167fbd987f09b2958a6a8dc2
+  version: 1184d8fd64de9b916b0b9af7b7506193776e4f67
 - name: github.com/fatih/color
   version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
 - name: github.com/franela/goreq
@@ -82,6 +82,15 @@ imports:
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
+  subpackages:
+  - dialects/postgres
+- name: github.com/jinzhu/inflection
+  version: 1c35d901db3da928c72a72d8458480cc9ade058f
+- name: github.com/lib/pq
+  version: ba5d4f7a35561e22fbdf7a39aa0070f4d460cfc0
+  subpackages:
+  - hstore
+  - oid
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
@@ -155,7 +164,7 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 4687d739464a2d0af89a25be0318456e0776f3ef
+  version: 0ad425fe45e885577bef05dc1c50f72e33188b16
   subpackages:
   - transform
   - unicode/norm
@@ -184,7 +193,7 @@ imports:
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: 9853efbdabb6f7d649916cb4bb77e5059514548a
+  version: 34726b35978f115328b4851975b055d6b280c493
   subpackages:
   - js
 - name: github.com/jtolds/gls

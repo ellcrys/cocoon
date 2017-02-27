@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/blockchain/chain"
-	"github.com/ncodes/cocoon/core/blockchain/orderer"
+	"github.com/ncodes/cocoon/core/ledgerchain/chain"
+	"github.com/ncodes/cocoon/core/ledgerchain/orderer"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ var ordererCmd = &cobra.Command{
 		endedCh := make(chan bool)
 
 		newOrderer := orderer.NewOrderer()
-		newOrderer.SetChain(new(chain.PostgresChain))
+		newOrderer.SetLedgerChain(new(chain.PostgresChain))
 		go newOrderer.Start(port, endedCh)
 
 		<-endedCh

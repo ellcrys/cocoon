@@ -1,0 +1,18 @@
+syntax = "proto3";
+package proto;
+
+service Orderer {
+    rpc Put(OrdererTx) returns (Response);
+}
+
+message OrdererTx {
+    string id = 1;
+    string name = 2;
+    string value = 3;
+}
+
+message Response {
+    int32 code = 1;
+    string message = 2;
+    bytes data = 3;
+}
