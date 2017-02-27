@@ -17,18 +17,19 @@ var ErrChainExist = errors.New("chain already exists")
 // known ledger info are stored.
 const LedgerListName = "ledgers"
 
-// GenesisLedgerHash is the first hash assigned to the first ledger list entry
-const GenesisLedgerHash = "0000000000000000000000000000000000000000000000000000000000000000"
+// NullHash is the default hash value assigned to columns that require a default hash value
+const NullHash = "0000000000000000000000000000000000000000000000000000000000000000"
 
 // Ledger represents a group of linked transactions
 type Ledger struct {
-	Number         uint   `gorm:"primary_key"`
-	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index"`
-	PrevLedgerHash string `json:"prev_ledger_hash" gorm:"type:varchar(100);unique_index"`
-	Name           string `json:"name" gorm:"type:varchar(100);unique_index"`
-	CocoonCodeID   string `json:"cocoon_code_id"`
-	Public         bool   `json:"public"`
-	CreatedAt      int64  `json:"created_at"`
+	Number          uint   `gorm:"primary_key"`
+	Hash            string `json:"hash" gorm:"type:varchar(64);unique_index"`
+	PrevLedgerHash  string `json:"prev_ledger_hash" gorm:"type:varchar(64);unique_index"`
+	ChildLedgerHash string `json:"child_ledger_hash" gorm:"type:varchar(64);unique_index"`
+	Name            string `json:"name" gorm:"type:varchar(100);unique_index"`
+	CocoonCodeID    string `json:"cocoon_code_id"`
+	Public          bool   `json:"public"`
+	CreatedAt       int64  `json:"created_at"`
 }
 
 // PostgresLedgerChain defines a ledgerchain implementation
@@ -51,7 +52,9 @@ func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to ledgerchain backend")
 	}
+
 	ch.db.LogMode(false)
+
 	return ch.db, nil
 }
 
@@ -91,34 +94,47 @@ func (ch *PostgresLedgerChain) Init() error {
 func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (*Ledger, error) {
 
 	tx := ch.db.Begin()
+
+	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
+	}
+
 	newLedger := &Ledger{
-		Name:         name,
-		CocoonCodeID: cocoonCodeID,
-		Public:       public,
-		CreatedAt:    time.Now().Unix(),
+		Name:            name,
+		CocoonCodeID:    cocoonCodeID,
+		Public:          public,
+		ChildLedgerHash: "",
+		CreatedAt:       time.Now().Unix(),
 	}
 
 	var prevLedger Ledger
-	err := tx.Last(&prevLedger).Error
+	err = tx.Where("child_ledger_hash = ?", "").Last(&prevLedger).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		tx.Rollback()
 		return nil, err
 	}
 
 	if err == gorm.ErrRecordNotFound {
-		newLedger.PrevLedgerHash = GenesisLedgerHash
+		newLedger.PrevLedgerHash = NullHash
 	} else {
 		newLedger.PrevLedgerHash = prevLedger.Hash
 	}
 
 	newLedger.Hash = ch.MakeLegderHash(newLedger)
 
-	if err := ch.db.Create(newLedger).Error; err != nil {
+	if err = tx.Model(&prevLedger).Update("child_ledger_hash", newLedger.Hash).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Create(newLedger).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	tx.Commit()
+
 	return newLedger, nil
 }
 

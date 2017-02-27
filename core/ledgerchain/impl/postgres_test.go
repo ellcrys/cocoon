@@ -101,6 +101,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should successfully create a ledger entry", func() {
+
 				ledger, err := pgChain.CreateLedger(ledgerName, util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
