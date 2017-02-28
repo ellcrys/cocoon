@@ -9,6 +9,6 @@ type LedgerChain interface {
 	Init() error
 	GetBackend() string
 	CreateLedger(name, cocoonCodeID string, public bool) (interface{}, error)
-	Put(ledger, key, value string) error
+	Put(ledger, txID, key, value string) (interface{}, error)
 	Close() error
 }

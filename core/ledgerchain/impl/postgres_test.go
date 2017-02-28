@@ -146,9 +146,41 @@ func TestPosgresLedgerChain(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return error if ledger does not exists", func() {
-				err := pgChain.Put("unknown", "key", "value")
+				newTx, err := pgChain.Put("unknown", util.Sha256("tx_id"), "key", "value")
+				So(newTx, ShouldBeNil)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "ledger does not exist")
+			})
+
+			Convey("expects new transaction to be the first and only transaction", func() {
+				txID := util.Sha256("tx_id")
+				_, err := pgChain.Put("global", txID, "key", "value")
+				So(err, ShouldBeNil)
+
+				var allTx []Transaction
+				err = db.(*gorm.DB).Find(&allTx).Error
+				So(err, ShouldBeNil)
+				So(len(allTx), ShouldEqual, 1)
+
+				Convey("expects the only transaction to have expected fields set", func() {
+					So(allTx[0].Hash, ShouldNotEqual, "")
+					So(allTx[0].ID, ShouldEqual, txID)
+					So(allTx[0].Key, ShouldEqual, "key")
+					So(allTx[0].Value, ShouldEqual, "value")
+					So(allTx[0].Ledger, ShouldEqual, "global")
+					So(allTx[0].NextTxHash, ShouldEqual, "")
+					So(allTx[0].PrevTxHash, ShouldEqual, NullHash)
+				})
+
+				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {
+					tx, err := pgChain.Put("global", util.Sha256(util.RandString(2)), "key", "value")
+					So(err, ShouldBeNil)
+					So(tx.(*Transaction).PrevTxHash, ShouldEqual, allTx[0].Hash)
+				})
+			})
+
+			Reset(func() {
+				RestDB()
 			})
 		})
 

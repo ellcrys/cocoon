@@ -178,22 +178,56 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
-func (ch *PostgresLedgerChain) Put(ledgerName, key, value string) error {
+func (ch *PostgresLedgerChain) Put(ledgerName, txID, key, value string) (interface{}, error) {
 
 	var ledger Ledger
 	err := ch.db.Where("name = ?", ledgerName).First(&ledger).Error
 	if err != nil {
-		return fmt.Errorf("ledger does not exist")
+		return nil, fmt.Errorf("ledger does not exist")
 	}
 
-	// tx := ch.db.Begin()
+	tx := ch.db.Begin()
 
-	// err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
-	// }
+	err = tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
+	}
 
-	return nil
+	newTx := &Transaction{
+		Ledger: ledgerName,
+		ID:     txID,
+		Key:    key,
+		Value:  value,
+	}
+
+	var prevTx Transaction
+	err = tx.Where("next_tx_hash = ?", "").Last(&prevTx).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		newTx.PrevTxHash = NullHash
+	} else {
+		newTx.PrevTxHash = prevTx.Hash
+	}
+
+	newTx.Hash = ch.MakeTxHash(newTx)
+
+	if err = tx.Model(&prevTx).Update("next_tx_hash", newTx.Hash).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Create(newTx).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+
+	return newTx, nil
 }
 
 // Close releases any resource held
