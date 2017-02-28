@@ -132,11 +132,23 @@ func TestPosgresLedgerChain(t *testing.T) {
 				ledger2, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger2, ShouldNotBeNil)
-				So(ledger2.PrevLedgerHash, ShouldEqual, ledger.Hash)
+				So(ledger2.(*Ledger).PrevLedgerHash, ShouldEqual, ledger.(*Ledger).Hash)
 			})
 
 			Reset(func() {
 				RestDB()
+			})
+		})
+
+		Convey(".Put", func() {
+
+			err := pgChain.Init()
+			So(err, ShouldBeNil)
+
+			Convey("should return error if ledger does not exists", func() {
+				err := pgChain.Put("unknown", "key", "value")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "ledger does not exist")
 			})
 		})
 

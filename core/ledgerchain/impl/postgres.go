@@ -26,14 +26,14 @@ const NullHash = "00000000000000000000000000000000000000000000000000000000000000
 
 // Ledger represents a group of linked transactions
 type Ledger struct {
-	Number          uint   `gorm:"primary_key"`
-	Hash            string `json:"hash" gorm:"type:varchar(64);unique_index"`
-	PrevLedgerHash  string `json:"prev_ledger_hash" gorm:"type:varchar(64);unique_index"`
-	ChildLedgerHash string `json:"child_ledger_hash" gorm:"type:varchar(64);unique_index"`
-	Name            string `json:"name" gorm:"type:varchar(64);unique_index"`
-	CocoonCodeID    string `json:"cocoon_code_id"`
-	Public          bool   `json:"public"`
-	CreatedAt       int64  `json:"created_at"`
+	Number         uint   `gorm:"primary_key"`
+	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index"`
+	PrevLedgerHash string `json:"prev_ledger_hash" gorm:"type:varchar(64);unique_index"`
+	NextLedgerHash string `json:"next_ledger_hash" gorm:"type:varchar(64);unique_index"`
+	Name           string `json:"name" gorm:"type:varchar(64);unique_index"`
+	CocoonCodeID   string `json:"cocoon_code_id"`
+	Public         bool   `json:"public"`
+	CreatedAt      int64  `json:"created_at"`
 }
 
 // Transaction reprents a group of transactions belonging to a ledger.
@@ -47,6 +47,7 @@ type Transaction struct {
 	Value      string `json:"key" gorm:"type:text"`
 	Hash       string `json:"hash" gorm:"type:varchar(64);unique_index"`
 	PrevTxHash string `json:"prev_tx_hash" gorm:"type:varchar(64);unique_index"`
+	NextTxHash string `json:"next_tx_hash" gorm:"type:varchar(64);unique_index"`
 }
 
 // PostgresLedgerChain defines a ledgerchain implementation
@@ -64,6 +65,7 @@ func (ch *PostgresLedgerChain) GetBackend() string {
 // Connect connects to a postgress server and returns a client
 // or error if connection failed.
 func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
+
 	var err error
 	ch.db, err = gorm.Open("postgres", dbAddr)
 	if err != nil {
@@ -115,7 +117,7 @@ func (ch *PostgresLedgerChain) Init() error {
 }
 
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (*Ledger, error) {
+func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (interface{}, error) {
 
 	tx := ch.db.Begin()
 
@@ -125,15 +127,15 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 	}
 
 	newLedger := &Ledger{
-		Name:            name,
-		CocoonCodeID:    cocoonCodeID,
-		Public:          public,
-		ChildLedgerHash: "",
-		CreatedAt:       time.Now().Unix(),
+		Name:           name,
+		CocoonCodeID:   cocoonCodeID,
+		Public:         public,
+		NextLedgerHash: "",
+		CreatedAt:      time.Now().Unix(),
 	}
 
 	var prevLedger Ledger
-	err = tx.Where("child_ledger_hash = ?", "").Last(&prevLedger).Error
+	err = tx.Where("next_ledger_hash = ?", "").Last(&prevLedger).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		tx.Rollback()
 		return nil, err
@@ -147,7 +149,7 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 
 	newLedger.Hash = ch.MakeLegderHash(newLedger)
 
-	if err = tx.Model(&prevLedger).Update("child_ledger_hash", newLedger.Hash).Error; err != nil {
+	if err = tx.Model(&prevLedger).Update("next_ledger_hash", newLedger.Hash).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}
@@ -160,6 +162,19 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 	tx.Commit()
 
 	return newLedger, nil
+}
+
+// Put creates a new transaction associated to a ledger.
+// Returns error if ledger does not exists or nil of successful.
+func (ch *PostgresLedgerChain) Put(ledgerName, key, value string) error {
+
+	var ledger Ledger
+	err := ch.db.Where("name = ?", ledgerName).First(&ledger).Error
+	if err != nil {
+		return fmt.Errorf("ledger does not exist")
+	}
+
+	return nil
 }
 
 // Close releases any resource held
