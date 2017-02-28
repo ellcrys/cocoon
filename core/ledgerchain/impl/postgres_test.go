@@ -219,6 +219,35 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
+		Convey(".Get", func() {
+
+			err := pgChain.Init()
+			So(err, ShouldBeNil)
+
+			Convey("should return nil when transaction does not exist", func() {
+				tx, err := pgChain.Get("wrong_key")
+				So(tx, ShouldBeNil)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("should return expected transaction", func() {
+				key := util.UUID4()
+				txID := util.Sha256(util.UUID4())
+				tx, err := pgChain.Put(txID, key, "value")
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				tx2, err := pgChain.Get(key)
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+				So(tx2.(*Transaction).Hash, ShouldEqual, tx.(*Transaction).Hash)
+			})
+
+			Reset(func() {
+				RestDB()
+			})
+		})
+
 		Reset(func() {
 			RestDB()
 		})

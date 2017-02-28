@@ -238,6 +238,20 @@ func (ch *PostgresLedgerChain) GetByID(txID string) (interface{}, error) {
 	return &tx, nil
 }
 
+// Get fetches a transaction by its key
+func (ch *PostgresLedgerChain) Get(key string) (interface{}, error) {
+	var tx Transaction
+
+	err := ch.db.Where("key = ?", key).Last(&tx).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to get transaction. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &tx, nil
+}
+
 // Close releases any resource held
 func (ch *PostgresLedgerChain) Close() error {
 	if ch.db != nil {
