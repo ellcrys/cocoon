@@ -26,10 +26,23 @@ type Ledger struct {
 	Hash            string `json:"hash" gorm:"type:varchar(64);unique_index"`
 	PrevLedgerHash  string `json:"prev_ledger_hash" gorm:"type:varchar(64);unique_index"`
 	ChildLedgerHash string `json:"child_ledger_hash" gorm:"type:varchar(64);unique_index"`
-	Name            string `json:"name" gorm:"type:varchar(100);unique_index"`
+	Name            string `json:"name" gorm:"type:varchar(64);unique_index"`
 	CocoonCodeID    string `json:"cocoon_code_id"`
 	Public          bool   `json:"public"`
 	CreatedAt       int64  `json:"created_at"`
+}
+
+// Transaction reprents a group of transactions belonging to a ledger.
+// All transaction entries must reference the hash of the immediate transaction
+// sharing the same ledger name.
+type Transaction struct {
+	Number     uint   `gorm:"primary_key"`
+	Ledger     string `json:"ledger"`
+	ID         string `json:"id" gorm:"type:varchar(64);unique_index"`
+	Key        string `json:"key" gorm:"type:varchar(64)"`
+	Value      string `json:"key" gorm:"type:text"`
+	Hash       string `json:"hash" gorm:"type:varchar(64);unique_index"`
+	PrevTxHash string `json:"prev_tx_hash" gorm:"type:varchar(64);unique_index"`
 }
 
 // PostgresLedgerChain defines a ledgerchain implementation
