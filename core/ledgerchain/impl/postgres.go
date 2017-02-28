@@ -190,6 +190,20 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (interface{}, error) {
 	return &l, nil
 }
 
+// ListLedger fetches a list of all ledgers associated to a cocoon code id
+func (ch *PostgresLedgerChain) ListLedger(cocoonCodeID string) (interface{}, error) {
+	var l []Ledger
+
+	err := ch.db.Where("cocoon_code_id = ?", cocoonCodeID).Find(&l).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to list ledgers. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return l, nil
+	}
+
+	return l, nil
+}
+
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
 func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error) {

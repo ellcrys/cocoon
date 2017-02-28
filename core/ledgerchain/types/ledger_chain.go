@@ -10,6 +10,7 @@ type LedgerChain interface {
 	GetBackend() string
 	CreateLedger(name, cocoonCodeID string, public bool) (interface{}, error)
 	GetLedger(name string) (interface{}, error)
+	ListLedger(cocoonCodeID string) (interface{}, error)
 	Put(txID, key, value string) (interface{}, error)
 	Get(key string) (interface{}, error)
 	GetByID(txID string) (interface{}, error)
