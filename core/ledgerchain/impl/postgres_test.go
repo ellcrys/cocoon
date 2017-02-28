@@ -140,6 +140,35 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
+		Convey(".GetLedger", func() {
+
+			err := pgChain.Init()
+			So(err, ShouldBeNil)
+
+			Convey("should return nil when ledger does not exist", func() {
+				tx, err := pgChain.GetLedger("wrong_name")
+				So(tx, ShouldBeNil)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("should return expected transaction", func() {
+				name := util.RandString(10)
+				cocoonCodeID := util.RandString(10)
+				ledger, err := pgChain.CreateLedger(name, cocoonCodeID, true)
+				So(err, ShouldBeNil)
+				So(ledger, ShouldNotBeNil)
+
+				found, err := pgChain.GetLedger(name)
+				So(found, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+				So(found.(*Ledger).Hash, ShouldEqual, ledger.(*Ledger).Hash)
+			})
+
+			Reset(func() {
+				RestDB()
+			})
+		})
+
 		Convey(".MakeTxHash", func() {
 			Convey("should return expected transaction hash", func() {
 				hash := pgChain.MakeTxHash(&Transaction{

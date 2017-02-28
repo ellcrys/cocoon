@@ -176,6 +176,20 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 	return newLedger, nil
 }
 
+// GetLedger fetches a ledger meta information
+func (ch *PostgresLedgerChain) GetLedger(name string) (interface{}, error) {
+	var l Ledger
+
+	err := ch.db.Where("name = ?", name).Last(&l).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to get ledger. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &l, nil
+}
+
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
 func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error) {
