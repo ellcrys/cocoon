@@ -31,7 +31,7 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(addr string, endedCh chan bool) {
+func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
 
 	od.endedCh = endedCh
 
@@ -45,10 +45,11 @@ func (od *Orderer) Start(addr string, endedCh chan bool) {
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
 		// establish connection to chain backend
-		_, err := od.chain.Connect("host=localhost user=ned dbname=cocoonchain sslmode=disable password=")
+		_, err := od.chain.Connect(ledgerChainConStr)
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
+			return
 		}
 
 		log.Info("Backend successfully connnected")
