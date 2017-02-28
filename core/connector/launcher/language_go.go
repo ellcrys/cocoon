@@ -74,10 +74,10 @@ func (g *Go) GetMountDestination(url string) string {
 
 // RequiresBuild returns true if cocoon codes written in
 // go langugage requires a build process.
-// During development, If RUN_ROOT_BIN env is set, it will return false as
+// During development, If DEV_RUN_ROOT_BIN env is set, it will return false as
 // the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
-	if len(os.Getenv("RUN_ROOT_BIN")) > 0 {
+	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
 		return false
 	}
 	return true
@@ -112,13 +112,13 @@ func (g *Go) GetBuildScript() string {
 
 // GetRunScript returns the script required to start the
 // cocoon code accodeording to the build and installation process
-// of the language. If RUN_ROOT_BIN env is set, it will run the
+// of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
 // ccode binary located in the mount destination.
 func (g *Go) GetRunScript() []string {
 	script := []string{strings.Join([]string{"ccode"}, " && ")}
 
-	// run ccode in the repo root if RUN_ROOT_BIN is set (for development only)
-	if len(os.Getenv("RUN_ROOT_BIN")) > 0 {
+	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
+	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
 		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetMountDestination(g.repoURL))}
 	}
 
