@@ -30,7 +30,7 @@ func NewClient(ccodePort int) *Client {
 }
 
 // Connect connects to a cocoon code server
-// running on a unknow port
+// running on a known port
 func (c *Client) Connect() error {
 
 	log.Info("Starting cocoon code client")
