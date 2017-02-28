@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
@@ -79,7 +80,18 @@ func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
 
 // MakeLegderHash takes a ledger and computes a hash
 func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
-	return util.Sha256(fmt.Sprintf("%s|%s|%t|%d", ledger.PrevLedgerHash, ledger.Name, ledger.Public, ledger.CreatedAt))
+	return util.Sha256(fmt.Sprintf("%s|%t|%d|%s", ledger.Name, ledger.Public, ledger.CreatedAt, ledger.PrevLedgerHash))
+}
+
+// MakeTxHash creates a hash of a transaction
+func (ch *PostgresLedgerChain) MakeTxHash(tx *Transaction) string {
+	return util.Sha256(fmt.Sprintf(
+		"%s|%s|%s|%s|%s",
+		tx.Ledger,
+		tx.ID,
+		crypto.ToBase64([]byte(tx.Key)),
+		crypto.ToBase64([]byte(tx.Value)),
+		tx.PrevTxHash))
 }
 
 // Init initializes the blockchain. Creates the necessary tables such as the
@@ -100,14 +112,14 @@ func (ch *PostgresLedgerChain) Init() error {
 		}
 	}
 
-	// Create general ledger if it does not exists
+	// Create global ledger if it does not exists
 	var c int
 	if err := ch.db.Model(&Ledger{}).Count(&c).Error; err != nil {
-		return fmt.Errorf("failed to check whether general ledger exists in the ledger list table. %s", err)
+		return fmt.Errorf("failed to check whether global ledger exists in the ledger list table. %s", err)
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger("general", "", true)
+		_, err := ch.CreateLedger("global", "", true)
 		if err != nil {
 			return err
 		}
@@ -173,6 +185,13 @@ func (ch *PostgresLedgerChain) Put(ledgerName, key, value string) error {
 	if err != nil {
 		return fmt.Errorf("ledger does not exist")
 	}
+
+	// tx := ch.db.Begin()
+
+	// err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
+	// }
 
 	return nil
 }

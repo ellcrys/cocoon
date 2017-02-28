@@ -56,7 +56,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, "general")
+						So(entries[0].Name, ShouldEqual, "global")
 					})
 
 					Reset(func() {
@@ -77,7 +77,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					err = db.(*gorm.DB).Find(&entries).Error
 					So(err, ShouldBeNil)
 					So(len(entries), ShouldEqual, 1)
-					So(entries[0].Name, ShouldEqual, "general")
+					So(entries[0].Name, ShouldEqual, "global")
 				})
 
 				Reset(func() {
@@ -90,13 +90,13 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("should return expected ledger hash", func() {
 				hash := pgChain.MakeLegderHash(&Ledger{
-					PrevLedgerHash: "0000000000000000000000000000000000000000000000000000000000000000",
-					Name:           "general",
+					PrevLedgerHash: NullHash,
+					Name:           "global",
 					CocoonCodeID:   "xh6549dh",
 					Public:         true,
 					CreatedAt:      1488196279,
 				})
-				So(hash, ShouldEqual, "fa375c76226c54885bac292cdc722017743aae83e667f7ee92e9430d112218e1")
+				So(hash, ShouldEqual, "8741cc99b2d5cae9c49d05930cf014b87e60d20fecc122deb0ff3beaee7c8064")
 			})
 
 		})
@@ -150,6 +150,21 @@ func TestPosgresLedgerChain(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "ledger does not exist")
 			})
+		})
+
+		Convey(".MakeTxHash", func() {
+
+			Convey("should return expected transaction hash", func() {
+				hash := pgChain.MakeTxHash(&Transaction{
+					Ledger:     "global",
+					ID:         util.Sha256("tx_id"),
+					Key:        "balance",
+					Value:      "30.50",
+					PrevTxHash: util.Sha256("prev_tx_hash"),
+				})
+				So(hash, ShouldEqual, "b472517c05fdc297c10edbf2cb359f9d85efb1879507a8b3d48ca93df0f462af")
+			})
+
 		})
 
 		Reset(func() {
