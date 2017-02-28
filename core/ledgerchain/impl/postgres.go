@@ -42,7 +42,6 @@ type Ledger struct {
 // sharing the same ledger name.
 type Transaction struct {
 	Number     uint   `gorm:"primary_key"`
-	Ledger     string `json:"ledger"`
 	ID         string `json:"id" gorm:"type:varchar(64);unique_index"`
 	Key        string `json:"key" gorm:"type:varchar(64)"`
 	Value      string `json:"key" gorm:"type:text"`
@@ -86,8 +85,7 @@ func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
 // MakeTxHash creates a hash of a transaction
 func (ch *PostgresLedgerChain) MakeTxHash(tx *Transaction) string {
 	return util.Sha256(fmt.Sprintf(
-		"%s|%s|%s|%s|%s",
-		tx.Ledger,
+		"%s|%s|%s|%s",
 		tx.ID,
 		crypto.ToBase64([]byte(tx.Key)),
 		crypto.ToBase64([]byte(tx.Value)),
@@ -178,26 +176,19 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
-func (ch *PostgresLedgerChain) Put(ledgerName, txID, key, value string) (interface{}, error) {
-
-	var ledger Ledger
-	err := ch.db.Where("name = ?", ledgerName).First(&ledger).Error
-	if err != nil {
-		return nil, fmt.Errorf("ledger does not exist")
-	}
+func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error) {
 
 	tx := ch.db.Begin()
 
-	err = tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
+	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
 	newTx := &Transaction{
-		Ledger: ledgerName,
-		ID:     txID,
-		Key:    key,
-		Value:  value,
+		ID:    txID,
+		Key:   key,
+		Value: value,
 	}
 
 	var prevTx Transaction
@@ -230,11 +221,11 @@ func (ch *PostgresLedgerChain) Put(ledgerName, txID, key, value string) (interfa
 	return newTx, nil
 }
 
-// GetByID fetches a transaction by its transaction id and ledger name
-func (ch *PostgresLedgerChain) GetByID(ledger, txID string) (interface{}, error) {
+// GetByID fetches a transaction by its transaction id
+func (ch *PostgresLedgerChain) GetByID(txID string) (interface{}, error) {
 	var tx Transaction
 
-	err := ch.db.Where("id = ? AND ledger = ?", txID, ledger).First(&tx).Error
+	err := ch.db.Where("id = ?", txID).First(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to perform find op. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
