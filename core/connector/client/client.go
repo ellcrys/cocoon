@@ -39,16 +39,22 @@ func NewClient(ccodePort int) *Client {
 // running on a known port
 func (c *Client) Connect() error {
 
+	log.Info("Starting cocoon code client")
+
 	// start a ticker to continously discover orderer addreses
 	go func() {
-		c.discoverOrderers()
 		c.orderDiscoTicker = time.NewTicker(60 * time.Second)
 		for _ = range c.orderDiscoTicker.C {
 			c.discoverOrderers()
 		}
 	}()
 
-	log.Info("Starting cocoon code client")
+	c.discoverOrderers()
+	if len(c.orderersAddr) > 0 {
+		log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(c.orderersAddr))
+	} else {
+		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
+	}
 
 	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", c.ccodePort), grpc.WithInsecure())
 	if err != nil {
@@ -74,7 +80,6 @@ func (c *Client) Connect() error {
 func (c *Client) discoverOrderers() {
 	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
 		c.orderersAddr = []string{os.Getenv("DEV_ORDERER_ADDR")}
-		log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(c.orderersAddr))
 	}
 	// Retrieve from consul service API (not implemented)
 }
