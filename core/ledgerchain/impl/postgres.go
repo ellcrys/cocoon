@@ -13,9 +13,13 @@ import (
 // ErrChainExist represents an error about an existing chain
 var ErrChainExist = errors.New("chain already exists")
 
-// LedgerListName represents the name of the table where all
+// LedgerTableName represents the name of the table where all
 // known ledger info are stored.
-const LedgerListName = "ledgers"
+const LedgerTableName = "ledgers"
+
+// TransactionTableName represents the name of the table where all
+// transactions are stored.
+const TransactionTableName = "transactions"
 
 // NullHash is the default hash value assigned to columns that require a default hash value
 const NullHash = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -80,17 +84,24 @@ func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
 // the table holding records of all ledgers.
 func (ch *PostgresLedgerChain) Init() error {
 
-	// create ledger list entry table if not existing
-	if !ch.db.HasTable(LedgerListName) {
+	// create ledger table if not existing
+	if !ch.db.HasTable(LedgerTableName) {
 		if err := ch.db.CreateTable(&Ledger{}).Error; err != nil {
-			return fmt.Errorf("failed to create `ledgers` table. %s", err)
+			return fmt.Errorf("failed to create `%s` table. %s", LedgerTableName, err)
 		}
 	}
 
-	// Create general ledger list entry if it does not exists
+	// create transaction table if not existing
+	if !ch.db.HasTable(TransactionTableName) {
+		if err := ch.db.CreateTable(&Transaction{}).Error; err != nil {
+			return fmt.Errorf("failed to create `%s` table. %s", TransactionTableName, err)
+		}
+	}
+
+	// Create general ledger if it does not exists
 	var c int
 	if err := ch.db.Model(&Ledger{}).Count(&c).Error; err != nil {
-		return fmt.Errorf("failed to check whether general ledger list entry exists in the ledger list table. %s", err)
+		return fmt.Errorf("failed to check whether general ledger exists in the ledger list table. %s", err)
 	}
 
 	if c == 0 {

@@ -18,6 +18,10 @@ func TestPosgresLedgerChain(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 
+		var RestDB = func() {
+			db.(*gorm.DB).DropTable(LedgerTableName, TransactionTableName)
+		}
+
 		Convey(".Connect", func() {
 			Convey("should return error when unable to connect to a postgres server", func() {
 				var conStr = "host=localhost user=wrong dbname=test sslmode=disable password=abc"
@@ -33,15 +37,18 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("when ledger table does not exists", func() {
 
-				Convey("should create ledger table and create a global ledger entry", func() {
+				Convey("should create ledger and transactions table and create a global ledger entry", func() {
 
-					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerListName)
+					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, false)
 
 					err := pgChain.Init()
 					So(err, ShouldBeNil)
 
-					ledgerEntryExists = db.(*gorm.DB).HasTable(LedgerListName)
+					ledgerEntryExists = db.(*gorm.DB).HasTable(LedgerTableName)
+					So(ledgerEntryExists, ShouldEqual, true)
+
+					ledgerEntryExists = db.(*gorm.DB).HasTable(TransactionTableName)
 					So(ledgerEntryExists, ShouldEqual, true)
 
 					Convey("ledger table must include a global ledger entry", func() {
@@ -53,7 +60,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					})
 
 					Reset(func() {
-						db.(*gorm.DB).DropTable(LedgerListName)
+						RestDB()
 					})
 				})
 			})
@@ -63,7 +70,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					err := pgChain.Init()
 					So(err, ShouldBeNil)
 
-					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerListName)
+					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, true)
 
 					var entries []Ledger
@@ -74,7 +81,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				})
 
 				Reset(func() {
-					db.(*gorm.DB).DropTable(LedgerListName)
+					RestDB()
 				})
 			})
 		})
@@ -129,12 +136,12 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 
 			Reset(func() {
-				db.(*gorm.DB).DropTable(LedgerListName)
+				RestDB()
 			})
 		})
 
 		Reset(func() {
-			db.(*gorm.DB).DropTable(LedgerListName)
+			RestDB()
 		})
 	})
 }

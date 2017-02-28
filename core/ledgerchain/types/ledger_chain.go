@@ -9,5 +9,6 @@ type LedgerChain interface {
 	Init() error
 	GetBackend() string
 	CreateLedger(name string) error
+	Put(key, value string) error
 	Close() error
 }
