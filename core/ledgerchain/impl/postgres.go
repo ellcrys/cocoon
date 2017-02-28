@@ -269,7 +269,7 @@ func (ch *PostgresLedgerChain) Get(key string) (interface{}, error) {
 // Close releases any resource held
 func (ch *PostgresLedgerChain) Close() error {
 	if ch.db != nil {
-		return ch.Close()
+		return ch.db.Close()
 	}
 	return nil
 }
