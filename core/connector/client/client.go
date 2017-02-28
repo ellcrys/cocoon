@@ -5,6 +5,10 @@ import (
 
 	"io"
 
+	"os"
+
+	"time"
+
 	proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -16,10 +20,12 @@ var log = logging.MustGetLogger("connector.client")
 // Client represents a cocoon code GRPC client
 // that interacts with a cocoon code.
 type Client struct {
-	ccodePort int
-	stub      proto.StubClient
-	conCtx    context.Context
-	conCancel context.CancelFunc
+	ccodePort        int
+	stub             proto.StubClient
+	conCtx           context.Context
+	conCancel        context.CancelFunc
+	orderDiscoTicker *time.Ticker
+	orderersAddr     []string
 }
 
 // NewClient creates a new cocoon code client
@@ -32,6 +38,15 @@ func NewClient(ccodePort int) *Client {
 // Connect connects to a cocoon code server
 // running on a known port
 func (c *Client) Connect() error {
+
+	// start a ticker to continously discover orderer addreses
+	go func() {
+		c.discoverOrderers()
+		c.orderDiscoTicker = time.NewTicker(60 * time.Second)
+		for _ = range c.orderDiscoTicker.C {
+			c.discoverOrderers()
+		}
+	}()
 
 	log.Info("Starting cocoon code client")
 
@@ -50,6 +65,18 @@ func (c *Client) Connect() error {
 	}
 
 	return nil
+}
+
+// discoverOrderers fetches a list of orderer service addresses
+// via consul service discovery API. For development purpose,
+// If DEV_ORDERER_ADDR is set, it will fetch the orderer
+// address from the env variable.
+func (c *Client) discoverOrderers() {
+	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
+		c.orderersAddr = []string{os.Getenv("DEV_ORDERER_ADDR")}
+		log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(c.orderersAddr))
+	}
+	// Retrieve from consul service API (not implemented)
 }
 
 // Do starts a request loop that continously asks the
