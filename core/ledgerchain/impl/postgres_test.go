@@ -140,6 +140,19 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
+		Convey(".MakeTxHash", func() {
+			Convey("should return expected transaction hash", func() {
+				hash := pgChain.MakeTxHash(&Transaction{
+					Ledger:     "global",
+					ID:         util.Sha256("tx_id"),
+					Key:        "balance",
+					Value:      "30.50",
+					PrevTxHash: util.Sha256("prev_tx_hash"),
+				})
+				So(hash, ShouldEqual, "b472517c05fdc297c10edbf2cb359f9d85efb1879507a8b3d48ca93df0f462af")
+			})
+		})
+
 		Convey(".Put", func() {
 
 			err := pgChain.Init()
@@ -184,19 +197,34 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
-		Convey(".MakeTxHash", func() {
+		Convey(".GetByID", func() {
 
-			Convey("should return expected transaction hash", func() {
-				hash := pgChain.MakeTxHash(&Transaction{
-					Ledger:     "global",
-					ID:         util.Sha256("tx_id"),
-					Key:        "balance",
-					Value:      "30.50",
-					PrevTxHash: util.Sha256("prev_tx_hash"),
-				})
-				So(hash, ShouldEqual, "b472517c05fdc297c10edbf2cb359f9d85efb1879507a8b3d48ca93df0f462af")
+			err := pgChain.Init()
+			So(err, ShouldBeNil)
+
+			Convey("should return nil when transaction does not exist", func() {
+				tx, err := pgChain.GetByID("global", "unknown_id")
+				So(tx, ShouldBeNil)
+				So(err, ShouldBeNil)
 			})
 
+			Convey("should return an expected transaction", func() {
+				key := util.UUID4()
+				txID := util.Sha256(util.UUID4())
+				tx, err := pgChain.Put("global", txID, key, "value")
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				tx, err = pgChain.GetByID("global", txID)
+				So(err, ShouldBeNil)
+				So(tx, ShouldNotBeNil)
+				So(tx.(*Transaction).Key, ShouldEqual, key)
+				So(tx.(*Transaction).Value, ShouldEqual, "value")
+			})
+
+			Reset(func() {
+				RestDB()
+			})
 		})
 
 		Reset(func() {

@@ -230,6 +230,20 @@ func (ch *PostgresLedgerChain) Put(ledgerName, txID, key, value string) (interfa
 	return newTx, nil
 }
 
+// GetByID fetches a transaction by its transaction id and ledger name
+func (ch *PostgresLedgerChain) GetByID(ledger, txID string) (interface{}, error) {
+	var tx Transaction
+
+	err := ch.db.Where("id = ? AND ledger = ?", txID, ledger).First(&tx).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to perform find op. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &tx, nil
+}
+
 // Close releases any resource held
 func (ch *PostgresLedgerChain) Close() error {
 	if ch.db != nil {
