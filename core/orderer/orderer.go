@@ -3,6 +3,7 @@ package orderer
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	context "golang.org/x/net/context"
 
@@ -30,18 +31,18 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(port string, endedCh chan bool) {
+func (od *Orderer) Start(addr string, endedCh chan bool) {
 
 	od.endedCh = endedCh
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s", addr))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s. Err: %s", port, err)
+		log.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
 	}
 
 	time.AfterFunc(2*time.Second, func() {
 
-		log.Infof("Started orderer GRPC server on port %s", port)
+		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
 		// establish connection to chain backend
 		_, err := od.chain.Connect("host=localhost user=ned dbname=cocoonchain sslmode=disable password=")
