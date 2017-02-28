@@ -147,8 +147,9 @@ func TestPosgresLedgerChain(t *testing.T) {
 					Key:        "balance",
 					Value:      "30.50",
 					PrevTxHash: util.Sha256("prev_tx_hash"),
+					CreatedAt:  12345678,
 				})
-				So(hash, ShouldEqual, "4a423be305a0d75c8da43012d2e986262235c3f28c1a8627f8ddd3c1ee2c957b")
+				So(hash, ShouldEqual, "0e92cf41a17865093e4d4e6553f00da9dc66e8ae2d30d19ad36dc21a2e3c2b89")
 			})
 		})
 

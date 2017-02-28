@@ -48,6 +48,7 @@ type Transaction struct {
 	Hash       string `json:"hash" gorm:"type:varchar(64);unique_index"`
 	PrevTxHash string `json:"prev_tx_hash" gorm:"type:varchar(64);unique_index"`
 	NextTxHash string `json:"next_tx_hash" gorm:"type:varchar(64);unique_index"`
+	CreatedAt  int64  `json:"created_at"`
 }
 
 // PostgresLedgerChain defines a ledgerchain implementation
@@ -85,11 +86,12 @@ func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
 // MakeTxHash creates a hash of a transaction
 func (ch *PostgresLedgerChain) MakeTxHash(tx *Transaction) string {
 	return util.Sha256(fmt.Sprintf(
-		"%s|%s|%s|%s",
+		"%s|%s|%s|%s|%d",
 		tx.ID,
 		crypto.ToBase64([]byte(tx.Key)),
 		crypto.ToBase64([]byte(tx.Value)),
-		tx.PrevTxHash))
+		tx.PrevTxHash,
+		tx.CreatedAt))
 }
 
 // Init initializes the blockchain. Creates the necessary tables such as the
@@ -186,9 +188,10 @@ func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error)
 	}
 
 	newTx := &Transaction{
-		ID:    txID,
-		Key:   key,
-		Value: value,
+		ID:        txID,
+		Key:       key,
+		Value:     value,
+		CreatedAt: time.Now().Unix(),
 	}
 
 	var prevTx Transaction
