@@ -190,8 +190,8 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (interface{}, error) {
 	return &l, nil
 }
 
-// ListLedger fetches a list of all ledgers associated to a cocoon code id
-func (ch *PostgresLedgerChain) ListLedger(cocoonCodeID string) (interface{}, error) {
+// ListLedgers fetches a list of all ledgers associated to a cocoon code id
+func (ch *PostgresLedgerChain) ListLedgers(cocoonCodeID string) (interface{}, error) {
 	var l []Ledger
 
 	err := ch.db.Where("cocoon_code_id = ?", cocoonCodeID).Find(&l).Error

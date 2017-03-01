@@ -169,13 +169,13 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
-		Convey(".ListLedger", func() {
+		Convey(".ListLedgers", func() {
 
 			err := pgChain.Init()
 			So(err, ShouldBeNil)
 
 			Convey("should return an empty list when no ledger is associated to a cocoon id is found", func() {
-				ledgers, err := pgChain.ListLedger("abc")
+				ledgers, err := pgChain.ListLedgers("abc")
 				So(err, ShouldBeNil)
 				So(len(ledgers.([]Ledger)), ShouldEqual, 0)
 			})
@@ -186,7 +186,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
-				ledgers, err := pgChain.ListLedger(cocoonCodeID)
+				ledgers, err := pgChain.ListLedgers(cocoonCodeID)
 				So(err, ShouldBeNil)
 				So(len(ledgers.([]Ledger)), ShouldEqual, 1)
 				So(ledgers.([]Ledger)[0].Hash, ShouldEqual, ledger.(*Ledger).Hash)
