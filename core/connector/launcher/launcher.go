@@ -167,6 +167,10 @@ func (lc *Launcher) Launch(req *Request) {
 // Stop stops the launcher and the container it is running
 func (lc *Launcher) Stop() error {
 
+	if dckClient == nil || lc.container == nil {
+		return nil
+	}
+
 	containerStatus, err := dckClient.InspectContainer(lc.container.ID)
 	if err != nil {
 		return fmt.Errorf("failed to inspect container before running. %s", err)
