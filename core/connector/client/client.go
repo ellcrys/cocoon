@@ -35,8 +35,12 @@ func NewClient(ccodePort string) *Client {
 	}
 }
 
-// GetCCPort returns the cocoon code port
+// GetCCPort returns the cocoon code port.
+// For development, if DEV_COCOON_CODE_PORT is set, it connects to it.
 func (c *Client) GetCCPort() string {
+	if devCCodePort := os.Getenv("DEV_COCOON_CODE_PORT"); len(devCCodePort) > 0 {
+		return devCCodePort
+	}
 	return c.ccodePort
 }
 
@@ -61,13 +65,13 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.ccodePort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.GetCCPort()), grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
 	}
 	defer conn.Close()
 
-	log.Debugf("Now connected to cocoon code at port=%d", c.ccodePort)
+	log.Debugf("Now connected to cocoon code at port=%d", c.GetCCPort())
 
 	c.stub = proto.NewStubClient(conn)
 
