@@ -20,7 +20,7 @@ var log = logging.MustGetLogger("connector.client")
 // Client represents a cocoon code GRPC client
 // that interacts with a cocoon code.
 type Client struct {
-	ccodePort        int
+	ccodePort        string
 	stub             proto.StubClient
 	conCtx           context.Context
 	conCancel        context.CancelFunc
@@ -29,10 +29,15 @@ type Client struct {
 }
 
 // NewClient creates a new cocoon code client
-func NewClient(ccodePort int) *Client {
+func NewClient(ccodePort string) *Client {
 	return &Client{
 		ccodePort: ccodePort,
 	}
+}
+
+// GetCCPort returns the cocoon code port
+func (c *Client) GetCCPort() string {
+	return c.ccodePort
 }
 
 // Connect connects to a cocoon code server
@@ -56,7 +61,7 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", c.ccodePort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.ccodePort), grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
 	}

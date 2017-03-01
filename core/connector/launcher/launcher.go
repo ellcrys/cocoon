@@ -44,7 +44,7 @@ type Launcher struct {
 func NewLauncher(failed chan bool) *Launcher {
 	return &Launcher{
 		failed: failed,
-		client: client.NewClient(8000),
+		client: client.NewClient(util.Env("COCOON_CODE_PORT", "8000")),
 	}
 }
 
@@ -313,15 +313,15 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string, env
 			WorkingDir: mountDir,
 			Tty:        true,
 			ExposedPorts: map[docker.Port]struct{}{
-				"8000/tcp": struct{}{},
+				docker.Port(fmt.Sprintf("%s/tcp", lc.client.GetCCPort())): struct{}{},
 			},
 			Cmd: []string{"bash"},
 			Env: env,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: map[docker.Port][]docker.PortBinding{
-				"8000/tcp": []docker.PortBinding{
-					docker.PortBinding{HostIP: "127.0.0.1", HostPort: "8000"},
+				docker.Port(fmt.Sprintf("%s/tcp", lc.client.GetCCPort())): []docker.PortBinding{
+					docker.PortBinding{HostIP: "127.0.0.1", HostPort: lc.client.GetCCPort()},
 				},
 			},
 			Mounts: []docker.Mount{
