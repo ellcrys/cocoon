@@ -100,7 +100,10 @@ func (lc *Launcher) Launch(req *Request) {
 		req.ID,
 		lang.GetImage(),
 		lang.GetDownloadDestination(req.URL),
-		lang.GetMountDestination(req.URL))
+		lang.GetMountDestination(req.URL),
+		[]string{
+			fmt.Sprintf("COCOON_ID=%s", req.ID),
+		})
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
 		lc.setFailed(true)
@@ -301,7 +304,7 @@ func (lc *Launcher) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // mounts the source directory and set the mount
 // directory as the work directory
-func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string) (*docker.Container, error) {
+func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string, env []string) (*docker.Container, error) {
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -313,6 +316,7 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string) (*d
 				"8000/tcp": struct{}{},
 			},
 			Cmd: []string{"bash"},
+			Env: env,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: map[docker.Port][]docker.PortBinding{
