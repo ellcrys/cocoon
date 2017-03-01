@@ -44,7 +44,7 @@
               "COCOON_BUILD_PARAMS": "{{CocoonBuildParams}}"
             },
             "Services": [{
-              "Name": "cocoons",
+              "Name": "{{ID}}",
               "Tags": ["{{ID}}"],
               "PortLabel": "connector-http"   
             }],
