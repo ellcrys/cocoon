@@ -22,3 +22,4 @@ import:
   subpackages:
   - convey
 - package: github.com/orcaman/concurrent-map
+- package: github.com/ncodes/cocoon-util

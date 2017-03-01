@@ -1,5 +1,5 @@
-hash: 379b391502f2df33d638273356c87544615ba3ecc2d239cf479f1af163ece27d
-updated: 2017-03-01T10:30:13.46058719+01:00
+hash: 02b14f03e499b60ba04989f1aaa14bd86f845a61553ecae08eacbb348b3062c5
+updated: 2017-03-01T18:59:00.227864594+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -103,6 +103,8 @@ imports:
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/mapstructure
   version: db1efb556f84b25a0a13a04aad883943538ad2e0
+- name: github.com/ncodes/cocoon-util
+  version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
 - name: github.com/op/go-logging
@@ -172,7 +174,7 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 0ad425fe45e885577bef05dc1c50f72e33188b16
+  version: d680ca3ed853995402af43b866311167281bdc20
   subpackages:
   - transform
   - unicode/norm
