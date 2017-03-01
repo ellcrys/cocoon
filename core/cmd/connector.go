@@ -49,7 +49,6 @@ var connectorCmd = &cobra.Command{
 	Long:  `Starts the connector and launches a cocoon code.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		doneCh := make(chan bool, 1)
 		launchFailedCh := make(chan bool, 1)
 
 		var log = logging.MustGetLogger("connector")
@@ -68,11 +67,11 @@ var connectorCmd = &cobra.Command{
 		lchr.Launch(req)
 
 		if <-launchFailedCh {
-			log.Fatal("aborting: cocoon code launch failed")
 			lchr.Stop()
+			log.Fatal("aborting: cocoon code launch failed")
 		}
 
-		<-doneCh
+		log.Info("cocoon code launch successfully exited")
 	},
 }
 
