@@ -32,9 +32,7 @@
               "network_mode": "host",
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
               "privileged": true,
-              "port_map": [{
-                "connector-api": 8002
-              }]
+              "port_map": []
             },
             "Env": {
               "COCOON_ID": "{{ID}}",
@@ -46,7 +44,7 @@
             "Services": [{
               "Name": "{{ID}}",
               "Tags": ["{{ID}}"],
-              "PortLabel": "connector-api"   
+              "PortLabel": "connector"   
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-connector.sh",
@@ -69,7 +67,7 @@
                 {
                   "MBits": 200,
                   "DynamicPorts":[
-                    { "Label":"connector-api"}
+                    { "Label":"connector"}
                   ]
                 }
               ]

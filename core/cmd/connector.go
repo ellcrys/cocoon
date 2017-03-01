@@ -6,6 +6,7 @@ import (
 
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/launcher"
+	"github.com/ncodes/cocoon/core/connector/server"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -64,10 +65,15 @@ var connectorCmd = &cobra.Command{
 		// install cooncode
 		lchr := launcher.NewLauncher(launchFailedCh)
 		lchr.AddLanguage(launcher.NewGo())
-		lchr.Launch(req)
+		go lchr.Launch(req)
+
+		// start grpc API server
+		apiServer := server.NewAPIServer()
+		go apiServer.Start(fmt.Sprintf(":%s", "8002"), make(chan bool, 1))
 
 		if <-launchFailedCh {
 			lchr.Stop()
+			apiServer.Stop(1)
 			log.Fatal("aborting: cocoon code launch failed")
 		}
 
