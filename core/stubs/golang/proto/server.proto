@@ -2,16 +2,16 @@ syntax = "proto3";
 package proto;
 
 service Stub {
-    rpc Transact(stream Op) returns (stream Tx);
+    rpc Transact(stream Resp) returns (stream Tx);
 }
 
 message Tx {
     string id = 1;
     string name = 2;
-    string value = 3;
+    repeated string params = 3;
 }
 
-message Op {
+message Resp {
     string name = 1;
     string value = 2;
 }
