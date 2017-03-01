@@ -71,7 +71,7 @@ func (c *Client) Connect() error {
 	}
 	defer conn.Close()
 
-	log.Debugf("Now connected to cocoon code at port=%d", c.GetCCPort())
+	log.Debugf("Now connected to cocoon code at port=%s", c.GetCCPort())
 
 	c.stub = proto.NewStubClient(conn)
 
