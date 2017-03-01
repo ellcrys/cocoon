@@ -35,9 +35,9 @@ func NewClient(ccodePort string) *Client {
 	}
 }
 
-// GetCCPort returns the cocoon code port.
+// getCCPort returns the cocoon code port.
 // For development, if DEV_COCOON_CODE_PORT is set, it connects to it.
-func (c *Client) GetCCPort() string {
+func (c *Client) getCCPort() string {
 	if devCCodePort := os.Getenv("DEV_COCOON_CODE_PORT"); len(devCCodePort) > 0 {
 		return devCCodePort
 	}
@@ -65,13 +65,13 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.GetCCPort()), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.getCCPort()), grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
 	}
 	defer conn.Close()
 
-	log.Debugf("Now connected to cocoon code at port=%s", c.GetCCPort())
+	log.Debugf("Now connected to cocoon code at port=%s", c.getCCPort())
 
 	c.stub = proto.NewStubClient(conn)
 
@@ -104,7 +104,7 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 	// connect to the cocoon code
 	stream, err := c.stub.Transact(c.conCtx)
 	if err != nil {
-		return fmt.Errorf("failed to call GetTx of cocoon code stub. %s", err)
+		return fmt.Errorf("failed to start transaction stream with cocoon code. %s", err)
 	}
 
 	for {
@@ -113,7 +113,7 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 
 		in, err := stream.Recv()
 		if err == io.EOF {
-			return fmt.Errorf("GetTx connection between connector and cocoon code stub has ended")
+			return fmt.Errorf("Transaction connection between connector and cocoon code has ended")
 		}
 		if err != nil {
 			return fmt.Errorf("Failed to successfully receive message from cocoon code. %s", err)

@@ -40,11 +40,14 @@ type Launcher struct {
 	client    *client.Client
 }
 
+// cocoonCodePort is the port the cococoon code server is listening on
+var cocoonCodePort = util.Env("COCOON_CODE_PORT", "8000")
+
 // NewLauncher creates a new launcher
 func NewLauncher(failed chan bool) *Launcher {
 	return &Launcher{
 		failed: failed,
-		client: client.NewClient(util.Env("COCOON_CODE_PORT", "8000")),
+		client: client.NewClient(cocoonCodePort),
 	}
 }
 
@@ -314,15 +317,15 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string, env
 			WorkingDir: mountDir,
 			Tty:        true,
 			ExposedPorts: map[docker.Port]struct{}{
-				docker.Port(fmt.Sprintf("%s/tcp", lc.client.GetCCPort())): struct{}{},
+				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
 			},
 			Cmd: []string{"bash"},
 			Env: env,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: map[docker.Port][]docker.PortBinding{
-				docker.Port(fmt.Sprintf("%s/tcp", lc.client.GetCCPort())): []docker.PortBinding{
-					docker.PortBinding{HostIP: "127.0.0.1", HostPort: lc.client.GetCCPort()},
+				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
+					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
 				},
 			},
 			Mounts: []docker.Mount{
