@@ -13,7 +13,7 @@ var testOrderCmd = &cobra.Command{
 	Long:  `Test client for the order. For development only.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var log = logging.MustGetLogger("orderer-test")
-		ordererAddr := ":9000"
+		ordererAddr := ":8001"
 		conn, err := grpc.Dial(ordererAddr, grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Failed to connect to orderer. Is orderer running on %s", ordererAddr)

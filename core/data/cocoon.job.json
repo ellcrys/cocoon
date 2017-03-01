@@ -33,7 +33,7 @@
               "args": ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"],
               "privileged": true,
               "port_map": [{
-                "connector-http": 3000
+                "connector-api": 8002
               }]
             },
             "Env": {
@@ -46,7 +46,7 @@
             "Services": [{
               "Name": "{{ID}}",
               "Tags": ["{{ID}}"],
-              "PortLabel": "connector-http"   
+              "PortLabel": "connector-api"   
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-connector.sh",
@@ -69,7 +69,7 @@
                 {
                   "MBits": 200,
                   "DynamicPorts":[
-                    { "Label":"connector-http"}
+                    { "Label":"connector-api"}
                   ]
                 }
               ]

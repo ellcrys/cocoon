@@ -17,7 +17,7 @@ var ordererCmd = &cobra.Command{
 
 		var log = logging.MustGetLogger("orderer")
 		log.Info("Orderer has started")
-		addr := util.Env("ORDERER_ADDR", "127.0.0.1:9000")
+		addr := util.Env("ORDERER_ADDR", "127.0.0.1:8001")
 		ledgerChainConStr := util.Env("LEDGER_CHAIN_CONNECTION_STRING", "host=localhost user=ned dbname=cocoonchain sslmode=disable password=")
 
 		endedCh := make(chan bool)
