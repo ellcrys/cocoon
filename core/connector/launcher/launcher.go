@@ -103,6 +103,7 @@ func (lc *Launcher) Launch(req *Request) {
 		lang.GetMountDestination(req.URL),
 		[]string{
 			fmt.Sprintf("COCOON_ID=%s", req.ID),
+			fmt.Sprintf("COCOON_CODE_PORT=%s", lc.client.GetCCPort()),
 		})
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())

@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serverPort = 8000
+var serverPort = util.Env("COCOON_CODE_PORT", "8000")
 var defaultServer *stubServer
 var log *logging.Logger
 var serverDone chan bool
@@ -77,12 +77,12 @@ func StartServer(startedCb func()) {
 
 	serverDone = make(chan bool, 1)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", serverPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", serverPort))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%d", serverPort)
+		log.Fatalf("failed to listen on port=%s", serverPort)
 	}
 
-	log.Infof("Started stub service at port=%d", serverPort)
+	log.Infof("Started stub service at port=%s", serverPort)
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, &stubServer{})
 	go server.Serve(lis)
