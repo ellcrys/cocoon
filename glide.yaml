@@ -21,3 +21,4 @@ import:
 - package: github.com/smartystreets/goconvey
   subpackages:
   - convey
+- package: github.com/orcaman/concurrent-map

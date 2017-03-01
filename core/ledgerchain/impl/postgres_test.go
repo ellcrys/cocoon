@@ -6,6 +6,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
+	"github.com/ncodes/cocoon/core/ledgerchain/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -52,7 +53,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					So(ledgerEntryExists, ShouldEqual, true)
 
 					Convey("ledger table must include a global ledger entry", func() {
-						var entries []Ledger
+						var entries []types.Ledger
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
@@ -73,7 +74,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, true)
 
-					var entries []Ledger
+					var entries []types.Ledger
 					err = db.(*gorm.DB).Find(&entries).Error
 					So(err, ShouldBeNil)
 					So(len(entries), ShouldEqual, 1)
@@ -89,7 +90,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 		Convey(".MakeLegderHash", func() {
 
 			Convey("should return expected ledger hash", func() {
-				hash := pgChain.MakeLegderHash(&Ledger{
+				hash := pgChain.MakeLegderHash(&types.Ledger{
 					PrevLedgerHash: NullHash,
 					Name:           "global",
 					CocoonCodeID:   "xh6549dh",
@@ -132,7 +133,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				ledger2, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger2, ShouldNotBeNil)
-				So(ledger2.(*Ledger).PrevLedgerHash, ShouldEqual, ledger.(*Ledger).Hash)
+				So(ledger2.PrevLedgerHash, ShouldEqual, ledger.Hash)
 			})
 
 			Reset(func() {
@@ -161,7 +162,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				found, err := pgChain.GetLedger(name)
 				So(found, ShouldNotBeNil)
 				So(err, ShouldBeNil)
-				So(found.(*Ledger).Hash, ShouldEqual, ledger.(*Ledger).Hash)
+				So(found.Hash, ShouldEqual, ledger.Hash)
 			})
 
 			Reset(func() {
@@ -177,7 +178,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 			Convey("should return an empty list when no ledger is associated to a cocoon id is found", func() {
 				ledgers, err := pgChain.ListLedgers("abc")
 				So(err, ShouldBeNil)
-				So(len(ledgers.([]Ledger)), ShouldEqual, 0)
+				So(len(ledgers), ShouldEqual, 0)
 			})
 
 			Convey("should successfully return the expected ledger and the count", func() {
@@ -188,14 +189,14 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 				ledgers, err := pgChain.ListLedgers(cocoonCodeID)
 				So(err, ShouldBeNil)
-				So(len(ledgers.([]Ledger)), ShouldEqual, 1)
-				So(ledgers.([]Ledger)[0].Hash, ShouldEqual, ledger.(*Ledger).Hash)
+				So(len(ledgers), ShouldEqual, 1)
+				So(ledgers[0].Hash, ShouldEqual, ledger.Hash)
 			})
 		})
 
 		Convey(".MakeTxHash", func() {
 			Convey("should return expected transaction hash", func() {
-				hash := pgChain.MakeTxHash(&Transaction{
+				hash := pgChain.MakeTxHash(&types.Transaction{
 					ID:         util.Sha256("tx_id"),
 					Key:        "balance",
 					Value:      "30.50",
@@ -216,7 +217,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				_, err := pgChain.Put(txID, "key", "value")
 				So(err, ShouldBeNil)
 
-				var allTx []Transaction
+				var allTx []types.Transaction
 				err = db.(*gorm.DB).Find(&allTx).Error
 				So(err, ShouldBeNil)
 				So(len(allTx), ShouldEqual, 1)
@@ -233,7 +234,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {
 					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), "key", "value")
 					So(err, ShouldBeNil)
-					So(tx.(*Transaction).PrevTxHash, ShouldEqual, allTx[0].Hash)
+					So(tx.PrevTxHash, ShouldEqual, allTx[0].Hash)
 				})
 			})
 
@@ -263,8 +264,8 @@ func TestPosgresLedgerChain(t *testing.T) {
 				tx, err = pgChain.GetByID(txID)
 				So(err, ShouldBeNil)
 				So(tx, ShouldNotBeNil)
-				So(tx.(*Transaction).Key, ShouldEqual, key)
-				So(tx.(*Transaction).Value, ShouldEqual, "value")
+				So(tx.Key, ShouldEqual, key)
+				So(tx.Value, ShouldEqual, "value")
 			})
 
 			Reset(func() {
@@ -293,7 +294,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				tx2, err := pgChain.Get(key)
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
-				So(tx2.(*Transaction).Hash, ShouldEqual, tx.(*Transaction).Hash)
+				So(tx2.Hash, ShouldEqual, tx.Hash)
 			})
 
 			Reset(func() {

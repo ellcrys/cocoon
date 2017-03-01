@@ -9,6 +9,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
+	"github.com/ncodes/cocoon/core/ledgerchain/types"
 )
 
 // ErrChainExist represents an error about an existing chain
@@ -24,32 +25,6 @@ const TransactionTableName = "transactions"
 
 // NullHash is the default hash value assigned to columns that require a default hash value
 const NullHash = "0000000000000000000000000000000000000000000000000000000000000000"
-
-// Ledger represents a group of linked transactions
-type Ledger struct {
-	Number         uint   `gorm:"primary_key"`
-	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index"`
-	PrevLedgerHash string `json:"prev_ledger_hash" gorm:"type:varchar(64);unique_index"`
-	NextLedgerHash string `json:"next_ledger_hash" gorm:"type:varchar(64);unique_index"`
-	Name           string `json:"name" gorm:"type:varchar(64);unique_index"`
-	CocoonCodeID   string `json:"cocoon_code_id"`
-	Public         bool   `json:"public"`
-	CreatedAt      int64  `json:"created_at"`
-}
-
-// Transaction reprents a group of transactions belonging to a ledger.
-// All transaction entries must reference the hash of the immediate transaction
-// sharing the same ledger name.
-type Transaction struct {
-	Number     uint   `gorm:"primary_key"`
-	ID         string `json:"id" gorm:"type:varchar(64);unique_index"`
-	Key        string `json:"key" gorm:"type:varchar(64)"`
-	Value      string `json:"key" gorm:"type:text"`
-	Hash       string `json:"hash" gorm:"type:varchar(64);unique_index"`
-	PrevTxHash string `json:"prev_tx_hash" gorm:"type:varchar(64);unique_index"`
-	NextTxHash string `json:"next_tx_hash" gorm:"type:varchar(64);unique_index"`
-	CreatedAt  int64  `json:"created_at"`
-}
 
 // PostgresLedgerChain defines a ledgerchain implementation
 // on the postgres database. It implements the LedgerChain interface
@@ -79,12 +54,12 @@ func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
 }
 
 // MakeLegderHash takes a ledger and computes a hash
-func (ch *PostgresLedgerChain) MakeLegderHash(ledger *Ledger) string {
+func (ch *PostgresLedgerChain) MakeLegderHash(ledger *types.Ledger) string {
 	return util.Sha256(fmt.Sprintf("%s|%t|%d|%s", ledger.Name, ledger.Public, ledger.CreatedAt, ledger.PrevLedgerHash))
 }
 
 // MakeTxHash creates a hash of a transaction
-func (ch *PostgresLedgerChain) MakeTxHash(tx *Transaction) string {
+func (ch *PostgresLedgerChain) MakeTxHash(tx *types.Transaction) string {
 	return util.Sha256(fmt.Sprintf(
 		"%s|%s|%s|%s|%d",
 		tx.ID,
@@ -100,21 +75,21 @@ func (ch *PostgresLedgerChain) Init() error {
 
 	// create ledger table if not existing
 	if !ch.db.HasTable(LedgerTableName) {
-		if err := ch.db.CreateTable(&Ledger{}).Error; err != nil {
+		if err := ch.db.CreateTable(&types.Ledger{}).Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", LedgerTableName, err)
 		}
 	}
 
 	// create transaction table if not existing
 	if !ch.db.HasTable(TransactionTableName) {
-		if err := ch.db.CreateTable(&Transaction{}).Error; err != nil {
+		if err := ch.db.CreateTable(&types.Transaction{}).Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", TransactionTableName, err)
 		}
 	}
 
 	// Create global ledger if it does not exists
 	var c int
-	if err := ch.db.Model(&Ledger{}).Count(&c).Error; err != nil {
+	if err := ch.db.Model(&types.Ledger{}).Count(&c).Error; err != nil {
 		return fmt.Errorf("failed to check whether global ledger exists in the ledger list table. %s", err)
 	}
 
@@ -129,7 +104,7 @@ func (ch *PostgresLedgerChain) Init() error {
 }
 
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (interface{}, error) {
+func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (*types.Ledger, error) {
 
 	tx := ch.db.Begin()
 
@@ -138,7 +113,7 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
-	newLedger := &Ledger{
+	newLedger := &types.Ledger{
 		Name:           name,
 		CocoonCodeID:   cocoonCodeID,
 		Public:         public,
@@ -146,7 +121,7 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 		CreatedAt:      time.Now().Unix(),
 	}
 
-	var prevLedger Ledger
+	var prevLedger types.Ledger
 	err = tx.Where("next_ledger_hash = ?", "").Last(&prevLedger).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		tx.Rollback()
@@ -177,8 +152,8 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 }
 
 // GetLedger fetches a ledger meta information
-func (ch *PostgresLedgerChain) GetLedger(name string) (interface{}, error) {
-	var l Ledger
+func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
+	var l types.Ledger
 
 	err := ch.db.Where("name = ?", name).Last(&l).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -191,8 +166,8 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (interface{}, error) {
 }
 
 // ListLedgers fetches a list of all ledgers associated to a cocoon code id
-func (ch *PostgresLedgerChain) ListLedgers(cocoonCodeID string) (interface{}, error) {
-	var l []Ledger
+func (ch *PostgresLedgerChain) ListLedgers(cocoonCodeID string) ([]*types.Ledger, error) {
+	var l []*types.Ledger
 
 	err := ch.db.Where("cocoon_code_id = ?", cocoonCodeID).Find(&l).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -206,7 +181,7 @@ func (ch *PostgresLedgerChain) ListLedgers(cocoonCodeID string) (interface{}, er
 
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
-func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error) {
+func (ch *PostgresLedgerChain) Put(txID, key, value string) (*types.Transaction, error) {
 
 	tx := ch.db.Begin()
 
@@ -215,14 +190,14 @@ func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error)
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
-	newTx := &Transaction{
+	newTx := &types.Transaction{
 		ID:        txID,
 		Key:       key,
 		Value:     value,
 		CreatedAt: time.Now().Unix(),
 	}
 
-	var prevTx Transaction
+	var prevTx types.Transaction
 	err = tx.Where("next_tx_hash = ?", "").Last(&prevTx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		tx.Rollback()
@@ -253,8 +228,8 @@ func (ch *PostgresLedgerChain) Put(txID, key, value string) (interface{}, error)
 }
 
 // GetByID fetches a transaction by its transaction id
-func (ch *PostgresLedgerChain) GetByID(txID string) (interface{}, error) {
-	var tx Transaction
+func (ch *PostgresLedgerChain) GetByID(txID string) (*types.Transaction, error) {
+	var tx types.Transaction
 
 	err := ch.db.Where("id = ?", txID).First(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -267,8 +242,8 @@ func (ch *PostgresLedgerChain) GetByID(txID string) (interface{}, error) {
 }
 
 // Get fetches a transaction by its key
-func (ch *PostgresLedgerChain) Get(key string) (interface{}, error) {
-	var tx Transaction
+func (ch *PostgresLedgerChain) Get(key string) (*types.Transaction, error) {
+	var tx types.Transaction
 
 	err := ch.db.Where("key = ?", key).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

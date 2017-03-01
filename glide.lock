@@ -1,5 +1,5 @@
-hash: a5c107621e1ab7ad0dca733641885d2cecad5e8375fc3b272adf4b4752ca1ee7
-updated: 2017-02-27T11:17:22.420229204+01:00
+hash: 379b391502f2df33d638273356c87544615ba3ecc2d239cf479f1af163ece27d
+updated: 2017-03-01T10:30:13.46058719+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -60,7 +60,7 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 999ef73f5d50979cf6d12afed1726325b63f9570
+  version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
 - name: github.com/goware/urlx
   version: 8bb4a2e4339f55b15164907177e96e9faf885504
 - name: github.com/hashicorp/go-cleanhttp
@@ -108,14 +108,16 @@ imports:
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: cf883a87e762961a5b97fad993aa377750512b28
+  version: dcbcdf2470421e911211604c61ea3e8ca740d346
   subpackages:
   - libcontainer/system
   - libcontainer/user
+- name: github.com/orcaman/concurrent-map
+  version: 33c5bcbc98a8c1699b433720ec85c48dd6a62a6e
 - name: github.com/pelletier/go-buffruneio
-  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+  version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: 22139eb5469018e7374b3e7ef653de37ffb44f72
+  version: 361678322880708ac144df8575e6f01144ba1404
 - name: github.com/PuerkitoBio/purell
   version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
 - name: github.com/PuerkitoBio/urlesc
@@ -123,7 +125,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
-  version: 7f4b1adc791766938c29457bed0703fb9134421a
+  version: 0208149b40d863d2c1a2f8fe5753096a9cf2cc8b
 - name: github.com/smartystreets/goconvey
   version: 3bd662eac601ad6436e64776af2e112069eb2edc
   subpackages:
@@ -137,7 +139,7 @@ imports:
 - name: github.com/spf13/cast
   version: f820543c3592e283e311a60d2a600a664e39f6f7
 - name: github.com/spf13/cobra
-  version: 92ea23a837e66f46ac9e7d04fa826602b7b0a42d
+  version: fcd0c5a1df88f5d6784cb4feead962c3f3d0b66c
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
@@ -165,7 +167,7 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: e4594059fe4cde2daf423055a596c2cd1e6c9adf
+  version: 76cc09b634294339fa19ec41b5f2a0b3932cea8b
   subpackages:
   - unix
   - windows
@@ -199,7 +201,7 @@ imports:
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: 34726b35978f115328b4851975b055d6b280c493
+  version: 7d94d732be268c4904141f8b8604eb2d6d6544a1
   subpackages:
   - js
 - name: github.com/jtolds/gls
