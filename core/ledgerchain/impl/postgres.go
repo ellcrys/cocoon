@@ -94,7 +94,7 @@ func (ch *PostgresLedgerChain) Init() error {
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger("global", "", true)
+		_, err := ch.CreateLedger("global", true)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (ch *PostgresLedgerChain) Init() error {
 }
 
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bool) (*types.Ledger, error) {
+func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Ledger, error) {
 
 	tx := ch.db.Begin()
 
@@ -115,7 +115,6 @@ func (ch *PostgresLedgerChain) CreateLedger(name, cocoonCodeID string, public bo
 
 	newLedger := &types.Ledger{
 		Name:           name,
-		CocoonCodeID:   cocoonCodeID,
 		Public:         public,
 		NextLedgerHash: "",
 		CreatedAt:      time.Now().Unix(),
@@ -163,20 +162,6 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
 	}
 
 	return &l, nil
-}
-
-// ListLedgers fetches a list of all ledgers associated to a cocoon code id
-func (ch *PostgresLedgerChain) ListLedgers(cocoonCodeID string) ([]*types.Ledger, error) {
-	var l []*types.Ledger
-
-	err := ch.db.Where("cocoon_code_id = ?", cocoonCodeID).Find(&l).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, fmt.Errorf("failed to list ledgers. %s", err)
-	} else if err == gorm.ErrRecordNotFound {
-		return l, nil
-	}
-
-	return l, nil
 }
 
 // Put creates a new transaction associated to a ledger.

@@ -93,7 +93,6 @@ func TestPosgresLedgerChain(t *testing.T) {
 				hash := pgChain.MakeLegderHash(&types.Ledger{
 					PrevLedgerHash: NullHash,
 					Name:           "global",
-					CocoonCodeID:   "xh6549dh",
 					Public:         true,
 					CreatedAt:      1488196279,
 				})
@@ -110,27 +109,27 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("should successfully create a ledger entry", func() {
 
-				ledger, err := pgChain.CreateLedger(ledgerName, util.RandString(10), true)
+				ledger, err := pgChain.CreateLedger(ledgerName, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
-				ledger, err = pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				ledger, err = pgChain.CreateLedger(util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
 				Convey("should return error since a ledger with same name already exists", func() {
-					_, err := pgChain.CreateLedger(ledgerName, util.RandString(10), true)
+					_, err := pgChain.CreateLedger(ledgerName, true)
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, `pq: duplicate key value violates unique constraint "uix_ledgers_name"`)
 				})
 			})
 
 			Convey("should successfully add a new ledger entry but PrevLedgerHash column must reference the previous ledger", func() {
-				ledger, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				ledger, err := pgChain.CreateLedger(util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
-				ledger2, err := pgChain.CreateLedger(util.RandString(10), util.RandString(10), true)
+				ledger2, err := pgChain.CreateLedger(util.RandString(10), true)
 				So(err, ShouldBeNil)
 				So(ledger2, ShouldNotBeNil)
 				So(ledger2.PrevLedgerHash, ShouldEqual, ledger.Hash)
@@ -154,8 +153,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("should return expected transaction", func() {
 				name := util.RandString(10)
-				cocoonCodeID := util.RandString(10)
-				ledger, err := pgChain.CreateLedger(name, cocoonCodeID, true)
+				ledger, err := pgChain.CreateLedger(name, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
@@ -170,29 +168,28 @@ func TestPosgresLedgerChain(t *testing.T) {
 			})
 		})
 
-		Convey(".ListLedgers", func() {
+		// Convey(".ListLedgers", func() {
 
-			err := pgChain.Init()
-			So(err, ShouldBeNil)
+		// 	err := pgChain.Init()
+		// 	So(err, ShouldBeNil)
 
-			Convey("should return an empty list when no ledger is associated to a cocoon id is found", func() {
-				ledgers, err := pgChain.ListLedgers("abc")
-				So(err, ShouldBeNil)
-				So(len(ledgers), ShouldEqual, 0)
-			})
+		// 	Convey("should return an empty list when no ledger is associated to a cocoon id is found", func() {
+		// 		ledgers, err := pgChain.ListLedgers("abc")
+		// 		So(err, ShouldBeNil)
+		// 		So(len(ledgers), ShouldEqual, 0)
+		// 	})
 
-			Convey("should successfully return the expected ledger and the count", func() {
-				cocoonCodeID := util.RandString(10)
-				ledger, err := pgChain.CreateLedger(util.RandString(10), cocoonCodeID, true)
-				So(err, ShouldBeNil)
-				So(ledger, ShouldNotBeNil)
+		// 	Convey("should successfully return the expected ledger and the count", func() {
+		// 		ledger, err := pgChain.CreateLedger(util.RandString(10), true)
+		// 		So(err, ShouldBeNil)
+		// 		So(ledger, ShouldNotBeNil)
 
-				ledgers, err := pgChain.ListLedgers(cocoonCodeID)
-				So(err, ShouldBeNil)
-				So(len(ledgers), ShouldEqual, 1)
-				So(ledgers[0].Hash, ShouldEqual, ledger.Hash)
-			})
-		})
+		// 		ledgers, err := pgChain.ListLedgers(cocoonCodeID)
+		// 		So(err, ShouldBeNil)
+		// 		So(len(ledgers), ShouldEqual, 1)
+		// 		So(ledgers[0].Hash, ShouldEqual, ledger.Hash)
+		// 	})
+		// })
 
 		Convey(".MakeTxHash", func() {
 			Convey("should return expected transaction hash", func() {
