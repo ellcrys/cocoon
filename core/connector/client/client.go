@@ -26,6 +26,7 @@ type Client struct {
 	conCancel        context.CancelFunc
 	orderDiscoTicker *time.Ticker
 	orderersAddr     []string
+	stream           proto.Stub_TransactClient
 }
 
 // NewClient creates a new cocoon code client
@@ -42,6 +43,11 @@ func (c *Client) getCCPort() string {
 		return devCCodePort
 	}
 	return c.ccodePort
+}
+
+// GetStream returns the grpc stream connected to the grpc cocoon code server
+func (c *Client) GetStream() proto.Stub_TransactClient {
+	return c.stream
 }
 
 // Connect connects to a cocoon code server
@@ -98,11 +104,13 @@ func (c *Client) discoverOrderers() {
 // it processes it and returns the result.
 func (c *Client) Do(conn *grpc.ClientConn) error {
 
+	var err error
+
 	// create a context so we have complete controll of the connection
 	c.conCtx, c.conCancel = context.WithCancel(context.Background())
 
 	// connect to the cocoon code
-	stream, err := c.stub.Transact(c.conCtx)
+	c.stream, err = c.stub.Transact(c.conCtx)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction stream with cocoon code. %s", err)
 	}
@@ -111,7 +119,7 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 
 		log.Info("Waiting for transactions")
 
-		in, err := stream.Recv()
+		in, err := c.stream.Recv()
 		if err == io.EOF {
 			return fmt.Errorf("Transaction connection between connector and cocoon code has ended")
 		}

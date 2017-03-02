@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncodes/cocoon/core/connector/client"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
@@ -16,13 +17,16 @@ var log = logging.MustGetLogger("connector.api")
 // APIServer defines a grpc server for
 // invoking operations against cocoon code
 type APIServer struct {
-	server  *grpc.Server
-	endedCh chan bool
+	server           *grpc.Server
+	endedCh          chan bool
+	cocoonCodeClient *client.Client
 }
 
 // NewAPIServer creates a new grpc API server
-func NewAPIServer() *APIServer {
-	return new(APIServer)
+func NewAPIServer(cocoonCodeClient *client.Client) *APIServer {
+	server := new(APIServer)
+	server.cocoonCodeClient = cocoonCodeClient
+	return server
 }
 
 // Start starts the API service

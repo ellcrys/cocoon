@@ -57,6 +57,11 @@ func (lc *Launcher) setFailed(v bool) {
 	lc.failed <- v
 }
 
+// GetClient returns the connector to cocoon code client
+func (lc *Launcher) GetClient() *client.Client {
+	return lc.client
+}
+
 // Launch starts a cocoon code
 func (lc *Launcher) Launch(req *Request) {
 

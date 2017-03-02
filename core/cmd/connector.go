@@ -69,7 +69,7 @@ var connectorCmd = &cobra.Command{
 		go lchr.Launch(req)
 
 		// start grpc API server
-		apiServer := server.NewAPIServer()
+		apiServer := server.NewAPIServer(lchr.GetClient())
 		apiServerAddr := util.Env("NOMAD_IP_connector", "")
 		apiServerPort := util.Env("NOMAD_PORT_connector", "8002")
 		go apiServer.Start(fmt.Sprintf("%s:%s", apiServerAddr, apiServerPort), make(chan bool, 1))
