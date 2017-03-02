@@ -82,7 +82,9 @@ func (api *APIServer) Invoke(ctx context.Context, req *proto.InvokeRequest) (*pr
 		return nil, err
 	}
 
-	log.Infof("Resp: %v", resp)
-
-	return nil, fmt.Errorf("test error")
+	return &proto.InvokeResponse{
+		Id:       txID,
+		Function: req.GetFunction(),
+		Body:     resp.GetBody(),
+	}, nil
 }
