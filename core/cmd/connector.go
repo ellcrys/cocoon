@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server"
@@ -69,7 +70,9 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		apiServer := server.NewAPIServer()
-		go apiServer.Start(fmt.Sprintf(":%s", "8002"), make(chan bool, 1))
+		apiServerAddr := util.Env("NOMAD_IP_connector", "")
+		apiServerPort := util.Env("NOMAD_PORT_connector", "8002")
+		go apiServer.Start(fmt.Sprintf("%s:%s", apiServerAddr, apiServerPort), make(chan bool, 1))
 
 		if <-launchFailedCh {
 			lchr.Stop()
