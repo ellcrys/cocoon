@@ -75,6 +75,18 @@ func (lc *Launcher) Launch(req *Request) {
 
 	dckClient = client
 
+	// No need downloading, building and starting a cocoon code
+	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
+	// is running at that port. Just start the connector's client.
+	if devCocoonCodePort := os.Getenv("DEV_COCOON_CODE_PORT"); len(devCocoonCodePort) > 0 {
+		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodePort)
+		if err = lc.GetClient().Connect(); err != nil {
+			log.Error(err)
+			lc.setFailed(true)
+			return
+		}
+	}
+
 	log.Info("Ready to install cocoon code")
 	log.Debugf("Found ccode url=%s and lang=%s", req.URL, req.Lang)
 

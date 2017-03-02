@@ -9,8 +9,8 @@ import (
 // testOrderCmd represents the test-orderer command
 var testOrderCmd = &cobra.Command{
 	Use:   "test-orderer",
-	Short: "Test client for the order. For development only.",
-	Long:  `Test client for the order. For development only.`,
+	Short: "Playground for testing orderer during development.",
+	Long:  `Playground for testing orderer during development.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var log = logging.MustGetLogger("orderer-test")
 		ordererAddr := ":8001"
