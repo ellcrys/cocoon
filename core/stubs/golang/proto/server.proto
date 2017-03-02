@@ -2,16 +2,16 @@ syntax = "proto3";
 package proto;
 
 service Stub {
-    rpc Transact(stream Resp) returns (stream Tx);
+    rpc Transact(stream Tx) returns (stream Tx);
 }
 
+// Tx represent an invoke transaction or a response transaction.
+// An invoke transaction sets `invoke` field to true and the `response` field
+// to false and vice versa for a response transaction. The `name` field is used
+// to differentiate the kind of transactions.
 message Tx {
-    string id = 1;
-    string name = 2;
-    repeated string params = 3;
-}
-
-message Resp {
-    string name = 1;
-    string value = 2;
+    bool invoke = 1;
+    bool response = 2;
+    string name = 3;
+    repeated string params = 4;
 }
