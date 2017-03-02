@@ -17,5 +17,5 @@ message InvokeRequest {
 message InvokeResponse {
     string id = 1; 
     string function = 2;
-    bytes data = 3;
+    bytes body = 3;
 }
