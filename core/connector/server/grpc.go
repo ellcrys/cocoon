@@ -9,6 +9,7 @@ import (
 	"github.com/ncodes/cocoon/core/connector/client"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
 	logging "github.com/op/go-logging"
+	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -53,4 +54,10 @@ func (api *APIServer) Stop(exitCode int) int {
 	api.server.Stop()
 	close(api.endedCh)
 	return exitCode
+}
+
+// Invoke calls a function in the cocoon code.
+func (api *APIServer) Invoke(context.Context, *proto.InvokeRequest) (*proto.InvokeResponse, error) {
+	log.Info("Got an invoke request people!!!")
+	return nil, fmt.Errorf("Sorry bro")
 }
