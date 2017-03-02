@@ -40,6 +40,11 @@ const TxListLedgers = "LIST_LEDGERS"
 // TxCreateLedger represents a message to create a ledger
 const TxCreateLedger = "CREATE_LEDGER"
 
+// Flag to help tell whether cocoon code is running
+var running = false
+
+var ccode CocoonCode
+
 func init() {
 	defaultServer = new(stubServer)
 	config.ConfigureLogger()
@@ -100,10 +105,34 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 
 // handleInvokeTransaction processes invoke transaction requests
 func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
-	return s.stream.Send(&proto.Tx{
-		Id:       tx.GetId(),
-		Response: true,
-	})
+	switch tx.GetName() {
+	case "function":
+		if !running {
+			return fmt.Errorf("cocoon code is not running. Did you call the Run() method?")
+		}
+
+		functionName := tx.GetParams()[0]
+		result, err := ccode.Invoke(tx.GetId(), functionName, tx.GetParams()[1:])
+		if err != nil {
+			return err
+		}
+
+		// coerce result to json
+		resultJSON, err := util.ToJSON(result)
+		if err != nil {
+			return fmt.Errorf("failed to coerce cocoon code Invoke() result to json string. %s", err)
+		}
+
+		return s.stream.Send(&proto.Tx{
+			Id:       tx.GetId(),
+			Response: true,
+			Status:   200,
+			Body:     resultJSON,
+		})
+
+	default:
+		return fmt.Errorf("Unsupported invoke transaction (%s)", tx.GetName())
+	}
 }
 
 // handleRespTransaction passes the transaction to a response
@@ -119,10 +148,13 @@ func (s *stubServer) handleRespTransaction(tx *proto.Tx) error {
 	return nil
 }
 
-// StartServer starts the stub server and
-// readys it for service processing.
-// Accepts a callback that is called when the server starts
-func StartServer(startedCb func()) {
+// Run starts the stub server, takes a cocoon code and attempts to initialize it..
+func Run(cc CocoonCode) {
+
+	if running {
+		log.Info("cocoon code is already running")
+		return
+	}
 
 	serverDone = make(chan bool, 1)
 
@@ -136,7 +168,14 @@ func StartServer(startedCb func()) {
 	proto.RegisterStubServer(server, &stubServer{})
 	go server.Serve(lis)
 
-	startedCb()
+	if err = cc.Init(); err != nil {
+		log.Errorf("cocoode Init() returned error: %s", err)
+		Stop(1)
+	}
+
+	running = true
+	ccode = cc
+
 	<-serverDone
 	log.Info("Cocoon code stopped")
 	os.Exit(0)
@@ -162,10 +201,11 @@ func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 }
 
 // Stop stub and cocoon code
-func Stop() {
-	log.Info("Stopping cocoon code")
+func Stop(exitCode int) {
 	defaultServer.stream = nil
 	serverDone <- true
+	log.Info("Cocoon code exiting with exit code %d", exitCode)
+	os.Exit(exitCode)
 }
 
 // AwaitTxChan takes a response channel and waits to receive a response

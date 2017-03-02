@@ -187,6 +187,6 @@ func (c *Client) SendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 		txRespChannels.Remove(tx.GetId())
 		return err
 	}
-	log.Debugf("Successfully sent transaction [%s] to cocoon code", tx.GetId())
+	log.Debugf("Successfully sent transaction (%s) to cocoon code", tx.GetId())
 	return nil
 }
