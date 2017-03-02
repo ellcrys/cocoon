@@ -8,10 +8,13 @@ service Stub {
 // Tx represent an invoke transaction or a response transaction.
 // An invoke transaction sets `invoke` field to true and the `response` field
 // to false and vice versa for a response transaction. The `name` field is used
-// to differentiate the kind of transactions.
+// to differentiate the kind of transactions. The params field should be used to 
+// set invoke parameters and body should hold response body.
 message Tx {
     bool invoke = 1;
     bool response = 2;
-    string name = 3;
-    repeated string params = 4;
+    string Id = 3;
+    string name = 4;
+    repeated string params = 5;
+    bytes body = 6;
 }
