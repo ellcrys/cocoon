@@ -74,6 +74,7 @@ func (lc *Launcher) Launch(req *Request) {
 	}
 
 	dckClient = client
+	lc.client.SetCocoonID(req.ID)
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
