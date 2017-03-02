@@ -57,7 +57,8 @@ func (api *APIServer) Stop(exitCode int) int {
 }
 
 // Invoke calls a function in the cocoon code.
-func (api *APIServer) Invoke(context.Context, *proto.InvokeRequest) (*proto.InvokeResponse, error) {
-	log.Info("Got an invoke request people!!!")
-	return nil, fmt.Errorf("Sorry bro")
+func (api *APIServer) Invoke(ctx context.Context, req *proto.InvokeRequest) (*proto.InvokeResponse, error) {
+	log.Infof("Got an invoke request with transaction id %s", req.GetId())
+	api.cocoonCodeClient.GetStream()
+	return nil, fmt.Errorf("test error")
 }

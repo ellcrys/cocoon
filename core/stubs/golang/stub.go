@@ -101,7 +101,7 @@ func GetLogger() *logging.Logger {
 // sendTx sends a transaction to the orderer
 // and saves the response channel to for any response
 // when available.
-func sendTx(tx *proto.Tx, respCh chan *proto.Resp) error {
+func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 	txRespChannels.Set(tx.GetId(), respCh)
 	if err := defaultServer.stream.Send(tx); err != nil {
 		txRespChannels.Remove(tx.GetId())
@@ -123,7 +123,7 @@ func Stop() {
 // to be received from it. If no error occurs, it copies the response
 // to the response pointer passed to it or returns error if it waited
 // 3 minutes and still got no response.
-func waitOnRespChan(ch chan *proto.Resp, resp *proto.Resp) error {
+func waitOnRespChan(ch chan *proto.Tx, resp *proto.Tx) error {
 	for {
 		select {
 		case r := <-ch:
@@ -149,7 +149,7 @@ func ListLedgers() ([]*types.Ledger, error) {
 		return nil, ErrNotConnected
 	}
 
-	var respCh = make(chan *proto.Resp)
+	var respCh = make(chan *proto.Tx)
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Name:   TxListLedgers,
@@ -160,7 +160,7 @@ func ListLedgers() ([]*types.Ledger, error) {
 	}
 
 	// wait for response
-	var resp *proto.Resp
+	var resp *proto.Tx
 	err = waitOnRespChan(respCh, resp)
 
 	return nil, nil
@@ -173,7 +173,7 @@ func CreateLedger() (*types.Ledger, error) {
 		return nil, ErrNotConnected
 	}
 
-	var respCh = make(chan *proto.Resp)
+	var respCh = make(chan *proto.Tx)
 
 	txID := util.UUID4()
 	err := sendTx(&proto.Tx{
@@ -186,7 +186,7 @@ func CreateLedger() (*types.Ledger, error) {
 	}
 
 	log.Debug("Waiting for response for transaction %s", txID)
-	var resp *proto.Resp
+	var resp *proto.Tx
 	err = waitOnRespChan(respCh, resp)
 	if err != nil {
 		log.Errorf("receiving message from transaction [%s] failed because: %s", txID, err)
