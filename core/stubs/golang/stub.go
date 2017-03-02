@@ -86,7 +86,6 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 				}
 			}()
 		case false:
-		default:
 			log.Debugf("New response transaction (%s) from connector", in.GetId())
 			go func() {
 				if err = s.handleRespTransaction(in); err != nil {
@@ -165,7 +164,7 @@ func Run(cc CocoonCode) {
 
 	log.Infof("Started stub service at port=%s", serverPort)
 	server := grpc.NewServer()
-	proto.RegisterStubServer(server, &stubServer{})
+	proto.RegisterStubServer(server, defaultServer)
 	go server.Serve(lis)
 
 	if err = cc.Init(); err != nil {
@@ -193,10 +192,10 @@ func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 	txRespChannels.Set(tx.GetId(), respCh)
 	if err := defaultServer.stream.Send(tx); err != nil {
 		txRespChannels.Remove(tx.GetId())
-		log.Debugf("Failed to send transaction [%s] to orderer. %s", tx.GetId(), err)
+		log.Errorf("failed to send transaction [%s] to connector. %s", tx.GetId(), err)
 		return err
 	}
-	log.Debugf("Successfully sent transaction [%s] to orderer", tx.GetId())
+	log.Debugf("Successfully sent transaction [%s] to connector", tx.GetId())
 	return nil
 }
 
@@ -255,7 +254,8 @@ func ListLedgers() ([]*types.Ledger, error) {
 	return nil, nil
 }
 
-// CreateLedger creates a new ledger
+// CreateLedger creates a new ledger by sending an
+// invoke transaction (TxCreateLedger) to the connector.
 func CreateLedger() (*types.Ledger, error) {
 
 	if !isConnected() {
@@ -267,17 +267,17 @@ func CreateLedger() (*types.Ledger, error) {
 	txID := util.UUID4()
 	err := sendTx(&proto.Tx{
 		Id:     txID,
+		Invoke: true,
 		Name:   TxCreateLedger,
 		Params: []string{},
 	}, respCh)
 	if err != nil {
-		return nil, fmt.Errorf("failed create ledger. %s", err)
+		return nil, fmt.Errorf("failed to create ledger. %s", err)
 	}
 
-	log.Debug("Waiting for response for transaction %s", txID)
 	resp, err := AwaitTxChan(respCh)
 	if err != nil {
-		log.Errorf("receiving message from transaction [%s] failed because: %s", txID, err)
+		log.Errorf("receiving message from transaction [%s] failed. %s", txID, err)
 		return nil, err
 	}
 
