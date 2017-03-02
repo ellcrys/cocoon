@@ -10,11 +10,13 @@ service Stub {
 // to false and vice versa for a response transaction. The `name` field is used
 // to differentiate the kind of transactions. The params field should be used to 
 // set invoke parameters and body should hold response body.
+// `status` field should hold the appropriate status number to signify success of failure. 
 message Tx {
     bool invoke = 1;
     bool response = 2;
-    string Id = 3;
-    string name = 4;
-    repeated string params = 5;
-    bytes body = 6;
+    int32 status = 3;
+    string Id = 4;
+    string name = 5;
+    repeated string params = 6;
+    bytes body = 7;
 }

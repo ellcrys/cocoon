@@ -2,6 +2,7 @@ package golang
 
 import (
 	"fmt"
+	"io"
 	"net"
 
 	"os"
@@ -51,23 +52,71 @@ type stubServer struct {
 	stream proto.Stub_TransactServer
 }
 
-// GetState fetches the value of a blockchain state
+// Transact listens and process invoke and response transactions from
+// the connector.
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 	s.stream = stream
 	for {
 
 		in, err := stream.Recv()
+		if err == io.EOF {
+			return fmt.Errorf("connection with cocoon code has ended")
+		}
 		if err != nil {
 			return fmt.Errorf("failed to read message from connector. %s", err)
 		}
 
-		log.Debug("New message from connector = %s", in.String())
-
-		stream.Send(&proto.Tx{
-			Id:   "sample",
-			Name: "do something",
-		})
+		switch in.Invoke {
+		case true:
+			go func() {
+				log.Debugf("New invoke transaction (%s) from connector", in.GetId())
+				if err = s.handleInvokeTransaction(in); err != nil {
+					log.Error(err.Error())
+					stream.Send(&proto.Tx{
+						Response: true,
+						Id:       in.GetId(),
+						Status:   500,
+						Body:     []byte(err.Error()),
+					})
+				}
+			}()
+		case false:
+		default:
+			log.Debugf("New response transaction (%s) from connector", in.GetId())
+			go func() {
+				if err = s.handleRespTransaction(in); err != nil {
+					log.Error(err.Error())
+					stream.Send(&proto.Tx{
+						Response: true,
+						Id:       in.GetId(),
+						Status:   500,
+						Body:     []byte(err.Error()),
+					})
+				}
+			}()
+		}
 	}
+}
+
+// handleInvokeTransaction processes invoke transaction requests
+func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
+	return s.stream.Send(&proto.Tx{
+		Id:       tx.GetId(),
+		Response: true,
+	})
+}
+
+// handleRespTransaction passes the transaction to a response
+// channel with a matching transaction id and deletes the channel afterwards.
+func (s *stubServer) handleRespTransaction(tx *proto.Tx) error {
+	if !txRespChannels.Has(tx.GetId()) {
+		return fmt.Errorf("response transaction (%s) does not have a corresponding response channel", tx.GetId())
+	}
+
+	txRespCh, _ := txRespChannels.Get(tx.GetId())
+	txRespCh.(chan *proto.Tx) <- tx
+	txRespChannels.Remove(tx.GetId())
+	return nil
 }
 
 // StartServer starts the stub server and
@@ -98,9 +147,9 @@ func GetLogger() *logging.Logger {
 	return log
 }
 
-// sendTx sends a transaction to the orderer
-// and saves the response channel to for any response
-// when available.
+// sendTx sends a transaction to the cocoon code
+// and saves the response channel. The response channel will
+// be passed a response when it is available in the Transact loop.
 func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 	txRespChannels.Set(tx.GetId(), respCh)
 	if err := defaultServer.stream.Send(tx); err != nil {
@@ -119,18 +168,16 @@ func Stop() {
 	serverDone <- true
 }
 
-// waitOnRespChan takes a response channel and waits for response
-// to be received from it. If no error occurs, it copies the response
-// to the response pointer passed to it or returns error if it waited
-// 3 minutes and still got no response.
-func waitOnRespChan(ch chan *proto.Tx, resp *proto.Tx) error {
+// AwaitTxChan takes a response channel and waits to receive a response
+// from it. If no error occurs, it returns the response. It
+// returns ErrOperationTimeout if it waited 5 minutes and got no response.
+func AwaitTxChan(ch chan *proto.Tx) (*proto.Tx, error) {
 	for {
 		select {
 		case r := <-ch:
-			*resp = *r
-			return nil
-		case <-time.After(3 * time.Minute):
-			return ErrOperationTimeout
+			return r, nil
+		case <-time.After(5 * time.Minute):
+			return nil, ErrOperationTimeout
 		}
 	}
 }
@@ -160,8 +207,10 @@ func ListLedgers() ([]*types.Ledger, error) {
 	}
 
 	// wait for response
-	var resp *proto.Tx
-	err = waitOnRespChan(respCh, resp)
+	_, err = AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
@@ -186,8 +235,7 @@ func CreateLedger() (*types.Ledger, error) {
 	}
 
 	log.Debug("Waiting for response for transaction %s", txID)
-	var resp *proto.Tx
-	err = waitOnRespChan(respCh, resp)
+	resp, err := AwaitTxChan(respCh)
 	if err != nil {
 		log.Errorf("receiving message from transaction [%s] failed because: %s", txID, err)
 		return nil, err

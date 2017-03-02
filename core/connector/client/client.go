@@ -2,20 +2,21 @@ package client
 
 import (
 	"fmt"
-
 	"io"
-
 	"os"
-
 	"time"
 
 	proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
 	logging "github.com/op/go-logging"
+	cmap "github.com/orcaman/concurrent-map"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 var log = logging.MustGetLogger("connector.client")
+
+// txChannels holds the channels to send transaction responses to
+var txRespChannels = cmap.New()
 
 // Client represents a cocoon code GRPC client
 // that interacts with a cocoon code.
@@ -117,16 +118,75 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 
 	for {
 
-		log.Info("Waiting for transactions")
-
 		in, err := c.stream.Recv()
 		if err == io.EOF {
-			return fmt.Errorf("Transaction connection between connector and cocoon code has ended")
+			return fmt.Errorf("connection with cocoon code has ended")
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to successfully receive message from cocoon code. %s", err)
+			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
 
-		log.Infof("New Tx From Cocoon: %", in.String())
+		switch in.Invoke {
+		case true:
+			go func() {
+				log.Debugf("New invoke transaction (%s) from cocoon code", in.GetId())
+				if err = c.handleInvokeTransaction(in); err != nil {
+					log.Error(err.Error())
+					c.stream.Send(&proto.Tx{
+						Response: true,
+						Id:       in.GetId(),
+						Status:   500,
+						Body:     []byte(err.Error()),
+					})
+				}
+			}()
+		case false:
+			log.Debugf("New response transaction (%s) from cocoon code", in.GetId())
+			go func() {
+				if err = c.handleRespTransaction(in); err != nil {
+					log.Error(err.Error())
+					c.stream.Send(&proto.Tx{
+						Response: true,
+						Id:       in.GetId(),
+						Status:   500,
+						Body:     []byte(err.Error()),
+					})
+				}
+			}()
+		}
 	}
+}
+
+// handleInvokeTransaction processes invoke transaction requests
+func (c *Client) handleInvokeTransaction(tx *proto.Tx) error {
+	return c.stream.Send(&proto.Tx{
+		Id:       tx.GetId(),
+		Response: true,
+	})
+}
+
+// handleRespTransaction passes the transaction to a response
+// channel with a matching transaction id and deletes the channel afterwards.
+func (c *Client) handleRespTransaction(tx *proto.Tx) error {
+	if !txRespChannels.Has(tx.GetId()) {
+		return fmt.Errorf("response transaction (%s) does not have a corresponding response channel", tx.GetId())
+	}
+
+	txRespCh, _ := txRespChannels.Get(tx.GetId())
+	txRespCh.(chan *proto.Tx) <- tx
+	txRespChannels.Remove(tx.GetId())
+	return nil
+}
+
+// SendTx sends a transaction to the cocoon code
+// and saves the response channel. The response channel will
+// be passed a response when it is available in the Transact loop.
+func (c *Client) SendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
+	txRespChannels.Set(tx.GetId(), respCh)
+	if err := c.stream.Send(tx); err != nil {
+		txRespChannels.Remove(tx.GetId())
+		return err
+	}
+	log.Debugf("Successfully sent transaction [%s] to cocoon code", tx.GetId())
+	return nil
 }
