@@ -311,7 +311,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 		Id:     txID,
 		Invoke: true,
 		Name:   TxPut,
-		Params: []string{GetDefaultLedger(), txID, key, string(value)},
+		Params: []string{ledgerName, txID, key, string(value)},
 	}, respCh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to put transaction. %s", err)
