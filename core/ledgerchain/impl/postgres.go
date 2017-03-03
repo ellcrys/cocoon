@@ -107,7 +107,7 @@ func (ch *PostgresLedgerChain) Init() error {
 // isUniqueConstraintError checks whether an error is a postgres
 // contraint error affecting a column.
 func isUniqueConstraintError(err error, column string) bool {
-	if m, _ := regexp.Match(`^.*unique constraint ".*_ledgers_`+column+`"$`, []byte(err.Error())); m {
+	if m, _ := regexp.Match(`^.*unique constraint "idx_name_`+column+`"$`, []byte(err.Error())); m {
 		return true
 	}
 	return false
