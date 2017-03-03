@@ -25,6 +25,12 @@ var defaultServer *stubServer
 var log *logging.Logger
 var serverDone chan bool
 
+// GlobalLedger represents the name of the global ledger
+const GlobalLedger = "global"
+
+// The default ledger is the global ledger.
+var defaultLedger = GlobalLedger
+
 // txChannels holds the channels to send transaction responses to
 var txRespChannels = cmap.New()
 
@@ -272,4 +278,19 @@ func CreateLedger(name string, public bool) (*types.Ledger, error) {
 	}
 
 	return &ledger, nil
+}
+
+// SetDefault ledger
+func SetDefault(name string) {
+	defaultLedger = name
+}
+
+// GetDefaultLedger returns the name of the default ledger.
+func GetDefaultLedger() string {
+	return defaultLedger
+}
+
+// Put adds a new transaction to the default ledger.
+func Put(key string, value []byte) (*types.Transaction, error) {
+	return nil, nil
 }
