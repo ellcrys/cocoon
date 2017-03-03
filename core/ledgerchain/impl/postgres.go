@@ -188,6 +188,7 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
 func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*types.Transaction, error) {
 
 	tx := ch.db.Begin()
+	ledger = util.Sha256(ledger)
 
 	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
@@ -196,14 +197,14 @@ func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*types.Tran
 
 	newTx := &types.Transaction{
 		ID:        txID,
-		Ledger:    util.Sha256(ledger),
+		Ledger:    ledger,
 		Key:       key,
 		Value:     value,
 		CreatedAt: time.Now().Unix(),
 	}
 
 	var prevTx types.Transaction
-	err = tx.Where("next_tx_hash = ?", "").Last(&prevTx).Error
+	err = tx.Where("next_tx_hash = ? AND ledger = ?", "", ledger).Last(&prevTx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		tx.Rollback()
 		return nil, err

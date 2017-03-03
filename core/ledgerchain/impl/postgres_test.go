@@ -231,7 +231,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				})
 
 				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {
-					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), util.Sha256(util.RandString(5)), "key", "value")
+					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), ledger, "key", "value")
 					So(err, ShouldBeNil)
 					So(tx.PrevTxHash, ShouldEqual, allTx[0].Hash)
 				})
