@@ -3,6 +3,7 @@ package proto;
 
 service Orderer {
     rpc CreateLedger(CreateLedgerParams) returns (Ledger);
+    rpc GetLedger(GetLedgerParams) returns (Ledger);
     rpc Put(PutTransactionParams) returns (Transaction);
 }
 
@@ -18,6 +19,11 @@ message PutTransactionParams {
     string ledgerName = 3;
     string key = 4;
     bytes value = 5;    
+}
+
+message GetLedgerParams {
+    string cocoonCodeId = 1;
+    string name = 2;
 }
 
 message Ledger {

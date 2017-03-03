@@ -86,8 +86,21 @@ func (od *Orderer) SetLedgerChain(ch types.LedgerChain) {
 // CreateLedger creates a new ledger
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
-	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
-	ledger, err := od.chain.CreateLedger(name, params.GetPublic())
+	ledger, err := od.chain.CreateLedger(params.GetCocoonCodeId(), params.GetName(), params.GetPublic())
+	if err != nil {
+		return nil, err
+	}
+
+	ledgerJSON, _ := util.ToJSON(ledger)
+	var protoLedger proto.Ledger
+	util.FromJSON(ledgerJSON, &protoLedger)
+
+	return &protoLedger, nil
+}
+
+// GetLedger returns a ledge
+func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
+	ledger, err := od.chain.GetLedger(params.GetCocoonCodeId(), params.GetName())
 	if err != nil {
 		return nil, err
 	}

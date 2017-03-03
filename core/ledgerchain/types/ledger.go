@@ -1,5 +1,8 @@
 package types
 
+// GlobalLedgerName represents the name of the global ledger
+const GlobalLedgerName = "global"
+
 // Ledger represents a group of linked transactions
 type Ledger struct {
 	Number         uint   `gorm:"primary_key"`

@@ -92,7 +92,7 @@ func (ch *PostgresLedgerChain) Init() error {
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger(util.Sha256("global"), true)
+		_, err := ch.CreateLedger("", types.GlobalLedgerName, true)
 		if err != nil {
 			return err
 		}
@@ -110,10 +110,17 @@ func isUniqueConstraintError(err error, column string) bool {
 	return false
 }
 
+// CreateLedgerName creates a ledger name
+func CreateLedgerName(cocoonCodeID, name string) string {
+	return util.Sha256(fmt.Sprintf("%s.%s", cocoonCodeID, name))
+}
+
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Ledger, error) {
+func (ch *PostgresLedgerChain) CreateLedger(cocoonCodeID, name string, public bool) (*types.Ledger, error) {
 
 	tx := ch.db.Begin()
+
+	name = CreateLedgerName(cocoonCodeID, name)
 
 	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
@@ -165,8 +172,10 @@ func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Le
 }
 
 // GetLedger fetches a ledger meta information
-func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
+func (ch *PostgresLedgerChain) GetLedger(cocoonCodeID, name string) (*types.Ledger, error) {
 	var l types.Ledger
+
+	name = CreateLedgerName(cocoonCodeID, name)
 
 	err := ch.db.Where("name = ?", name).Last(&l).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

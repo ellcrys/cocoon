@@ -8,8 +8,8 @@ type LedgerChain interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init() error
 	GetBackend() string
-	CreateLedger(name string, public bool) (*Ledger, error)
-	GetLedger(name string) (*Ledger, error)
+	CreateLedger(cocoonCodeID, name string, public bool) (*Ledger, error)
+	GetLedger(cocoonCodeID, name string) (*Ledger, error)
 	Put(txID, ledger, key, value string) (*Transaction, error)
 	Get(key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)

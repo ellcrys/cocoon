@@ -27,13 +27,16 @@ var serverDone chan bool
 
 const (
 	// GlobalLedger represents the name of the global ledger
-	GlobalLedger = "global"
+	GlobalLedger = types.GlobalLedgerName
 
 	// TxCreateLedger represents a message to create a ledger
 	TxCreateLedger = "CREATE_LEDGER"
 
 	// TxPut represents a message to create a transaction
 	TxPut = "PUT"
+
+	// TxGetLedger represents a message to get a ledger
+	TxGetLedger = "GET_LEDGER"
 )
 
 // The default ledger is the global ledger.
@@ -246,6 +249,16 @@ func isConnected() bool {
 	return defaultServer.stream != nil
 }
 
+// SetDefault ledger
+func SetDefault(name string) {
+	defaultLedger = name
+}
+
+// GetDefaultLedger returns the name of the default ledger.
+func GetDefaultLedger() string {
+	return defaultLedger
+}
+
 // CreateLedger creates a new ledger by sending an
 // invoke transaction (TxCreateLedger) to the connector.
 // The final name of the ledger is a sha256 hash of
@@ -287,14 +300,40 @@ func CreateLedger(name string, public bool) (*types.Ledger, error) {
 	return &ledger, nil
 }
 
-// SetDefault ledger
-func SetDefault(name string) {
-	defaultLedger = name
-}
+// GetLedger fetches a ledger
+func GetLedger(ledgerName string) (*types.Ledger, error) {
 
-// GetDefaultLedger returns the name of the default ledger.
-func GetDefaultLedger() string {
-	return defaultLedger
+	if !isConnected() {
+		return nil, ErrNotConnected
+	}
+
+	var respCh = make(chan *proto.Tx)
+
+	txID := util.UUID4()
+	err := sendTx(&proto.Tx{
+		Id:     txID,
+		Invoke: true,
+		Name:   TxGetLedger,
+		Params: []string{ledgerName},
+	}, respCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ledger. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+	}
+
+	var ledger types.Ledger
+	if err = util.FromJSON(resp.Body, &ledger); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &ledger, nil
 }
 
 // PutIn adds a new transaction to a ledger
