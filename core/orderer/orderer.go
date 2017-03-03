@@ -9,6 +9,7 @@ import (
 
 	"time"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	logging "github.com/op/go-logging"
@@ -52,6 +53,14 @@ func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
 			return
 		}
 
+		// initialize ledgerchain
+		err = od.chain.Init()
+		if err != nil {
+			log.Info(err)
+			od.Stop(1)
+			return
+		}
+
 		log.Info("Backend successfully connnected")
 	})
 
@@ -74,7 +83,18 @@ func (od *Orderer) SetLedgerChain(ch types.LedgerChain) {
 	od.chain = ch
 }
 
-// Put adds a new record to the chain
-func (od *Orderer) Put(ctx context.Context, tx *proto.OrdererTx) (*proto.Response, error) {
-	return nil, nil
+// CreateLedger creates a new ledger
+func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
+
+	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
+	ledger, err := od.chain.CreateLedger(name, params.GetPublic())
+	if err != nil {
+		return nil, err
+	}
+
+	ledgerJSON, _ := util.ToJSON(ledger)
+	var protoLedger proto.Ledger
+	util.FromJSON(ledgerJSON, &protoLedger)
+
+	return &protoLedger, nil
 }

@@ -9,8 +9,8 @@ It is generated from these files:
 	server.proto
 
 It has these top-level messages:
-	OrdererTx
-	Response
+	CreateLedgerParams
+	Ledger
 */
 package proto
 
@@ -34,73 +34,105 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto1.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type OrdererTx struct {
-	Id    string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Name  string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Value string `protobuf:"bytes,3,opt,name=value" json:"value,omitempty"`
+type CreateLedgerParams struct {
+	CocoonCodeId string `protobuf:"bytes,1,opt,name=cocoonCodeId" json:"cocoonCodeId,omitempty"`
+	Name         string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Public       bool   `protobuf:"varint,3,opt,name=public" json:"public,omitempty"`
 }
 
-func (m *OrdererTx) Reset()                    { *m = OrdererTx{} }
-func (m *OrdererTx) String() string            { return proto1.CompactTextString(m) }
-func (*OrdererTx) ProtoMessage()               {}
-func (*OrdererTx) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *CreateLedgerParams) Reset()                    { *m = CreateLedgerParams{} }
+func (m *CreateLedgerParams) String() string            { return proto1.CompactTextString(m) }
+func (*CreateLedgerParams) ProtoMessage()               {}
+func (*CreateLedgerParams) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *OrdererTx) GetId() string {
+func (m *CreateLedgerParams) GetCocoonCodeId() string {
 	if m != nil {
-		return m.Id
+		return m.CocoonCodeId
 	}
 	return ""
 }
 
-func (m *OrdererTx) GetName() string {
+func (m *CreateLedgerParams) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *OrdererTx) GetValue() string {
+func (m *CreateLedgerParams) GetPublic() bool {
 	if m != nil {
-		return m.Value
+		return m.Public
 	}
-	return ""
+	return false
 }
 
-type Response struct {
-	Code    int32  `protobuf:"varint,1,opt,name=code" json:"code,omitempty"`
-	Message string `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    []byte `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+type Ledger struct {
+	Number         int64  `protobuf:"varint,1,opt,name=number" json:"number,omitempty"`
+	Hash           string `protobuf:"bytes,2,opt,name=hash" json:"hash,omitempty"`
+	PrevLedgerHash string `protobuf:"bytes,3,opt,name=prevLedgerHash" json:"prevLedgerHash,omitempty"`
+	NextLedgerHash string `protobuf:"bytes,4,opt,name=nextLedgerHash" json:"nextLedgerHash,omitempty"`
+	Name           string `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
+	Public         bool   `protobuf:"varint,8,opt,name=public" json:"public,omitempty"`
+	CreatedAt      int64  `protobuf:"varint,7,opt,name=createdAt" json:"createdAt,omitempty"`
 }
 
-func (m *Response) Reset()                    { *m = Response{} }
-func (m *Response) String() string            { return proto1.CompactTextString(m) }
-func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *Ledger) Reset()                    { *m = Ledger{} }
+func (m *Ledger) String() string            { return proto1.CompactTextString(m) }
+func (*Ledger) ProtoMessage()               {}
+func (*Ledger) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *Response) GetCode() int32 {
+func (m *Ledger) GetNumber() int64 {
 	if m != nil {
-		return m.Code
+		return m.Number
 	}
 	return 0
 }
 
-func (m *Response) GetMessage() string {
+func (m *Ledger) GetHash() string {
 	if m != nil {
-		return m.Message
+		return m.Hash
 	}
 	return ""
 }
 
-func (m *Response) GetData() []byte {
+func (m *Ledger) GetPrevLedgerHash() string {
 	if m != nil {
-		return m.Data
+		return m.PrevLedgerHash
 	}
-	return nil
+	return ""
+}
+
+func (m *Ledger) GetNextLedgerHash() string {
+	if m != nil {
+		return m.NextLedgerHash
+	}
+	return ""
+}
+
+func (m *Ledger) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Ledger) GetPublic() bool {
+	if m != nil {
+		return m.Public
+	}
+	return false
+}
+
+func (m *Ledger) GetCreatedAt() int64 {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return 0
 }
 
 func init() {
-	proto1.RegisterType((*OrdererTx)(nil), "proto.OrdererTx")
-	proto1.RegisterType((*Response)(nil), "proto.Response")
+	proto1.RegisterType((*CreateLedgerParams)(nil), "proto.CreateLedgerParams")
+	proto1.RegisterType((*Ledger)(nil), "proto.Ledger")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -114,7 +146,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Orderer service
 
 type OrdererClient interface {
-	Put(ctx context.Context, in *OrdererTx, opts ...grpc.CallOption) (*Response, error)
+	CreateLedger(ctx context.Context, in *CreateLedgerParams, opts ...grpc.CallOption) (*Ledger, error)
 }
 
 type ordererClient struct {
@@ -125,9 +157,9 @@ func NewOrdererClient(cc *grpc.ClientConn) OrdererClient {
 	return &ordererClient{cc}
 }
 
-func (c *ordererClient) Put(ctx context.Context, in *OrdererTx, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := grpc.Invoke(ctx, "/proto.Orderer/Put", in, out, c.cc, opts...)
+func (c *ordererClient) CreateLedger(ctx context.Context, in *CreateLedgerParams, opts ...grpc.CallOption) (*Ledger, error) {
+	out := new(Ledger)
+	err := grpc.Invoke(ctx, "/proto.Orderer/CreateLedger", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -137,27 +169,27 @@ func (c *ordererClient) Put(ctx context.Context, in *OrdererTx, opts ...grpc.Cal
 // Server API for Orderer service
 
 type OrdererServer interface {
-	Put(context.Context, *OrdererTx) (*Response, error)
+	CreateLedger(context.Context, *CreateLedgerParams) (*Ledger, error)
 }
 
 func RegisterOrdererServer(s *grpc.Server, srv OrdererServer) {
 	s.RegisterService(&_Orderer_serviceDesc, srv)
 }
 
-func _Orderer_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OrdererTx)
+func _Orderer_CreateLedger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateLedgerParams)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdererServer).Put(ctx, in)
+		return srv.(OrdererServer).CreateLedger(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Orderer/Put",
+		FullMethod: "/proto.Orderer/CreateLedger",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdererServer).Put(ctx, req.(*OrdererTx))
+		return srv.(OrdererServer).CreateLedger(ctx, req.(*CreateLedgerParams))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -167,8 +199,8 @@ var _Orderer_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrdererServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Put",
-			Handler:    _Orderer_Put_Handler,
+			MethodName: "CreateLedger",
+			Handler:    _Orderer_CreateLedger_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -178,17 +210,21 @@ var _Orderer_serviceDesc = grpc.ServiceDesc{
 func init() { proto1.RegisterFile("server.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 178 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x3c, 0x8e, 0x41, 0x0b, 0x82, 0x40,
-	0x10, 0x85, 0x51, 0x33, 0x73, 0x90, 0x8a, 0xa1, 0xc3, 0xd2, 0x29, 0x3c, 0x79, 0xf2, 0x90, 0xbf,
-	0xa1, 0x5b, 0x50, 0x2c, 0xfd, 0x81, 0xad, 0x1d, 0x42, 0x48, 0x57, 0x76, 0x55, 0xfa, 0xf9, 0xe1,
-	0xe8, 0x76, 0x9a, 0xf7, 0x1e, 0x33, 0x6f, 0x3e, 0xc8, 0x1c, 0xd9, 0x91, 0x6c, 0xd9, 0x59, 0xd3,
-	0x1b, 0x8c, 0x79, 0xe4, 0x17, 0x48, 0x6f, 0x56, 0x93, 0x25, 0xfb, 0xf8, 0xe2, 0x16, 0xc2, 0x5a,
-	0x8b, 0xe0, 0x14, 0x14, 0xa9, 0x0c, 0x6b, 0x8d, 0x08, 0xab, 0x56, 0x35, 0x24, 0x42, 0x4e, 0x58,
-	0xe3, 0x01, 0xe2, 0x51, 0x7d, 0x06, 0x12, 0x11, 0x87, 0xb3, 0xc9, 0xaf, 0xb0, 0x91, 0xe4, 0x3a,
-	0xd3, 0x3a, 0x9a, 0xae, 0x5e, 0x46, 0x13, 0xf7, 0xc4, 0x92, 0x35, 0x0a, 0x48, 0x1a, 0x72, 0x4e,
-	0xbd, 0x7d, 0x99, 0xb7, 0xd3, 0xb6, 0x56, 0xbd, 0xe2, 0xba, 0x4c, 0xb2, 0x3e, 0x57, 0x90, 0x2c,
-	0x50, 0x58, 0x40, 0x74, 0x1f, 0x7a, 0xdc, 0xcf, 0xd4, 0xe5, 0x9f, 0xf5, 0xb8, 0x5b, 0x12, 0xff,
-	0xf6, 0xb9, 0x66, 0x5f, 0xfd, 0x02, 0x00, 0x00, 0xff, 0xff, 0x37, 0xdd, 0x04, 0xdc, 0xe7, 0x00,
-	0x00, 0x00,
+	// 241 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x6c, 0x50, 0x4d, 0x4b, 0xc3, 0x40,
+	0x10, 0x25, 0xa6, 0x4d, 0xdb, 0x21, 0x7a, 0x98, 0x83, 0x44, 0xf1, 0x50, 0x72, 0x90, 0x9e, 0x7a,
+	0xd0, 0x8b, 0x57, 0xc9, 0x45, 0x41, 0x50, 0xf2, 0x0f, 0x36, 0xbb, 0x83, 0x15, 0xcc, 0x6e, 0x98,
+	0x6c, 0x8b, 0xbf, 0xd2, 0xdf, 0x24, 0x3b, 0x1b, 0x35, 0xd1, 0x9e, 0x32, 0xef, 0x23, 0x6f, 0x1f,
+	0x0f, 0xf2, 0x9e, 0xf8, 0x40, 0xbc, 0xed, 0xd8, 0x79, 0x87, 0x73, 0xf9, 0x94, 0x06, 0xb0, 0x62,
+	0x52, 0x9e, 0x9e, 0xc8, 0xbc, 0x12, 0xbf, 0x28, 0x56, 0x6d, 0x8f, 0x25, 0xe4, 0xda, 0x69, 0xe7,
+	0x6c, 0xe5, 0x0c, 0x3d, 0x9a, 0x22, 0x59, 0x27, 0x9b, 0x55, 0x3d, 0xe1, 0x10, 0x61, 0x66, 0x55,
+	0x4b, 0xc5, 0x89, 0x68, 0x72, 0xe3, 0x39, 0x64, 0xdd, 0xbe, 0x79, 0x7f, 0xd3, 0x45, 0xba, 0x4e,
+	0x36, 0xcb, 0x7a, 0x40, 0xe5, 0x67, 0x02, 0x59, 0x7c, 0x20, 0x58, 0xec, 0xbe, 0x6d, 0x88, 0x25,
+	0x34, 0xad, 0x07, 0x14, 0xe2, 0x76, 0xaa, 0xdf, 0x7d, 0xc7, 0x85, 0x1b, 0xaf, 0xe1, 0xac, 0x63,
+	0x3a, 0xc4, 0x3f, 0x1f, 0x82, 0x9a, 0x8a, 0xfa, 0x87, 0x0d, 0x3e, 0x4b, 0x1f, 0x7e, 0xe4, 0x9b,
+	0x45, 0xdf, 0x94, 0xfd, 0xa9, 0x3c, 0x3f, 0x5a, 0x79, 0x39, 0xae, 0x8c, 0x57, 0xb0, 0xd2, 0x32,
+	0x8c, 0xb9, 0xf7, 0xc5, 0x42, 0xaa, 0xfe, 0x12, 0x37, 0x15, 0x2c, 0x9e, 0xd9, 0x10, 0x13, 0xe3,
+	0x1d, 0xe4, 0xe3, 0x05, 0xf1, 0x22, 0x0e, 0xbc, 0xfd, 0x3f, 0xeb, 0xe5, 0xe9, 0x20, 0x45, 0xb2,
+	0xc9, 0x04, 0xdd, 0x7e, 0x05, 0x00, 0x00, 0xff, 0xff, 0x93, 0x75, 0xba, 0xb2, 0x99, 0x01, 0x00,
+	0x00,
 }

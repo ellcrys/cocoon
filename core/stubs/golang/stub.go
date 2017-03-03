@@ -9,6 +9,8 @@ import (
 
 	"time"
 
+	"strings"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
@@ -55,6 +57,12 @@ func init() {
 type stubServer struct {
 	port   int
 	stream proto.Stub_TransactServer
+}
+
+// stripRPCErrorPrefix takes an error return from the RPC client and removes the
+// prefixed `rpc error: code = 2 desc =` statement
+func stripRPCErrorPrefix(err []byte) []byte {
+	return []byte(strings.TrimSpace(strings.Replace(string(err), "rpc error: code = 2 desc =", "", -1)))
 }
 
 // Transact listens and process invoke and response transactions from
@@ -227,36 +235,11 @@ func isConnected() bool {
 	return defaultServer.stream != nil
 }
 
-// ListLedgers returns the list of ledgers created
-// by the current cocoon code.
-func ListLedgers() ([]*types.Ledger, error) {
-
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-	err := sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Name:   TxListLedgers,
-		Params: []string{},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed get ledger list. %s", err)
-	}
-
-	// wait for response
-	_, err = AwaitTxChan(respCh)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
-}
-
 // CreateLedger creates a new ledger by sending an
 // invoke transaction (TxCreateLedger) to the connector.
-func CreateLedger() (*types.Ledger, error) {
+// The final name of the ledger is a sha256 hash of
+// the cocoon code id and the name (e.g SHA256(ccode_id.name))
+func CreateLedger(name string, public bool) (*types.Ledger, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -269,7 +252,7 @@ func CreateLedger() (*types.Ledger, error) {
 		Id:     txID,
 		Invoke: true,
 		Name:   TxCreateLedger,
-		Params: []string{},
+		Params: []string{name, fmt.Sprintf("%t", public)},
 	}, respCh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ledger. %s", err)
@@ -277,10 +260,16 @@ func CreateLedger() (*types.Ledger, error) {
 
 	resp, err := AwaitTxChan(respCh)
 	if err != nil {
-		log.Errorf("receiving message from transaction [%s] failed. %s", txID, err)
 		return nil, err
 	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+	}
 
-	log.Info("Got Response: %s", resp)
-	return nil, nil
+	var ledger types.Ledger
+	if err = util.FromJSON(resp.Body, &ledger); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &ledger, nil
 }
