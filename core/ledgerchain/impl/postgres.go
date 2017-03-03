@@ -3,6 +3,7 @@ package impl
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/ellcrys/crypto"
@@ -103,6 +104,15 @@ func (ch *PostgresLedgerChain) Init() error {
 	return nil
 }
 
+// isUniqueConstraintError checks whether an error is a postgres
+// contraint error affecting a column.
+func isUniqueConstraintError(err error, column string) bool {
+	if m, _ := regexp.Match(`^.*unique constraint ".*_ledgers_`+column+`"$`, []byte(err.Error())); m {
+		return true
+	}
+	return false
+}
+
 // CreateLedger creates a new ledger.
 func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Ledger, error) {
 
@@ -142,6 +152,15 @@ func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Le
 
 	if err := tx.Create(newLedger).Error; err != nil {
 		tx.Rollback()
+		if isUniqueConstraintError(err, "name") {
+			return nil, fmt.Errorf("ledger with matching name already exists")
+		} else if isUniqueConstraintError(err, "hash") {
+			return nil, fmt.Errorf("hash is being used by another ledger")
+		} else if isUniqueConstraintError(err, "prev_ledger_hash") {
+			return nil, fmt.Errorf("previous ledger hash already used")
+		} else if isUniqueConstraintError(err, "next_ledger_hash") {
+			return nil, fmt.Errorf("next ledger hash already used")
+		}
 		return nil, err
 	}
 
