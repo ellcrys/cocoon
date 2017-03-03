@@ -25,33 +25,38 @@ var defaultServer *stubServer
 var log *logging.Logger
 var serverDone chan bool
 
-// GlobalLedger represents the name of the global ledger
-const GlobalLedger = "global"
+const (
+	// GlobalLedger represents the name of the global ledger
+	GlobalLedger = "global"
+
+	// TxCreateLedger represents a message to create a ledger
+	TxCreateLedger = "CREATE_LEDGER"
+
+	// TxPut represents a message to create a transaction
+	TxPut = "PUT"
+)
 
 // The default ledger is the global ledger.
-var defaultLedger = GlobalLedger
+var (
+	defaultLedger = util.Sha256(GlobalLedger)
 
-// txChannels holds the channels to send transaction responses to
-var txRespChannels = cmap.New()
+	// txChannels holds the channels to send transaction responses to
+	txRespChannels = cmap.New()
 
-// ErrOperationTimeout represents a timeout error that occurs when response
-// is not received from orderer in time.
-var ErrOperationTimeout = fmt.Errorf("operation timed out")
+	// ErrOperationTimeout represents a timeout error that occurs when response
+	// is not received from orderer in time.
+	ErrOperationTimeout = fmt.Errorf("operation timed out")
 
-// ErrNotConnected represents an error about the cocoon code not
-// having an active connection with the connector.
-var ErrNotConnected = fmt.Errorf("not connected to the connector")
+	// ErrNotConnected represents an error about the cocoon code not
+	// having an active connection with the connector.
+	ErrNotConnected = fmt.Errorf("not connected to the connector")
 
-// TxListLedgers represents a message to list ledgers belonging to cocoon code
-const TxListLedgers = "LIST_LEDGERS"
+	// Flag to help tell whether cocoon code is running
+	running = false
 
-// TxCreateLedger represents a message to create a ledger
-const TxCreateLedger = "CREATE_LEDGER"
-
-// Flag to help tell whether cocoon code is running
-var running = false
-
-var ccode CocoonCode
+	// The cocoon code currently running
+	ccode CocoonCode
+)
 
 func init() {
 	defaultServer = new(stubServer)
@@ -247,6 +252,8 @@ func isConnected() bool {
 // the cocoon code id and the name (e.g SHA256(ccode_id.name))
 func CreateLedger(name string, public bool) (*types.Ledger, error) {
 
+	// TODO: prevent use of ledger name with punctuations (execept an underscore)
+
 	if !isConnected() {
 		return nil, ErrNotConnected
 	}
@@ -290,7 +297,43 @@ func GetDefaultLedger() string {
 	return defaultLedger
 }
 
-// Put adds a new transaction to the default ledger.
+// PutIn adds a new transaction to a ledger
+func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
+
+	if !isConnected() {
+		return nil, ErrNotConnected
+	}
+
+	var respCh = make(chan *proto.Tx)
+
+	txID := util.UUID4()
+	err := sendTx(&proto.Tx{
+		Id:     txID,
+		Invoke: true,
+		Name:   TxPut,
+		Params: []string{GetDefaultLedger(), txID, key, string(value)},
+	}, respCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to put transaction. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+	}
+
+	var tx types.Transaction
+	if err = util.FromJSON(resp.Body, &tx); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &tx, nil
+}
+
+// Put adds a new transaction into the default ledger
 func Put(key string, value []byte) (*types.Transaction, error) {
-	return nil, nil
+	return PutIn(GetDefaultLedger(), key, value)
 }

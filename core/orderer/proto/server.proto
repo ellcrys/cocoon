@@ -3,6 +3,7 @@ package proto;
 
 service Orderer {
     rpc CreateLedger(CreateLedgerParams) returns (Ledger);
+    rpc Put(PutTransactionParams) returns (Transaction);
 }
 
 message CreateLedgerParams {
@@ -11,12 +12,32 @@ message CreateLedgerParams {
     bool public = 3;
 }
 
+message PutTransactionParams {
+    string Id = 1;
+    string cocoonCodeId = 2;
+    string ledgerName = 3;
+    string key = 4;
+    bytes value = 5;    
+}
+
 message Ledger {
     int64 number = 1;
     string hash = 2;
     string prevLedgerHash = 3;
     string nextLedgerHash = 4;
     string name = 5;
-    bool public = 8;
+    bool public = 6;
     int64 createdAt = 7;
+}
+
+message Transaction {
+    int64 number = 1;
+    string ledger = 2;
+    string id = 3;
+    string key = 4;
+    string value = 5;
+    string hash = 6;
+    string prevTxHash = 7;
+    string nextTxHash = 8;
+    int64 createdAt = 9;
 }

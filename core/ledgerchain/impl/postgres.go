@@ -185,7 +185,7 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
 
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
-func (ch *PostgresLedgerChain) Put(txID, key, value string) (*types.Transaction, error) {
+func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*types.Transaction, error) {
 
 	tx := ch.db.Begin()
 
@@ -196,6 +196,7 @@ func (ch *PostgresLedgerChain) Put(txID, key, value string) (*types.Transaction,
 
 	newTx := &types.Transaction{
 		ID:        txID,
+		Ledger:    util.Sha256(ledger),
 		Key:       key,
 		Value:     value,
 		CreatedAt: time.Now().Unix(),

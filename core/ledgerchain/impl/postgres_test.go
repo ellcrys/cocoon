@@ -57,7 +57,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, "global")
+						So(entries[0].Name, ShouldEqual, util.Sha256("global"))
 					})
 
 					Reset(func() {
@@ -78,7 +78,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					err = db.(*gorm.DB).Find(&entries).Error
 					So(err, ShouldBeNil)
 					So(len(entries), ShouldEqual, 1)
-					So(entries[0].Name, ShouldEqual, "global")
+					So(entries[0].Name, ShouldEqual, util.Sha256("global"))
 				})
 
 				Reset(func() {
@@ -120,7 +120,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				Convey("should return error since a ledger with same name already exists", func() {
 					_, err := pgChain.CreateLedger(ledgerName, true)
 					So(err, ShouldNotBeNil)
-					So(err.Error(), ShouldEqual, `pq: duplicate key value violates unique constraint "uix_ledgers_name"`)
+					So(err.Error(), ShouldEqual, `ledger with matching name already exists`)
 				})
 			})
 
@@ -211,7 +211,8 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("expects new transaction to be the first and only transaction", func() {
 				txID := util.Sha256("tx_id")
-				_, err := pgChain.Put(txID, "key", "value")
+				ledger := util.Sha256("ledger_name")
+				_, err := pgChain.Put(txID, ledger, "key", "value")
 				So(err, ShouldBeNil)
 
 				var allTx []types.Transaction
@@ -222,6 +223,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				Convey("expects the only transaction to have expected fields set", func() {
 					So(allTx[0].Hash, ShouldNotEqual, "")
 					So(allTx[0].ID, ShouldEqual, txID)
+					So(allTx[0].Ledger, ShouldEqual, util.Sha256(ledger))
 					So(allTx[0].Key, ShouldEqual, "key")
 					So(allTx[0].Value, ShouldEqual, "value")
 					So(allTx[0].NextTxHash, ShouldEqual, "")
@@ -229,7 +231,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 				})
 
 				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {
-					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), "key", "value")
+					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), util.Sha256(util.RandString(5)), "key", "value")
 					So(err, ShouldBeNil)
 					So(tx.PrevTxHash, ShouldEqual, allTx[0].Hash)
 				})
@@ -254,7 +256,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 			Convey("should return an expected transaction", func() {
 				key := util.UUID4()
 				txID := util.Sha256(util.UUID4())
-				tx, err := pgChain.Put(txID, key, "value")
+				tx, err := pgChain.Put(txID, util.Sha256(util.RandString(5)), key, "value")
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -284,7 +286,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 			Convey("should return expected transaction", func() {
 				key := util.UUID4()
 				txID := util.Sha256(util.UUID4())
-				tx, err := pgChain.Put(txID, key, "value")
+				tx, err := pgChain.Put(txID, util.Sha256(util.RandString(5)), key, "value")
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 

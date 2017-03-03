@@ -98,3 +98,19 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 
 	return &protoLedger, nil
 }
+
+// Put creates a new transaction
+func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
+
+	key := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetKey()))
+	tx, err := od.chain.Put(params.GetId(), params.GetLedgerName(), key, string(params.GetValue()))
+	if err != nil {
+		return nil, err
+	}
+
+	txJSON, _ := util.ToJSON(tx)
+	var protoTx proto.Transaction
+	util.FromJSON(txJSON, &protoTx)
+
+	return &protoTx, nil
+}

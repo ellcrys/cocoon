@@ -10,7 +10,7 @@ type LedgerChain interface {
 	GetBackend() string
 	CreateLedger(name string, public bool) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
-	Put(txID, key, value string) (*Transaction, error)
+	Put(txID, ledger, key, value string) (*Transaction, error)
 	Get(key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)
 	Close() error
