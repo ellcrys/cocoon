@@ -91,12 +91,11 @@ func TestPosgresLedgerChain(t *testing.T) {
 
 			Convey("should return expected ledger hash", func() {
 				hash := pgChain.MakeLegderHash(&types.Ledger{
-					PrevLedgerHash: NullHash,
-					Name:           "global",
-					Public:         true,
-					CreatedAt:      1488196279,
+					Name:      "global",
+					Public:    true,
+					CreatedAt: 1488196279,
 				})
-				So(hash, ShouldEqual, "8741cc99b2d5cae9c49d05930cf014b87e60d20fecc122deb0ff3beaee7c8064")
+				So(hash, ShouldEqual, "6c3ae4804b0b7a042d08cebcdf8913faacc41ed207198d2430f56485fd1c54f1")
 			})
 
 		})
@@ -227,7 +226,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 					So(allTx[0].Key, ShouldEqual, "key")
 					So(allTx[0].Value, ShouldEqual, "value")
 					So(allTx[0].NextTxHash, ShouldEqual, "")
-					So(allTx[0].PrevTxHash, ShouldEqual, NullHash)
+					So(allTx[0].PrevTxHash, ShouldEqual, "")
 				})
 
 				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {

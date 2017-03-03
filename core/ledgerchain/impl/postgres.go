@@ -24,9 +24,6 @@ const LedgerTableName = "ledgers"
 // transactions are stored.
 const TransactionTableName = "transactions"
 
-// NullHash is the default hash value assigned to columns that require a default hash value
-const NullHash = "0000000000000000000000000000000000000000000000000000000000000000"
-
 // PostgresLedgerChain defines a ledgerchain implementation
 // on the postgres database. It implements the LedgerChain interface
 type PostgresLedgerChain struct {
@@ -137,9 +134,7 @@ func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Le
 		return nil, err
 	}
 
-	if err == gorm.ErrRecordNotFound {
-		newLedger.PrevLedgerHash = NullHash
-	} else {
+	if err != gorm.ErrRecordNotFound {
 		newLedger.PrevLedgerHash = prevLedger.Hash
 	}
 
@@ -210,9 +205,7 @@ func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*types.Tran
 		return nil, err
 	}
 
-	if err == gorm.ErrRecordNotFound {
-		newTx.PrevTxHash = NullHash
-	} else {
+	if err != gorm.ErrRecordNotFound {
 		newTx.PrevTxHash = prevTx.Hash
 	}
 
