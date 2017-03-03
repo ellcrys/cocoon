@@ -5,11 +5,11 @@ package types
 // sharing the same ledger name.
 type Transaction struct {
 	Number     uint   `gorm:"primary_key"`
-	ID         string `json:"id" gorm:"type:varchar(64);unique_index"`
-	Key        string `json:"key" gorm:"type:varchar(64)"`
-	Value      string `json:"key" gorm:"type:text"`
-	Hash       string `json:"hash" gorm:"type:varchar(64);unique_index"`
-	PrevTxHash string `json:"prev_tx_hash" gorm:"type:varchar(64);unique_index"`
-	NextTxHash string `json:"next_tx_hash" gorm:"type:varchar(64);unique_index"`
-	CreatedAt  int64  `json:"created_at"`
+	ID         string `gorm:"type:varchar(64);unique_index:idx_name_id"`
+	Key        string `gorm:"type:varchar(64)"`
+	Value      string `gorm:"type:text"`
+	Hash       string `gorm:"type:varchar(64);unique_index:idx_name_hash"`
+	PrevTxHash string `gorm:"type:varchar(64);unique_index:idx_name_prev_tx_hash"`
+	NextTxHash string `gorm:"type:varchar(64);unique_index:idx_name_next_tx_hash"`
+	CreatedAt  int64
 }
