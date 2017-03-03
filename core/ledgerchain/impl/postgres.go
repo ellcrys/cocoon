@@ -95,7 +95,7 @@ func (ch *PostgresLedgerChain) Init() error {
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger("global", true)
+		_, err := ch.CreateLedger(util.Sha256("global"), true)
 		if err != nil {
 			return err
 		}
