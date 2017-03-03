@@ -98,7 +98,7 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 	return &protoLedger, nil
 }
 
-// GetLedger returns a ledge
+// GetLedger returns a ledger
 func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
 	ledger, err := od.chain.GetLedger(params.GetCocoonCodeId(), params.GetName())
 	if err != nil {

@@ -50,6 +50,9 @@ var (
 	// is not received from orderer in time.
 	ErrOperationTimeout = fmt.Errorf("operation timed out")
 
+	// ErrNotFound represents an error about a resource not found
+	ErrNotFound = fmt.Errorf("not found")
+
 	// ErrNotConnected represents an error about the cocoon code not
 	// having an active connection with the connector.
 	ErrNotConnected = fmt.Errorf("not connected to the connector")
@@ -251,6 +254,7 @@ func isConnected() bool {
 
 // SetDefault ledger
 func SetDefault(name string) {
+	// ledger, err := GetLedger(name)
 	defaultLedger = name
 }
 
@@ -331,6 +335,10 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 	var ledger types.Ledger
 	if err = util.FromJSON(resp.Body, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	if err == nil && ledger == (types.Ledger{}) {
+		return nil, ErrNotFound
 	}
 
 	return &ledger, nil
