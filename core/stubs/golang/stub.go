@@ -432,6 +432,10 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
+	if err == nil && tx == (types.Transaction{}) {
+		return nil, ErrNotFound
+	}
+
 	return &tx, nil
 }
 
