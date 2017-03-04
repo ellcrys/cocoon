@@ -119,8 +119,8 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
 
 	// check if ledger exists
-	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
-	ledger, err := od.chain.GetLedger(name)
+	ledgerName := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
+	ledger, err := od.chain.GetLedger(ledgerName)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 	}
 
 	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
-	tx, err := od.chain.Put(params.GetId(), params.GetLedgerName(), key, string(params.GetValue()))
+	tx, err := od.chain.Put(params.GetId(), ledgerName, key, string(params.GetValue()))
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +144,9 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 // Get returns a transaction with a matching key and cocoon id
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
+	ledgerName := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
 	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
-	tx, err := od.chain.Get(params.GetLedger(), key)
+	tx, err := od.chain.Get(ledgerName, key)
 	if err != nil {
 		return nil, err
 	}
