@@ -270,8 +270,8 @@ func SetDefaultLedger(name string) error {
 	return nil
 }
 
-// GetDefaultLedger returns the name of the default ledger.
-func GetDefaultLedger() string {
+// GetDefaultLedgerName returns the name of the default ledger.
+func GetDefaultLedgerName() string {
 	return defaultLedger
 }
 
@@ -399,7 +399,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 
 // Put adds a new transaction into the default ledger
 func Put(key string, value []byte) (*types.Transaction, error) {
-	return PutIn(GetDefaultLedger(), key, value)
+	return PutIn(GetDefaultLedgerName(), key, value)
 }
 
 // GetFrom returns a transaction by its key and the ledger it belongs to
@@ -440,5 +440,5 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 // Get returns a transaction that belongs to the default legder by its key.
 func Get(key string) (*types.Transaction, error) {
-	return GetFrom(GetDefaultLedger(), key)
+	return GetFrom(GetDefaultLedgerName(), key)
 }
