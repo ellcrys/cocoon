@@ -256,7 +256,11 @@ func (ch *PostgresLedgerChain) Get(ledger, key string) (*types.Transaction, erro
 
 // MakeLedgerName creates a ledger name for use for creating or querying a ledger.
 // Accepts a namespace value and the ledger name.
+// If name provided is same as the GlobalLedgerName, then no namespace is required.
 func (ch *PostgresLedgerChain) MakeLedgerName(namespace, name string) string {
+	if name == types.GetGlobalLedgerName() {
+		namespace = ""
+	}
 	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
 }
 
