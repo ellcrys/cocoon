@@ -13,5 +13,7 @@ type LedgerChain interface {
 	Put(txID, ledger, key, value string) (*Transaction, error)
 	Get(ledger, key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)
+	MakeLedgerName(namespace, name string) string
+	MakeTxKey(namespace, name string) string
 	Close() error
 }

@@ -54,7 +54,7 @@ func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
 		}
 
 		// initialize ledgerchain
-		err = od.chain.Init()
+		err = od.chain.Init(od.chain.MakeLedgerName("", types.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -86,7 +86,7 @@ func (od *Orderer) SetLedgerChain(ch types.LedgerChain) {
 // CreateLedger creates a new ledger
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
-	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
+	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
 	ledger, err := od.chain.CreateLedger(name, params.GetPublic())
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 // GetLedger returns a ledger
 func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
 
-	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
+	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
 	ledger, err := od.chain.GetLedger(name)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
 
 	// check if ledger exists
-	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetLedgerName()))
+	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
 	ledger, err := od.chain.GetLedger(name)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		return nil, fmt.Errorf("ledger not found")
 	}
 
-	key := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetKey()))
+	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
 	tx, err := od.chain.Put(params.GetId(), params.GetLedgerName(), key, string(params.GetValue()))
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 // Get returns a transaction with a matching key and cocoon id
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
-	key := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetKey()))
+	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
 	tx, err := od.chain.Get(params.GetLedger(), key)
 	if err != nil {
 		return nil, err

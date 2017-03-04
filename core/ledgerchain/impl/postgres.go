@@ -254,6 +254,18 @@ func (ch *PostgresLedgerChain) Get(ledger, key string) (*types.Transaction, erro
 	return &tx, nil
 }
 
+// MakeLedgerName creates a ledger name for use for creating or querying a ledger.
+// Accepts a namespace value and the ledger name.
+func (ch *PostgresLedgerChain) MakeLedgerName(namespace, name string) string {
+	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
+}
+
+// MakeTxKey creates a transaction key name for use for creating or querying a transaction.
+// Accepts a namespace value and the key name.
+func (ch *PostgresLedgerChain) MakeTxKey(namespace, name string) string {
+	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
+}
+
 // Close releases any resource held
 func (ch *PostgresLedgerChain) Close() error {
 	if ch.db != nil {
