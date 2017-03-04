@@ -260,8 +260,8 @@ func isConnected() bool {
 	return defaultServer.stream != nil
 }
 
-// SetDefault ledger
-func SetDefault(name string) error {
+// SetDefaultLedger sets the default ledger
+func SetDefaultLedger(name string) error {
 	_, err := GetLedger(name)
 	if err != nil {
 		return err
