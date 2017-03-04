@@ -115,6 +115,15 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 // Put creates a new transaction
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
 
+	// check if ledger exists
+	ledger, err := od.chain.GetLedger(params.GetCocoonCodeId(), params.GetLedgerName())
+	if err != nil {
+		return nil, err
+	}
+	if err == nil && ledger == nil {
+		return nil, fmt.Errorf("ledger not found")
+	}
+
 	key := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetKey()))
 	tx, err := od.chain.Put(params.GetId(), params.GetLedgerName(), key, string(params.GetValue()))
 	if err != nil {
