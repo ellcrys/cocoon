@@ -86,7 +86,8 @@ func (od *Orderer) SetLedgerChain(ch types.LedgerChain) {
 // CreateLedger creates a new ledger
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
-	ledger, err := od.chain.CreateLedger(params.GetCocoonCodeId(), params.GetName(), params.GetPublic())
+	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
+	ledger, err := od.chain.CreateLedger(name, params.GetPublic())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,9 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 
 // GetLedger returns a ledger
 func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
-	ledger, err := od.chain.GetLedger(params.GetCocoonCodeId(), params.GetName())
+
+	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetName()))
+	ledger, err := od.chain.GetLedger(name)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +119,8 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
 
 	// check if ledger exists
-	ledger, err := od.chain.GetLedger(params.GetCocoonCodeId(), params.GetLedgerName())
+	name := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetLedgerName()))
+	ledger, err := od.chain.GetLedger(name)
 	if err != nil {
 		return nil, err
 	}

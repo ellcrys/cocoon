@@ -81,7 +81,7 @@ type stubServer struct {
 
 // GetGlobalLedgerName returns the name of the global ledger
 func GetGlobalLedgerName() string {
-	return util.Sha256(types.GlobalLedgerName)
+	return types.GetGlobalLedgerName()
 }
 
 // stripRPCErrorPrefix takes an error return from the RPC client and removes the

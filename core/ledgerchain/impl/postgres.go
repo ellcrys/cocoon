@@ -68,8 +68,8 @@ func (ch *PostgresLedgerChain) MakeTxHash(tx *types.Transaction) string {
 }
 
 // Init initializes the blockchain. Creates the necessary tables such as the
-// the table holding records of all ledgers.
-func (ch *PostgresLedgerChain) Init() error {
+// the table holding records of all ledgers and global ledger entry
+func (ch *PostgresLedgerChain) Init(globalLedgerName string) error {
 
 	// create ledger table if not existing
 	if !ch.db.HasTable(LedgerTableName) {
@@ -92,7 +92,7 @@ func (ch *PostgresLedgerChain) Init() error {
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger("", types.GlobalLedgerName, true)
+		_, err := ch.CreateLedger(globalLedgerName, true)
 		if err != nil {
 			return err
 		}
@@ -110,17 +110,10 @@ func isUniqueConstraintError(err error, column string) bool {
 	return false
 }
 
-// CreateLedgerName creates a ledger name
-func CreateLedgerName(cocoonCodeID, name string) string {
-	return util.Sha256(fmt.Sprintf("%s.%s", cocoonCodeID, name))
-}
-
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(cocoonCodeID, name string, public bool) (*types.Ledger, error) {
+func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*types.Ledger, error) {
 
 	tx := ch.db.Begin()
-
-	name = CreateLedgerName(cocoonCodeID, name)
 
 	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
@@ -172,10 +165,9 @@ func (ch *PostgresLedgerChain) CreateLedger(cocoonCodeID, name string, public bo
 }
 
 // GetLedger fetches a ledger meta information
-func (ch *PostgresLedgerChain) GetLedger(cocoonCodeID, name string) (*types.Ledger, error) {
-	var l types.Ledger
+func (ch *PostgresLedgerChain) GetLedger(name string) (*types.Ledger, error) {
 
-	name = CreateLedgerName(cocoonCodeID, name)
+	var l types.Ledger
 
 	err := ch.db.Where("name = ?", name).Last(&l).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -192,7 +184,6 @@ func (ch *PostgresLedgerChain) GetLedger(cocoonCodeID, name string) (*types.Ledg
 func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*types.Transaction, error) {
 
 	tx := ch.db.Begin()
-	ledger = util.Sha256(ledger)
 
 	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
@@ -252,7 +243,6 @@ func (ch *PostgresLedgerChain) GetByID(txID string) (*types.Transaction, error) 
 // Get fetches a transaction by its ledger and key
 func (ch *PostgresLedgerChain) Get(ledger, key string) (*types.Transaction, error) {
 	var tx types.Transaction
-	ledger = util.Sha256(ledger)
 
 	err := ch.db.Where("key = ? AND ledger = ?", key, ledger).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

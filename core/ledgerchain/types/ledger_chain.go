@@ -6,10 +6,10 @@ package types
 // number of cryptographically linked transactions.
 type LedgerChain interface {
 	Connect(dbAddr string) (interface{}, error)
-	Init() error
+	Init(globalLedgerName string) error
 	GetBackend() string
-	CreateLedger(cocoonCodeID, name string, public bool) (*Ledger, error)
-	GetLedger(cocoonCodeID, name string) (*Ledger, error)
+	CreateLedger(name string, public bool) (*Ledger, error)
+	GetLedger(name string) (*Ledger, error)
 	Put(txID, ledger, key, value string) (*Transaction, error)
 	Get(ledger, key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)

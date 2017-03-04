@@ -52,7 +52,7 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 	// if name is the global ledger, then a cocoon code id is not required.
 	name := tx.GetParams()[0]
 	cocoonCodeID := c.cocoonID
-	if name == types.GlobalLedgerName {
+	if name == types.GetGlobalLedgerName() {
 		cocoonCodeID = ""
 	}
 

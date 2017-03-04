@@ -1,7 +1,14 @@
 package types
 
+import "github.com/ellcrys/util"
+
 // GlobalLedgerName represents the name of the global ledger
-const GlobalLedgerName = "global"
+var globalLedgerName = util.Sha256("global")
+
+// GetGlobalLedgerName returns the global ledger name
+func GetGlobalLedgerName() string {
+	return globalLedgerName
+}
 
 // Ledger represents a group of linked transactions
 type Ledger struct {
