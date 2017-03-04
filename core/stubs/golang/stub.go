@@ -261,9 +261,13 @@ func isConnected() bool {
 }
 
 // SetDefault ledger
-func SetDefault(name string) {
-	// ledger, err := GetLedger(name)
+func SetDefault(name string) error {
+	_, err := GetLedger(name)
+	if err != nil {
+		return err
+	}
 	defaultLedger = name
+	return nil
 }
 
 // GetDefaultLedger returns the name of the default ledger.
