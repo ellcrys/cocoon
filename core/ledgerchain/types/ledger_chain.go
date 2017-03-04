@@ -11,7 +11,7 @@ type LedgerChain interface {
 	CreateLedger(cocoonCodeID, name string, public bool) (*Ledger, error)
 	GetLedger(cocoonCodeID, name string) (*Ledger, error)
 	Put(txID, ledger, key, value string) (*Transaction, error)
-	Get(key string) (*Transaction, error)
+	Get(ledger, key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)
 	Close() error
 }

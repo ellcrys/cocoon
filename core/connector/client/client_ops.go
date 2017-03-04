@@ -18,8 +18,8 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 	}
 	defer ordererConn.Close()
 
-	client := order_proto.NewOrdererClient(ordererConn)
-	result, err := client.CreateLedger(context.Background(), &order_proto.CreateLedgerParams{
+	odc := order_proto.NewOrdererClient(ordererConn)
+	result, err := odc.CreateLedger(context.Background(), &order_proto.CreateLedgerParams{
 		CocoonCodeId: c.cocoonID,
 		Name:         tx.GetParams()[0],
 		Public:       tx.GetParams()[1] == "true",
@@ -56,8 +56,8 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 		cocoonCodeID = ""
 	}
 
-	client := order_proto.NewOrdererClient(ordererConn)
-	result, err := client.GetLedger(context.Background(), &order_proto.GetLedgerParams{
+	odc := order_proto.NewOrdererClient(ordererConn)
+	result, err := odc.GetLedger(context.Background(), &order_proto.GetLedgerParams{
 		Name:         name,
 		CocoonCodeId: cocoonCodeID,
 	})
@@ -87,13 +87,45 @@ func (c *Client) put(tx *proto.Tx) error {
 	}
 	defer ordererConn.Close()
 
-	client := order_proto.NewOrdererClient(ordererConn)
-	result, err := client.Put(context.Background(), &order_proto.PutTransactionParams{
+	odc := order_proto.NewOrdererClient(ordererConn)
+	result, err := odc.Put(context.Background(), &order_proto.PutTransactionParams{
 		CocoonCodeId: c.cocoonID,
 		LedgerName:   tx.GetParams()[0],
 		Id:           tx.GetParams()[1],
 		Key:          tx.GetParams()[2],
 		Value:        []byte(tx.GetParams()[3]),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	body, _ := util.ToJSON(result)
+
+	c.stream.Send(&proto.Tx{
+		Response: true,
+		Status:   200,
+		Id:       tx.GetId(),
+		Body:     body,
+	})
+
+	return nil
+}
+
+// get gets a transaction by its key
+func (c *Client) get(tx *proto.Tx) error {
+
+	ordererConn, err := c.dialOrderer()
+	if err != nil {
+		return err
+	}
+	defer ordererConn.Close()
+
+	odc := order_proto.NewOrdererClient(ordererConn)
+	result, err := odc.Get(context.Background(), &order_proto.GetParams{
+		CocoonCodeId: c.cocoonID,
+		Ledger:       tx.GetParams()[0],
+		Key:          tx.GetParams()[1],
 	})
 
 	if err != nil {

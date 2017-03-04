@@ -249,11 +249,12 @@ func (ch *PostgresLedgerChain) GetByID(txID string) (*types.Transaction, error) 
 	return &tx, nil
 }
 
-// Get fetches a transaction by its key
-func (ch *PostgresLedgerChain) Get(key string) (*types.Transaction, error) {
+// Get fetches a transaction by its ledger and key
+func (ch *PostgresLedgerChain) Get(ledger, key string) (*types.Transaction, error) {
 	var tx types.Transaction
+	ledger = util.Sha256(ledger)
 
-	err := ch.db.Where("key = ?", key).Last(&tx).Error
+	err := ch.db.Where("key = ? AND ledger = ?", key, ledger).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	} else if err == gorm.ErrRecordNotFound {

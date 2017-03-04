@@ -256,7 +256,7 @@ func TestPosgresLedgerChain(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgChain.Get("wrong_key")
+				tx, err := pgChain.Get(types.GlobalLedgerName, "wrong_key")
 				So(tx, ShouldBeNil)
 				So(err, ShouldBeNil)
 			})
@@ -264,11 +264,12 @@ func TestPosgresLedgerChain(t *testing.T) {
 			Convey("should return expected transaction", func() {
 				key := util.UUID4()
 				txID := util.Sha256(util.UUID4())
-				tx, err := pgChain.Put(txID, util.Sha256(util.RandString(5)), key, "value")
+				ledger := util.Sha256(util.RandString(5))
+				tx, err := pgChain.Put(txID, ledger, key, "value")
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
-				tx2, err := pgChain.Get(key)
+				tx2, err := pgChain.Get(ledger, key)
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 				So(tx2.Hash, ShouldEqual, tx.Hash)

@@ -195,6 +195,8 @@ func (c *Client) handleInvokeTransaction(tx *proto.Tx) error {
 		return c.put(tx)
 	case stub.TxGetLedger:
 		return c.getLedger(tx)
+	case stub.TxGet:
+		return c.get(tx)
 	default:
 		return c.stream.Send(&proto.Tx{
 			Id:       tx.GetId(),

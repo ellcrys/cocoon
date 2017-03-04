@@ -37,6 +37,9 @@ const (
 
 	// TxGetLedger represents a message to get a ledger
 	TxGetLedger = "GET_LEDGER"
+
+	// TxGet represents a message to get a transaction
+	TxGet = "GET"
 )
 
 // The default ledger is the global ledger.
@@ -383,4 +386,45 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 // Put adds a new transaction into the default ledger
 func Put(key string, value []byte) (*types.Transaction, error) {
 	return PutIn(GetDefaultLedger(), key, value)
+}
+
+// GetFrom returns a transaction by its key and the ledger it belongs to
+func GetFrom(ledgerName, key string) (*types.Transaction, error) {
+
+	if !isConnected() {
+		return nil, ErrNotConnected
+	}
+
+	var respCh = make(chan *proto.Tx)
+
+	txID := util.UUID4()
+	err := sendTx(&proto.Tx{
+		Id:     txID,
+		Invoke: true,
+		Name:   TxGet,
+		Params: []string{ledgerName, key},
+	}, respCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+	}
+
+	var tx types.Transaction
+	if err = util.FromJSON(resp.Body, &tx); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &tx, nil
+}
+
+// Get returns a transaction that belongs to the default legder by its key.
+func Get(key string) (*types.Transaction, error) {
+	return GetFrom(GetDefaultLedger(), key)
 }

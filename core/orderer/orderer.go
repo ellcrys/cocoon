@@ -127,3 +127,19 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 
 	return &protoTx, nil
 }
+
+// Get returns a transaction with a matching key and cocoon id
+func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
+
+	key := util.Sha256(fmt.Sprintf("%s.%s", params.GetCocoonCodeId(), params.GetKey()))
+	tx, err := od.chain.Get(params.GetLedger(), key)
+	if err != nil {
+		return nil, err
+	}
+
+	txJSON, _ := util.ToJSON(tx)
+	var protoTx proto.Transaction
+	util.FromJSON(txJSON, &protoTx)
+
+	return &protoTx, nil
+}

@@ -5,6 +5,7 @@ service Orderer {
     rpc CreateLedger(CreateLedgerParams) returns (Ledger);
     rpc GetLedger(GetLedgerParams) returns (Ledger);
     rpc Put(PutTransactionParams) returns (Transaction);
+    rpc Get(GetParams) returns (Transaction);
 }
 
 message CreateLedgerParams {
@@ -24,6 +25,12 @@ message PutTransactionParams {
 message GetLedgerParams {
     string cocoonCodeId = 1;
     string name = 2;
+}
+
+message GetParams {
+    string cocoonCodeId = 1; 
+    string key = 2;
+    string ledger = 3;   
 }
 
 message Ledger {
