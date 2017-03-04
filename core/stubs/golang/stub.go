@@ -26,9 +26,6 @@ var log *logging.Logger
 var serverDone chan bool
 
 const (
-	// GlobalLedger represents the name of the global ledger
-	GlobalLedger = types.GlobalLedgerName
-
 	// TxCreateLedger represents a message to create a ledger
 	TxCreateLedger = "CREATE_LEDGER"
 
@@ -44,7 +41,7 @@ const (
 
 // The default ledger is the global ledger.
 var (
-	defaultLedger = util.Sha256(GlobalLedger)
+	defaultLedger = GetGlobalLedgerName()
 
 	// txChannels holds the channels to send transaction responses to
 	txRespChannels = cmap.New()
@@ -55,6 +52,9 @@ var (
 
 	// ErrNotFound represents an error about a resource not found
 	ErrNotFound = fmt.Errorf("not found")
+
+	// ErrAlreadyExist represents an error about an already existing resource
+	ErrAlreadyExist = fmt.Errorf("already exists")
 
 	// ErrNotConnected represents an error about the cocoon code not
 	// having an active connection with the connector.
@@ -77,6 +77,11 @@ func init() {
 type stubServer struct {
 	port   int
 	stream proto.Stub_TransactServer
+}
+
+// GetGlobalLedgerName returns the name of the global ledger
+func GetGlobalLedgerName() string {
+	return util.Sha256(types.GlobalLedgerName)
 }
 
 // stripRPCErrorPrefix takes an error return from the RPC client and removes the
@@ -295,8 +300,13 @@ func CreateLedger(name string, public bool) (*types.Ledger, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		err = fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		if strings.Contains(err.Error(), "already exists") {
+			return nil, ErrAlreadyExist
+		}
+		return nil, err
 	}
 
 	var ledger types.Ledger
