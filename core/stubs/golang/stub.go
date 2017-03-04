@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net"
-
 	"os"
-
-	"time"
-
 	"strings"
+	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
