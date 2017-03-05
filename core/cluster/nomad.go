@@ -72,7 +72,7 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a cocoon code to the cluster
-func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
+func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (string, error) {
 
 	var err error
 
@@ -99,7 +99,7 @@ func (cl *Nomad) Deploy(lang, url, tag, buildParams string) (string, error) {
 	}
 
 	cocoonData := map[string]interface{}{
-		"ID":                util.Sha1(util.UUID4())[0:15],
+		"ID":                jobID,
 		"Count":             1,
 		"CPU":               500,
 		"MemoryMB":          512,
