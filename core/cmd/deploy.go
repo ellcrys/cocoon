@@ -11,7 +11,6 @@ var log = logging.MustGetLogger("deploy")
 // Deploy calls the clusters Deploy method to
 // start a new cocoon.
 func Deploy(cluster cluster.Cluster, jobID, lang, url, tag, buildParams string) (string, error) {
-	log.Debugf("Deploying app with language=%s and url=%s", lang, url)
 	return cluster.Deploy(jobID, lang, url, tag, buildParams)
 }
 
@@ -33,7 +32,10 @@ var deployCmd = &cobra.Command{
 		cl := cluster.NewNomad()
 		cl.SetAddr(clusterAddr, clusterAddrHTTPS)
 		cocoonID, err := Deploy(cl, id, lang, url, tag, buildParams)
-		log.Debug(cocoonID, err)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		log.Info("Deployment ID:", cocoonID)
 	},
 }
 

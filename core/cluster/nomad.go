@@ -28,7 +28,6 @@ type Nomad struct {
 
 // NewNomad creates a nomad cluster object
 func NewNomad() *Nomad {
-	log.Info("Nomad cluster instance created")
 	return new(Nomad)
 }
 
@@ -76,13 +75,17 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (string, erro
 
 	var err error
 
-	if !util.InStringSlice(SupportedCocoonCodeLang, lang) {
+	if len(jobID) == 0 {
+		return "", fmt.Errorf("job id is required")
+	} else if !util.InStringSlice(SupportedCocoonCodeLang, lang) {
 		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedCocoonCodeLang, ","))
 	} else if url == "" {
 		return "", fmt.Errorf("github repo url is required")
 	} else if !cutil.IsGithubRepoURL(url) {
 		return "", fmt.Errorf("invalid chaincode url. Chaincode must be hosted on github")
 	}
+
+	log.Debugf("Deploying app with language=%s and url=%s", lang, url)
 
 	var img string
 	switch lang {
@@ -129,6 +132,8 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (string, erro
 		log.Error(resp)
 		return "", e
 	}
+
+	log.Info(resp)
 
 	return cocoonData["ID"].(string), nil
 }
