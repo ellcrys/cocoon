@@ -136,6 +136,7 @@ func (lc *Launcher) Launch(req *Request) {
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
 		if len(req.BuildParams) > 0 {
+			log.Info(">>> ", req.BuildParams)
 			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
 				log.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 				lc.setFailed(true)
