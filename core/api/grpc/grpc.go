@@ -7,12 +7,21 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
+	"github.com/ncodes/cocoon/core/scheduler"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 var log = logging.MustGetLogger("api.grpc")
+
+// scheduler represents the cluster scheduler implementation (nomad, kubernetes, etc)
+var sch scheduler.Scheduler
+
+// SetCluster sets the default cluster
+func SetCluster(s scheduler.Scheduler) {
+	sch = s
+}
 
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource
@@ -53,7 +62,14 @@ func (api *API) Stop(exitCode int) int {
 	return exitCode
 }
 
-// Cocoon handles cocoon requests.
-func (api *API) Cocoon(context.Context, *proto.Request) (*proto.Response, error) {
-	return nil, nil
+// Deploy starts a new cocoon. The scheduler creates a job based on the requests
+func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
+	depInfo, err := sch.Deploy(req.GetId(), req.GetLanguage(), req.GetUrl(), req.GetReleaseTag(), string(req.GetBuildParam()))
+	if err != nil {
+		return nil, err
+	}
+	return &proto.Response{
+		Status: 200,
+		Body:   []byte(depInfo.ID),
+	}, nil
 }

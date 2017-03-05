@@ -1,15 +1,12 @@
-package cluster
+package scheduler
 
 import (
 	"fmt"
 
-	"strings"
-
-	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
-	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/data"
+	"github.com/ncodes/cocoon/core/validation"
 	logging "github.com/op/go-logging"
 )
 
@@ -71,34 +68,29 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a cocoon code to the cluster
-func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (string, error) {
+func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentInfo, error) {
 
 	var err error
 
 	if len(jobID) == 0 {
-		return "", fmt.Errorf("job id is required")
-	} else if !util.InStringSlice(SupportedCocoonCodeLang, lang) {
-		return "", fmt.Errorf("only the following languages are suppored [%s]", strings.Join(SupportedCocoonCodeLang, ","))
-	} else if url == "" {
-		return "", fmt.Errorf("github repo url is required")
-	} else if !cutil.IsGithubRepoURL(url) {
-		return "", fmt.Errorf("invalid chaincode url. Chaincode must be hosted on github")
+		return nil, fmt.Errorf("job id is required")
 	}
 
-	log.Debugf("Deploying app with language=%s and url=%s", lang, url)
+	if err = validation.ValidateDeployment(url, lang, buildParams); err != nil {
+		return nil, err
+	}
+
+	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
+
+	if len(buildParams) > 0 {
+		bs, _ := util.ToJSON([]byte(buildParams))
+		buildParams = string(bs)
+	}
 
 	var img string
 	switch lang {
 	case "go":
 		img = "ncodes/cocoon-launcher:latest"
-	}
-
-	// Attempt to parse build parameters if provided
-	if len(buildParams) > 0 {
-		_, err = crypto.FromBase64(buildParams)
-		if err != nil {
-			return "", fmt.Errorf("Invalid build params. Expects a base 64 encoded string. %s", err)
-		}
 	}
 
 	cocoonData := map[string]interface{}{
@@ -117,23 +109,23 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (string, erro
 	jobSpec, err := cl.PrepareJobSpec(cocoonData)
 
 	if err != nil {
-		e := fmt.Errorf("failed to prepare job spec. %s", err)
-		log.Error(e.Error())
-		return "", e
+		return nil, fmt.Errorf("system: failed to prepare job spec. %s", err)
 	}
 
 	resp, status, err := cl.deployJob(string(jobSpec))
 	if err != nil {
-		e := fmt.Errorf("failed to deploy job spec. %s", err)
-		log.Error(e.Error())
-		return "", e
+		return nil, fmt.Errorf("system: failed to deploy job spec. %s", err)
 	} else if status != 200 {
-		e := fmt.Errorf("failed to deploy job spec. %s", resp)
-		log.Error(resp)
-		return "", e
+		return nil, fmt.Errorf("system: failed to deploy job spec. %s", resp)
 	}
 
-	log.Info(resp)
+	var jobInfo map[string]interface{}
+	if err = util.FromJSON([]byte(resp), &jobInfo); err != nil {
+		return nil, fmt.Errorf("system: %s", resp)
+	}
 
-	return cocoonData["ID"].(string), nil
+	return &DeploymentInfo{
+		ID:     jobID,
+		EvalID: jobInfo["EvalID"].(string),
+	}, nil
 }

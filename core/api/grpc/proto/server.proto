@@ -2,12 +2,15 @@ syntax = "proto3";
 package proto;
 
 service API {
-    rpc Cocoon(Request) returns (Response);
+    rpc Deploy(DeployRequest) returns (Response);
 }
 
-message Request {
-    string name = 1;
-    repeated string params = 2;
+message DeployRequest {
+    string id = 1;
+    string url = 2;
+    string language = 3;
+    string releaseTag = 4;
+    bytes buildParam = 5;
 }
 
 message Response {

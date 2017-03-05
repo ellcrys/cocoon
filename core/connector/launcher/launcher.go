@@ -11,11 +11,10 @@ import (
 
 	"strings"
 
-	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/client"
-	"github.com/ncodes/cocoon/core/connector/config"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
@@ -137,14 +136,6 @@ func (lc *Launcher) Launch(req *Request) {
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
 		if len(req.BuildParams) > 0 {
-
-			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
-			if err != nil {
-				log.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
-				lc.setFailed(true)
-				return
-			}
-
 			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
 				log.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 				lc.setFailed(true)
