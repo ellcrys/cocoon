@@ -18,7 +18,8 @@ func ValidateDeployment(url, language, buildParam string) error {
 	} else if !util.InStringSlice([]string{"go"}, language) {
 		return fmt.Errorf("language is not supported. Expected one of these languages [go]")
 	} else if len(buildParam) > 0 {
-		if util.FromJSON([]byte(buildParam), make(map[string]interface{})) != nil {
+		var c map[string]interface{}
+		if util.FromJSON([]byte(buildParam), &c) != nil {
 			return fmt.Errorf("build parameter is not valid json")
 		}
 	}
