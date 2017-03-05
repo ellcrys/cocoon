@@ -83,7 +83,7 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentI
 	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
 
 	if len(buildParams) > 0 {
-		bs, _ := util.ToJSON([]byte(buildParams))
+		bs, _ := util.ToJSON(buildParams)
 		buildParams = string(bs)
 	}
 
