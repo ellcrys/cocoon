@@ -62,7 +62,6 @@
             "Resources": {
               "CPU": {{CPU}},
               "MemoryMB": {{MemoryMB}},
-              "DiskMB": {{DiskMB}},
               "IOPS": 0,
               "Networks": [
                 {
