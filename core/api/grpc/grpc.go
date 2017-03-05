@@ -68,6 +68,9 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("Successfully deployed cocoon code %s", depInfo.ID)
+
 	return &proto.Response{
 		Status: 200,
 		Body:   []byte(depInfo.ID),
