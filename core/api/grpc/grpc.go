@@ -66,6 +66,10 @@ func (api *API) Stop(exitCode int) int {
 func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
 	depInfo, err := sch.Deploy(req.GetId(), req.GetLanguage(), req.GetUrl(), req.GetReleaseTag(), string(req.GetBuildParam()))
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "system") {
+			log.Error(err.Error())
+			return nil, fmt.Errorf("failed to deploy cocoon")
+		}
 		return nil, err
 	}
 

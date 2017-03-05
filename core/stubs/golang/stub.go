@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
@@ -79,12 +80,6 @@ type stubServer struct {
 // GetGlobalLedgerName returns the name of the global ledger
 func GetGlobalLedgerName() string {
 	return types.GetGlobalLedgerName()
-}
-
-// stripRPCErrorPrefix takes an error return from the RPC client and removes the
-// prefixed `rpc error: code = 2 desc =` statement
-func stripRPCErrorPrefix(err []byte) []byte {
-	return []byte(strings.TrimSpace(strings.Replace(string(err), "rpc error: code = 2 desc =", "", -1)))
 }
 
 // Transact listens and process invoke and response transactions from
@@ -303,7 +298,7 @@ func CreateLedger(name string, public bool) (*types.Ledger, error) {
 	}
 
 	if resp.Status != 200 {
-		err = fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		err = fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, ErrAlreadyExist
 		}
@@ -343,7 +338,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
 	var ledger types.Ledger
@@ -383,7 +378,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
 	var tx types.Transaction
@@ -424,7 +419,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", stripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
 	var tx types.Transaction

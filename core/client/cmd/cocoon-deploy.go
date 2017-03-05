@@ -1,9 +1,8 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
-//
 package cmd
 
 import (
 	"github.com/ncodes/cocoon/core/client/cocoon"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -26,7 +25,7 @@ var cocoonDeployCmd = &cobra.Command{
 
 		err := new(cocoon.Deploy).Deploy(url, releaseTag, lang, buildParams)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%s", common.StripRPCErrorPrefix([]byte(err.Error())))
 		}
 	},
 }

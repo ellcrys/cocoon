@@ -5,7 +5,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
-	"github.com/ncodes/cocoon/core/validation"
+	"github.com/ncodes/cocoon/core/common"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ type Deploy struct {
 // Deploy creates and sends a deploy request to the server
 func (cd *Deploy) Deploy(url, releaseTag, language, buildParam string) error {
 
-	if err := validation.ValidateDeployment(url, language, buildParam); err != nil {
+	if err := common.ValidateDeployment(url, language, buildParam); err != nil {
 		return err
 	}
 
