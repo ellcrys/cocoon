@@ -3,10 +3,11 @@ package scheduler
 import (
 	"fmt"
 
+	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/data"
-	"github.com/ncodes/cocoon/core/validation"
 	logging "github.com/op/go-logging"
 )
 
@@ -76,15 +77,14 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentI
 		return nil, fmt.Errorf("job id is required")
 	}
 
-	if err = validation.ValidateDeployment(url, lang, buildParams); err != nil {
+	if err = common.ValidateDeployment(url, lang, buildParams); err != nil {
 		return nil, err
 	}
 
 	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
 
 	if len(buildParams) > 0 {
-		bs, _ := util.ToJSON(buildParams)
-		buildParams = string(bs)
+		buildParams = crypto.ToBase64([]byte(buildParams))
 	}
 
 	var img string
