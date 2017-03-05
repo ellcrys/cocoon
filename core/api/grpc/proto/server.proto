@@ -11,6 +11,8 @@ message DeployRequest {
     string language = 3;
     string releaseTag = 4;
     bytes buildParam = 5;
+    string memory = 6;
+    string cpuShare = 7;
 }
 
 message Response {

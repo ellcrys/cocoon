@@ -22,7 +22,7 @@ type Deploy struct {
 }
 
 // Deploy creates and sends a deploy request to the server
-func (cd *Deploy) Deploy(url, releaseTag, language, buildParam string) error {
+func (cd *Deploy) Deploy(url, releaseTag, language, buildParam, memory, cpuShare string) error {
 
 	if err := common.ValidateDeployment(url, language, buildParam); err != nil {
 		return err
@@ -41,6 +41,8 @@ func (cd *Deploy) Deploy(url, releaseTag, language, buildParam string) error {
 		Language:   language,
 		ReleaseTag: releaseTag,
 		BuildParam: []byte(buildParam),
+		Memory:     memory,
+		CpuShare:   cpuShare,
 	})
 	if err != nil {
 		return err

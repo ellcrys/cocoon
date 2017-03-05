@@ -16,6 +16,25 @@ var log = logging.MustGetLogger("nomad")
 // SupportedCocoonCodeLang defines the supported chaincode language
 var SupportedCocoonCodeLang = []string{"go"}
 
+// SupportedMemory represents the allowed cocoon memory choices
+var SupportedMemory = map[string]interface{}{
+	"512m": 512,
+	"1g":   1024,
+	"2g":   2048,
+}
+
+// SupportedCPUShare represents the allowed cocoon cpu share choices
+var SupportedCPUShare = map[string]interface{}{
+	"1x": 100,
+	"2x": 200,
+}
+
+// SupportedDiskSpace represents the allowed cocoon disk space
+var SupportedDiskSpace = map[string]interface{}{
+	"1x": 300,
+	"2x": 500,
+}
+
 // Nomad defines a nomad cluster that implements
 // cluster.Cluster interface. Every interaction with
 // the cluster is handled here.
@@ -69,7 +88,7 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a cocoon code to the cluster
-func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentInfo, error) {
+func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare string) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -79,6 +98,11 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentI
 
 	if err = common.ValidateDeployment(url, lang, buildParams); err != nil {
 		return nil, err
+	}
+	if !util.InStringSlice(util.GetMapKeys(SupportedMemory), memory) {
+		return nil, fmt.Errorf("Invalid memory value. Expects one of these: %v", util.GetMapKeys(SupportedMemory))
+	} else if !util.InStringSlice(util.GetMapKeys(SupportedCPUShare), cpuShare) {
+		return nil, fmt.Errorf("Invalid cpu share value. Expects one of these: %v", util.GetMapKeys(SupportedCPUShare))
 	}
 
 	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
@@ -96,9 +120,10 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentI
 	cocoonData := map[string]interface{}{
 		"ID":                jobID,
 		"Count":             1,
-		"CPU":               500,
-		"MemoryMB":          512,
-		"DiskMB":            100,
+		"MemoryMB":          SupportedMemory[memory].(int),
+		"CPU":               SupportedCPUShare[cpuShare].(int),
+		"DiskMB":            SupportedDiskSpace[cpuShare].(int),
+		"MBits":             1000,
 		"Image":             img,
 		"CocoonCodeURL":     url,
 		"CocoonCodeLang":    lang,

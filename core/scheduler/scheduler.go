@@ -8,6 +8,6 @@ type DeploymentInfo struct {
 
 // Scheduler defines an interface for cluster interactions
 type Scheduler interface {
-	Deploy(jobID, lang, url, tag, buildParams string) (*DeploymentInfo, error)
+	Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare string) (*DeploymentInfo, error)
 	SetAddr(addr string, https bool)
 }

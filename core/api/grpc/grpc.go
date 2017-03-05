@@ -64,7 +64,15 @@ func (api *API) Stop(exitCode int) int {
 
 // Deploy starts a new cocoon. The scheduler creates a job based on the requests
 func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
-	depInfo, err := sch.Deploy(req.GetId(), req.GetLanguage(), req.GetUrl(), req.GetReleaseTag(), string(req.GetBuildParam()))
+	depInfo, err := sch.Deploy(
+		req.GetId(),
+		req.GetLanguage(),
+		req.GetUrl(),
+		req.GetReleaseTag(),
+		string(req.GetBuildParam()),
+		req.GetMemory(),
+		req.GetCpuShare(),
+	)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			log.Error(err.Error())

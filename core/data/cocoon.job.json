@@ -62,10 +62,11 @@
             "Resources": {
               "CPU": {{CPU}},
               "MemoryMB": {{MemoryMB}},
+              "DiskMB": {{DiskMB}},
               "IOPS": 0,
               "Networks": [
                 {
-                  "MBits": 200,
+                  "MBits": {{MBits}},
                   "DynamicPorts":[
                     { "Label":"connector"}
                   ]
