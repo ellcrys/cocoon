@@ -23,3 +23,5 @@ import:
   - convey
 - package: github.com/orcaman/concurrent-map
 - package: github.com/ncodes/cocoon-util
+- package: github.com/olebedev/emitter
+- package: github.com/dustin/go-humanize

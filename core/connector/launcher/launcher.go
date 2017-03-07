@@ -16,6 +16,7 @@ import (
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/client"
+	"github.com/ncodes/cocoon/core/connector/monitor"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
@@ -39,6 +40,7 @@ type Launcher struct {
 	container        *docker.Container
 	client           *client.Client
 	containerRunning bool
+	monitor          *monitor.Monitor
 }
 
 // cocoonCodePort is the port the cococoon code server is listening on
@@ -47,8 +49,9 @@ var cocoonCodePort = util.Env("COCOON_CODE_PORT", "8000")
 // NewLauncher creates a new launcher
 func NewLauncher(waitCh chan bool) *Launcher {
 	return &Launcher{
-		waitCh: waitCh,
-		client: client.NewClient(cocoonCodePort),
+		waitCh:  waitCh,
+		client:  client.NewClient(cocoonCodePort),
+		monitor: monitor.NewMonitor(),
 	}
 }
 
@@ -70,6 +73,7 @@ func (lc *Launcher) Launch(req *Request) {
 
 	dckClient = client
 	lc.client.SetCocoonID(req.ID)
+	lc.monitor.SetDockerClient(dckClient)
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
@@ -128,6 +132,7 @@ func (lc *Launcher) Launch(req *Request) {
 	}
 
 	lc.container = newContainer
+	lc.monitor.SetContainerID(lc.container.ID)
 
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
@@ -169,6 +174,8 @@ func (lc *Launcher) Launch(req *Request) {
 		lc.Stop(true)
 		return
 	}
+
+	go lc.monitor.Monitor()
 
 	if err = lc.run(newContainer, lang); err != nil {
 		log.Error(err.Error())

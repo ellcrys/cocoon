@@ -1,5 +1,5 @@
-hash: 02b14f03e499b60ba04989f1aaa14bd86f845a61553ecae08eacbb348b3062c5
-updated: 2017-03-01T18:59:00.227864594+01:00
+hash: 0e98be0a954a6d9cd9115a9b454ff139a92dc7935cee9c2350e1379209d23369
+updated: 2017-03-07T11:41:11.056214557+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -38,11 +38,13 @@ imports:
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-connections
-  version: 1b14b2d192e2f91cdc2bc6bf9aee0b0e116eed42
+  version: a2afab9802043837035592f1c24827fb70766de9
   subpackages:
   - nat
 - name: github.com/docker/go-units
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- name: github.com/dustin/go-humanize
+  version: 259d2a102b871d17f30e3cd9881a642961a1e486
 - name: github.com/ellcrys/crypto
   version: 4260838a35589024ba32fad882cbc4520df31a58
 - name: github.com/ellcrys/util
@@ -52,13 +54,11 @@ imports:
 - name: github.com/franela/goreq
   version: fc08df6ca2d4a0d1a5ae24739aa268863943e723
 - name: github.com/fsnotify/fsnotify
-  version: a904159b9206978bb6d53fcc7a769e5cd726c737
+  version: 7d7316ed6e1ed2de075aab8dfc76de5d158d66e1
 - name: github.com/golang/protobuf
   version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
 - name: github.com/goware/urlx
@@ -87,7 +87,7 @@ imports:
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/lib/pq
-  version: ba5d4f7a35561e22fbdf7a39aa0070f4d460cfc0
+  version: ca5bc43047f2138703da0f3d3ca89a59f3d597f1
   subpackages:
   - hstore
   - oid
@@ -107,10 +107,12 @@ imports:
   version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
+- name: github.com/olebedev/emitter
+  version: 9110dbae3d07cb26c2993dbf3bdbd0aad98329f9
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: dcbcdf2470421e911211604c61ea3e8ca740d346
+  version: 49a33c41f830c7863c3e53e547d071cd0c0f27b7
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -119,7 +121,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: 361678322880708ac144df8575e6f01144ba1404
+  version: 13d49d4606eb801b8f01ae542b4afc4c6ee3d84a
 - name: github.com/PuerkitoBio/purell
   version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
 - name: github.com/PuerkitoBio/urlesc
@@ -139,7 +141,7 @@ imports:
   subpackages:
   - mem
 - name: github.com/spf13/cast
-  version: f820543c3592e283e311a60d2a600a664e39f6f7
+  version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
   version: fcd0c5a1df88f5d6784cb4feead962c3f3d0b66c
 - name: github.com/spf13/jwalterweatherman
@@ -169,12 +171,12 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 76cc09b634294339fa19ec41b5f2a0b3932cea8b
+  version: e48874b42435b4347fc52bdee0424a52abc974d7
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: d680ca3ed853995402af43b866311167281bdc20
+  version: f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd
   subpackages:
   - transform
   - unicode/norm
