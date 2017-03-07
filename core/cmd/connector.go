@@ -25,6 +25,7 @@ func getRequest() (*launcher.Request, error) {
 	ccURL := os.Getenv("COCOON_CODE_URL")
 	ccTag := os.Getenv("COCOON_CODE_TAG")
 	ccLang := os.Getenv("COCOON_CODE_LANG")
+	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 
 	if ccID == "" {
@@ -40,6 +41,7 @@ func getRequest() (*launcher.Request, error) {
 		URL:         ccURL,
 		Tag:         ccTag,
 		Lang:        ccLang,
+		DiskLimit:   util.ToInt64(diskLimit),
 		BuildParams: buildParam,
 	}, nil
 }

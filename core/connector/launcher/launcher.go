@@ -11,6 +11,7 @@ import (
 
 	"strings"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
@@ -74,6 +75,7 @@ func (lc *Launcher) Launch(req *Request) {
 	dckClient = client
 	lc.client.SetCocoonID(req.ID)
 	lc.monitor.SetDockerClient(dckClient)
+	lc.HookToMonitor(req)
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
@@ -182,6 +184,27 @@ func (lc *Launcher) Launch(req *Request) {
 	}
 }
 
+// HookToMonitor is where all listeners to the monitor
+// are attached.
+func (lc *Launcher) HookToMonitor(req *Request) {
+	go func() {
+		for evt := range lc.monitor.GetEmitter().On("monitor.report") {
+			lc.RestartIfDiskExceeded(req, evt.Args[0].(monitor.Report).DiskUsage)
+		}
+	}()
+}
+
+// RestartIfDiskExceeded restarts the cocoon code is disk usages
+// has exceeded its set limit.
+func (lc *Launcher) RestartIfDiskExceeded(req *Request, curDiskSize int64) {
+	if curDiskSize > req.DiskLimit {
+		log.Errorf("cocoon code has used more than its allocated disk space (Used %s of %s). Restarting...",
+			humanize.Bytes(uint64(curDiskSize)),
+			humanize.Bytes(uint64(req.DiskLimit)))
+		lc.Stop(true)
+	}
+}
+
 // Stop closes the client, stops the container if it is still running
 // and deletes the container. This will effectively bring the launcher
 // to a halt. Set failed parameter to true to set a positve exit code or
@@ -198,6 +221,10 @@ func (lc *Launcher) Stop(failed bool) error {
 
 	if lc.client != nil {
 		lc.client.Close()
+	}
+
+	if lc.monitor != nil {
+		lc.monitor.Stop()
 	}
 
 	lc.containerRunning = false

@@ -6,5 +6,6 @@ type Request struct {
 	URL         string
 	Tag         string
 	Lang        string
+	DiskLimit   int64
 	BuildParams string
 }

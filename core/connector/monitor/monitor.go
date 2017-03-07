@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	humanize "github.com/dustin/go-humanize"
 	docker "github.com/ncodes/go-dockerclient"
 	"github.com/olebedev/emitter"
 	logging "github.com/op/go-logging"
@@ -14,6 +13,11 @@ var log = logging.MustGetLogger("launcher.monitor")
 
 // HandleFunc is the expected function signature
 type HandleFunc func(map[string]interface{})
+
+// Report represents the result of the monitors checks
+type Report struct {
+	DiskUsage int64
+}
 
 // Monitor defines a launcher monitor module checking resource
 // useage of a cocoon code. This module provides a pubsub feature that allows
@@ -28,8 +32,9 @@ type Monitor struct {
 
 // NewMonitor creates a new monitor instance.
 func NewMonitor() *Monitor {
+	e := emitter.New(10)
 	return &Monitor{
-		emitter: emitter.New(10),
+		emitter: e,
 	}
 }
 
@@ -51,6 +56,7 @@ func (m *Monitor) GetEmitter() *emitter.Emitter {
 // Stop the monitor
 func (m *Monitor) Stop() {
 	m.stop = true
+	m.emitter.Off("*")
 }
 
 // getContainerRootSize fetches the total
@@ -74,12 +80,17 @@ func (m *Monitor) getContainerRootSize() (int64, error) {
 // Monitor starts the monitor
 func (m *Monitor) Monitor() {
 	for !m.stop {
+
 		size, err := m.getContainerRootSize()
 		if err != nil {
 			log.Error(err.Error())
 		}
 
-		log.Info(humanize.Bytes(uint64(size)))
-		time.Sleep(5 * time.Second)
+		report := Report{
+			DiskUsage: size,
+		}
+
+		<-m.emitter.Emit("monitor.report", report)
+		time.Sleep(1 * time.Second)
 	}
 }
