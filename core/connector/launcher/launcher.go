@@ -129,8 +129,6 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	return
-
 	lc.container = newContainer
 	lc.monitor.SetContainerID(lc.container.ID)
 
