@@ -99,77 +99,8 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	_, err = lc.fetchSource(req, lang)
+	newContainer, err := lc.prepareContainer(req, lang)
 	if err != nil {
-		log.Error(err.Error())
-		lc.Stop(true)
-		return
-	}
-
-	// ensure cocoon code isn't already launched on a container
-	c, err := lc.getContainer(req.ID)
-	if err != nil {
-		log.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
-		lc.Stop(true)
-		return
-	} else if c != nil {
-		log.Error("cocoon code already exists on a container")
-		lc.Stop(true)
-		return
-	}
-
-	newContainer, err := lc.createContainer(
-		req.ID,
-		lang,
-		[]string{
-			fmt.Sprintf("COCOON_ID=%s", req.ID),
-			fmt.Sprintf("COCOON_CODE_PORT=%s", cocoonCodePort),
-		})
-	if err != nil {
-		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
-		lc.Stop(true)
-		return
-	}
-
-	lc.container = newContainer
-	lc.monitor.SetContainerID(lc.container.ID)
-
-	if lang.RequiresBuild() {
-		var buildParams map[string]interface{}
-		if len(req.BuildParams) > 0 {
-
-			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
-			if err != nil {
-				log.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
-				lc.Stop(true)
-				return
-			}
-
-			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
-				log.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
-				lc.Stop(true)
-				return
-			}
-		}
-
-		if err = lang.SetBuildParams(buildParams); err != nil {
-			log.Errorf("failed to set and validate build parameter. %s", err)
-			lc.Stop(true)
-			return
-		}
-
-		err = lc.build(newContainer, lang)
-		if err != nil {
-			log.Errorf(err.Error())
-			lc.Stop(true)
-			lc.stopContainer(newContainer.ID)
-			return
-		}
-	} else {
-		log.Info("Cocoon code does not require a build processing. Skipped.")
-	}
-
-	if err = lc.configFirewall(newContainer, req); err != nil {
 		log.Error(err.Error())
 		lc.Stop(true)
 		return
@@ -184,19 +115,85 @@ func (lc *Launcher) Launch(req *Request) {
 	}
 }
 
+// prepareContainer fetches the cocoon code source, creates a container,
+// moves the source in to it, builds the source within the container (if required)
+// and configures default firewall.
+func (lc *Launcher) prepareContainer(req *Request, lang Language) (*docker.Container, error) {
+
+	_, err := lc.fetchSource(req, lang)
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure cocoon code isn't already launched on a container
+	c, err := lc.getContainer(req.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
+	} else if c != nil {
+		return nil, fmt.Errorf("cocoon code already exists on a container")
+	}
+
+	newContainer, err := lc.createContainer(
+		req.ID,
+		lang,
+		[]string{
+			fmt.Sprintf("COCOON_ID=%s", req.ID),
+			fmt.Sprintf("COCOON_CODE_PORT=%s", cocoonCodePort),
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
+	}
+
+	lc.container = newContainer
+	lc.monitor.SetContainerID(lc.container.ID)
+
+	if lang.RequiresBuild() {
+		var buildParams map[string]interface{}
+		if len(req.BuildParams) > 0 {
+
+			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
+			}
+
+			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
+				return nil, fmt.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
+			}
+		}
+
+		if err = lang.SetBuildParams(buildParams); err != nil {
+			return nil, fmt.Errorf("failed to set and validate build parameter. %s", err)
+		}
+
+		err = lc.build(newContainer, lang)
+		if err != nil {
+			return nil, fmt.Errorf(err.Error())
+		}
+
+	} else {
+		log.Info("Cocoon code does not require a build processing. Skipped.")
+	}
+
+	if err = lc.configFirewall(newContainer, req); err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+
+	return newContainer, nil
+}
+
 // HookToMonitor is where all listeners to the monitor
 // are attached.
 func (lc *Launcher) HookToMonitor(req *Request) {
 	go func() {
 		for evt := range lc.monitor.GetEmitter().On("monitor.report") {
-			lc.RestartIfDiskExceeded(req, evt.Args[0].(monitor.Report).DiskUsage)
+			lc.RestartIfDiskAllocExceeded(req, evt.Args[0].(monitor.Report).DiskUsage)
 		}
 	}()
 }
 
-// RestartIfDiskExceeded restarts the cocoon code is disk usages
+// RestartIfDiskAllocExceeded restarts the cocoon code is disk usages
 // has exceeded its set limit.
-func (lc *Launcher) RestartIfDiskExceeded(req *Request, curDiskSize int64) {
+func (lc *Launcher) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64) {
 	if curDiskSize > req.DiskLimit {
 		log.Errorf("cocoon code has used more than its allocated disk space (Used %s of %s). Restarting...",
 			humanize.Bytes(uint64(curDiskSize)),
