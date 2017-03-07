@@ -118,9 +118,7 @@ func (lc *Launcher) Launch(req *Request) {
 
 	newContainer, err := lc.createContainer(
 		req.ID,
-		lang.GetImage(),
-		lang.GetDownloadDestination(req.URL),
-		lang.GetMountDestination(req.URL),
+		lang,
 		[]string{
 			fmt.Sprintf("COCOON_ID=%s", req.ID),
 			fmt.Sprintf("COCOON_CODE_PORT=%s", cocoonCodePort),
@@ -130,6 +128,8 @@ func (lc *Launcher) Launch(req *Request) {
 		lc.Stop(true)
 		return
 	}
+
+	return
 
 	lc.container = newContainer
 	lc.monitor.SetContainerID(lc.container.ID)
@@ -282,7 +282,7 @@ func (lc *Launcher) fetchFromGit(req *Request, lang Language) (string, error) {
 	}
 
 	// determine download directory
-	downloadDst = lang.GetDownloadDestination(req.URL)
+	downloadDst = lang.GetDownloadDestination()
 
 	// delete download directory if it exists
 	if _, err := os.Stat(downloadDst); err == nil {
@@ -341,15 +341,14 @@ func (lc *Launcher) getContainer(name string) (*docker.APIContainers, error) {
 }
 
 // createContainer creates a brand new container,
-// mounts the source directory and set the mount
-// directory as the work directory
-func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string, env []string) (*docker.Container, error) {
+// and copies the cocoon source code to it.
+func (lc *Launcher) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
-			Image:      image,
+			Image:      lang.GetImage(),
 			Labels:     map[string]string{"name": name, "type": "cocoon_code"},
-			WorkingDir: mountDir,
+			WorkingDir: lang.GetSourceRootDir(),
 			Tty:        true,
 			ExposedPorts: map[docker.Port]struct{}{
 				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
@@ -363,19 +362,20 @@ func (lc *Launcher) createContainer(name, image, sourceDir, mountDir string, env
 					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
 				},
 			},
-			Mounts: []docker.Mount{
-				docker.Mount{
-					Type:     "bind",
-					Source:   sourceDir,
-					Target:   mountDir,
-					ReadOnly: false,
-				},
-			},
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	// copy source directory to the container's source directory
+	cmd := "docker"
+	args := []string{"cp", lang.GetDownloadDestination(), fmt.Sprintf("%s:%s", container.ID, lang.GetCopyDestination())}
+	if err = exec.Command(cmd, args...).Run(); err != nil {
+		return nil, fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
+	}
+
+	log.Info("Copied cocoon code source to cocoon")
 
 	return container, nil
 }

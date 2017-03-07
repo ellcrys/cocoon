@@ -5,10 +5,11 @@ package launcher
 type Language interface {
 	GetName() string
 	GetImage() string
-	GetDownloadDestination(string) string
-	GetMountDestination(string) string
+	GetDownloadDestination() string
+	GetCopyDestination() string
+	GetSourceRootDir() string
 	RequiresBuild() bool
-	SetBuildParams(map[string]interface{}) error
 	GetBuildScript() string
 	GetRunScript() []string
+	SetBuildParams(map[string]interface{}) error
 }

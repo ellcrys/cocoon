@@ -14,6 +14,7 @@ import (
 
 // Go defines a deployment helper for go cocoon.
 type Go struct {
+	req         *Request
 	name        string
 	image       string
 	userHome    string
@@ -24,12 +25,13 @@ type Go struct {
 
 // NewGo returns a new instance a golang
 // cocoon code deployment helper.
-func NewGo() *Go {
+func NewGo(req *Request) *Go {
 	g := &Go{
 		name:      "go",
 		image:     "ncodes/launch-go",
 		userHome:  os.Getenv("HOME"),
 		imgGoPath: "/go",
+		req:       req,
 	}
 	g.setUserHomeDir()
 	return g
@@ -57,17 +59,24 @@ func (g *Go) setUserHomeDir() error {
 
 // GetDownloadDestination returns the location to save
 // the downloaded go cocoon code to.
-func (g *Go) GetDownloadDestination(url string) string {
-	g.repoURL = url
-	u, _ := urlx.Parse(url)
+func (g *Go) GetDownloadDestination() string {
+	u, _ := urlx.Parse(g.req.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.userHome, "/ccode/source", repoID)
 }
 
-// GetMountDestination returns the location in
-// the container where the source code root will be mounted
-func (g *Go) GetMountDestination(url string) string {
-	u, _ := urlx.Parse(url)
+// GetCopyDestination returns the location in
+// the container where the source code will be copied to
+func (g *Go) GetCopyDestination() string {
+	u, _ := urlx.Parse(g.req.URL)
+	repoID := strings.Trim(u.Path, "/")
+	return path.Join(g.imgGoPath, "src/github.com/", strings.Split(repoID, "/")[0])
+}
+
+// GetSourceRootDir returns the root directory of the cocoon source code
+// in container.
+func (g *Go) GetSourceRootDir() string {
+	u, _ := urlx.Parse(g.req.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.imgGoPath, "src/github.com/", repoID)
 }
@@ -119,7 +128,7 @@ func (g *Go) GetRunScript() []string {
 
 	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
 	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
-		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetMountDestination(g.repoURL))}
+		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetSourceRootDir())}
 	}
 
 	return script

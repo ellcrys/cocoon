@@ -65,7 +65,7 @@ var connectorCmd = &cobra.Command{
 
 		// install cooncode
 		lchr := launcher.NewLauncher(waitCh)
-		lchr.AddLanguage(launcher.NewGo())
+		lchr.AddLanguage(launcher.NewGo(req))
 		go lchr.Launch(req)
 
 		// start grpc API server
