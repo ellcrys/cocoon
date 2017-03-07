@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/connector/client"
+	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
 	stub "github.com/ncodes/cocoon/core/stubs/golang"
 	stub_proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
@@ -21,15 +21,15 @@ var log = logging.MustGetLogger("connector.api")
 // APIServer defines a grpc server for
 // invoking operations against cocoon code
 type APIServer struct {
-	server           *grpc.Server
-	endedCh          chan bool
-	cocoonCodeClient *client.Client
+	server   *grpc.Server
+	endedCh  chan bool
+	launcher *launcher.Launcher
 }
 
 // NewAPIServer creates a new grpc API server
-func NewAPIServer(cocoonCodeClient *client.Client) *APIServer {
+func NewAPIServer(launcher *launcher.Launcher) *APIServer {
 	server := new(APIServer)
-	server.cocoonCodeClient = cocoonCodeClient
+	server.launcher = launcher
 	return server
 }
 
@@ -65,7 +65,7 @@ func (api *APIServer) Invoke(ctx context.Context, req *proto.InvokeRequest) (*pr
 
 	var respCh = make(chan *stub_proto.Tx)
 	var txID = util.UUID4()
-	err := api.cocoonCodeClient.SendTx(&stub_proto.Tx{
+	err := api.launcher.GetClient().SendTx(&stub_proto.Tx{
 		Id:     txID,
 		Invoke: true,
 		Name:   "function",

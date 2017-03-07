@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"strings"
+
 	"github.com/ellcrys/util"
 	stub "github.com/ncodes/cocoon/core/stubs/golang"
 	proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
@@ -52,6 +54,12 @@ func (c *Client) getCCPort() string {
 		return devCCodePort
 	}
 	return c.ccodePort
+}
+
+// Close the stream and cancel connections
+func (c *Client) Close() {
+	c.stream.CloseSend()
+	c.conCancel()
 }
 
 // GetStream returns the grpc stream connected to the grpc cocoon code server
@@ -152,6 +160,10 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
 		if err != nil {
+			if strings.Contains(err.Error(), "context canceled") {
+				log.Info("Connection to cocoon code closed")
+				return nil
+			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
 

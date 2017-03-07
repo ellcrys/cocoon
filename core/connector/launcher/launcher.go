@@ -34,27 +34,22 @@ func init() {
 // Launcher defines cocoon code
 // deployment service.
 type Launcher struct {
-	failed    chan bool
-	languages []Language
-	container *docker.Container
-	client    *client.Client
+	waitCh           chan bool
+	languages        []Language
+	container        *docker.Container
+	client           *client.Client
+	containerRunning bool
 }
 
 // cocoonCodePort is the port the cococoon code server is listening on
 var cocoonCodePort = util.Env("COCOON_CODE_PORT", "8000")
 
 // NewLauncher creates a new launcher
-func NewLauncher(failed chan bool) *Launcher {
+func NewLauncher(waitCh chan bool) *Launcher {
 	return &Launcher{
-		failed: failed,
+		waitCh: waitCh,
 		client: client.NewClient(cocoonCodePort),
 	}
-}
-
-// setFailed sends true or false to the
-// launch failed channel to indicate success or failure
-func (lc *Launcher) setFailed(v bool) {
-	lc.failed <- v
 }
 
 // GetClient returns the connector to cocoon code client
@@ -69,7 +64,7 @@ func (lc *Launcher) Launch(req *Request) {
 	client, err := docker.NewClient(endpoint)
 	if err != nil {
 		log.Errorf("failed to create docker client. Is dockerd running locally?. %s", err)
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
@@ -83,7 +78,7 @@ func (lc *Launcher) Launch(req *Request) {
 		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodePort)
 		if err = lc.GetClient().Connect(); err != nil {
 			log.Error(err)
-			lc.setFailed(true)
+			lc.Stop(true)
 			return
 		}
 	}
@@ -94,14 +89,14 @@ func (lc *Launcher) Launch(req *Request) {
 	lang := lc.GetLanguage(req.Lang)
 	if lang == nil {
 		log.Errorf("cocoon code language (%s) not supported", req.Lang)
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
 	_, err = lc.fetchSource(req, lang)
 	if err != nil {
 		log.Error(err.Error())
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
@@ -109,11 +104,11 @@ func (lc *Launcher) Launch(req *Request) {
 	c, err := lc.getContainer(req.ID)
 	if err != nil {
 		log.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	} else if c != nil {
 		log.Error("cocoon code already exists on a container")
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
@@ -128,7 +123,7 @@ func (lc *Launcher) Launch(req *Request) {
 		})
 	if err != nil {
 		log.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
@@ -141,27 +136,27 @@ func (lc *Launcher) Launch(req *Request) {
 			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
 			if err != nil {
 				log.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
-				lc.setFailed(true)
+				lc.Stop(true)
 				return
 			}
 
 			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
 				log.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
-				lc.setFailed(true)
+				lc.Stop(true)
 				return
 			}
 		}
 
 		if err = lang.SetBuildParams(buildParams); err != nil {
 			log.Errorf("failed to set and validate build parameter. %s", err)
-			lc.setFailed(true)
+			lc.Stop(true)
 			return
 		}
 
 		err = lc.build(newContainer, lang)
 		if err != nil {
 			log.Errorf(err.Error())
-			lc.setFailed(true)
+			lc.Stop(true)
 			lc.stopContainer(newContainer.ID)
 			return
 		}
@@ -171,33 +166,44 @@ func (lc *Launcher) Launch(req *Request) {
 
 	if err = lc.configFirewall(newContainer, req); err != nil {
 		log.Error(err.Error())
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 
 	if err = lc.run(newContainer, lang); err != nil {
 		log.Error(err.Error())
-		lc.setFailed(true)
+		lc.Stop(true)
 		return
 	}
 }
 
-// Stop stops the launcher and the container it is running
-func (lc *Launcher) Stop() error {
+// Stop closes the client, stops the container if it is still running
+// and deletes the container. This will effectively bring the launcher
+// to a halt. Set failed parameter to true to set a positve exit code or
+// false for 0 exit code.
+func (lc *Launcher) Stop(failed bool) error {
+
+	defer func() {
+		lc.waitCh <- failed
+	}()
 
 	if dckClient == nil || lc.container == nil {
 		return nil
 	}
 
-	containerStatus, err := dckClient.InspectContainer(lc.container.ID)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container before running. %s", err)
+	if lc.client != nil {
+		lc.client.Close()
 	}
 
-	if !containerStatus.State.Running {
-		if err = lc.stopContainer(lc.container.ID); err != nil {
-			return fmt.Errorf("failed to stop container")
-		}
+	lc.containerRunning = false
+
+	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
+		ID:            lc.container.ID,
+		RemoveVolumes: true,
+		Force:         true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to remove container. %s", err)
 	}
 
 	return nil
@@ -392,6 +398,7 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 		if err != nil {
 			return fmt.Errorf("failed start container for exec [%s]. %s", name, err.Error())
 		}
+		lc.containerRunning = true
 	}
 
 	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
@@ -438,10 +445,11 @@ func (lc *Launcher) execInContainer(container *docker.Container, name string, co
 		return err
 	}
 
-	for {
+	for lc.containerRunning {
 		execIns, err := dckClient.InspectExec(exec.ID)
 		if err != nil {
-			return fmt.Errorf("failed to inspect run exec [%s] op. %s", name, err)
+			outStream.Stop()
+			return err
 		}
 
 		if execIns.Running {

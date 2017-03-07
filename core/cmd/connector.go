@@ -51,7 +51,7 @@ var connectorCmd = &cobra.Command{
 	Long:  `Starts the connector and launches a cocoon code.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		launchFailedCh := make(chan bool, 1)
+		waitCh := make(chan bool, 1)
 
 		var log = logging.MustGetLogger("connector")
 		log.Info("Connector started. Initiating cocoon code launch procedure.")
@@ -64,23 +64,24 @@ var connectorCmd = &cobra.Command{
 		}
 
 		// install cooncode
-		lchr := launcher.NewLauncher(launchFailedCh)
+		lchr := launcher.NewLauncher(waitCh)
 		lchr.AddLanguage(launcher.NewGo())
 		go lchr.Launch(req)
 
 		// start grpc API server
-		apiServer := server.NewAPIServer(lchr.GetClient())
+		apiServer := server.NewAPIServer(lchr)
 		apiServerAddr := util.Env("NOMAD_IP_connector", "")
 		apiServerPort := util.Env("NOMAD_PORT_connector", "8002")
 		go apiServer.Start(fmt.Sprintf("%s:%s", apiServerAddr, apiServerPort), make(chan bool, 1))
 
-		if <-launchFailedCh {
-			lchr.Stop()
+		if <-waitCh {
 			apiServer.Stop(1)
-			log.Fatal("aborting: cocoon code launch failed")
+			log.Fatal("launcher has failed")
+		} else {
+			apiServer.Stop(0)
 		}
 
-		log.Info("cocoon code launch successfully exited")
+		log.Info("launcher successfully exited")
 	},
 }
 
