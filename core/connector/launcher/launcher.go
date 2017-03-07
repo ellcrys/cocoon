@@ -42,6 +42,7 @@ type Launcher struct {
 	client           *client.Client
 	containerRunning bool
 	monitor          *monitor.Monitor
+	req              *Request
 }
 
 // cocoonCodePort is the port the cococoon code server is listening on
@@ -64,6 +65,8 @@ func (lc *Launcher) GetClient() *client.Client {
 // Launch starts a cocoon code
 func (lc *Launcher) Launch(req *Request) {
 
+	lc.req = req
+
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
 	if err != nil {
@@ -75,7 +78,6 @@ func (lc *Launcher) Launch(req *Request) {
 	dckClient = client
 	lc.client.SetCocoonID(req.ID)
 	lc.monitor.SetDockerClient(dckClient)
-	lc.HookToMonitor(req)
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
@@ -146,6 +148,7 @@ func (lc *Launcher) prepareContainer(req *Request, lang Language) (*docker.Conta
 
 	lc.container = newContainer
 	lc.monitor.SetContainerID(lc.container.ID)
+	lc.HookToMonitor(req)
 
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
@@ -186,20 +189,27 @@ func (lc *Launcher) prepareContainer(req *Request, lang Language) (*docker.Conta
 func (lc *Launcher) HookToMonitor(req *Request) {
 	go func() {
 		for evt := range lc.monitor.GetEmitter().On("monitor.report") {
-			lc.RestartIfDiskAllocExceeded(req, evt.Args[0].(monitor.Report).DiskUsage)
+			if lc.RestartIfDiskAllocExceeded(req, evt.Args[0].(monitor.Report).DiskUsage) {
+				break
+			}
 		}
 	}()
 }
 
 // RestartIfDiskAllocExceeded restarts the cocoon code is disk usages
 // has exceeded its set limit.
-func (lc *Launcher) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64) {
+func (lc *Launcher) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64) bool {
 	if curDiskSize > req.DiskLimit {
-		log.Errorf("cocoon code has used more than its allocated disk space (Used %s of %s). Restarting...",
+		log.Errorf("cocoon code has used more than its allocated disk space (%s of %s)",
 			humanize.Bytes(uint64(curDiskSize)),
 			humanize.Bytes(uint64(req.DiskLimit)))
-		lc.Stop(true)
+		if err := lc.restart(); err != nil {
+			log.Error(err.Error())
+			return false
+		}
+		return true
 	}
+	return false
 }
 
 // Stop closes the client, stops the container if it is still running
@@ -234,6 +244,51 @@ func (lc *Launcher) Stop(failed bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to remove container. %s", err)
 	}
+
+	return nil
+}
+
+// restart restarts the cocoon code. The running cocoon code is stopped
+// and relaunched.
+func (lc *Launcher) restart() error {
+
+	if dckClient == nil || lc.container == nil {
+		return nil
+	}
+
+	if lc.client != nil {
+		lc.client.Close()
+	}
+
+	if lc.monitor != nil {
+		lc.monitor.Reset()
+	}
+
+	log.Info("Restarting cocoon code")
+
+	lc.containerRunning = false
+
+	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
+		ID:            lc.container.ID,
+		RemoveVolumes: true,
+		Force:         true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to remove container. %s", err)
+	}
+
+	newContainer, err := lc.prepareContainer(lc.req, lc.GetLanguage(lc.req.Lang))
+	if err != nil {
+		return fmt.Errorf("restart: %s", err)
+	}
+
+	go lc.monitor.Monitor()
+
+	go func() {
+		if err = lc.run(newContainer, lc.GetLanguage(lc.req.Lang)); err != nil {
+			log.Info(fmt.Errorf("restart: %s", err))
+		}
+	}()
 
 	return nil
 }

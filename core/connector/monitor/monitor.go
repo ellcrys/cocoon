@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 )
 
 var log = logging.MustGetLogger("launcher.monitor")
+
+// ErrNoContainerFound represents a error about not finding containers
+var ErrNoContainerFound = errors.New("no container found")
 
 // HandleFunc is the expected function signature
 type HandleFunc func(map[string]interface{})
@@ -59,6 +63,13 @@ func (m *Monitor) Stop() {
 	m.emitter.Off("*")
 }
 
+// Reset resets the monitor
+func (m *Monitor) Reset() {
+	m.Stop()
+	m.emitter = emitter.New(10)
+	m.stop = false
+}
+
 // getContainerRootSize fetches the total
 // size of all the files in the container.
 func (m *Monitor) getContainerRootSize() (int64, error) {
@@ -74,15 +85,18 @@ func (m *Monitor) getContainerRootSize() (int64, error) {
 		return 0, fmt.Errorf("failed to list containers. %s", err)
 	}
 
+	if len(containers) == 0 {
+		return 0, ErrNoContainerFound
+	}
+
 	return containers[0].SizeRw, nil
 }
 
 // Monitor starts the monitor
 func (m *Monitor) Monitor() {
 	for !m.stop {
-
 		size, err := m.getContainerRootSize()
-		if err != nil {
+		if err != nil && err != ErrNoContainerFound {
 			log.Error(err.Error())
 		}
 
