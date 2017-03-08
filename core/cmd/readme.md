@@ -9,13 +9,12 @@ These are the available services on the Cocoon platform:
 3. Stub (CocoonCode a.k.a Smart Contract)
 4. API 
 5. Client 
-6. System CocoonCode 
 
 
 These are commands for starting various complementary services such as the connector, orderer etc on a development machine. This document also contains the required and optional environment variables for each command. Because our scheduler is Nomad, some of the environment variables are prefixed with `NOMAD_` keyword.
 
 ## 1. Connector
-The connector is a service that starts a cocoon code, monitors and manages it. It is the interface between the every other services and the cocoon code and as such the cocoon code can only communicate with other external service through the connector. It works by establishing a connection to the cocoon code as soon as it is started and relays every relevant instructions to and from the cocoon code.  
+The connector is a service that starts a cocoon code, monitors and manages it. It is the interface between the every other services and the cocoon code and as such the cocoon code can only communicate with other services through the connector. It works by establishing a connection to the cocoon code as soon as it is started and relays every relevant instructions to and from the cocoon code.  
 
 ##### Command
 ```sh
@@ -32,14 +31,19 @@ go run core/main.go connector
 | DEV_COCOON_CODE_PORT| false         |     8003       | The port to a local cocoon code running on a separate process on the machine. If this is set, the connector will not attempt to launch a cocoon code. It will establish a connection with the cocoon code at this port.
 | DEV_ORDERER_ADDR    | false          |                | The port to a local orderer service. A cocoon code will not be able to do anything meaningful with out the connector having access to an orderer.
 | HOME                | true           |    $HOME       | The home directory of the machine. Required by the Go language deployment implementation. 
+| COCOON_ID           | true          |                 | A unique id for the CocoonCode 
+| COCOON_CODE_URL     | true          |                 | A github link to the CocoonCode source code 
+| COCOON_CODE_TAG     | false         | latest          | The github release tag to fetch and run
+| COCOON_DISK_LIMIT   | false         | 300MB           | The amount of ephemeral disk space a cocoon can use before it is restarted
+| COCOON_BUILD_PARAMS | false         |                 | Standard Base64 encoded configuration options for building a cocoon code. e.g `Base64Encode(`{"pkg_mgr": "glide"})`
 
 ## 2. Orderer
 The orderer is the gateway service to the immutable ledger shared by every smart contract. It runs an implementation
 of the ledger interface based on our simple, blockless chain design. Below is a basic description of the blockless chain.  
 
-### 2.1. BlocklessChain - A no gimmick, immutable, chained transactions on proven technologies. 
+### 2.1. BlocklessChain - A no gimmick, immutable, chained transactions built on proven technologies. 
 
-A blockless chain is a ridiculously simple database structure that collects transactions and cryptograhically links them together. Each transaction referencing the hash before it and as such a change to a transaction effectively invalidates the entire chain. It is built on existing, proven technologies with great replication techniques. Our current implementation is based on Postgres and supports easy plugging of other implementations. The blockless chain allows smart contracts to create as many chains/ledgers as they want and have the option to make it publicly acessible or private. By default, all smart contracts have access to the global chain which is a publicly accessible. 
+A blockless chain is a ridiculously simple database structure that collects transactions and cryptograhically links them together. Each transaction referencing the hash before it and as such a change to a transaction effectively invalidates the entire chain. It is built on existing, proven technologies with great replication techniques. Our current implementation is based on Postgres and supports easy plugging of other implementations. The blockless chain allows smart contracts to create as many chains/ledgers as they want and have the option to make them publicly accessible or private. By default, all smart contracts have access to the global chain which is a publicly accessible. 
 
 ##### Command
 ```sh
