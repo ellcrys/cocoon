@@ -21,6 +21,8 @@ type HandleFunc func(map[string]interface{})
 // Report represents the result of the monitors checks
 type Report struct {
 	DiskUsage int64
+	NetTx     uint64
+	NetRx     uint64
 }
 
 // Monitor defines a launcher monitor module checking resource
@@ -92,16 +94,53 @@ func (m *Monitor) getContainerRootSize() (int64, error) {
 	return containers[0].SizeRw, nil
 }
 
+// getContainerNetworkIO returns the current Net IO usage of the container
+func (m *Monitor) getContainerNetworkIO() (uint64, uint64, error) {
+	var stats = make(chan *docker.Stats)
+	var done = make(chan bool)
+	go func() {
+		m.dckClient.Stats(docker.StatsOptions{
+			ID:      m.containerID,
+			Stats:   stats,
+			Timeout: 5 * time.Second,
+			Done:    done,
+		})
+	}()
+
+	for s := range stats {
+		close(done)
+		rxBytes := uint64(0)
+		txBytes := uint64(0)
+		for _, n := range s.Networks {
+			rxBytes += n.RxBytes
+			txBytes += n.TxBytes
+		}
+		return rxBytes, txBytes, nil
+	}
+
+	return 0, 0, nil
+}
+
 // Monitor starts the monitor
 func (m *Monitor) Monitor() {
 	for !m.stop {
+
 		size, err := m.getContainerRootSize()
 		if err != nil && err != ErrNoContainerFound {
 			log.Error(err.Error())
 		}
 
+		rxBytes, txBytes, err := m.getContainerNetworkIO()
+		if err != nil {
+			log.Error(err.Error())
+		}
+
+		log.Infof("Rx Bytes: %d / Tx Bytes: %d", rxBytes, txBytes)
+
 		report := Report{
 			DiskUsage: size,
+			NetRx:     txBytes,
+			NetTx:     txBytes,
 		}
 
 		<-m.emitter.Emit("monitor.report", report)
