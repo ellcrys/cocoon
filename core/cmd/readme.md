@@ -35,7 +35,7 @@ go run core/main.go connector
 | COCOON_CODE_URL     | true          |                 | A github link to the CocoonCode source code 
 | COCOON_CODE_TAG     | false         | latest          | The github release tag to fetch and run
 | COCOON_DISK_LIMIT   | false         | 300MB           | The amount of ephemeral disk space a cocoon can use before it is restarted
-| COCOON_BUILD_PARAMS | false         |                 | Standard Base64 encoded configuration options for building a cocoon code. e.g `Base64Encode(`{"pkg_mgr": "glide"})`
+| COCOON_BUILD_PARAMS | false         |                 | Standard Base64 encoded configuration options for building a cocoon code. e.g `Base64Encode("{\"pkg_mgr\": \"glide\"}")`
 
 ## 2. Orderer
 The orderer is the gateway service to the immutable ledger shared by every smart contract. It runs an implementation
