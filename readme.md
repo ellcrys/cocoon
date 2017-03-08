@@ -1,7 +1,7 @@
 # Cocoon - A no-gimmick, centralized, scalable smart contract platform. 
 
 Cocoon is a smart contract engine that is fast, scalable and built on everyday technologies we use and 
-love. It is centralized (this is not a sin!) and includes a distributed, chained and replicated ledger called a BlocklessChain ledger. We are are building cocoon as an alternative to existing decentralized platforms suffering from from the following challenges:
+love. It is centralized (this is not a sin!) and includes a distributed, chained and replicated ledger called a BlocklessChain ledger. We are are building cocoon as an alternative to existing decentralized platforms experiencing the following challenges:
 
 1. Inability to scale beyound a few transactions per second. 
 2. Understandable resource wastage via block replication (We get it, trust-less systems are hard!). 
@@ -9,28 +9,28 @@ love. It is centralized (this is not a sin!) and includes a distributed, chained
 4. Lack of choice of a public or private ledger. 
 5. Reliance on a native currency to interact with the platform.
 
-We are of the believe that smart contracts will become a huge part of how we interact with businesses and 
-how businesses interact with each other and as such there needs to be a choice between going fully decentralized, trustless and accepting all the performance penalties or building on a centralized, non-trustless system with the same functionalities (or even more), but with the benefit of fast, performant, synchronous transactions against a no-gimmick, immutable ledger and an insane ability to scale smart contracts vertically or horizontally. 
+We believe that smart contracts will become a huge part of how we interact with businesses and 
+how businesses interact with each other and as such there needs to be a choice between going fully decentralized, trustless and accepting all the performance penalties that comes with it or building on a centralized, non-trustless system with the same functionalities (or even more), but with the benefit of fast, performant, synchronous transactions against a no-gimmick, immutable ledger and an insane ability to scale smart contracts vertically or horizontally. 
 
 ## Features
-Below are the task list for features and capabilities we are looking to include. Only checked ones are currently functional.
+Below are the task list for features and capabilities we are looking to support. Only checked ones are currently functional. 
 
 - [x] Distributed immutable ledger (BlocklessChain)
 - [x] Smart contact engine (Initial support for Go programming language)
-- []  Horizontal/Vertical scalability of smart contracts. 
-- []  Ledger access control 
+- [ ]  Horizontal/Vertical scalability of smart contracts. 
+- [ ]  Ledger access control 
 - [x] Support public ledger chain
-- []  Support private ledger chain
-- []  Multi-Sig smart contract deployment
-- []  Global lock API for smart contract
-- []  Transaction/Ledger streaming service
-- []  Multi-Sig transaction validation
-- []  Single Transaction API service
-- []  Cross smart contract messaging
-- []  Cross smart contract event service
-- []  Binary smart contract deployment
-- []  New smart contract language support for Node.js & Ruby
-- []  Native currency (Project Titan)
+- [ ]  Support private ledger chain
+- [ ]  Multi-Sig smart contract deployment
+- [ ]  Global lock API for smart contract
+- [ ]  Transaction/Ledger streaming service
+- [ ]  Multi-Sig transaction validation
+- [ ]  Single Transaction API service
+- [ ]  Cross smart contract messaging
+- [ ]  Cross smart contract event service
+- [ ]  Binary smart contract deployment
+- [ ]  New smart contract language support for Node.js & Ruby
+- [ ]  Native currency (Project Titan)
 
 ## Introduction To Cocoon Services
 
