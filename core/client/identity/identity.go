@@ -73,7 +73,7 @@ func (i *Identity) Create(email, pubKey string) error {
 		log.Infof("==> Your Private Key: \n%s", key.GetPrivKey())
 	}
 	log.Infof("==> Your Public Key: \n%s", key.GetPubKey())
-	log.Info("*** Caution! Please key your private key safe. Do not share it. ***")
+	log.Info("\n*** Caution! Please key your private key safe. Do not share it. ***")
 
 	return nil
 }
