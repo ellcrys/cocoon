@@ -26,10 +26,10 @@ Below are the task list for features and capabilities we are looking to support.
 - [ ]  Transaction/Ledger streaming service
 - [ ]  Multi-Sig transaction validation
 - [ ]  Single Transaction API service
-- [ ]  Cross smart contract messaging
-- [ ]  Cross smart contract event service
+- [ ]  Cross contract messaging
+- [ ]  Cross contract event service
 - [ ]  Binary smart contract deployment
-- [ ]  New smart contract language support for Node.js & Ruby
+- [ ]  New contract language support for Node.js & Ruby
 - [ ]  Native currency (Project Titan)
 
 ## Introduction To Cocoon Services
