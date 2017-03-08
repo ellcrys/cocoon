@@ -2,6 +2,9 @@ package identity
 
 import (
 	"fmt"
+	"time"
+
+	"os"
 
 	"github.com/ellcrys/crypto/ecdsa"
 	"github.com/ellcrys/util"
@@ -32,9 +35,11 @@ func NewIdentity() *Identity {
 }
 
 // Create a new identity
-func (i *Identity) Create(email, pubKey string) error {
+func (i *Identity) Create(email, pubKey, outputFile string) error {
 
 	var key *ecdsa.SimpleECDSA
+	var file *os.File
+	var err error
 
 	if len(pubKey) == 0 {
 		key = ecdsa.NewSimpleECDSA(ecdsa.CurveP256)
@@ -44,6 +49,14 @@ func (i *Identity) Create(email, pubKey string) error {
 		if !valid {
 			log.Fatal("Public key is invalid. Please use the keygen tool to generate keys")
 		}
+	}
+
+	if len(outputFile) > 0 {
+		file, err = os.Create(outputFile)
+		if err != nil {
+			return fmt.Errorf("error opening output file. %s", err)
+		}
+		defer file.Close()
 	}
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
@@ -69,11 +82,29 @@ func (i *Identity) Create(email, pubKey string) error {
 	log.Info("==> Successfully created a new identity")
 	log.Info("==> ID:", email)
 	log.Info("==> TxID:", resp.GetId())
-	if key != nil {
-		log.Infof("==> Your Private Key: \n%s", key.GetPrivKey())
+
+	if len(outputFile) == 0 {
+		if key != nil {
+			log.Infof("==> Your Private Key: \n%s", key.GetPrivKey())
+		}
+		log.Infof("==> Your Public Key: \n%s", key.GetPubKey())
+		log.Info("\n*** Caution! Please key your private key safe. Do not share it. ***")
+		return nil
 	}
-	log.Infof("==> Your Public Key: \n%s", key.GetPubKey())
-	log.Info("\n*** Caution! Please key your private key safe. Do not share it. ***")
+
+	keyData, _ := util.ToJSON(map[string]string{
+		"id":           email,
+		"pub_key":      key.GetPubKey(),
+		"priv_key":     key.GetPrivKey(),
+		"date_created": time.Now().UTC().String(),
+	})
+
+	_, err = file.Write(keyData)
+	if err != nil {
+		return fmt.Errorf("failed to write key data to output file. %s", err)
+	}
+
+	log.Info("==> Key File:", outputFile)
 
 	return nil
 }
