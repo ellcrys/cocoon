@@ -35,26 +35,26 @@ var SupportedDiskSpace = map[string]interface{}{
 	"2x": 500,
 }
 
-// Nomad defines a nomad cluster that implements
-// cluster.Cluster interface. Every interaction with
-// the cluster is handled here.
+// Nomad defines a nomad scheduler that implements
+// scheduler.Scheduler interface. Every interaction with
+// the scheduler is handled here.
 type Nomad struct {
-	clusterAddr string
-	API         string
+	schedulerAddr string
+	API           string
 }
 
-// NewNomad creates a nomad cluster object
+// NewNomad creates a nomad scheduler object
 func NewNomad() *Nomad {
 	return new(Nomad)
 }
 
 // SetAddr sets the nomad's API endpoint
-func (cl *Nomad) SetAddr(addr string, https bool) {
+func (sc *Nomad) SetAddr(addr string, https bool) {
 	scheme := "http://"
 	if https {
 		scheme = "https://"
 	}
-	cl.API = scheme + addr
+	sc.API = scheme + addr
 }
 
 // PrepareJobSpec creates a new job specification
@@ -71,11 +71,11 @@ func (cl *Nomad) PrepareJobSpec(tempData map[string]interface{}) ([]byte, error)
 }
 
 // deployJob registers a new job
-func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
+func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
 
 	res, err := goreq.Request{
 		Method: "POST",
-		Uri:    cl.API + "/v1/jobs",
+		Uri:    sc.API + "/v1/jobs",
 		Body:   jobSpec,
 	}.Do()
 
@@ -87,8 +87,8 @@ func (cl *Nomad) deployJob(jobSpec string) (string, int, error) {
 	return respStr, res.StatusCode, nil
 }
 
-// Deploy a cocoon code to the cluster
-func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare string) (*DeploymentInfo, error) {
+// Deploy a cocoon code to the scheduler
+func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare string) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -131,13 +131,13 @@ func (cl *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare str
 		"CocoonBuildParams": buildParams,
 	}
 
-	jobSpec, err := cl.PrepareJobSpec(cocoonData)
+	jobSpec, err := sc.PrepareJobSpec(cocoonData)
 
 	if err != nil {
 		return nil, fmt.Errorf("system: failed to prepare job spec. %s", err)
 	}
 
-	resp, status, err := cl.deployJob(string(jobSpec))
+	resp, status, err := sc.deployJob(string(jobSpec))
 	if err != nil {
 		return nil, fmt.Errorf("system: failed to deploy job spec. %s", err)
 	} else if status != 200 {
