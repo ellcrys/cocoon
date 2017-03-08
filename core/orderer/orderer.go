@@ -3,6 +3,7 @@ package orderer
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	context "golang.org/x/net/context"
@@ -17,6 +18,39 @@ import (
 )
 
 var log = logging.MustGetLogger("orderer")
+
+// DiscoverOrderers fetches a list of orderer service addresses
+// via consul service discovery API. For development purpose,
+// If DEV_ORDERER_ADDR is set, it will fetch the orderer
+// address from the env variable.
+func DiscoverOrderers() []string {
+	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
+		return []string{os.Getenv("DEV_ORDERER_ADDR")}
+	}
+	// TODO: Retrieve from consul service API (not implemented)
+	return []string{}
+}
+
+// DialOrderer returns a connection to a orderer from a list of addresses. It randomly
+// picks an orderer address from the list for orderers.
+func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
+	var ordererAddr string
+
+	if len(orderersAddr) == 0 {
+		return nil, fmt.Errorf("no known orderer address")
+	} else if len(orderersAddr) == 1 {
+		ordererAddr = orderersAddr[0]
+	} else {
+		ordererAddr = orderersAddr[util.RandNum(0, len(orderersAddr))]
+	}
+
+	client, err := grpc.Dial(ordererAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
 
 // Orderer defines a transaction ordering, block creation
 // and inclusion module

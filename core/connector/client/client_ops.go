@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/ledgerchain/types"
+	"github.com/ncodes/cocoon/core/orderer"
 	order_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
 	context "golang.org/x/net/context"
@@ -12,7 +13,7 @@ import (
 // a new ledger.
 func (c *Client) createLedger(tx *proto.Tx) error {
 
-	ordererConn, err := c.dialOrderer()
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,7 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 // getLedger fetches a ledger by its name and cocoon code id
 func (c *Client) getLedger(tx *proto.Tx) error {
 
-	ordererConn, err := c.dialOrderer()
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 // put adds a new transaction to a ledger
 func (c *Client) put(tx *proto.Tx) error {
 
-	ordererConn, err := c.dialOrderer()
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
 	}
@@ -115,7 +116,7 @@ func (c *Client) put(tx *proto.Tx) error {
 // get gets a transaction by its key
 func (c *Client) get(tx *proto.Tx) error {
 
-	ordererConn, err := c.dialOrderer()
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
 	}
