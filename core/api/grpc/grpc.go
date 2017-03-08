@@ -18,8 +18,8 @@ var log = logging.MustGetLogger("api.grpc")
 // scheduler represents the cluster scheduler implementation (nomad, kubernetes, etc)
 var sch scheduler.Scheduler
 
-// SetCluster sets the default cluster
-func SetCluster(s scheduler.Scheduler) {
+// SetScheduler sets the default cluster
+func SetScheduler(s scheduler.Scheduler) {
 	sch = s
 }
 
