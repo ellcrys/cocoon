@@ -6,15 +6,14 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
 	"github.com/ncodes/cocoon/core/common"
-	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-var log = logging.MustGetLogger("api.client")
+// var log = logging.MustGetLogger("api.client")
 
 // APIAddress is the remote address to the cluster server
-var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8004")
+// var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8004")
 
 // Deploy defines methods for deploying
 // creating a deploy request.

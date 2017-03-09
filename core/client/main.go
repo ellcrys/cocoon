@@ -20,6 +20,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/ncodes/cocoon/core/client/cmd"
+	"github.com/ncodes/cocoon/core/client/db"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
 )
@@ -29,7 +30,9 @@ var log *logging.Logger
 // ProjectName is the official name of the project
 var ProjectName = "cocoon"
 
+// createConfigDir creates the config directory if it doesn't exists
 func createConfigDir() {
+
 	home, err := homedir.Dir()
 	if err != nil {
 		log.Fatal("failed to determine home directory")
@@ -53,5 +56,7 @@ func init() {
 }
 
 func main() {
+	db := db.GetDefaultDB()
 	cmd.Execute()
+	db.Close()
 }

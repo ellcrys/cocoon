@@ -1,10 +1,14 @@
-hash: fbe3e16d56a164d3ecfe5215ec5623269a2d88c1df4310abdfbc6bd11593ccb1
-updated: 2017-03-09T11:05:27.53440549+01:00
+hash: e50b39ec9945536dce880267817202bdd591915a19d67dce0f0979a82fd06249
+updated: 2017-03-09T12:02:54.451095327+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
+- name: github.com/boltdb/bolt
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
+  subpackages:
+  - '...'
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
 - name: github.com/dgrijalva/jwt-go
