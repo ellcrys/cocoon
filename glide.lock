@@ -1,5 +1,5 @@
-hash: e50b39ec9945536dce880267817202bdd591915a19d67dce0f0979a82fd06249
-updated: 2017-03-09T12:02:54.451095327+01:00
+hash: 978640310d50075721bd85858c4aa66fda847e9e253754741a72c7190a61b96c
+updated: 2017-03-09T15:36:42.184094262+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -54,7 +54,7 @@ imports:
   subpackages:
   - ecdsa
 - name: github.com/ellcrys/util
-  version: 1184d8fd64de9b916b0b9af7b7506193776e4f67
+  version: 79aacacfcb8369d5d4e26baacbe1e29570f15108
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/franela/goreq
@@ -163,6 +163,8 @@ imports:
   subpackages:
   - cipher
   - json
+- name: github.com/tj/go-spin
+  version: d9cf5dfd6d7f5b9d1f62122ace69b7fda90f5793
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:

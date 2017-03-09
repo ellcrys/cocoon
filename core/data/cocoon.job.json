@@ -40,7 +40,7 @@
               "COCOON_CODE_TAG": "{{CocoonCodeTag}}",
               "COCOON_CODE_LANG": "{{CocoonCodeLang}}",
               "COCOON_BUILD_PARAMS": "{{CocoonBuildParams}}",
-              "COCOON_DISK_LIMIT": "{{DiskMB}}",
+              "COCOON_DISK_LIMIT": "{{DiskMB}}"
             },
             "Services": [{
               "Name": "{{ID}}",

@@ -2,6 +2,7 @@ package client
 
 // Cocoon represents a cocoon
 type Cocoon struct {
+	ID         string
 	URL        string
 	ReleaseTag string
 	Lang       string

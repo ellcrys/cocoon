@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ncodes/cocoon/core/client/cocoon"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -18,6 +19,11 @@ var startCmd = &cobra.Command{
 
 		if len(args) == 0 {
 			log.Fatal("Cocoon ID is required")
+		}
+
+		ops := new(cocoon.Ops)
+		if err := ops.Start(args[0]); err != nil {
+			log.Fatal(err)
 		}
 	},
 }
