@@ -13,10 +13,12 @@ Existing platforms like Ethereum are unable to handle high transactions per seco
 
 The blockchain is an important technology at the heart of decentralized systems such as Bitcoin and Ethereum. It allows transactions to be collected in series of blocks and these blocks are then broadcasted to every node and cryptographically linked to existing blocks in such a way that it is difficult to alter these data without reconstructing the links between the blocks on every single node on the network. While amazing, the block replication and replayed computation techniques makes the blockchain an inefficient datastore for centralized, high-throuhtput, permissioned applications like this project. In our opinion, the blockchain is a breakthrough technology designed to meet the security needs of decentralized systems and a complete adaptation to centralized, permissioned platform unnecessarily introduces foriegn performance issues.
 
-### 1.3 Expensive & Unterministic Cost
+### 1.3 Expensive & Undeterministic Cost
 
 Decentralized systems like Ethereum have opened our minds to the possibility of building open, autonomous applications
-that require little or no human input to function. To ensure these open platforms are secured against attacks and spam, developers are required to pay fees for computations performed by their apps. The exact amount to pay is not immediately known and as such it makes it hard for developers and business to make decisions. 
+that require little or no human input to function. To ensure these open platforms are secured against attacks and spam, developers are required to pay fees for computations performed by their apps. The exact amount to pay is not immediately known and as such it makes it hard for developers and businesses to make financial decisions. 
+
+------
 
 We believe that smart contracts will become a huge part of how we interact with businesses and 
 how businesses interact with each other and as such there needs to be a choice between going fully decentralized, trustless and accepting all the performance penalties that comes with it or building on a centralized system with the same functionalities (or even more), but with the benefit of fast, performant, synchronous transactions against a no-gimmick, immutable ledger (TxChain) and an insane ability to scale smart contracts vertically or horizontally. 
