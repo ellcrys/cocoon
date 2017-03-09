@@ -1,7 +1,7 @@
 # Cocoon - A no-gimmick, centralized, scalable smart contract platform. 
 
 Cocoon is a smart contract engine that is designed to be fast, scalable and built on everyday technologies we use and 
-love. It is centralized and includes a distributed, chained and ledger called a TransactionChain (TxChain) ledger. Our motives for building a centralized smart contract platform are as follows: 
+love. It is centralized and includes a distributed, chained ledger called a TransactionChain (TxChain) ledger. Our motives for building a centralized smart contract platform are as follows: 
 
 - **Scalablity:**
  
