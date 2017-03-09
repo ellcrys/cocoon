@@ -1,5 +1,5 @@
-hash: 0e98be0a954a6d9cd9115a9b454ff139a92dc7935cee9c2350e1379209d23369
-updated: 2017-03-07T11:41:11.056214557+01:00
+hash: fbe3e16d56a164d3ecfe5215ec5623269a2d88c1df4310abdfbc6bd11593ccb1
+updated: 2017-03-09T11:05:27.53440549+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -47,10 +47,12 @@ imports:
   version: 259d2a102b871d17f30e3cd9881a642961a1e486
 - name: github.com/ellcrys/crypto
   version: 4260838a35589024ba32fad882cbc4520df31a58
+  subpackages:
+  - ecdsa
 - name: github.com/ellcrys/util
   version: 1184d8fd64de9b916b0b9af7b7506193776e4f67
 - name: github.com/fatih/color
-  version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/franela/goreq
   version: fc08df6ca2d4a0d1a5ae24739aa268863943e723
 - name: github.com/fsnotify/fsnotify
@@ -97,12 +99,14 @@ imports:
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
+- name: github.com/mitchellh/go-homedir
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
-  version: db1efb556f84b25a0a13a04aad883943538ad2e0
+  version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/ncodes/cocoon-util
   version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
@@ -112,7 +116,7 @@ imports:
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: 49a33c41f830c7863c3e53e547d071cd0c0f27b7
+  version: df4d872dd90cd29ec96c95cf75d92dd81ab95862
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -129,7 +133,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
-  version: 0208149b40d863d2c1a2f8fe5753096a9cf2cc8b
+  version: 1deb2db2a6fff8a35532079061b903c3a25eed52
 - name: github.com/smartystreets/goconvey
   version: 3bd662eac601ad6436e64776af2e112069eb2edc
   subpackages:
@@ -143,7 +147,7 @@ imports:
 - name: github.com/spf13/cast
   version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
-  version: fcd0c5a1df88f5d6784cb4feead962c3f3d0b66c
+  version: 24bb44aac8fd4730262546161cac1cc7d2869b32
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
@@ -171,7 +175,7 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: e48874b42435b4347fc52bdee0424a52abc974d7
+  version: 99f16d856c9836c42d24e7ab64ea72916925fa97
   subpackages:
   - unix
   - windows

@@ -15,6 +15,10 @@
 package main
 
 import (
+	"os"
+	"path"
+
+	"github.com/mitchellh/go-homedir"
 	"github.com/ncodes/cocoon/core/client/cmd"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
@@ -22,9 +26,29 @@ import (
 
 var log *logging.Logger
 
+// ProjectName is the official name of the project
+var ProjectName = "cocoon"
+
+func createConfigDir() {
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Fatal("failed to determine home directory")
+	}
+
+	projectConfigDir := path.Join(home, ".config", ProjectName)
+	if _, err = os.Stat(projectConfigDir); err != nil {
+		if os.IsNotExist(err) {
+			if err = os.MkdirAll(projectConfigDir, 0777); err != nil {
+				log.Fatal("failed to create config directory")
+			}
+		}
+	}
+}
+
 func init() {
 	config.ConfigureLogger()
 	log = logging.MustGetLogger("api.client")
+	createConfigDir()
 	log.SetBackend(config.MessageOnlyBackend)
 }
 
