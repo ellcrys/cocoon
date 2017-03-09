@@ -17,7 +17,6 @@ The blockchain is an important technology at the heart of decentralized systems 
 
 Decentralized systems like Ethereum have opened our minds to the possibility of building open, autonomous applications
 that require little or no human input to function. To ensure these open platforms are secured against attacks and spam, developers are required to pay fees for computations performed by their apps. The exact amount to pay is not immediately known and as such it makes it hard for developers and businesses to make financial decisions. 
-
 ------
 
 We believe that smart contracts will become a huge part of how we interact with businesses and 
