@@ -1,16 +1,23 @@
 # Cocoon - A no-gimmick, centralized, scalable smart contract platform. 
 
-Cocoon is a smart contract engine that is fast, scalable and built on everyday technologies we use and 
-love. It is centralized (this is not a sin!) and includes a distributed, chained and replicated ledger called a BlocklessChain ledger. We are are building cocoon as an alternative to existing decentralized platforms experiencing the following challenges:
+Cocoon is a smart contract engine that is designed to be fast, scalable and built on everyday technologies we use and 
+love. It is centralized and includes a distributed, chained and ledger called a TransactionChain (TxChain) ledger. Our motives for building a centralized smart contract platform are as follows: 
 
-1. Inability to scale beyound a few transactions per second. 
-2. Understandable resource wastage via block replication (We get it, trust-less systems are hard!). 
-3. Expensive smart contract with undeterministic cost to businesses (Business need to know how much their core systems will cost them).
-4. Lack of choice of a public or private ledger. 
-5. Reliance on a native currency to interact with the platform.
+- **Scalablity:**
+ 
+Existing platforms like Ethereum are unable to handle high transactions per seconds. While the reasons are understood, this is unacceptable for building and hosting applications that will serve thounsands of concurrent user requests at any given time. This project is targetted towards projects where scabality is a priority and complete trustlessness is not a priority. 
+
+- **Slow Transactions**
+
+The blockchain is an important technology at the heart of decentralized systems such as Bitcoin and Ethereum. It allows transactions to be collected in series of blocks and these blocks are then broadcasted to every node and cryptographically linked to existing blocks in such a way that it is difficult to alter these data without reconstructing the links between the blocks on every single node on the network. While amazing, the block replication and replayed computation techniques makes the blockchain an inefficient datastore for centralized, high-throuhtput, permissioned applications like this project. In our opinion, the blockchain is a breakthrough technology designed to meet the security needs of decentralized systems and a complete adaptation to centralized, permissioned platform unnecessarily introduces foriegn performance issues.
+
+**Expensive & Unterministic Cost**
+
+Decentralized systems like Ethereum have opened our minds to the possibility of building open, autonomous applications
+that require little or no human input to function. To ensure these open platforms are secured against attacks and spam, developers are required to pay fees for computations performed by their apps. The exact amount to pay is not immediately known and as such it makes it hard for developers and business to make decisions. 
 
 We believe that smart contracts will become a huge part of how we interact with businesses and 
-how businesses interact with each other and as such there needs to be a choice between going fully decentralized, trustless and accepting all the performance penalties that comes with it or building on a centralized, non-trustless system with the same functionalities (or even more), but with the benefit of fast, performant, synchronous transactions against a no-gimmick, immutable ledger and an insane ability to scale smart contracts vertically or horizontally. 
+how businesses interact with each other and as such there needs to be a choice between going fully decentralized, trustless and accepting all the performance penalties that comes with it or building on a centralized system with the same functionalities (or even more), but with the benefit of fast, performant, synchronous transactions against a no-gimmick, immutable ledger (TxChain) and an insane ability to scale smart contracts vertically or horizontally. 
 
 ## Features
 Below are the task list for features and capabilities we are looking to support. Only checked ones are currently functional. 
@@ -32,7 +39,9 @@ Below are the task list for features and capabilities we are looking to support.
 - [ ]  New contract language support for Node.js & Ruby
 - [ ]  Native currency (Project Titan)
 
-## Introduction To Cocoon Services
+## Anatomy of Cocoon
+
+***Note: This document is constantly being updated.***
 
 This document describes the services available and how to start/run them on a development machine. The contents of this document is targeted towards people who are interested in knowing how the system works, looking to contribute to the project or just looking to give it a spin. 
 
