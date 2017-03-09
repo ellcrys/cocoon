@@ -5,15 +5,15 @@
 Cocoon is a smart contract engine that is designed to be fast, scalable and built on everyday technologies we use and 
 love. It is centralized and includes a distributed, chained ledger called a TransactionChain (TxChain). Our motives for building a centralized smart contract platform are as follows: 
 
-## 1.1 Scalablity:
+### 1.1 Scalablity:
  
 Existing platforms like Ethereum are unable to handle high transactions per seconds. While the reasons are understood, this is unacceptable for building and hosting applications that will serve thounsands of concurrent user requests at any given time. This project is targetted towards projects where scabality is a priority and complete trustlessness is not a priority. 
 
-## 1.2 Slow Transactions
+### 1.2 Slow Transactions
 
 The blockchain is an important technology at the heart of decentralized systems such as Bitcoin and Ethereum. It allows transactions to be collected in series of blocks and these blocks are then broadcasted to every node and cryptographically linked to existing blocks in such a way that it is difficult to alter these data without reconstructing the links between the blocks on every single node on the network. While amazing, the block replication and replayed computation techniques makes the blockchain an inefficient datastore for centralized, high-throuhtput, permissioned applications like this project. In our opinion, the blockchain is a breakthrough technology designed to meet the security needs of decentralized systems and a complete adaptation to centralized, permissioned platform unnecessarily introduces foriegn performance issues.
 
-## 1.3 Expensive & Unterministic Cost
+### 1.3 Expensive & Unterministic Cost
 
 Decentralized systems like Ethereum have opened our minds to the possibility of building open, autonomous applications
 that require little or no human input to function. To ensure these open platforms are secured against attacks and spam, developers are required to pay fees for computations performed by their apps. The exact amount to pay is not immediately known and as such it makes it hard for developers and business to make decisions. 
