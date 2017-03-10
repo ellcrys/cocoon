@@ -3,10 +3,9 @@ image: golang:1.7.5-wheezy
 before_script:
   - curl https://glide.sh/get | sh
   - glide install
-  - mkdir -p $GOPATH/ncodes/$CI_PROJECT_NAME
-  - mv $CI_PROJECT_DIR/* $GOPATH/ncodes/$CI_PROJECT_NAME
-  - cd $GOPATH/ncodes/$CI_PROJECT_NAME
-  - mv vendor core
+  - mkdir -p $GOPATH/src/github.com/ncodes/$CI_PROJECT_NAME
+  - mv $CI_PROJECT_DIR/* $GOPATH/src/github.com/ncodes/$CI_PROJECT_NAME
+  - cd $GOPATH/src/github.com/ncodes/$CI_PROJECT_NAME
 
 services:
   - postgres:9.6.2
@@ -25,6 +24,4 @@ orderer:
     ORDERER_ADDR: 127.0.0.1:8001
     TXCHAIN_CON_STR: host=postgres user=test dbname=cocoon sslmode=disable password=
   script:
-    - cd core
-    - pwd && ls
-    - go run main.go orderer
+    - go run core/main.go orderer
