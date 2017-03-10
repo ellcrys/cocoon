@@ -1,5 +1,5 @@
-hash: 935d4db0c9c72029ee4e210151f66741aa007d61dde12a0fcc5aa9b001f2be88
-updated: 2017-03-10T21:39:44.778104408+01:00
+hash: 9c367b758e20732f54a07eeeb003cf9bf6e0d0417b638cd0a6cc37734664b5c2
+updated: 2017-03-10T21:58:38.113470104+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -12,7 +12,7 @@ imports:
 - name: github.com/cbroglie/mustache
   version: 6857e4b493bdb8d4b1931446eb41704aeb4c28cb
 - name: github.com/dgrijalva/jwt-go
-  version: 9fe8afe96d32468fba230b8b22acea86251f0506
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
   version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
   subpackages:
