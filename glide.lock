@@ -1,5 +1,5 @@
-hash: 978640310d50075721bd85858c4aa66fda847e9e253754741a72c7190a61b96c
-updated: 2017-03-10T17:26:14.356853978+01:00
+hash: 87263584fad0fb05b2079a5e02e3259756117d9f22003d3cfb4975e6cf7ba5bb
+updated: 2017-03-10T17:41:37.440380841+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -163,8 +163,6 @@ imports:
   subpackages:
   - cipher
   - json
-- name: github.com/tj/go-spin
-  version: d9cf5dfd6d7f5b9d1f62122ace69b7fda90f5793
 - name: github.com/ugorji/go
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
