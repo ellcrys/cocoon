@@ -27,6 +27,8 @@ import:
 - package: github.com/dustin/go-humanize
 - package: github.com/mitchellh/go-homedir
 - package: github.com/boltdb/bolt
-  version: ^1.3.0
+  version: ^1.0.0
   subpackages:
   - '...'
+- package: github.com/ncodes/go-spin
+  version: ddabc69b6151945c05fc40e2ae3f2fc9396b77a2

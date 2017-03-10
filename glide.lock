@@ -1,5 +1,5 @@
-hash: 87263584fad0fb05b2079a5e02e3259756117d9f22003d3cfb4975e6cf7ba5bb
-updated: 2017-03-10T17:41:37.440380841+01:00
+hash: 935d4db0c9c72029ee4e210151f66741aa007d61dde12a0fcc5aa9b001f2be88
+updated: 2017-03-10T21:39:44.778104408+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -114,7 +114,7 @@ imports:
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
 - name: github.com/ncodes/go-spin
-  version: d9cf5dfd6d7f5b9d1f62122ace69b7fda90f5793
+  version: ddabc69b6151945c05fc40e2ae3f2fc9396b77a2
 - name: github.com/olebedev/emitter
   version: 9110dbae3d07cb26c2993dbf3bdbd0aad98329f9
 - name: github.com/op/go-logging
