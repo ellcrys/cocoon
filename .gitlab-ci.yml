@@ -1,7 +1,13 @@
+image: go:1.7.5-wheezy
+
 before_script:
   - curl https://glide.sh/get | sh
 
-start_orderer:
+stages:
+  - orderer
+
+orderer:
+  stage: orderer
   script:
     - glide install
     - ls
