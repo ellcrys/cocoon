@@ -6,6 +6,7 @@ before_script:
   - mkdir -p $GOPATH/ncodes/$CI_PROJECT_NAME
   - mv $CI_PROJECT_DIR/* $GOPATH/ncodes/$CI_PROJECT_NAME
   - cd $GOPATH/ncodes/$CI_PROJECT_NAME
+  - mv vendor core
 
 services:
   - postgres:9.6.2
