@@ -2,12 +2,18 @@ syntax = "proto3";
 package proto;
 
 service API {
+    rpc Login(LoginRequest) returns (Response);
     rpc CreateCocoon(CreateCocoonRequest) returns (Response);
     rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
     rpc GetCocoon(GetCocoonRequest) returns (Response);
     rpc GetIdentity(GetIdentityRequest) returns (Response);
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
 }
 
 message CreateCocoonRequest {

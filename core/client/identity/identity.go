@@ -1,8 +1,9 @@
 package identity
 
 import (
-	"context"
 	"fmt"
+
+	context "golang.org/x/net/context"
 
 	"golang.org/x/crypto/ssh/terminal"
 

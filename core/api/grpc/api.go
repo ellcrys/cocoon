@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -110,6 +111,59 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		Id:     req.GetId(),
 		Status: 200,
 		Body:   []byte(depInfo.ID),
+	}, nil
+}
+
+// Login authenticates a user and returns a JWT token
+func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
+
+	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonCodeId: "",
+		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
+		Ledger:       txchain.GetGlobalLedgerName(),
+	})
+
+	if err != nil {
+		return nil, err
+	} else if *tx == (orderer_proto.Transaction{}) {
+		return nil, types.ErrIdentityNotFound
+	}
+
+	var value map[string]interface{}
+	err = util.FromJSON([]byte(tx.GetValue()), &value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to json encode identity data")
+	}
+
+	if err = bcrypt.CompareHashAndPassword([]byte(value["password"].(string)), []byte(req.GetPassword())); err != nil {
+		return nil, fmt.Errorf("Email or password are invalid")
+	}
+
+	claims := &jwt.MapClaims{
+		"identity": tx.GetId(),
+		"exp":      time.Now().AddDate(0, 1, 0).Unix(),
+	}
+
+	key := "test_key" // TODO: Important! Get this from somewhere else
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(key))
+	if err != nil {
+		log.Error(err.Error())
+		return nil, fmt.Errorf("failed to create session token")
+	}
+
+	return &proto.Response{
+		Id:     util.UUID4(),
+		Status: 200,
+		Body:   []byte(ss),
 	}, nil
 }
 
@@ -287,7 +341,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.GetPassword()), bcrypt.DefaultCost)
 	value, _ := util.ToJSON(map[string]interface{}{
 		"email":    req.GetEmail(),
-		"password": hashedPassword,
+		"password": string(hashedPassword),
 	})
 
 	txID := util.UUID4()
