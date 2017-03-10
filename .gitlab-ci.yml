@@ -10,4 +10,7 @@ orderer:
   stage: orderer
   script:
     - glide install
-    - ls
+    - mkdir -p $GOPATH/ncodes/$CI_PROJECT_NAME
+    - mv $CI_PROJECT_DIR/* $GOPATH/ncodes/$CI_PROJECT_NAME
+    - cd $GOPATH/ncodes/$CI_PROJECT_NAME
+    - pwd && ls
