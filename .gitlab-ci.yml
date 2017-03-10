@@ -25,5 +25,6 @@ orderer:
     ORDERER_ADDR: 127.0.0.1:8001
     TXCHAIN_CON_STR: host=postgres user=test dbname=cocoon sslmode=disable password=
   script:
+    - cd core
     - pwd && ls
-    - go run core/main.go orderer
+    - go run main.go orderer
