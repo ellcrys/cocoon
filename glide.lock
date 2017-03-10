@@ -1,5 +1,5 @@
 hash: 978640310d50075721bd85858c4aa66fda847e9e253754741a72c7190a61b96c
-updated: 2017-03-09T15:36:42.184094262+01:00
+updated: 2017-03-10T17:26:14.356853978+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -50,11 +50,9 @@ imports:
 - name: github.com/dustin/go-humanize
   version: 259d2a102b871d17f30e3cd9881a642961a1e486
 - name: github.com/ellcrys/crypto
-  version: 4260838a35589024ba32fad882cbc4520df31a58
-  subpackages:
-  - ecdsa
+  version: 0a4b0be14cff5c4fae8174303e203d25425b5016
 - name: github.com/ellcrys/util
-  version: a0fbe04ade4498edfb4173ed193629e12aca381f
+  version: b3935ad648a96ebf17ed79490429fdf42a1277c7
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/franela/goreq
@@ -93,7 +91,7 @@ imports:
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/lib/pq
-  version: ca5bc43047f2138703da0f3d3ca89a59f3d597f1
+  version: e4af84aab01e159ca479940dbde304519e8e8811
   subpackages:
   - hstore
   - oid
@@ -115,12 +113,14 @@ imports:
   version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
+- name: github.com/ncodes/go-spin
+  version: d9cf5dfd6d7f5b9d1f62122ace69b7fda90f5793
 - name: github.com/olebedev/emitter
   version: 9110dbae3d07cb26c2993dbf3bdbd0aad98329f9
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: df4d872dd90cd29ec96c95cf75d92dd81ab95862
+  version: 31980a53ae7887b2c8f8715d13c3eb486c27b6cf
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -151,7 +151,7 @@ imports:
 - name: github.com/spf13/cast
   version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
-  version: 24bb44aac8fd4730262546161cac1cc7d2869b32
+  version: 16c014f1a19d865b765b420e74508f80eb831ada
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
@@ -169,6 +169,12 @@ imports:
   version: a396ed22fc049df733440d90efe17475e3929ccb
   subpackages:
   - codec
+- name: golang.org/x/crypto
+  version: 728b753d0135da6801d45a38e6f43ff55779c5c2
+  subpackages:
+  - bcrypt
+  - blowfish
+  - ssh/terminal
 - name: golang.org/x/net
   version: 10c134ea0df15f7e34d789338c7a2d76cc7a3ab9
   subpackages:
