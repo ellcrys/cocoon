@@ -2,17 +2,18 @@ package client
 
 // Cocoon represents a smart contract application
 type Cocoon struct {
-	ID           string
-	URL          string
-	ReleaseTag   string
-	Language     string
-	BuildParam   string
-	Memory       string
-	CPUShare     string
-	Instances    int32
-	Signers      int32
-	SigThreshold int32
-	Releases     []string
+	ID             string
+	URL            string
+	ReleaseTag     string
+	Language       string
+	BuildParam     string
+	Memory         string
+	CPUShare       string
+	Instances      int32
+	NumSignatories int32
+	SigThreshold   int32
+	Releases       []string
+	Signatories    []string
 }
 
 // Release represents a new update to a cocoon's

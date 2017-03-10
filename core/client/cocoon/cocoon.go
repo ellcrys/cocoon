@@ -72,7 +72,6 @@ func (c *Ops) Create(cocoon *client.Cocoon) error {
 
 	id := util.UUID4()
 	cocoon.ID = id
-	// db := db.GetDefaultDB()
 
 	err := validateCreateCocoon(cocoon)
 	if err != nil {
@@ -101,17 +100,17 @@ func (c *Ops) Create(cocoon *client.Cocoon) error {
 
 	client := proto.NewAPIClient(conn)
 	resp, err := client.CreateCocoon(context.Background(), &proto.CreateCocoonRequest{
-		Id:           cocoon.ID,
-		Url:          cocoon.URL,
-		Language:     cocoon.Language,
-		ReleaseTag:   cocoon.ReleaseTag,
-		BuildParam:   []byte(cocoon.BuildParam),
-		Memory:       cocoon.Memory,
-		CPUShare:     cocoon.CPUShare,
-		Releases:     cocoon.Releases,
-		Instances:    cocoon.Instances,
-		Signers:      cocoon.Signers,
-		SigThreshold: cocoon.SigThreshold,
+		Id:             cocoon.ID,
+		Url:            cocoon.URL,
+		Language:       cocoon.Language,
+		ReleaseTag:     cocoon.ReleaseTag,
+		BuildParam:     []byte(cocoon.BuildParam),
+		Memory:         cocoon.Memory,
+		CPUShare:       cocoon.CPUShare,
+		Releases:       cocoon.Releases,
+		Instances:      cocoon.Instances,
+		NumSignatories: cocoon.NumSignatories,
+		SigThreshold:   cocoon.SigThreshold,
 	})
 
 	if err != nil {

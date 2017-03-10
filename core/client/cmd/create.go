@@ -26,20 +26,20 @@ var createCmd = &cobra.Command{
 		memory, _ := cmd.Flags().GetString("memory")
 		cpuShare, _ := cmd.Flags().GetString("cpu-share")
 		instances, _ := cmd.Flags().GetInt32("instances")
-		signers, _ := cmd.Flags().GetInt32("signers")
+		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
 		ops := new(cocoon.Ops)
 		err := ops.Create(&client.Cocoon{
-			URL:          url,
-			Language:     lang,
-			ReleaseTag:   releaseTag,
-			BuildParam:   buildParams,
-			Memory:       memory,
-			CPUShare:     cpuShare,
-			Instances:    instances,
-			Signers:      signers,
-			SigThreshold: sigThreshold,
+			URL:            url,
+			Language:       lang,
+			ReleaseTag:     releaseTag,
+			BuildParam:     buildParams,
+			Memory:         memory,
+			CPUShare:       cpuShare,
+			Instances:      instances,
+			NumSignatories: numSig,
+			SigThreshold:   sigThreshold,
 		})
 		if err != nil {
 			log.Fatalf("%s", common.StripRPCErrorPrefix([]byte(err.Error())))
@@ -56,6 +56,6 @@ func init() {
 	createCmd.Flags().StringP("memory", "m", "512m", "The amount of memory to allocate. e.g 512m, 1g or 2g")
 	createCmd.Flags().StringP("cpu-share", "c", "1x", "The share of cpu to allocate. e.g 1x or 2x")
 	createCmd.Flags().Int32P("instances", "i", 1, "The number of instances to run")
-	createCmd.Flags().Int32P("signers", "s", 1, "The number of signatories")
+	createCmd.Flags().Int32P("num-sig", "s", 1, "The number of signatories")
 	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required confirm an update")
 }

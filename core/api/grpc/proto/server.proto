@@ -7,6 +7,7 @@ service API {
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
     rpc GetCocoon(GetCocoonRequest) returns (Response);
+    rpc GetIdentity(GetIdentityRequest) returns (Response);
 }
 
 message CreateCocoonRequest {
@@ -19,12 +20,17 @@ message CreateCocoonRequest {
     string CPUShare = 7;
     repeated string releases = 8;
     int32 instances = 9;
-    int32 signers = 10;
+    int32 numSignatories = 10;
     int32 sigThreshold = 11;
+    repeated string signatories = 12;
 }
 
 message GetCocoonRequest {
     string id = 1;
+}
+
+message GetIdentityRequest {
+    string email = 1;
 }
 
 message CreateReleaseRequest {
@@ -49,9 +55,8 @@ message DeployRequest {
 }
 
 message CreateIdentityRequest {
-    string id = 1;
-    string email = 2;
-    string pubKey = 3;
+    string email = 1;
+    string password = 2;
 }
 
 message Response {

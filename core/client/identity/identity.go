@@ -1,17 +1,17 @@
 package identity
 
 import (
+	"context"
 	"fmt"
-	"time"
 
-	"os"
+	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/ellcrys/crypto/ecdsa"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
-	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -35,76 +35,58 @@ func NewIdentity() *Identity {
 }
 
 // Create a new identity
-func (i *Identity) Create(email, pubKey, outputFile string) error {
+func (i *Identity) Create(email string) error {
 
-	var key *ecdsa.SimpleECDSA
-	var file *os.File
 	var err error
-
-	if len(pubKey) == 0 {
-		key = ecdsa.NewSimpleECDSA(ecdsa.CurveP256)
-		pubKey = key.GetPubKey()
-	} else {
-		valid, _ := ecdsa.IsValidPubKey(pubKey)
-		if !valid {
-			log.Fatal("Public key is invalid. Please use the keygen tool to generate keys")
-		}
-	}
-
-	if len(outputFile) > 0 {
-		file, err = os.Create(outputFile)
-		if err != nil {
-			return fmt.Errorf("error opening output file. %s", err)
-		}
-		defer file.Close()
-	}
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
 
+	stopSpinner := util.Spinner("Please wait")
+
 	client := proto.NewAPIClient(conn)
-	resp, err := client.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
-		Id:     util.UUID4(),
-		Email:  email,
-		PubKey: pubKey,
+	resp, err := client.GetIdentity(context.Background(), &proto.GetIdentityRequest{
+		Email: email,
 	})
 
-	if err != nil {
-		return fmt.Errorf(err.Error())
+	if err != nil && common.ToRPCError(2, types.ErrIdentityNotFound).Error() != err.Error() {
+		stopSpinner()
+		return err
+	} else if resp != nil {
+		stopSpinner()
+		return types.ErrIdentityAlreadyExists
 	}
 
-	if resp.Status != 200 {
+	stopSpinner()
+	log.Info("Enter your password (minimum: 8 characters)")
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		return fmt.Errorf("failed to get password")
+	}
+
+	if len(password) < 8 {
+		stopSpinner()
+		return fmt.Errorf("Password is too short. Minimum of 8 characters required")
+	}
+
+	stopSpinner = util.Spinner("Please wait")
+	resp, err = client.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+		Email:    email,
+		Password: string(password),
+	})
+	if err != nil {
+		stopSpinner()
+		return err
+	} else if resp.Status != 200 {
+		stopSpinner()
 		return fmt.Errorf("%s", resp.Body)
 	}
 
+	stopSpinner()
 	log.Info("==> Successfully created a new identity")
 	log.Info("==> ID:", email)
-	log.Info("==> TxID:", resp.GetId())
-
-	if len(outputFile) == 0 {
-		if key != nil {
-			log.Infof("==> Your Private Key: \n%s", key.GetPrivKey())
-		}
-		log.Infof("==> Your Public Key: \n%s", key.GetPubKey())
-		log.Info("\n*** Caution! Please key your private key safe. Do not share it. ***")
-		return nil
-	}
-
-	keyData, _ := util.ToJSON(map[string]string{
-		"id":           email,
-		"pub_key":      key.GetPubKey(),
-		"priv_key":     key.GetPrivKey(),
-		"date_created": time.Now().UTC().String(),
-	})
-
-	_, err = file.Write(keyData)
-	if err != nil {
-		return fmt.Errorf("failed to write key data to output file. %s", err)
-	}
-
-	log.Info("==> Key File:", outputFile)
 
 	return nil
 }

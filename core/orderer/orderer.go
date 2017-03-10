@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/ledgerchain/types"
 	"github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/types/txchain"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
@@ -56,7 +56,7 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // and inclusion module
 type Orderer struct {
 	server  *grpc.Server
-	chain   types.LedgerChain
+	chain   txchain.LedgerChain
 	endedCh chan bool
 }
 
@@ -88,7 +88,7 @@ func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
 		}
 
 		// initialize ledgerchain
-		err = od.chain.Init(od.chain.MakeLedgerName("", types.GetGlobalLedgerName()))
+		err = od.chain.Init(od.chain.MakeLedgerName("", txchain.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -112,7 +112,7 @@ func (od *Orderer) Stop(exitCode int) int {
 }
 
 // SetLedgerChain sets the ledgerchain implementation to use.
-func (od *Orderer) SetLedgerChain(ch types.LedgerChain) {
+func (od *Orderer) SetLedgerChain(ch txchain.LedgerChain) {
 	log.Infof("Setting ledgerchain backend to %s", ch.GetBackend())
 	od.chain = ch
 }

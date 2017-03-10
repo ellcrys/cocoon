@@ -1,4 +1,5 @@
-package types
+package txchain
+
 
 import "github.com/ellcrys/util"
 

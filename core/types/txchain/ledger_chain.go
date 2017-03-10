@@ -1,4 +1,5 @@
-package types
+package txchain
+
 
 // LedgerChain defines an interface required for the implementation
 // of a linked ledger data structure. A ledger chain is a continous,

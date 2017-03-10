@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/ledgerchain/impl"
 	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/txchain/impl"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
