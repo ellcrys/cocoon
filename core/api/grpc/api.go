@@ -111,6 +111,122 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	}, nil
 }
 
+// CreateCocoon creates a cocoon
+func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest) (*proto.Response, error) {
+
+	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+
+	// check if cocoon with matching ID already exists
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonCodeId: "",
+		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
+		Ledger:       types.GetGlobalLedgerName(),
+	})
+
+	if err != nil {
+		return nil, err
+	} else if *tx != (orderer_proto.Transaction{}) {
+		return nil, fmt.Errorf("cocoon with matching ID already exists")
+	}
+
+	value, _ := util.ToJSON(req)
+	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+		Id:           req.GetId(),
+		CocoonCodeId: "",
+		LedgerName:   types.GetGlobalLedgerName(),
+		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
+		Value:        value,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Id:     req.GetId(),
+		Status: 200,
+		Body:   value,
+	}, nil
+}
+
+// CreateRelease creates a release
+func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseRequest) (*proto.Response, error) {
+
+	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+
+	// check if release with matching ID already exists
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonCodeId: "",
+		Key:          fmt.Sprintf("release.%s", req.GetId()),
+		Ledger:       types.GetGlobalLedgerName(),
+	})
+
+	if err != nil {
+		return nil, err
+	} else if *tx != (orderer_proto.Transaction{}) {
+		return nil, fmt.Errorf("release already exists")
+	}
+
+	value, _ := util.ToJSON(req)
+	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+		Id:           req.GetId(),
+		CocoonCodeId: "",
+		LedgerName:   types.GetGlobalLedgerName(),
+		Key:          fmt.Sprintf("release.%s", req.GetId()),
+		Value:        value,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Id:     req.GetId(),
+		Status: 200,
+		Body:   value,
+	}, nil
+}
+
+// GetCocoon fetches a cocoon
+func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
+
+	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonCodeId: "",
+		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
+		Ledger:       types.GetGlobalLedgerName(),
+	})
+	if err != nil {
+		return nil, err
+	} else if *tx == (orderer_proto.Transaction{}) {
+		return nil, fmt.Errorf("cocoon not found")
+	}
+
+	return &proto.Response{
+		Id:     req.GetId(),
+		Status: 200,
+		Body:   []byte(tx.GetValue()),
+	}, nil
+}
+
 // CreateIdentity creates a new identity
 func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityRequest) (*proto.Response, error) {
 

@@ -6,11 +6,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/boltdb/bolt"
 	"github.com/ellcrys/util"
 	cocoon_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
-	"github.com/ncodes/cocoon/core/client/db"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types/client"
 	logging "github.com/op/go-logging"
@@ -45,9 +43,9 @@ func validateCreateCocoon(c *client.Cocoon) error {
 		return fmt.Errorf("url is required")
 	} else if !cocoon_util.IsGithubRepoURL(c.URL) {
 		return fmt.Errorf("url is not a valid github repo url")
-	} else if len(c.Lang) == 0 {
+	} else if len(c.Language) == 0 {
 		return fmt.Errorf("language is required")
-	} else if !util.InStringSlice(supportedLanguages, c.Lang) {
+	} else if !util.InStringSlice(supportedLanguages, c.Language) {
 		return fmt.Errorf("language is not supported. Expects one of these values %s", supportedLanguages)
 	} else if len(c.BuildParam) > 0 {
 		var _c map[string]interface{}
@@ -71,35 +69,81 @@ func validateCreateCocoon(c *client.Cocoon) error {
 
 // Create a new cocoon locally
 func (c *Ops) Create(cocoon *client.Cocoon) error {
+
 	id := util.UUID4()
 	cocoon.ID = id
-	db := db.GetDefaultDB()
+	// db := db.GetDefaultDB()
 
 	err := validateCreateCocoon(cocoon)
 	if err != nil {
 		return err
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("cocoons"))
-		if err != nil {
-			return fmt.Errorf("failed to create bucket. %s", err)
-		}
-
-		val, _ := util.ToJSON(cocoon)
-		err = b.Put([]byte(id), val)
-		if err != nil {
-			return fmt.Errorf("failed to create cocoon. %s", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
+	release := client.Release{
+		ID:         util.UUID4(),
+		CocoonID:   cocoon.ID,
+		URL:        cocoon.URL,
+		ReleaseTag: cocoon.ReleaseTag,
+		Language:   cocoon.Language,
+		BuildParam: cocoon.BuildParam,
 	}
 
+	cocoon.Releases = []string{release.ID}
+
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
+
+	client := proto.NewAPIClient(conn)
+	resp, err := client.CreateCocoon(context.Background(), &proto.CreateCocoonRequest{
+		Id:           cocoon.ID,
+		Url:          cocoon.URL,
+		Language:     cocoon.Language,
+		ReleaseTag:   cocoon.ReleaseTag,
+		BuildParam:   []byte(cocoon.BuildParam),
+		Memory:       cocoon.Memory,
+		CPUShare:     cocoon.CPUShare,
+		Releases:     cocoon.Releases,
+		Instances:    cocoon.Instances,
+		Signers:      cocoon.Signers,
+		SigThreshold: cocoon.SigThreshold,
+	})
+
+	if err != nil {
+		stopSpinner()
+		return err
+	} else if resp.Status != 200 {
+		stopSpinner()
+		return fmt.Errorf("%s", resp.Body)
+	}
+
+	resp, err = client.CreateRelease(context.Background(), &proto.CreateReleaseRequest{
+		Id:         release.ID,
+		CocoonID:   cocoon.ID,
+		Url:        cocoon.URL,
+		Language:   cocoon.Language,
+		ReleaseTag: cocoon.ReleaseTag,
+		BuildParam: []byte(cocoon.BuildParam),
+	})
+
+	if err != nil {
+		stopSpinner()
+		return err
+	} else if resp.Status != 200 {
+		stopSpinner()
+		return fmt.Errorf("%s", resp.Body)
+	}
+
+	stopSpinner()
 	log.Info("==> New cocoon created")
-	log.Infof("==> ID: %s", id)
+	log.Infof("==> Cocoon ID: %s", id)
+	log.Infof("==> Release ID: %s", release.ID)
+
 	return nil
 }
 
@@ -110,12 +154,13 @@ func (c *Ops) deploy(cocoon *client.Cocoon) error {
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
+	defer conn.Close()
 
 	client := proto.NewAPIClient(conn)
 	resp, err := client.Deploy(context.Background(), &proto.DeployRequest{
 		Id:         cocoon.ID,
 		Url:        cocoon.URL,
-		Language:   cocoon.Lang,
+		Language:   cocoon.Language,
 		ReleaseTag: cocoon.ReleaseTag,
 		BuildParam: []byte(cocoon.BuildParam),
 		Memory:     cocoon.Memory,
@@ -123,9 +168,7 @@ func (c *Ops) deploy(cocoon *client.Cocoon) error {
 	})
 	if err != nil {
 		return err
-	}
-
-	if resp.Status != 200 {
+	} else if resp.Status != 200 {
 		return fmt.Errorf("%s", resp.Body)
 	}
 
@@ -135,31 +178,36 @@ func (c *Ops) deploy(cocoon *client.Cocoon) error {
 // Start starts a new or stopped cocoon code
 func (c *Ops) Start(id string) error {
 
-	_db := db.GetDefaultDB()
-	cid, cBytes, err := db.GetFirstByPrefix(_db, "cocoons", fmt.Sprintf("%s-", id))
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
-		return fmt.Errorf("failed to get cocoon. %s", err)
+		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
+	defer conn.Close()
 
-	if len(cid) == 0 {
-		return fmt.Errorf("unknown cocoon")
+	stopSpinner := util.Spinner("Please wait")
+	cl := proto.NewAPIClient(conn)
+	resp, err := cl.GetCocoon(context.Background(), &proto.GetCocoonRequest{
+		Id: id,
+	})
+
+	if err != nil {
+		stopSpinner()
+		return err
+	} else if resp.Status != 200 {
+		stopSpinner()
+		return fmt.Errorf("%s", resp.Body)
 	}
 
 	var cocoon client.Cocoon
-	err = util.FromJSON(cBytes, &cocoon)
-	if err != nil {
-		return fmt.Errorf("failed to parse cocoon data. %s", err)
-	}
+	err = util.FromJSON(resp.Body, &cocoon)
 
-	stopSpinner := util.Spinner("Please wait")
-
-	err = c.deploy(&cocoon)
-	stopSpinner()
-	if err != nil {
+	if err = c.deploy(&cocoon); err != nil {
+		stopSpinner()
 		return err
 	}
 
-	log.Info("==> Successfully deploy new cocoon")
+	stopSpinner()
+	log.Info("==> Successfully created a deployment request")
 	log.Info("==> ID:", cocoon.ID)
 
 	return nil

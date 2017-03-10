@@ -54,7 +54,7 @@ imports:
   subpackages:
   - ecdsa
 - name: github.com/ellcrys/util
-  version: 79aacacfcb8369d5d4e26baacbe1e29570f15108
+  version: a0fbe04ade4498edfb4173ed193629e12aca381f
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/franela/goreq

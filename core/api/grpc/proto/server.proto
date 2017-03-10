@@ -2,8 +2,40 @@ syntax = "proto3";
 package proto;
 
 service API {
-    rpc Deploy(DeployRequest) returns (Response);
+    rpc CreateCocoon(CreateCocoonRequest) returns (Response);
+    rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
+    rpc Deploy(DeployRequest) returns (Response);
+    rpc GetCocoon(GetCocoonRequest) returns (Response);
+}
+
+message CreateCocoonRequest {
+    string id = 1;
+    string url = 2;
+    string language = 3;
+    string releaseTag = 4;
+    bytes buildParam = 5;
+    string memory = 6;
+    string CPUShare = 7;
+    repeated string releases = 8;
+    int32 instances = 9;
+    int32 signers = 10;
+    int32 sigThreshold = 11;
+}
+
+message GetCocoonRequest {
+    string id = 1;
+}
+
+message CreateReleaseRequest {
+    string id = 1;
+    string cocoonID = 2;
+    string url = 3;
+    string language = 4;
+    string releaseTag = 5;
+    bytes buildParam = 6;
+    int32 sigApproved = 7;
+    int32 sigDenied = 8;
 }
 
 message DeployRequest {
