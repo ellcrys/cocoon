@@ -13,7 +13,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types/txchain"
+	"github.com/ncodes/cocoon/core/types/store"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
@@ -57,7 +57,7 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // and inclusion module
 type Orderer struct {
 	server  *grpc.Server
-	chain   txchain.TxChain
+	chain   store.Store
 	endedCh chan bool
 }
 
@@ -67,7 +67,7 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(addr, txChainConStr string, endedCh chan bool) {
+func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 	od.endedCh = endedCh
 
@@ -81,15 +81,15 @@ func (od *Orderer) Start(addr, txChainConStr string, endedCh chan bool) {
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
 		// establish connection to chain backend
-		_, err := od.chain.Connect(txChainConStr)
+		_, err := od.chain.Connect(storeConStr)
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
 			return
 		}
 
-		// initialize txchain
-		err = od.chain.Init(od.chain.MakeLedgerName("", txchain.GetGlobalLedgerName()))
+		// initialize store
+		err = od.chain.Init(od.chain.MakeLedgerName("", store.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -112,9 +112,9 @@ func (od *Orderer) Stop(exitCode int) int {
 	return exitCode
 }
 
-// SetTxChain sets the txchain implementation to use.
-func (od *Orderer) SetTxChain(ch txchain.TxChain) {
-	log.Infof("Setting txchain backend to %s", ch.GetBackend())
+// SetStore sets the store implementation to use.
+func (od *Orderer) SetStore(ch store.Store) {
+	log.Infof("Setting store backend to %s", ch.GetBackend())
 	od.chain = ch
 }
 

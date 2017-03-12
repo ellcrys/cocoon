@@ -6,15 +6,15 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
-	"github.com/ncodes/cocoon/core/types/txchain"
+	"github.com/ncodes/cocoon/core/types/store"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestPosgresTxChain(t *testing.T) {
-	Convey("PostgresTxChain", t, func() {
+func TestPosgresStore(t *testing.T) {
+	Convey("PostgresStore", t, func() {
 
 		var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
-		pgChain := new(PostgresTxChain)
+		pgChain := new(PostgresStore)
 		db, err := pgChain.Connect(conStr)
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
@@ -26,11 +26,11 @@ func TestPosgresTxChain(t *testing.T) {
 		Convey(".Connect", func() {
 			Convey("should return error when unable to connect to a postgres server", func() {
 				var conStr = "host=localhost user=wrong dbname=test sslmode=disable password=abc"
-				pgChain := new(PostgresTxChain)
+				pgChain := new(PostgresStore)
 				db, err := pgChain.Connect(conStr)
 				So(db, ShouldBeNil)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "failed to connect to txchain backend")
+				So(err.Error(), ShouldEqual, "failed to connect to store backend")
 			})
 		})
 
@@ -43,7 +43,7 @@ func TestPosgresTxChain(t *testing.T) {
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, false)
 
-					err := pgChain.Init(txchain.GetGlobalLedgerName())
+					err := pgChain.Init(store.GetGlobalLedgerName())
 					So(err, ShouldBeNil)
 
 					ledgerEntryExists = db.(*gorm.DB).HasTable(LedgerTableName)
@@ -53,11 +53,11 @@ func TestPosgresTxChain(t *testing.T) {
 					So(ledgerEntryExists, ShouldEqual, true)
 
 					Convey("ledger table must include a global ledger entry", func() {
-						var entries []txchain.Ledger
+						var entries []store.Ledger
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, txchain.GetGlobalLedgerName())
+						So(entries[0].Name, ShouldEqual, store.GetGlobalLedgerName())
 					})
 
 					Reset(func() {
@@ -68,17 +68,17 @@ func TestPosgresTxChain(t *testing.T) {
 
 			Convey("when ledger table exists", func() {
 				Convey("should return nil with no effect", func() {
-					err := pgChain.Init(txchain.GetGlobalLedgerName())
+					err := pgChain.Init(store.GetGlobalLedgerName())
 					So(err, ShouldBeNil)
 
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, true)
 
-					var entries []txchain.Ledger
+					var entries []store.Ledger
 					err = db.(*gorm.DB).Find(&entries).Error
 					So(err, ShouldBeNil)
 					So(len(entries), ShouldEqual, 1)
-					So(entries[0].Name, ShouldEqual, txchain.GetGlobalLedgerName())
+					So(entries[0].Name, ShouldEqual, store.GetGlobalLedgerName())
 				})
 
 				Reset(func() {
@@ -90,8 +90,8 @@ func TestPosgresTxChain(t *testing.T) {
 		Convey(".MakeLegderHash", func() {
 
 			Convey("should return expected ledger hash", func() {
-				hash := pgChain.MakeLegderHash(&txchain.Ledger{
-					Name:      txchain.GetGlobalLedgerName(),
+				hash := pgChain.MakeLegderHash(&store.Ledger{
+					Name:      store.GetGlobalLedgerName(),
 					Public:    true,
 					CreatedAt: 1488196279,
 				})
@@ -103,7 +103,7 @@ func TestPosgresTxChain(t *testing.T) {
 		Convey(".CreateLedger", func() {
 
 			var ledgerName = util.RandString(10)
-			err := pgChain.Init(txchain.GetGlobalLedgerName())
+			err := pgChain.Init(store.GetGlobalLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should successfully create a ledger entry", func() {
@@ -141,7 +141,7 @@ func TestPosgresTxChain(t *testing.T) {
 
 		Convey(".GetLedger", func() {
 
-			err := pgChain.Init(txchain.GetGlobalLedgerName())
+			err := pgChain.Init(store.GetGlobalLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when ledger does not exist", func() {
@@ -169,7 +169,7 @@ func TestPosgresTxChain(t *testing.T) {
 
 		Convey(".MakeTxHash", func() {
 			Convey("should return expected transaction hash", func() {
-				hash := pgChain.MakeTxHash(&txchain.Transaction{
+				hash := pgChain.MakeTxHash(&store.Transaction{
 					ID:         util.Sha256("tx_id"),
 					Key:        "balance",
 					Value:      "30.50",
@@ -182,7 +182,7 @@ func TestPosgresTxChain(t *testing.T) {
 
 		Convey(".Put", func() {
 
-			err := pgChain.Init(txchain.GetGlobalLedgerName())
+			err := pgChain.Init(store.GetGlobalLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("expects new transaction to be the first and only transaction", func() {
@@ -191,7 +191,7 @@ func TestPosgresTxChain(t *testing.T) {
 				_, err := pgChain.Put(txID, ledger, "key", "value")
 				So(err, ShouldBeNil)
 
-				var allTx []txchain.Transaction
+				var allTx []store.Transaction
 				err = db.(*gorm.DB).Find(&allTx).Error
 				So(err, ShouldBeNil)
 				So(len(allTx), ShouldEqual, 1)
@@ -220,7 +220,7 @@ func TestPosgresTxChain(t *testing.T) {
 
 		Convey(".GetByID", func() {
 
-			err := pgChain.Init(txchain.GetGlobalLedgerName())
+			err := pgChain.Init(store.GetGlobalLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
@@ -250,11 +250,11 @@ func TestPosgresTxChain(t *testing.T) {
 
 		Convey(".Get", func() {
 
-			err := pgChain.Init(txchain.GetGlobalLedgerName())
+			err := pgChain.Init(store.GetGlobalLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgChain.Get(txchain.GetGlobalLedgerName(), "wrong_key")
+				tx, err := pgChain.Get(store.GetGlobalLedgerName(), "wrong_key")
 				So(tx, ShouldBeNil)
 				So(err, ShouldBeNil)
 			})

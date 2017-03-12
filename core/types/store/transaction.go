@@ -1,4 +1,4 @@
-package txchain
+package store
 
 // Transaction reprents a group of transactions belonging to a ledger.
 // All transaction entries must reference the hash of the immediate transaction

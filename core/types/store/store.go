@@ -1,10 +1,8 @@
-package txchain
+package store
 
-// TxChain defines an interface required for the implementation
-// of a linked ledger data structure. A ledger chain is a continous,
-// crytographically linked set of ledger with each ledger holding unlimited
-// number of cryptographically linked transactions.
-type TxChain interface {
+// Store defines an interface required for the implementation
+// of a data structure for creating and reading ledgers and transactions.
+type Store interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(globalLedgerName string) error
 	GetBackend() string

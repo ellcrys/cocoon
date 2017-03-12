@@ -13,7 +13,7 @@ import (
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types/txchain"
+	"github.com/ncodes/cocoon/core/types/store"
 	logging "github.com/op/go-logging"
 	"golang.org/x/crypto/bcrypt"
 	context "golang.org/x/net/context"
@@ -128,7 +128,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 
 	if err != nil {
@@ -183,7 +183,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 
 	if err != nil {
@@ -196,7 +196,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		Id:           req.GetId(),
 		CocoonCodeId: "",
-		LedgerName:   txchain.GetGlobalLedgerName(),
+		LedgerName:   store.GetGlobalLedgerName(),
 		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
 		Value:        value,
 	})
@@ -227,7 +227,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("release.%s", req.GetId()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 
 	if err != nil {
@@ -240,7 +240,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		Id:           req.GetId(),
 		CocoonCodeId: "",
-		LedgerName:   txchain.GetGlobalLedgerName(),
+		LedgerName:   store.GetGlobalLedgerName(),
 		Key:          fmt.Sprintf("release.%s", req.GetId()),
 		Value:        value,
 	})
@@ -268,7 +268,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 	if err != nil {
 		return nil, err
@@ -297,7 +297,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 
 	if err != nil {
@@ -329,7 +329,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
-		Ledger:       txchain.GetGlobalLedgerName(),
+		Ledger:       store.GetGlobalLedgerName(),
 	})
 
 	if err != nil {
@@ -348,7 +348,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		Id:           txID,
 		CocoonCodeId: "",
-		LedgerName:   txchain.GetGlobalLedgerName(),
+		LedgerName:   store.GetGlobalLedgerName(),
 		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
 		Value:        value,
 	})

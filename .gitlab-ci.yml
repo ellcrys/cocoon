@@ -27,6 +27,6 @@ orderer:
   stage: orderer
   variables:
     ORDERER_ADDR: 127.0.0.1:8001
-    TXCHAIN_CON_STR: host=postgres user=test dbname=cocoon sslmode=disable password=
+    STORE_CON_STR: host=postgres user=test dbname=cocoon sslmode=disable password=
   script:
     - go run core/main.go orderer

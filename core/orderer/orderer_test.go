@@ -8,13 +8,13 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer/proto"
-	"github.com/ncodes/cocoon/core/txchain/impl"
+	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
 	context "golang.org/x/net/context"
 )
 
-var txChainConStr = util.Env("TXCHAIN_CON_STR", "host=localhost user=ned dbname=cocoon_dev sslmode=disable password=")
+var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon_dev sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
@@ -24,20 +24,20 @@ func startOrderer(startCB func(*Orderer, chan bool)) {
 	endCh := make(chan bool)
 	addr := util.Env("ORDERER_ADDR", "127.0.0.1:7001")
 	newOrderer := NewOrderer()
-	newOrderer.SetTxChain(new(impl.PostgresTxChain))
-	go newOrderer.Start(addr, txChainConStr, endCh)
+	newOrderer.SetStore(new(impl.PostgresStore))
+	go newOrderer.Start(addr, storeConStr, endCh)
 	time.Sleep(3 * time.Second)
 	startCB(newOrderer, endCh)
 	<-endCh
 }
 
-func dropTxChainDB() error {
-	return impl.Destroy(txChainConStr)
+func dropStoreDB() error {
+	return impl.Destroy(storeConStr)
 }
 
 func TestOrderer(t *testing.T) {
 
-	err := dropTxChainDB()
+	err := dropStoreDB()
 	if err != nil {
 		t.Log("failed to drop chain")
 		t.Fail()

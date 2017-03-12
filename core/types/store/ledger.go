@@ -1,5 +1,4 @@
-package txchain
-
+package store
 
 import "github.com/ellcrys/util"
 
@@ -11,7 +10,7 @@ func GetGlobalLedgerName() string {
 	return globalLedgerName
 }
 
-// Ledger represents a group of linked transactions
+// Ledger represents a group of transactions
 type Ledger struct {
 	Number         uint   `gorm:"primary_key"`
 	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`

@@ -12,7 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
-	"github.com/ncodes/cocoon/core/types/txchain"
+	"github.com/ncodes/cocoon/core/types/store"
 	"github.com/op/go-logging"
 	cmap "github.com/orcaman/concurrent-map"
 	"google.golang.org/grpc"
@@ -79,7 +79,7 @@ type stubServer struct {
 
 // GetGlobalLedgerName returns the name of the global ledger
 func GetGlobalLedgerName() string {
-	return txchain.GetGlobalLedgerName()
+	return store.GetGlobalLedgerName()
 }
 
 // Transact listens and process invoke and response transactions from
@@ -271,7 +271,7 @@ func GetDefaultLedgerName() string {
 // invoke transaction (TxCreateLedger) to the connector.
 // The final name of the ledger is a sha256 hash of
 // the cocoon code id and the name (e.g SHA256(ccode_id.name))
-func CreateLedger(name string, public bool) (*txchain.Ledger, error) {
+func CreateLedger(name string, public bool) (*store.Ledger, error) {
 
 	// TODO: prevent use of ledger name with punctuations (execept an underscore)
 
@@ -305,7 +305,7 @@ func CreateLedger(name string, public bool) (*txchain.Ledger, error) {
 		return nil, err
 	}
 
-	var ledger txchain.Ledger
+	var ledger store.Ledger
 	if err = util.FromJSON(resp.Body, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
@@ -314,7 +314,7 @@ func CreateLedger(name string, public bool) (*txchain.Ledger, error) {
 }
 
 // GetLedger fetches a ledger
-func GetLedger(ledgerName string) (*txchain.Ledger, error) {
+func GetLedger(ledgerName string) (*store.Ledger, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -341,12 +341,12 @@ func GetLedger(ledgerName string) (*txchain.Ledger, error) {
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var ledger txchain.Ledger
+	var ledger store.Ledger
 	if err = util.FromJSON(resp.Body, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
-	if err == nil && ledger == (txchain.Ledger{}) {
+	if err == nil && ledger == (store.Ledger{}) {
 		return nil, ErrNotFound
 	}
 
@@ -354,7 +354,7 @@ func GetLedger(ledgerName string) (*txchain.Ledger, error) {
 }
 
 // PutIn adds a new transaction to a ledger
-func PutIn(ledgerName string, key string, value []byte) (*txchain.Transaction, error) {
+func PutIn(ledgerName string, key string, value []byte) (*store.Transaction, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -381,7 +381,7 @@ func PutIn(ledgerName string, key string, value []byte) (*txchain.Transaction, e
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var tx txchain.Transaction
+	var tx store.Transaction
 	if err = util.FromJSON(resp.Body, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
@@ -390,12 +390,12 @@ func PutIn(ledgerName string, key string, value []byte) (*txchain.Transaction, e
 }
 
 // Put adds a new transaction into the default ledger
-func Put(key string, value []byte) (*txchain.Transaction, error) {
+func Put(key string, value []byte) (*store.Transaction, error) {
 	return PutIn(GetDefaultLedgerName(), key, value)
 }
 
 // GetFrom returns a transaction by its key and the ledger it belongs to
-func GetFrom(ledgerName, key string) (*txchain.Transaction, error) {
+func GetFrom(ledgerName, key string) (*store.Transaction, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -422,12 +422,12 @@ func GetFrom(ledgerName, key string) (*txchain.Transaction, error) {
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var tx txchain.Transaction
+	var tx store.Transaction
 	if err = util.FromJSON(resp.Body, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
-	if err == nil && tx == (txchain.Transaction{}) {
+	if err == nil && tx == (store.Transaction{}) {
 		return nil, ErrNotFound
 	}
 
@@ -435,6 +435,6 @@ func GetFrom(ledgerName, key string) (*txchain.Transaction, error) {
 }
 
 // Get returns a transaction that belongs to the default legder by its key.
-func Get(key string) (*txchain.Transaction, error) {
+func Get(key string) (*store.Transaction, error) {
 	return GetFrom(GetDefaultLedgerName(), key)
 }

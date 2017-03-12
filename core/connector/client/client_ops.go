@@ -5,7 +5,7 @@ import (
 	"github.com/ncodes/cocoon/core/orderer"
 	order_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
-	"github.com/ncodes/cocoon/core/types/txchain"
+	"github.com/ncodes/cocoon/core/types/store"
 	context "golang.org/x/net/context"
 )
 
@@ -53,7 +53,7 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 	// if name is the global ledger, then a cocoon code id is not required.
 	name := tx.GetParams()[0]
 	cocoonCodeID := c.cocoonID
-	if name == txchain.GetGlobalLedgerName() {
+	if name == store.GetGlobalLedgerName() {
 		cocoonCodeID = ""
 	}
 

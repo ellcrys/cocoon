@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer"
-	"github.com/ncodes/cocoon/core/txchain/impl"
+	"github.com/ncodes/cocoon/core/store/impl"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -18,12 +18,12 @@ var ordererCmd = &cobra.Command{
 		var log = logging.MustGetLogger("orderer")
 		log.Info("Orderer has started")
 		addr := util.Env("ORDERER_ADDR", "127.0.0.1:8001")
-		txChainConStr := util.Env("TXCHAIN_CON_STR", "host=localhost user=ned dbname=cocoon sslmode=disable password=")
+		storeConStr := util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon sslmode=disable password=")
 
 		endedCh := make(chan bool)
 		newOrderer := orderer.NewOrderer()
-		newOrderer.SetTxChain(new(impl.PostgresTxChain))
-		go newOrderer.Start(addr, txChainConStr, endedCh)
+		newOrderer.SetStore(new(impl.PostgresStore))
+		go newOrderer.Start(addr, storeConStr, endedCh)
 
 		<-endedCh
 	},
