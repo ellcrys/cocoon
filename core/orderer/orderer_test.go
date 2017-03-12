@@ -63,7 +63,7 @@ func TestOrderer(t *testing.T) {
 						ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
 							CocoonCodeId: "cocoon-123",
 							Name:         "myledger",
-							Public:       true,
+							Public:       false,
 						})
 						So(err, ShouldNotBeNil)
 						So(err.Error(), ShouldEqual, "ledger with matching name already exists")

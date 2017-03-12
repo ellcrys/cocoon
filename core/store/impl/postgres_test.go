@@ -95,7 +95,7 @@ func TestPosgresStore(t *testing.T) {
 					Public:    true,
 					CreatedAt: 1488196279,
 				})
-				So(hash, ShouldEqual, "bd530818540325f1714847c9c46dc4720a1ac46128b28aa91829f151550c4872")
+				So(hash, ShouldEqual, "2f97bb39bf93e995dcb611632fbb72424722b5e6090a0bc483846e46128eb74b")
 			})
 
 		})
@@ -117,21 +117,10 @@ func TestPosgresStore(t *testing.T) {
 				So(ledger, ShouldNotBeNil)
 
 				Convey("should return error since a ledger with same name already exists", func() {
-					_, err := pgChain.CreateLedger(ledgerName, true)
+					_, err := pgChain.CreateLedger(ledgerName, false)
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, `ledger with matching name already exists`)
 				})
-			})
-
-			Convey("should successfully add a new ledger entry but PrevLedgerHash column must reference the previous ledger", func() {
-				ledger, err := pgChain.CreateLedger(util.RandString(10), true)
-				So(err, ShouldBeNil)
-				So(ledger, ShouldNotBeNil)
-
-				ledger2, err := pgChain.CreateLedger(util.RandString(10), true)
-				So(err, ShouldBeNil)
-				So(ledger2, ShouldNotBeNil)
-				So(ledger2.PrevLedgerHash, ShouldEqual, ledger.Hash)
 			})
 
 			Reset(func() {
@@ -170,13 +159,12 @@ func TestPosgresStore(t *testing.T) {
 		Convey(".MakeTxHash", func() {
 			Convey("should return expected transaction hash", func() {
 				hash := pgChain.MakeTxHash(&store.Transaction{
-					ID:         util.Sha256("tx_id"),
-					Key:        "balance",
-					Value:      "30.50",
-					PrevTxHash: util.Sha256("prev_tx_hash"),
-					CreatedAt:  12345678,
+					ID:        util.Sha256("tx_id"),
+					Key:       "balance",
+					Value:     "30.50",
+					CreatedAt: 12345678,
 				})
-				So(hash, ShouldEqual, "0e92cf41a17865093e4d4e6553f00da9dc66e8ae2d30d19ad36dc21a2e3c2b89")
+				So(hash, ShouldEqual, "6d0318d08d26bd08bb0f90c2d86f9d6ffeebbc3a0767f1544cc76748d52670f5")
 			})
 		})
 
@@ -202,15 +190,8 @@ func TestPosgresStore(t *testing.T) {
 					So(allTx[0].Ledger, ShouldEqual, ledger)
 					So(allTx[0].Key, ShouldEqual, "key")
 					So(allTx[0].Value, ShouldEqual, "value")
-					So(allTx[0].NextTxHash, ShouldEqual, "")
-					So(allTx[0].PrevTxHash, ShouldEqual, "")
 				})
 
-				Convey("expects new transaction to have its PrevTxHash set to the hash of the last transaction's hash", func() {
-					tx, err := pgChain.Put(util.Sha256(util.RandString(2)), ledger, "key", "value")
-					So(err, ShouldBeNil)
-					So(tx.PrevTxHash, ShouldEqual, allTx[0].Hash)
-				})
 			})
 
 			Reset(func() {

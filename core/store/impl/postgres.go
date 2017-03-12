@@ -55,17 +55,16 @@ func (ch *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 
 // MakeLegderHash takes a ledger and computes a hash
 func (ch *PostgresStore) MakeLegderHash(ledger *store.Ledger) string {
-	return util.Sha256(fmt.Sprintf("%s|%t|%d|%s", ledger.Name, ledger.Public, ledger.CreatedAt, ledger.PrevLedgerHash))
+	return util.Sha256(fmt.Sprintf("%s|%t|%d", ledger.Name, ledger.Public, ledger.CreatedAt))
 }
 
 // MakeTxHash creates a hash of a transaction
 func (ch *PostgresStore) MakeTxHash(tx *store.Transaction) string {
 	return util.Sha256(fmt.Sprintf(
-		"%s|%s|%s|%s|%d",
+		"%s|%s|%s|%d",
 		tx.ID,
 		crypto.ToBase64([]byte(tx.Key)),
 		crypto.ToBase64([]byte(tx.Value)),
-		tx.PrevTxHash,
 		tx.CreatedAt))
 }
 
@@ -139,29 +138,12 @@ func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, 
 	}
 
 	newLedger := &store.Ledger{
-		Name:           name,
-		Public:         public,
-		NextLedgerHash: "",
-		CreatedAt:      time.Now().Unix(),
-	}
-
-	var prevLedger store.Ledger
-	err = tx.Where("next_ledger_hash = ?", "").Last(&prevLedger).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		tx.Rollback()
-		return nil, err
-	}
-
-	if err != gorm.ErrRecordNotFound {
-		newLedger.PrevLedgerHash = prevLedger.Hash
+		Name:      name,
+		Public:    public,
+		CreatedAt: time.Now().Unix(),
 	}
 
 	newLedger.Hash = ch.MakeLegderHash(newLedger)
-
-	if err = tx.Model(&prevLedger).Update("next_ledger_hash", newLedger.Hash).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
 
 	if err := tx.Create(newLedger).Error; err != nil {
 		tx.Rollback()
@@ -169,10 +151,6 @@ func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, 
 			return nil, fmt.Errorf("ledger with matching name already exists")
 		} else if isUniqueConstraintError(err, "hash") {
 			return nil, fmt.Errorf("hash is being used by another ledger")
-		} else if isUniqueConstraintError(err, "prev_ledger_hash") {
-			return nil, fmt.Errorf("previous ledger hash already used")
-		} else if isUniqueConstraintError(err, "next_ledger_hash") {
-			return nil, fmt.Errorf("next ledger hash already used")
 		}
 		return nil, err
 	}
@@ -216,23 +194,7 @@ func (ch *PostgresStore) Put(txID, ledger, key, value string) (*store.Transactio
 		CreatedAt: time.Now().Unix(),
 	}
 
-	var prevTx store.Transaction
-	err = tx.Where("next_tx_hash = ? AND ledger = ?", "", ledger).Last(&prevTx).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		tx.Rollback()
-		return nil, err
-	}
-
-	if err != gorm.ErrRecordNotFound {
-		newTx.PrevTxHash = prevTx.Hash
-	}
-
 	newTx.Hash = ch.MakeTxHash(newTx)
-
-	if err = tx.Model(&prevTx).Update("next_tx_hash", newTx.Hash).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
 
 	if err := tx.Create(newTx).Error; err != nil {
 		tx.Rollback()
