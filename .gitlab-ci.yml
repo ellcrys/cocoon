@@ -16,7 +16,12 @@ variables:
   POSTGRES_PASSWORD: ""
 
 stages:
-  - orderer
+  - unit_tests
+  
+unit_tests:
+  stage: unit
+  script:
+    - go test -v (go list ./... | grep -v /vendor/)
 
 orderer:
   stage: orderer

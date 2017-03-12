@@ -15,14 +15,18 @@ func (ml *MyLang) GetName() string {
 func (ml *MyLang) GetImage() string {
 	return ""
 }
-func (ml *MyLang) GetDownloadDestination(url string) string {
+func (ml *MyLang) GetDownloadDestination() string {
 	return ""
 }
 func (ml *MyLang) GetBuildScript() string {
 	return ""
 }
 
-func (ml *MyLang) GetMountDestination(string) string {
+func (ml *MyLang) GetCopyDestination() string {
+	return ""
+}
+
+func (ml *MyLang) GetSourceRootDir() string {
 	return ""
 }
 
@@ -44,7 +48,7 @@ func TestLauncher(t *testing.T) {
 		Convey("AddLanguage", func() {
 			lc := NewLauncher(make(chan bool))
 			Convey("should successfully add new language and return nil", func() {
-				err := lc.AddLanguage(new(MyLang))
+				err := lc.AddLanguage(&MyLang{})
 				So(err, ShouldBeNil)
 
 				Convey("should return error if langauge has already been added", func() {

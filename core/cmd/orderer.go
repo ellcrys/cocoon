@@ -18,12 +18,12 @@ var ordererCmd = &cobra.Command{
 		var log = logging.MustGetLogger("orderer")
 		log.Info("Orderer has started")
 		addr := util.Env("ORDERER_ADDR", "127.0.0.1:8001")
-		ledgerChainConStr := util.Env("TXCHAIN_CON_STR", "host=localhost user=ned dbname=cocoon sslmode=disable password=")
+		txChainConStr := util.Env("TXCHAIN_CON_STR", "host=localhost user=ned dbname=cocoon sslmode=disable password=")
 
 		endedCh := make(chan bool)
 		newOrderer := orderer.NewOrderer()
-		newOrderer.SetLedgerChain(new(impl.PostgresLedgerChain))
-		go newOrderer.Start(addr, ledgerChainConStr, endedCh)
+		newOrderer.SetTxChain(new(impl.PostgresTxChain))
+		go newOrderer.Start(addr, txChainConStr, endedCh)
 
 		<-endedCh
 	},

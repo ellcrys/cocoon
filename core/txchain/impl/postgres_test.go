@@ -10,11 +10,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestPosgresLedgerChain(t *testing.T) {
-	Convey("PostgresLedgerChain", t, func() {
+func TestPosgresTxChain(t *testing.T) {
+	Convey("PostgresTxChain", t, func() {
 
 		var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
-		pgChain := new(PostgresLedgerChain)
+		pgChain := new(PostgresTxChain)
 		db, err := pgChain.Connect(conStr)
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
@@ -26,11 +26,11 @@ func TestPosgresLedgerChain(t *testing.T) {
 		Convey(".Connect", func() {
 			Convey("should return error when unable to connect to a postgres server", func() {
 				var conStr = "host=localhost user=wrong dbname=test sslmode=disable password=abc"
-				pgChain := new(PostgresLedgerChain)
+				pgChain := new(PostgresTxChain)
 				db, err := pgChain.Connect(conStr)
 				So(db, ShouldBeNil)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "failed to connect to ledgerchain backend")
+				So(err.Error(), ShouldEqual, "failed to connect to txchain backend")
 			})
 		})
 

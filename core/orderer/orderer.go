@@ -12,6 +12,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cocoon/core/types/txchain"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
@@ -56,7 +57,7 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // and inclusion module
 type Orderer struct {
 	server  *grpc.Server
-	chain   txchain.LedgerChain
+	chain   txchain.TxChain
 	endedCh chan bool
 }
 
@@ -66,7 +67,7 @@ func NewOrderer() *Orderer {
 }
 
 // Start starts the order service
-func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
+func (od *Orderer) Start(addr, txChainConStr string, endedCh chan bool) {
 
 	od.endedCh = endedCh
 
@@ -80,14 +81,14 @@ func (od *Orderer) Start(addr, ledgerChainConStr string, endedCh chan bool) {
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
 		// establish connection to chain backend
-		_, err := od.chain.Connect(ledgerChainConStr)
+		_, err := od.chain.Connect(txChainConStr)
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
 			return
 		}
 
-		// initialize ledgerchain
+		// initialize txchain
 		err = od.chain.Init(od.chain.MakeLedgerName("", txchain.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
@@ -111,9 +112,9 @@ func (od *Orderer) Stop(exitCode int) int {
 	return exitCode
 }
 
-// SetLedgerChain sets the ledgerchain implementation to use.
-func (od *Orderer) SetLedgerChain(ch txchain.LedgerChain) {
-	log.Infof("Setting ledgerchain backend to %s", ch.GetBackend())
+// SetTxChain sets the txchain implementation to use.
+func (od *Orderer) SetTxChain(ch txchain.TxChain) {
+	log.Infof("Setting txchain backend to %s", ch.GetBackend())
 	od.chain = ch
 }
 
@@ -140,6 +141,8 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 	ledger, err := od.chain.GetLedger(name)
 	if err != nil {
 		return nil, err
+	} else if ledger == nil && err == nil {
+		return nil, types.ErrLedgerNotFound
 	}
 
 	ledgerJSON, _ := util.ToJSON(ledger)
@@ -157,9 +160,8 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 	ledger, err := od.chain.GetLedger(ledgerName)
 	if err != nil {
 		return nil, err
-	}
-	if err == nil && ledger == nil {
-		return nil, fmt.Errorf("ledger not found")
+	} else if err == nil && ledger == nil {
+		return nil, types.ErrLedgerNotFound
 	}
 
 	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
@@ -178,11 +180,21 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 // Get returns a transaction with a matching key and cocoon id
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
+	_, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+		CocoonCodeId: params.GetCocoonCodeId(),
+		Name:         params.GetLedger(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	ledgerName := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
 	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
 	tx, err := od.chain.Get(ledgerName, key)
 	if err != nil {
 		return nil, err
+	} else if tx == nil && err == nil {
+		return nil, types.ErrTxNotFound
 	}
 
 	txJSON, _ := util.ToJSON(tx)

@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"time"
 
+	"os"
+
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
@@ -24,26 +26,26 @@ const LedgerTableName = "ledgers"
 // transactions are stored.
 const TransactionTableName = "transactions"
 
-// PostgresLedgerChain defines a ledgerchain implementation
-// on the postgres database. It implements the LedgerChain interface
-type PostgresLedgerChain struct {
+// PostgresTxChain defines a txchain implementation
+// on the postgres database. It implements the TxChain interface
+type PostgresTxChain struct {
 	db *gorm.DB
 }
 
 // GetBackend returns the database backend this chain
 // implementation depends on.
-func (ch *PostgresLedgerChain) GetBackend() string {
+func (ch *PostgresTxChain) GetBackend() string {
 	return "postgres"
 }
 
 // Connect connects to a postgress server and returns a client
 // or error if connection failed.
-func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
+func (ch *PostgresTxChain) Connect(dbAddr string) (interface{}, error) {
 
 	var err error
 	ch.db, err = gorm.Open("postgres", dbAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to ledgerchain backend")
+		return nil, fmt.Errorf("failed to connect to txchain backend")
 	}
 
 	ch.db.LogMode(false)
@@ -52,12 +54,12 @@ func (ch *PostgresLedgerChain) Connect(dbAddr string) (interface{}, error) {
 }
 
 // MakeLegderHash takes a ledger and computes a hash
-func (ch *PostgresLedgerChain) MakeLegderHash(ledger *txchain.Ledger) string {
+func (ch *PostgresTxChain) MakeLegderHash(ledger *txchain.Ledger) string {
 	return util.Sha256(fmt.Sprintf("%s|%t|%d|%s", ledger.Name, ledger.Public, ledger.CreatedAt, ledger.PrevLedgerHash))
 }
 
 // MakeTxHash creates a hash of a transaction
-func (ch *PostgresLedgerChain) MakeTxHash(tx *txchain.Transaction) string {
+func (ch *PostgresTxChain) MakeTxHash(tx *txchain.Transaction) string {
 	return util.Sha256(fmt.Sprintf(
 		"%s|%s|%s|%s|%d",
 		tx.ID,
@@ -69,7 +71,7 @@ func (ch *PostgresLedgerChain) MakeTxHash(tx *txchain.Transaction) string {
 
 // Init initializes the blockchain. Creates the necessary tables such as the
 // the table holding records of all ledgers and global ledger entry
-func (ch *PostgresLedgerChain) Init(globalLedgerName string) error {
+func (ch *PostgresTxChain) Init(globalLedgerName string) error {
 
 	// create ledger table if not existing
 	if !ch.db.HasTable(LedgerTableName) {
@@ -101,6 +103,22 @@ func (ch *PostgresLedgerChain) Init(globalLedgerName string) error {
 	return nil
 }
 
+// Destroy removes the database structure of the chain.
+// Will only work in a test environment
+func Destroy(dbAddr string) error {
+
+	if os.Getenv("APP_ENV") != "test" {
+		return fmt.Errorf("Cowardly refusing to do it! Can only call Destroy() in test environment")
+	}
+
+	db, err := gorm.Open("postgres", dbAddr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to txchain backend")
+	}
+
+	return db.DropTable(txchain.Ledger{}, txchain.Transaction{}).Error
+}
+
 // isUniqueConstraintError checks whether an error is a postgres
 // contraint error affecting a column.
 func isUniqueConstraintError(err error, column string) bool {
@@ -111,7 +129,7 @@ func isUniqueConstraintError(err error, column string) bool {
 }
 
 // CreateLedger creates a new ledger.
-func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*txchain.Ledger, error) {
+func (ch *PostgresTxChain) CreateLedger(name string, public bool) (*txchain.Ledger, error) {
 
 	tx := ch.db.Begin()
 
@@ -165,7 +183,7 @@ func (ch *PostgresLedgerChain) CreateLedger(name string, public bool) (*txchain.
 }
 
 // GetLedger fetches a ledger meta information
-func (ch *PostgresLedgerChain) GetLedger(name string) (*txchain.Ledger, error) {
+func (ch *PostgresTxChain) GetLedger(name string) (*txchain.Ledger, error) {
 
 	var l txchain.Ledger
 
@@ -181,7 +199,7 @@ func (ch *PostgresLedgerChain) GetLedger(name string) (*txchain.Ledger, error) {
 
 // Put creates a new transaction associated to a ledger.
 // Returns error if ledger does not exists or nil of successful.
-func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*txchain.Transaction, error) {
+func (ch *PostgresTxChain) Put(txID, ledger, key, value string) (*txchain.Transaction, error) {
 
 	tx := ch.db.Begin()
 
@@ -227,7 +245,7 @@ func (ch *PostgresLedgerChain) Put(txID, ledger, key, value string) (*txchain.Tr
 }
 
 // GetByID fetches a transaction by its transaction id
-func (ch *PostgresLedgerChain) GetByID(txID string) (*txchain.Transaction, error) {
+func (ch *PostgresTxChain) GetByID(txID string) (*txchain.Transaction, error) {
 	var tx txchain.Transaction
 
 	err := ch.db.Where("id = ?", txID).First(&tx).Error
@@ -241,7 +259,7 @@ func (ch *PostgresLedgerChain) GetByID(txID string) (*txchain.Transaction, error
 }
 
 // Get fetches a transaction by its ledger and key
-func (ch *PostgresLedgerChain) Get(ledger, key string) (*txchain.Transaction, error) {
+func (ch *PostgresTxChain) Get(ledger, key string) (*txchain.Transaction, error) {
 	var tx txchain.Transaction
 
 	err := ch.db.Where("key = ? AND ledger = ?", key, ledger).Last(&tx).Error
@@ -257,7 +275,7 @@ func (ch *PostgresLedgerChain) Get(ledger, key string) (*txchain.Transaction, er
 // MakeLedgerName creates a ledger name for use for creating or querying a ledger.
 // Accepts a namespace value and the ledger name.
 // If name provided is same as the GlobalLedgerName, then no namespace is required.
-func (ch *PostgresLedgerChain) MakeLedgerName(namespace, name string) string {
+func (ch *PostgresTxChain) MakeLedgerName(namespace, name string) string {
 	if name == txchain.GetGlobalLedgerName() {
 		namespace = ""
 	}
@@ -266,12 +284,12 @@ func (ch *PostgresLedgerChain) MakeLedgerName(namespace, name string) string {
 
 // MakeTxKey creates a transaction key name for use for creating or querying a transaction.
 // Accepts a namespace value and the key name.
-func (ch *PostgresLedgerChain) MakeTxKey(namespace, name string) string {
+func (ch *PostgresTxChain) MakeTxKey(namespace, name string) string {
 	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
 }
 
 // Close releases any resource held
-func (ch *PostgresLedgerChain) Close() error {
+func (ch *PostgresTxChain) Close() error {
 	if ch.db != nil {
 		return ch.db.Close()
 	}

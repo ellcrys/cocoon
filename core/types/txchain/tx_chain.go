@@ -1,11 +1,10 @@
 package txchain
 
-
-// LedgerChain defines an interface required for the implementation
+// TxChain defines an interface required for the implementation
 // of a linked ledger data structure. A ledger chain is a continous,
 // crytographically linked set of ledger with each ledger holding unlimited
 // number of cryptographically linked transactions.
-type LedgerChain interface {
+type TxChain interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(globalLedgerName string) error
 	GetBackend() string

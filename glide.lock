@@ -1,5 +1,5 @@
 hash: 9c367b758e20732f54a07eeeb003cf9bf6e0d0417b638cd0a6cc37734664b5c2
-updated: 2017-03-10T21:58:38.113470104+01:00
+updated: 2017-03-11T09:39:50.695012839+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -52,7 +52,7 @@ imports:
 - name: github.com/ellcrys/crypto
   version: 0a4b0be14cff5c4fae8174303e203d25425b5016
 - name: github.com/ellcrys/util
-  version: b3935ad648a96ebf17ed79490429fdf42a1277c7
+  version: d9e8acdabb878df9e9bb4ce880d9e9ec5a194f26
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/franela/goreq
