@@ -1,20 +1,21 @@
 package orderer
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"os"
 
 	"github.com/ellcrys/util"
+	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
-	context "golang.org/x/net/context"
 )
 
-var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon_dev sslmode=disable password=")
+var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon-dev sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
@@ -25,6 +26,7 @@ func startOrderer(startCB func(*Orderer, chan bool)) {
 	addr := util.Env("ORDERER_ADDR", "127.0.0.1:7001")
 	newOrderer := NewOrderer()
 	newOrderer.SetStore(new(impl.PostgresStore))
+	newOrderer.SetBlockchain(new((blkch_impl.PostgresBlockchain)))
 	go newOrderer.Start(addr, storeConStr, endCh)
 	time.Sleep(3 * time.Second)
 	startCB(newOrderer, endCh)
@@ -39,7 +41,6 @@ func TestOrderer(t *testing.T) {
 
 	err := dropStoreDB()
 	if err != nil {
-		t.Log("failed to drop chain")
 		t.Fail()
 	}
 
@@ -150,12 +151,10 @@ func TestOrderer(t *testing.T) {
 							Key:          key,
 							Value:        []byte("value"),
 						})
-
-						t.Log(tx == nil, err)
+						So(tx, ShouldNotBeNil)
 						So(err, ShouldBeNil)
 
 						Convey("Should return error if ledger does not exist", func() {
-							t.Log(time.Now().Unix())
 							tx, err := od.Get(context.Background(), &proto.GetParams{
 								CocoonCodeId: "cocoon-abc",
 								Ledger:       "unknown",
@@ -166,7 +165,6 @@ func TestOrderer(t *testing.T) {
 						})
 
 						Convey("Should return transaction error if key does not exist in ledger", func() {
-							t.Log(time.Now().Unix())
 							tx, err := od.Get(context.Background(), &proto.GetParams{
 								CocoonCodeId: "cocoon-abc",
 								Ledger:       ledgerName,
@@ -177,7 +175,6 @@ func TestOrderer(t *testing.T) {
 						})
 
 						Convey("Should successfully get a transaction", func() {
-							t.Log(time.Now().Unix())
 							tx, err := od.Get(context.Background(), &proto.GetParams{
 								CocoonCodeId: "cocoon-abc",
 								Ledger:       ledgerName,

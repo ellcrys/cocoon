@@ -58,7 +58,7 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // and inclusion module
 type Orderer struct {
 	server     *grpc.Server
-	chain      store.Store
+	store      store.Store
 	blockchain blockchain.Blockchain
 	endedCh    chan bool
 }
@@ -83,7 +83,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
 		// establish connection to store backend
-		_, err := od.chain.Connect(storeConStr)
+		_, err := od.store.Connect(storeConStr)
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -91,19 +91,33 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		}
 
 		// initialize store
-		err = od.chain.Init(od.chain.MakeLedgerName("", store.GetGlobalLedgerName()))
+		if od.store == nil {
+			log.Error("Store implementation not set")
+			od.Stop(1)
+			return
+		}
+
+		err = od.store.Init(od.store.MakeLedgerName("", store.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
 			return
 		}
 
-		// establish connection to blockchain backend
-		_, err = od.blockchain.Connect(storeConStr)
-		if err != nil {
-			log.Info(err)
+		if od.blockchain == nil {
+			log.Error("Blockchain implementation not set")
 			od.Stop(1)
 			return
+		}
+
+		// establish connection to blockchain backend
+		if od.blockchain != nil {
+			_, err = od.blockchain.Connect(storeConStr)
+			if err != nil {
+				log.Info(err)
+				od.Stop(1)
+				return
+			}
 		}
 
 		// initialize the blockchain
@@ -125,7 +139,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 // Stop stops the orderer and returns an exit code.
 func (od *Orderer) Stop(exitCode int) int {
 	od.server.Stop()
-	od.chain.Close()
+	od.store.Close()
 	close(od.endedCh)
 	return exitCode
 }
@@ -133,7 +147,7 @@ func (od *Orderer) Stop(exitCode int) int {
 // SetStore sets the store implementation to use.
 func (od *Orderer) SetStore(ch store.Store) {
 	log.Infof("Setting store implementation named %s", ch.GetImplmentationName())
-	od.chain = ch
+	od.store = ch
 }
 
 // SetBlockchain sets the blockchain implementation
@@ -145,8 +159,8 @@ func (od *Orderer) SetBlockchain(b blockchain.Blockchain) {
 // CreateLedger creates a new ledger
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
-	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
-	ledger, err := od.chain.CreateLedger(name, params.GetPublic())
+	name := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
+	ledger, err := od.store.CreateLedger(name, params.GetPublic())
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +175,8 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 // GetLedger returns a ledger
 func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
 
-	name := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
-	ledger, err := od.chain.GetLedger(name)
+	name := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
+	ledger, err := od.store.GetLedger(name)
 	if err != nil {
 		return nil, err
 	} else if ledger == nil && err == nil {
@@ -180,16 +194,16 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
 
 	// check if ledger exists
-	ledgerName := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
-	ledger, err := od.chain.GetLedger(ledgerName)
+	ledgerName := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
+	ledger, err := od.store.GetLedger(ledgerName)
 	if err != nil {
 		return nil, err
 	} else if err == nil && ledger == nil {
 		return nil, types.ErrLedgerNotFound
 	}
 
-	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
-	tx, err := od.chain.Put(params.GetId(), ledgerName, key, string(params.GetValue()))
+	key := od.store.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
+	tx, err := od.store.Put(params.GetId(), ledgerName, key, string(params.GetValue()))
 	if err != nil {
 		return nil, err
 	}
@@ -212,9 +226,9 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		return nil, err
 	}
 
-	ledgerName := od.chain.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
-	key := od.chain.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
-	tx, err := od.chain.Get(ledgerName, key)
+	ledgerName := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
+	key := od.store.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
+	tx, err := od.store.Get(ledgerName, key)
 	if err != nil {
 		return nil, err
 	} else if tx == nil && err == nil {
