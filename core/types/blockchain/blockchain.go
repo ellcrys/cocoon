@@ -13,4 +13,5 @@ type Blockchain interface {
 	GetImplmentationName() string
 	MakeChainName(namespace, name string) string
 	CreateBlock(chainName string, transactions []*store.Transaction) (*Block, error)
+	// GetBlock()
 }

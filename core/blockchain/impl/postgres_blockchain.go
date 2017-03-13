@@ -195,6 +195,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 
 	txToJSONBytes, _ := util.ToJSON(transactions)
 	newBlock := &blockchain.Block{
+		ID:            util.Sha256(util.UUID4()),
 		Number:        curBlockCount + 1,
 		ChainName:     chainName,
 		PrevBlockHash: lastBlock.Hash,
@@ -208,7 +209,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 		return nil, fmt.Errorf("failed to create block. %s", err)
 	}
 
-	if lastBlock.ID != 0 {
+	if lastBlock.PK != 0 {
 		lastBlock.HasRightSibling = true
 		if err = dbTx.Save(&lastBlock).Error; err != nil {
 			dbTx.Rollback()

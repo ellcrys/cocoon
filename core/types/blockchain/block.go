@@ -2,7 +2,8 @@ package blockchain
 
 // Block represents a table of chains
 type Block struct {
-	ID              uint   `gorm:"primary_key"`
+	PK              uint   `json:"-" gorm:"primary_key"`
+	ID              string `json:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
 	Number          uint   `json:"number" sql:"DEFAULT:0"`
 	ChainName       string `json:"chainName"`
 	PrevBlockHash   string `json:"prevBlockHash" gorm:"type:varchar(64);unique_index:idx_name_prev_hash"`
