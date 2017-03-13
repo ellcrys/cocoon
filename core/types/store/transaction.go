@@ -1,5 +1,12 @@
 package store
 
+import (
+	"fmt"
+
+	"github.com/ellcrys/crypto"
+	"github.com/ellcrys/util"
+)
+
 // Transaction reprents a group of transactions belonging to a ledger.
 // All transaction entries must reference the hash of the immediate transaction
 // sharing the same ledger name.
@@ -11,4 +18,14 @@ type Transaction struct {
 	Value     string `json:"value" gorm:"type:text"`
 	Hash      string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	CreatedAt int64  `json:"createdAt"`
+}
+
+// MakeHash creates a hash of a transaction
+func (t *Transaction) MakeHash() string {
+	return util.Sha256(fmt.Sprintf(
+		"%s %s %s %d",
+		t.ID,
+		crypto.ToBase64([]byte(t.Key)),
+		crypto.ToBase64([]byte(t.Value)),
+		t.CreatedAt))
 }

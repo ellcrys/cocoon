@@ -7,7 +7,6 @@ import (
 
 	"os"
 
-	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
@@ -55,16 +54,6 @@ func (ch *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 // MakeLegderHash takes a ledger and computes a hash
 func (ch *PostgresStore) MakeLegderHash(ledger *store.Ledger) string {
 	return util.Sha256(fmt.Sprintf("%s|%t|%d", ledger.Name, ledger.Public, ledger.CreatedAt))
-}
-
-// MakeTxHash creates a hash of a transaction
-func (ch *PostgresStore) MakeTxHash(tx *store.Transaction) string {
-	return util.Sha256(fmt.Sprintf(
-		"%s|%s|%s|%d",
-		tx.ID,
-		crypto.ToBase64([]byte(tx.Key)),
-		crypto.ToBase64([]byte(tx.Value)),
-		tx.CreatedAt))
 }
 
 // Init initializes the store. Creates the necessary tables such as the
@@ -184,7 +173,7 @@ func (ch *PostgresStore) Put(txID, ledger, key, value string) (*store.Transactio
 		CreatedAt: time.Now().Unix(),
 	}
 
-	newTx.Hash = ch.MakeTxHash(newTx)
+	newTx.Hash = newTx.MakeHash()
 
 	if err := tx.Create(newTx).Error; err != nil {
 		tx.Rollback()

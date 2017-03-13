@@ -13,3 +13,9 @@ var ErrLedgerNotFound = fmt.Errorf("ledger not found")
 
 // ErrTxNotFound indicates a missing transaction
 var ErrTxNotFound = fmt.Errorf("transaction not found")
+
+// ErrChainNotFound indicates a missing chain
+var ErrChainNotFound = fmt.Errorf("chain not found")
+
+// ErrZeroTransactions indicates a transaction list has zeto transactions
+var ErrZeroTransactions = fmt.Errorf("zero transactions not allowed")
