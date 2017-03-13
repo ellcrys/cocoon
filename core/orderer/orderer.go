@@ -13,6 +13,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/ncodes/cocoon/core/types/blockchain"
 	"github.com/ncodes/cocoon/core/types/store"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
@@ -56,9 +57,10 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // Orderer defines a transaction ordering, block creation
 // and inclusion module
 type Orderer struct {
-	server  *grpc.Server
-	chain   store.Store
-	endedCh chan bool
+	server     *grpc.Server
+	chain      store.Store
+	blockchain blockchain.Blockchain
+	endedCh    chan bool
 }
 
 // NewOrderer creates a new Orderer object
@@ -80,7 +82,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
-		// establish connection to chain backend
+		// establish connection to store backend
 		_, err := od.chain.Connect(storeConStr)
 		if err != nil {
 			log.Info(err)
@@ -90,6 +92,22 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 		// initialize store
 		err = od.chain.Init(od.chain.MakeLedgerName("", store.GetGlobalLedgerName()))
+		if err != nil {
+			log.Info(err)
+			od.Stop(1)
+			return
+		}
+
+		// establish connection to blockchain backend
+		_, err = od.blockchain.Connect(storeConStr)
+		if err != nil {
+			log.Info(err)
+			od.Stop(1)
+			return
+		}
+
+		// initialize the blockchain
+		err = od.blockchain.Init(od.blockchain.MakeChainName("", blockchain.GetGlobalChainName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -114,8 +132,14 @@ func (od *Orderer) Stop(exitCode int) int {
 
 // SetStore sets the store implementation to use.
 func (od *Orderer) SetStore(ch store.Store) {
-	log.Infof("Setting store backend to %s", ch.GetBackend())
+	log.Infof("Setting store implementation named %s", ch.GetImplmentationName())
 	od.chain = ch
+}
+
+// SetBlockchain sets the blockchain implementation
+func (od *Orderer) SetBlockchain(b blockchain.Blockchain) {
+	log.Infof("Setting blockchain implementation named %s", b.GetImplmentationName())
+	od.blockchain = b
 }
 
 // CreateLedger creates a new ledger

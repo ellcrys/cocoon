@@ -3,7 +3,6 @@ package impl
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"time"
 
 	"os"
@@ -12,6 +11,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types/store"
 )
 
@@ -32,10 +32,9 @@ type PostgresStore struct {
 	db *gorm.DB
 }
 
-// GetBackend returns the database backend this chain
-// implementation depends on.
-func (ch *PostgresStore) GetBackend() string {
-	return "postgres"
+// GetImplmentationName returns the name of this store implementation
+func (ch *PostgresStore) GetImplmentationName() string {
+	return "postgres.store"
 }
 
 // Connect connects to a postgress server and returns a client
@@ -68,7 +67,7 @@ func (ch *PostgresStore) MakeTxHash(tx *store.Transaction) string {
 		tx.CreatedAt))
 }
 
-// Init initializes the blockchain. Creates the necessary tables such as the
+// Init initializes the store. Creates the necessary tables such as the
 // the table holding records of all ledgers and global ledger entry
 func (ch *PostgresStore) Init(globalLedgerName string) error {
 
@@ -118,15 +117,6 @@ func Destroy(dbAddr string) error {
 	return db.DropTable(store.Ledger{}, store.Transaction{}).Error
 }
 
-// isUniqueConstraintError checks whether an error is a postgres
-// contraint error affecting a column.
-func isUniqueConstraintError(err error, column string) bool {
-	if m, _ := regexp.Match(`^.*unique constraint "idx_name_`+column+`"$`, []byte(err.Error())); m {
-		return true
-	}
-	return false
-}
-
 // CreateLedger creates a new ledger.
 func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, error) {
 
@@ -147,9 +137,9 @@ func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, 
 
 	if err := tx.Create(newLedger).Error; err != nil {
 		tx.Rollback()
-		if isUniqueConstraintError(err, "name") {
+		if common.IsUniqueConstraintError(err, "name") {
 			return nil, fmt.Errorf("ledger with matching name already exists")
-		} else if isUniqueConstraintError(err, "hash") {
+		} else if common.IsUniqueConstraintError(err, "hash") {
 			return nil, fmt.Errorf("hash is being used by another ledger")
 		}
 		return nil, err

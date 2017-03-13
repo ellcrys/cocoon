@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/ellcrys/util"
+	b_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/orderer"
 	"github.com/ncodes/cocoon/core/store/impl"
 	logging "github.com/op/go-logging"
@@ -23,6 +24,7 @@ var ordererCmd = &cobra.Command{
 		endedCh := make(chan bool)
 		newOrderer := orderer.NewOrderer()
 		newOrderer.SetStore(new(impl.PostgresStore))
+		newOrderer.SetBlockchain(new(b_impl.PostgresBlockchain))
 		go newOrderer.Start(addr, storeConStr, endedCh)
 
 		<-endedCh

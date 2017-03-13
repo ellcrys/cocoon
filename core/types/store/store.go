@@ -5,7 +5,7 @@ package store
 type Store interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(globalLedgerName string) error
-	GetBackend() string
+	GetImplmentationName() string
 	CreateLedger(name string, public bool) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
 	Put(txID, ledger, key, value string) (*Transaction, error)
