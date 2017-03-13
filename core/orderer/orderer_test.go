@@ -152,40 +152,40 @@ func TestOrderer(t *testing.T) {
 						})
 
 						t.Log(tx == nil, err)
-						// So(err, ShouldBeNil)
+						So(err, ShouldBeNil)
 
-						// Convey("Should return error if ledger does not exist", func() {
-						// 	t.Log(time.Now().Unix())
-						// 	tx, err := od.Get(context.Background(), &proto.GetParams{
-						// 		CocoonCodeId: "cocoon-abc",
-						// 		Ledger:       "unknown",
-						// 		Key:          "wrong",
-						// 	})
-						// 	So(tx, ShouldBeNil)
-						// 	So(err, ShouldResemble, types.ErrLedgerNotFound)
-						// })
+						Convey("Should return error if ledger does not exist", func() {
+							t.Log(time.Now().Unix())
+							tx, err := od.Get(context.Background(), &proto.GetParams{
+								CocoonCodeId: "cocoon-abc",
+								Ledger:       "unknown",
+								Key:          "wrong",
+							})
+							So(tx, ShouldBeNil)
+							So(err, ShouldResemble, types.ErrLedgerNotFound)
+						})
 
-						// Convey("Should return transaction error if key does not exist in ledger", func() {
-						// 	t.Log(time.Now().Unix())
-						// 	tx, err := od.Get(context.Background(), &proto.GetParams{
-						// 		CocoonCodeId: "cocoon-abc",
-						// 		Ledger:       ledgerName,
-						// 		Key:          "wrong",
-						// 	})
-						// 	So(tx, ShouldBeNil)
-						// 	So(err, ShouldResemble, types.ErrTxNotFound)
-						// })
+						Convey("Should return transaction error if key does not exist in ledger", func() {
+							t.Log(time.Now().Unix())
+							tx, err := od.Get(context.Background(), &proto.GetParams{
+								CocoonCodeId: "cocoon-abc",
+								Ledger:       ledgerName,
+								Key:          "wrong",
+							})
+							So(tx, ShouldBeNil)
+							So(err, ShouldResemble, types.ErrTxNotFound)
+						})
 
-						// Convey("Should successfully get a transaction", func() {
-						// 	t.Log(time.Now().Unix())
-						// 	tx, err := od.Get(context.Background(), &proto.GetParams{
-						// 		CocoonCodeId: "cocoon-abc",
-						// 		Ledger:       ledgerName,
-						// 		Key:          key,
-						// 	})
-						// 	So(tx, ShouldNotBeNil)
-						// 	So(err, ShouldBeNil)
-						// })
+						Convey("Should successfully get a transaction", func() {
+							t.Log(time.Now().Unix())
+							tx, err := od.Get(context.Background(), &proto.GetParams{
+								CocoonCodeId: "cocoon-abc",
+								Ledger:       ledgerName,
+								Key:          key,
+							})
+							So(tx, ShouldNotBeNil)
+							So(err, ShouldBeNil)
+						})
 					})
 				})
 			})
