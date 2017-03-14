@@ -220,3 +220,17 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	dbTx.Commit()
 	return newBlock, nil
 }
+
+// GetBlock fetches a block by its id
+func (b *PostgresBlockchain) GetBlock(id string) (*blockchain.Block, error) {
+
+	var block blockchain.Block
+	err := b.db.Where("id = ?", id).First(&block).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to get block. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &block, nil
+}

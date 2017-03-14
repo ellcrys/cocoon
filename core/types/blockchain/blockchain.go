@@ -8,10 +8,10 @@ import (
 type Blockchain interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(name string) error
-	CreateChain(name string, public bool) (*Chain, error)
-	GetChain(name string) (*Chain, error)
 	GetImplmentationName() string
 	MakeChainName(namespace, name string) string
+	CreateChain(name string, public bool) (*Chain, error)
+	GetChain(name string) (*Chain, error)
 	CreateBlock(chainName string, transactions []*store.Transaction) (*Block, error)
-	// GetBlock()
+	GetBlock(id string) (*Block, error)
 }

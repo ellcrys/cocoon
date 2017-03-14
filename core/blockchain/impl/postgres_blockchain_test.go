@@ -263,6 +263,36 @@ func TestPosgresBlockchain(t *testing.T) {
 				})
 			})
 
+			Convey(".GetBlock", func() {
+
+				chain, err := pgChain.CreateChain("chain1", true)
+				So(err, ShouldBeNil)
+				So(chain.Name, ShouldEqual, "chain1")
+				So(chain.Public, ShouldEqual, true)
+
+				Convey("Should return error nil and nil if block does not exists", func() {
+					block, err := pgChain.GetBlock("unknown_id")
+					So(block, ShouldBeNil)
+					So(err, ShouldBeNil)
+				})
+
+				Convey("Should successfully return an existing block", func() {
+
+					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1.Hash = tx1.MakeHash()
+					txs := []*store.Transaction{tx1}
+					blk, err := pgChain.CreateBlock("chain1", txs)
+					So(blk, ShouldNotBeNil)
+					So(err, ShouldBeNil)
+
+					block, err := pgChain.GetBlock(blk.ID)
+					So(err, ShouldBeNil)
+					So(block, ShouldNotBeNil)
+					So(block.ID, ShouldEqual, blk.ID)
+					So(block.Hash, ShouldEqual, blk.Hash)
+				})
+			})
+
 			Reset(func() {
 				RestDB()
 			})
