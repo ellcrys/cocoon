@@ -81,7 +81,7 @@ func (ch *PostgresStore) Init(globalLedgerName string) error {
 	}
 
 	if c == 0 {
-		_, err := ch.CreateLedger(globalLedgerName, true)
+		_, err := ch.CreateLedger(globalLedgerName, true, true)
 		if err != nil {
 			return err
 		}
@@ -106,8 +106,10 @@ func Destroy(dbAddr string) error {
 	return db.DropTable(store.Ledger{}, store.Transaction{}).Error
 }
 
-// CreateLedger creates a new ledger.
-func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, error) {
+// CreateLedgerThen creates a new ledger and accepts an additional operation (via the thenFunc) to be
+// executed before the ledger creation transaction is committed. If the thenFunc returns an error, the
+// transaction is rolled back and error returned
+func (ch *PostgresStore) CreateLedgerThen(name string, chained, public bool, thenFunc func() error) (*store.Ledger, error) {
 
 	tx := ch.db.Begin()
 
@@ -119,6 +121,7 @@ func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, 
 	newLedger := &store.Ledger{
 		Name:      name,
 		Public:    public,
+		Chained:   chained,
 		CreatedAt: time.Now().Unix(),
 	}
 
@@ -134,9 +137,23 @@ func (ch *PostgresStore) CreateLedger(name string, public bool) (*store.Ledger, 
 		return nil, err
 	}
 
+	// run the companion functions and Rollback
+	// the transaction if error was returned
+	if thenFunc != nil {
+		if err = thenFunc(); err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
 	tx.Commit()
 
 	return newLedger, nil
+}
+
+// CreateLedger creates a new ledger.
+func (ch *PostgresStore) CreateLedger(name string, chained, public bool) (*store.Ledger, error) {
+	return ch.CreateLedgerThen(name, chained, public, nil)
 }
 
 // GetLedger fetches a ledger meta information

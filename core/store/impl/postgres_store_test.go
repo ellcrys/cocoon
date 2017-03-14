@@ -3,6 +3,8 @@ package impl
 import (
 	"testing"
 
+	"fmt"
+
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
@@ -108,19 +110,52 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("should successfully create a ledger entry", func() {
 
-				ledger, err := pgStore.CreateLedger(ledgerName, true)
+				ledger, err := pgStore.CreateLedger(ledgerName, true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
+				So(ledger.Chained, ShouldEqual, true)
+				So(ledger.Public, ShouldEqual, true)
 
-				ledger, err = pgStore.CreateLedger(util.RandString(10), true)
+				ledger, err = pgStore.CreateLedger(util.RandString(10), true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
 				Convey("should return error since a ledger with same name already exists", func() {
-					_, err := pgStore.CreateLedger(ledgerName, false)
+					_, err := pgStore.CreateLedger(ledgerName, false, false)
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, `ledger with matching name already exists`)
 				})
+			})
+
+			Reset(func() {
+				RestDB()
+			})
+		})
+
+		Convey(".CreateLedgerThen", func() {
+
+			var ledgerName = util.RandString(10)
+			err := pgStore.Init(store.GetGlobalLedgerName())
+			So(err, ShouldBeNil)
+
+			Convey("should fail to create a ledger if thenFunction returns an error", func() {
+				var ErrFromThenFunc = fmt.Errorf("thenFunc error")
+				ledger, err := pgStore.CreateLedgerThen(ledgerName, true, true, func() error {
+					return ErrFromThenFunc
+				})
+				So(err, ShouldNotBeNil)
+				So(err, ShouldResemble, ErrFromThenFunc)
+				So(ledger, ShouldBeNil)
+			})
+
+			Convey("should successfully create a ledger if then function does not return error", func() {
+				ledger, err := pgStore.CreateLedgerThen(ledgerName, true, true, func() error {
+					return nil
+				})
+				So(err, ShouldBeNil)
+				So(ledger, ShouldNotBeNil)
+				So(ledger.Chained, ShouldEqual, true)
+				So(ledger.Public, ShouldEqual, true)
 			})
 
 			Reset(func() {
@@ -139,9 +174,9 @@ func TestPosgresStore(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("should return expected transaction", func() {
+			Convey("should return existing ledger", func() {
 				name := util.RandString(10)
-				ledger, err := pgStore.CreateLedger(name, true)
+				ledger, err := pgStore.CreateLedger(name, true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
@@ -155,18 +190,6 @@ func TestPosgresStore(t *testing.T) {
 				RestDB()
 			})
 		})
-
-		// Convey(".MakeHash", func() {
-		// 	Convey("should return expected transaction hash", func() {
-		// 		hash := MakeHash(&store.Transaction{
-		// 			ID:        util.Sha256("tx_id"),
-		// 			Key:       "balance",
-		// 			Value:     "30.50",
-		// 			CreatedAt: 12345678,
-		// 		})
-		// 		So(hash, ShouldEqual, "6d0318d08d26bd08bb0f90c2d86f9d6ffeebbc3a0767f1544cc76748d52670f5")
-		// 	})
-		// })
 
 		Convey(".Put", func() {
 
