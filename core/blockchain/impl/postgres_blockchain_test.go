@@ -291,6 +291,10 @@ func TestPosgresBlockchain(t *testing.T) {
 					So(block.ID, ShouldEqual, blk.ID)
 					So(block.Hash, ShouldEqual, blk.Hash)
 				})
+
+				Reset(func() {
+					RestDB()
+				})
 			})
 
 			Reset(func() {
