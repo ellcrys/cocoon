@@ -197,9 +197,12 @@ func TestPosgresStore(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("expects new transaction to be the first and only transaction", func() {
-				txID := util.Sha256("tx_id")
 				ledger := util.Sha256("ledger_name")
-				_, err := pgStore.Put(txID, ledger, "key", "value")
+				_, err := pgStore.CreateLedger(ledger, true, true)
+				So(err, ShouldBeNil)
+
+				tx := &store.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
+				err = pgStore.Put(ledger, []*store.Transaction{tx})
 				So(err, ShouldBeNil)
 
 				var allTx []store.Transaction
@@ -209,12 +212,48 @@ func TestPosgresStore(t *testing.T) {
 
 				Convey("expects the only transaction to have expected fields set", func() {
 					So(allTx[0].Hash, ShouldNotEqual, "")
-					So(allTx[0].ID, ShouldEqual, txID)
+					So(allTx[0].ID, ShouldEqual, tx.ID)
 					So(allTx[0].Ledger, ShouldEqual, ledger)
 					So(allTx[0].Key, ShouldEqual, "key")
 					So(allTx[0].Value, ShouldEqual, "value")
 				})
 
+			})
+
+			Reset(func() {
+				RestDB()
+			})
+		})
+
+		Convey(".PutThen", func() {
+
+			err := pgStore.Init(store.GetGlobalLedgerName())
+			So(err, ShouldBeNil)
+
+			ledger := util.Sha256("ledger_name")
+			_, err = pgStore.CreateLedger(ledger, true, true)
+			So(err, ShouldBeNil)
+
+			Convey("Should fail if thenFunc returns error", func() {
+				var ErrThenFunc = fmt.Errorf("thenFunc error")
+				tx := &store.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
+				err = pgStore.PutThen(ledger, []*store.Transaction{tx}, func() error {
+					return ErrThenFunc
+				})
+				So(err, ShouldResemble, ErrThenFunc)
+			})
+
+			Convey("Should successfully add transaction if thenFunc does not return error", func() {
+				tx := &store.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
+				err = pgStore.PutThen(ledger, []*store.Transaction{tx}, func() error {
+					return nil
+				})
+				So(err, ShouldBeNil)
+
+				var allTx []store.Transaction
+				err = db.(*gorm.DB).Find(&allTx).Error
+				So(err, ShouldBeNil)
+				So(len(allTx), ShouldEqual, 1)
 			})
 
 			Reset(func() {
@@ -234,17 +273,22 @@ func TestPosgresStore(t *testing.T) {
 			})
 
 			Convey("should return an expected transaction", func() {
-				key := util.UUID4()
 				txID := util.Sha256(util.UUID4())
-				tx, err := pgStore.Put(txID, util.Sha256(util.RandString(5)), key, "value")
-				So(tx, ShouldNotBeNil)
+				tx := &store.Transaction{ID: txID, Key: "key", Value: "value"}
+
+				ledger := util.Sha256(util.RandString(5))
+				_, err := pgStore.CreateLedger(ledger, true, true)
 				So(err, ShouldBeNil)
 
-				tx, err = pgStore.GetByID(txID)
+				err = pgStore.Put(ledger, []*store.Transaction{tx})
 				So(err, ShouldBeNil)
-				So(tx, ShouldNotBeNil)
-				So(tx.Key, ShouldEqual, key)
-				So(tx.Value, ShouldEqual, "value")
+
+				tx2, err := pgStore.GetByID(txID)
+				So(err, ShouldBeNil)
+				So(tx2, ShouldNotBeNil)
+				So(tx2.Key, ShouldEqual, tx.Key)
+				So(tx2.Value, ShouldEqual, tx.Value)
+				So(tx2.Hash, ShouldNotBeEmpty)
 			})
 
 			Reset(func() {
@@ -265,9 +309,13 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("should return expected transaction", func() {
 				key := util.UUID4()
-				txID := util.Sha256(util.UUID4())
+
 				ledger := util.Sha256(util.RandString(5))
-				tx, err := pgStore.Put(txID, ledger, key, "value")
+				_, err = pgStore.CreateLedger(ledger, true, true)
+				So(err, ShouldBeNil)
+
+				tx := &store.Transaction{ID: util.Sha256(util.UUID4()), Key: key, Value: "value"}
+				err := pgStore.Put(ledger, []*store.Transaction{tx})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 

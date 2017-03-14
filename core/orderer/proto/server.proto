@@ -4,7 +4,7 @@ package proto;
 service Orderer {
     rpc CreateLedger(CreateLedgerParams) returns (Ledger);
     rpc GetLedger(GetLedgerParams) returns (Ledger);
-    rpc Put(PutTransactionParams) returns (Transaction);
+    rpc Put(PutTransactionParams) returns (PutResult);
     rpc Get(GetParams) returns (Transaction);
 }
 
@@ -12,14 +12,13 @@ message CreateLedgerParams {
     string cocoonCodeId = 1;
     string name = 2;
     bool public = 3;
+    bool chained = 4;
 }
 
 message PutTransactionParams {
-    string Id = 1;
-    string cocoonCodeId = 2;
-    string ledgerName = 3;
-    string key = 4;
-    bytes value = 5;    
+    string cocoonCodeId = 1;
+    string ledgerName = 2;
+    repeated Transaction transactions = 3;
 }
 
 message GetLedgerParams {
@@ -40,7 +39,8 @@ message Ledger {
     string nextLedgerHash = 4;
     string name = 5;
     bool public = 6;
-    int64 createdAt = 7;
+    bool chained = 7;
+    int64 createdAt = 8;
 }
 
 message Transaction {
@@ -50,7 +50,20 @@ message Transaction {
     string key = 4;
     string value = 5;
     string hash = 6;
-    string prevTxHash = 7;
-    string nextTxHash = 8;
     int64 createdAt = 9;
+}
+
+message PutResult {
+    int32 added = 1;
+    Block block = 2;
+}
+
+message Block  {
+    string id = 1;
+    int64 number = 2;
+    string chainName = 3;
+    string prevBlockHash = 4;
+    string hash = 5;
+    bytes transactions = 6;
+    int64 createdAt = 7; 
 }

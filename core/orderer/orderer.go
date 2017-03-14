@@ -160,10 +160,22 @@ func (od *Orderer) SetBlockchain(b blockchain.Blockchain) {
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
 	name := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetName())
-	ledger, err := od.store.CreateLedger(name, params.GetPublic())
+
+	var createChainFunc func() error
+	if params.Chained {
+		createChainFunc = func() error {
+			_, err := od.blockchain.CreateChain(name, params.Public)
+			return err
+		}
+	}
+
+	ledger, err := od.store.CreateLedgerThen(name, params.GetChained(), params.GetPublic(), createChainFunc)
 	if err != nil {
 		return nil, err
 	}
+
+	// replace hashed name to user readable name
+	ledger.Name = params.GetName()
 
 	ledgerJSON, _ := util.ToJSON(ledger)
 	var protoLedger proto.Ledger
@@ -183,6 +195,9 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 		return nil, types.ErrLedgerNotFound
 	}
 
+	// replace hashed name to user readable name
+	ledger.Name = params.GetName()
+
 	ledgerJSON, _ := util.ToJSON(ledger)
 	var protoLedger proto.Ledger
 	util.FromJSON(ledgerJSON, &protoLedger)
@@ -191,7 +206,7 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 }
 
 // Put creates a new transaction
-func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.Transaction, error) {
+func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.PutResult, error) {
 
 	// check if ledger exists
 	ledgerName := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
@@ -202,17 +217,41 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		return nil, types.ErrLedgerNotFound
 	}
 
-	key := od.store.MakeTxKey(params.GetCocoonCodeId(), params.GetKey())
-	tx, err := od.store.Put(params.GetId(), ledgerName, key, string(params.GetValue()))
+	for _, tx := range params.GetTransactions() {
+		tx.Key = od.store.MakeTxKey(params.GetCocoonCodeId(), tx.Key)
+	}
+
+	// convert []proto.Transaction to []store.Transaction
+	txsAsJSON, _ := util.ToJSON(params.GetTransactions())
+	var transactions []*store.Transaction
+	util.FromJSON(txsAsJSON, &transactions)
+
+	var block = new(proto.Block)
+	var createBlockFunc func() error
+	if ledger.Chained {
+		createBlockFunc = func() error {
+			b, err := od.blockchain.CreateBlock(ledgerName, transactions)
+			if b != nil {
+				block.Id = b.ID
+				block.ChainName = b.ChainName
+				block.Hash = b.Hash
+				block.Number = int64(b.Number)
+				block.PrevBlockHash = b.PrevBlockHash
+				block.CreatedAt = b.CreatedAt
+			}
+			return err
+		}
+	}
+
+	err = od.store.PutThen(ledgerName, transactions, createBlockFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	txJSON, _ := util.ToJSON(tx)
-	var protoTx proto.Transaction
-	util.FromJSON(txJSON, &protoTx)
-
-	return &protoTx, nil
+	return &proto.PutResult{
+		Added: int32(len(transactions)),
+		Block: block,
+	}, nil
 }
 
 // Get returns a transaction with a matching key and cocoon id

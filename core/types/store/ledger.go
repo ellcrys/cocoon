@@ -16,5 +16,6 @@ type Ledger struct {
 	Hash      string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	Name      string `json:"name" gorm:"type:varchar(64);unique_index:idx_name_name"`
 	Public    bool   `json:"public"`
+	Chained   bool   `json:"chained"`
 	CreatedAt int64  `json:"createdAt"`
 }

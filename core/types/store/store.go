@@ -9,7 +9,8 @@ type Store interface {
 	CreateLedger(name string, chained, public bool) (*Ledger, error)
 	CreateLedgerThen(name string, chained, public bool, then func() error) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
-	Put(txID, ledger, key, value string) (*Transaction, error)
+	Put(ledger string, txs []*Transaction) error
+	PutThen(ledger string, txs []*Transaction, then func() error) error
 	Get(ledger, key string) (*Transaction, error)
 	GetByID(txID string) (*Transaction, error)
 	MakeLedgerName(namespace, name string) string
