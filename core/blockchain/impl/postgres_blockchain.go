@@ -175,6 +175,10 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
+	var dummyBlock = blockchain.Block{
+		Hash: strings.Repeat("0", 64),
+	}
+
 	// get last block of chain
 	// I included the `has_right_sibling` check to ensure competing transactions are exit/rollback when
 	// when this field is updated by the first transaction to update it. This is a safeguard for when multiple blocks try to
@@ -184,13 +188,24 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	if err != nil && err != gorm.ErrRecordNotFound {
 		dbTx.Rollback()
 		return nil, fmt.Errorf("failed to get last block of chain `%s`. %s", chainName, err)
-	} else if err != nil && err == gorm.ErrRecordNotFound { // no last block, set initial hash
-		lastBlock.Hash = strings.Repeat("0", 64)
+	} else if err != nil && err == gorm.ErrRecordNotFound { // no last block, use dummy block
+		lastBlock = dummyBlock
 	}
 
 	var curBlockCount uint
 	if err = dbTx.Model(&blockchain.Block{}).Where("chain_name = ?", chainName).Count(&curBlockCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to get chain `%s` block count. %s", chainName, err)
+	}
+
+	// if last lock is not a dummy block, set has right sibling to true.
+	// This will effective cause all other concurrent attempt to attach a block to the last block
+	// to immediately be aborted.
+	if lastBlock.Hash != dummyBlock.Hash {
+		lastBlock.HasRightSibling = true
+		if err = dbTx.Save(&lastBlock).Error; err != nil {
+			dbTx.Rollback()
+			return nil, fmt.Errorf("failed to update previous block right sibling column. %s", err)
+		}
 	}
 
 	txToJSONBytes, _ := util.ToJSON(transactions)
@@ -207,14 +222,6 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	if err = dbTx.Create(&newBlock).Error; err != nil {
 		dbTx.Rollback()
 		return nil, fmt.Errorf("failed to create block. %s", err)
-	}
-
-	if lastBlock.PK != 0 {
-		lastBlock.HasRightSibling = true
-		if err = dbTx.Save(&lastBlock).Error; err != nil {
-			dbTx.Rollback()
-			return nil, fmt.Errorf("failed to update previous block right sibling column. %s", err)
-		}
 	}
 
 	dbTx.Commit()
