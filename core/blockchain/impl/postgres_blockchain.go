@@ -95,7 +95,7 @@ func (b *PostgresBlockchain) CreateChain(name string, public bool) (*blockchain.
 
 	if err := tx.Create(newChain).Error; err != nil {
 		tx.Rollback()
-		if common.IsUniqueConstraintError(err, "name") {
+		if common.IsUniqueConstraintError(err, "chain_name") {
 			return nil, fmt.Errorf("chain with matching name already exists")
 		}
 		return nil, err

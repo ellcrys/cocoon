@@ -22,7 +22,6 @@ func TestPosgresBlockchain(t *testing.T) {
 		var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
 		pgChain := new(PostgresBlockchain)
 		db, err := pgChain.Connect(conStr)
-		fmt.Println(err)
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 
