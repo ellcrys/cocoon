@@ -7,6 +7,10 @@ import (
 
 	"os"
 
+	"os/exec"
+
+	"fmt"
+
 	"github.com/ellcrys/util"
 	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/orderer/proto"
@@ -15,10 +19,25 @@ import (
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
 )
 
-var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon-dev sslmode=disable password=")
+var dbname = "test_db_" + util.RandString(5)
+var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbname+" sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+}
+
+func createDb(t *testing.T) error {
+	if err := exec.Command("createdb", dbname).Start(); err != nil {
+		return fmt.Errorf("failed to create test db")
+	}
+	return nil
+}
+
+func dropDB(t *testing.T) error {
+	if err := exec.Command("dropdb", dbname).Start(); err != nil {
+		return fmt.Errorf("failed to drop test db")
+	}
+	return impl.Destroy(storeConStr)
 }
 
 func startOrderer(startCB func(*Orderer, chan bool)) {
@@ -33,15 +52,11 @@ func startOrderer(startCB func(*Orderer, chan bool)) {
 	<-endCh
 }
 
-func dropStoreDB() error {
-	return impl.Destroy(storeConStr)
-}
-
 func TestOrderer(t *testing.T) {
 
-	err := dropStoreDB()
+	err := createDb(t)
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
 
 	startOrderer(func(od *Orderer, endCh chan bool) {
@@ -189,5 +204,9 @@ func TestOrderer(t *testing.T) {
 		})
 
 		close(endCh)
+		err := dropDB(t)
+		if err != nil {
+			t.Fail()
+		}
 	})
 }
