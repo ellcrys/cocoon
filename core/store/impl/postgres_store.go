@@ -11,7 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types/store"
+	"github.com/ncodes/cocoon/core/types"
 )
 
 // ErrChainExist represents an error about an existing chain
@@ -52,31 +52,31 @@ func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 }
 
 // MakeLegderHash takes a ledger and computes a hash
-func (s *PostgresStore) MakeLegderHash(ledger *store.Ledger) string {
+func (s *PostgresStore) MakeLegderHash(ledger *types.Ledger) string {
 	return util.Sha256(fmt.Sprintf("%s|%t|%d", ledger.Name, ledger.Public, ledger.CreatedAt))
 }
 
-// Init initializes the store. Creates the necessary tables such as the
+// Init initializes the types. Creates the necessary tables such as the
 // the table holding records of all ledgers and global ledger entry
 func (s *PostgresStore) Init(globalLedgerName string) error {
 
 	// create ledger table if not existing
 	if !s.db.HasTable(LedgerTableName) {
-		if err := s.db.CreateTable(&store.Ledger{}).Error; err != nil {
+		if err := s.db.CreateTable(&types.Ledger{}).Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", LedgerTableName, err)
 		}
 	}
 
 	// create transaction table if not existing
 	if !s.db.HasTable(TransactionTableName) {
-		if err := s.db.CreateTable(&store.Transaction{}).Error; err != nil {
+		if err := s.db.CreateTable(&types.Transaction{}).Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", TransactionTableName, err)
 		}
 	}
 
 	// Create global ledger if it does not exists
 	var c int
-	if err := s.db.Model(&store.Ledger{}).Count(&c).Error; err != nil {
+	if err := s.db.Model(&types.Ledger{}).Count(&c).Error; err != nil {
 		return fmt.Errorf("failed to check whether global ledger exists in the ledger list table. %s", err)
 	}
 
@@ -103,13 +103,13 @@ func Destroy(dbAddr string) error {
 		return fmt.Errorf("failed to connect to store backend")
 	}
 
-	return db.DropTable(store.Ledger{}, store.Transaction{}).Error
+	return db.DropTable(types.Ledger{}, types.Transaction{}).Error
 }
 
 // CreateLedgerThen creates a new ledger and accepts an additional operation (via the thenFunc) to be
 // executed before the ledger creation transaction is committed. If the thenFunc returns an error, the
 // transaction is rolled back and error returned
-func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, thenFunc func() error) (*store.Ledger, error) {
+func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, thenFunc func() error) (*types.Ledger, error) {
 
 	tx := s.db.Begin()
 
@@ -119,7 +119,7 @@ func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, then
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
-	newLedger := &store.Ledger{
+	newLedger := &types.Ledger{
 		Name:      name,
 		Public:    public,
 		Chained:   chained,
@@ -153,14 +153,14 @@ func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, then
 }
 
 // CreateLedger creates a new ledger.
-func (s *PostgresStore) CreateLedger(name string, chained, public bool) (*store.Ledger, error) {
+func (s *PostgresStore) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 	return s.CreateLedgerThen(name, chained, public, nil)
 }
 
 // GetLedger fetches a ledger meta information
-func (s *PostgresStore) GetLedger(name string) (*store.Ledger, error) {
+func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 
-	var l store.Ledger
+	var l types.Ledger
 
 	err := s.db.Where("name = ?", name).Last(&l).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -177,7 +177,7 @@ func (s *PostgresStore) GetLedger(name string) (*store.Ledger, error) {
 // all transactions were successful added. It accepts an additional operation (via the thenFunc) to be
 // executed before the transactions are committed. If the thenFunc returns an error, the
 // transaction is rolled back and error is returned
-func (s *PostgresStore) PutThen(ledgerName string, txs []*store.Transaction, thenFunc func() error) error {
+func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func() error) error {
 
 	dbTx := s.db.Begin()
 	err := dbTx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
@@ -211,13 +211,13 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*store.Transaction, the
 // Put creates one or more transactions associated to a ledger.
 // Returns error if ledger does not exists, if any of the transaction failed or nil if
 // all transactions were successful added.
-func (s *PostgresStore) Put(ledgerName string, txs []*store.Transaction) error {
+func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) error {
 	return s.PutThen(ledgerName, txs, nil)
 }
 
 // GetByID fetches a transaction by its transaction id
-func (s *PostgresStore) GetByID(txID string) (*store.Transaction, error) {
-	var tx store.Transaction
+func (s *PostgresStore) GetByID(txID string) (*types.Transaction, error) {
+	var tx types.Transaction
 
 	err := s.db.Where("id = ?", txID).First(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -230,8 +230,8 @@ func (s *PostgresStore) GetByID(txID string) (*store.Transaction, error) {
 }
 
 // Get fetches a transaction by its ledger and key
-func (s *PostgresStore) Get(ledger, key string) (*store.Transaction, error) {
-	var tx store.Transaction
+func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
+	var tx types.Transaction
 
 	err := s.db.Where("key = ? AND ledger = ?", key, ledger).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -247,7 +247,7 @@ func (s *PostgresStore) Get(ledger, key string) (*store.Transaction, error) {
 // Accepts a namespace value and the ledger name.
 // If name provided is same as the GlobalLedgerName, then no namespace is required.
 func (s *PostgresStore) MakeLedgerName(namespace, name string) string {
-	if name == store.GetGlobalLedgerName() {
+	if name == types.GetGlobalLedgerName() {
 		namespace = ""
 	}
 	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))

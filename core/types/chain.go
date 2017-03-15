@@ -1,4 +1,4 @@
-package blockchain
+package types
 
 import "github.com/ellcrys/util"
 

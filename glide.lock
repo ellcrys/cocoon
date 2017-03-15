@@ -1,5 +1,5 @@
-hash: 9c367b758e20732f54a07eeeb003cf9bf6e0d0417b638cd0a6cc37734664b5c2
-updated: 2017-03-11T09:39:50.695012839+01:00
+hash: b51f0320599422e8e826be8ae86b550ee0fc0630d8108c7f3e810a23bd91475d
+updated: 2017-03-15T12:12:51.691024596+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -16,16 +16,16 @@ imports:
 - name: github.com/docker/docker
   version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
   subpackages:
-  - api/types
-  - api/types/blkiodev
-  - api/types/container
-  - api/types/filters
-  - api/types/mount
-  - api/types/network
-  - api/types/registry
-  - api/types/strslice
-  - api/types/swarm
-  - api/types/versions
+  - apitypes.
+  - apitypes./blkiodev
+  - apitypes./container
+  - apitypes./filters
+  - apitypes./mount
+  - apitypes./network
+  - apitypes./registry
+  - apitypes./strslice
+  - apitypes./swarm
+  - apitypes./versions
   - opts
   - pkg/archive
   - pkg/fileutils
@@ -91,7 +91,7 @@ imports:
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/lib/pq
-  version: e4af84aab01e159ca479940dbde304519e8e8811
+  version: 472a0745531a17dbac346e828b4c60e73ddff30c
   subpackages:
   - hstore
   - oid
@@ -129,7 +129,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: 13d49d4606eb801b8f01ae542b4afc4c6ee3d84a
+  version: fee7787d3f811af92276f5ff10107092e95b7a1d
 - name: github.com/PuerkitoBio/purell
   version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
 - name: github.com/PuerkitoBio/urlesc
@@ -137,7 +137,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
-  version: 1deb2db2a6fff8a35532079061b903c3a25eed52
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - name: github.com/smartystreets/goconvey
   version: 3bd662eac601ad6436e64776af2e112069eb2edc
   subpackages:
@@ -151,13 +151,13 @@ imports:
 - name: github.com/spf13/cast
   version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
-  version: 16c014f1a19d865b765b420e74508f80eb831ada
+  version: 7be4beda01ec05d0b93d80b3facd2b6f44080d94
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
-  version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
+  version: 0b5690fd875739811249ca79d24afd8f89f188c6
 - name: github.com/square/go-jose
   version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
   subpackages:
@@ -213,13 +213,15 @@ imports:
   subpackages:
   - bson
   - internal/json
+- name: gopkg.in/oleiade/lane.v1
+  version: 28f7c3f09254f12b51e620fa4db136ba58804762
 - name: gopkg.in/square/go-jose.v1
   version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
 - name: gopkg.in/yaml.v2
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: 7d94d732be268c4904141f8b8604eb2d6d6544a1
+  version: 0cc212b4ef1943b61e894a7d56490575b3216439
   subpackages:
   - js
 - name: github.com/jtolds/gls

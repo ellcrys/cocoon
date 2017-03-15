@@ -1,8 +1,4 @@
-package blockchain
-
-import (
-	"github.com/ncodes/cocoon/core/types/store"
-)
+package types
 
 // Blockchain defines an interface for a blockchain
 type Blockchain interface {
@@ -12,6 +8,6 @@ type Blockchain interface {
 	MakeChainName(namespace, name string) string
 	CreateChain(name string, public bool) (*Chain, error)
 	GetChain(name string) (*Chain, error)
-	CreateBlock(chainName string, transactions []*store.Transaction) (*Block, error)
+	CreateBlock(chainName string, transactions []*Transaction) (*Block, error)
 	GetBlock(id string) (*Block, error)
 }

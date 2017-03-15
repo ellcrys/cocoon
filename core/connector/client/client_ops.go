@@ -1,11 +1,13 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer"
 	order_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
-	"github.com/ncodes/cocoon/core/types/store"
+	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
 
@@ -23,7 +25,8 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 	result, err := odc.CreateLedger(context.Background(), &order_proto.CreateLedgerParams{
 		CocoonCodeId: c.cocoonID,
 		Name:         tx.GetParams()[0],
-		Public:       tx.GetParams()[1] == "true",
+		Chained:      tx.GetParams()[1] == "true",
+		Public:       tx.GetParams()[2] == "true",
 	})
 	if err != nil {
 		return err
@@ -53,7 +56,7 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 	// if name is the global ledger, then a cocoon code id is not required.
 	name := tx.GetParams()[0]
 	cocoonCodeID := c.cocoonID
-	if name == store.GetGlobalLedgerName() {
+	if name == types.GetGlobalLedgerName() {
 		cocoonCodeID = ""
 	}
 
@@ -82,26 +85,30 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 // put adds a new transaction to a ledger
 func (c *Client) put(tx *proto.Tx) error {
 
+	var txs []*order_proto.Transaction
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
 	}
 	defer ordererConn.Close()
 
+	err = util.FromJSON(tx.GetBody(), &txs)
+	if err != nil {
+		return fmt.Errorf("failed to coerce transaction from bytes to order_proto.Transaction")
+	}
+
 	odc := order_proto.NewOrdererClient(ordererConn)
 	result, err := odc.Put(context.Background(), &order_proto.PutTransactionParams{
 		CocoonCodeId: c.cocoonID,
 		LedgerName:   tx.GetParams()[0],
-		Id:           tx.GetParams()[1],
-		Key:          tx.GetParams()[2],
-		Value:        []byte(tx.GetParams()[3]),
+		Transactions: txs,
 	})
 
 	if err != nil {
 		return err
 	}
 
-	body, _ := util.ToJSON(result)
+	body, _ := util.ToJSON(result.Block)
 
 	c.stream.Send(&proto.Tx{
 		Response: true,

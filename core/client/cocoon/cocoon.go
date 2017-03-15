@@ -11,7 +11,7 @@ import (
 	cocoon_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/types/client"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 )
 
@@ -38,7 +38,7 @@ type Ops struct {
 }
 
 // validateCreateCocoon validates a cocoon to be created
-func validateCreateCocoon(c *client.Cocoon) error {
+func validateCreateCocoon(c *types.Cocoon) error {
 
 	if len(c.URL) == 0 {
 		return fmt.Errorf("url is required")
@@ -69,7 +69,7 @@ func validateCreateCocoon(c *client.Cocoon) error {
 }
 
 // Create a new cocoon locally
-func (c *Ops) Create(cocoon *client.Cocoon) error {
+func (c *Ops) Create(cocoon *types.Cocoon) error {
 
 	id := util.UUID4()
 	cocoon.ID = id
@@ -79,7 +79,7 @@ func (c *Ops) Create(cocoon *client.Cocoon) error {
 		return err
 	}
 
-	release := client.Release{
+	release := types.Release{
 		ID:         util.UUID4(),
 		CocoonID:   cocoon.ID,
 		URL:        cocoon.URL,
@@ -148,7 +148,7 @@ func (c *Ops) Create(cocoon *client.Cocoon) error {
 }
 
 // Deploy creates and sends a deploy request to the server
-func (c *Ops) deploy(cocoon *client.Cocoon) error {
+func (c *Ops) deploy(cocoon *types.Cocoon) error {
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -198,7 +198,7 @@ func (c *Ops) Start(id string) error {
 		return fmt.Errorf("%s", resp.Body)
 	}
 
-	var cocoon client.Cocoon
+	var cocoon types.Cocoon
 	err = util.FromJSON(resp.Body, &cocoon)
 
 	if err = c.deploy(&cocoon); err != nil {

@@ -34,3 +34,5 @@ import:
   version: ddabc69b6151945c05fc40e2ae3f2fc9396b77a2
 - package: github.com/dgrijalva/jwt-go
   version: v3.0.0
+- package: gopkg.in/oleiade/lane.v1
+  version: ^1.0.0

@@ -78,7 +78,7 @@ func TestOrderer(t *testing.T) {
 					So(ledger.Name, ShouldEqual, "myledger")
 					So(ledger.Chained, ShouldEqual, true)
 
-					chain, err := od.blockchain.GetChain(od.store.MakeLedgerName("cocoon-123", "myledger"))
+					chain, err := od.types.GetChain(od.types.MakeLedgerName("cocoon-123", "myledger"))
 					So(err, ShouldBeNil)
 					So(chain, ShouldNotBeNil)
 

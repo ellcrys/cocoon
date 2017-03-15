@@ -1,4 +1,4 @@
-package store
+package types
 
 // Store defines an interface required for the implementation
 // of a data structure for creating and reading ledgers and transactions.

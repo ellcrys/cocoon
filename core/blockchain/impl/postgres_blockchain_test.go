@@ -11,8 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types/blockchain"
-	"github.com/ncodes/cocoon/core/types/store"
+	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -49,7 +48,7 @@ func TestPosgresBlockchain(t *testing.T) {
 					chainTableExists := db.(*gorm.DB).HasTable(ChainTableName)
 					So(chainTableExists, ShouldEqual, false)
 
-					err := pgChain.Init(blockchain.GetGlobalChainName())
+					err := pgChain.Init(types.GetGlobalChainName())
 					So(err, ShouldBeNil)
 
 					chainTableExists = db.(*gorm.DB).HasTable(ChainTableName)
@@ -59,11 +58,11 @@ func TestPosgresBlockchain(t *testing.T) {
 					So(chainTableExists, ShouldEqual, true)
 
 					Convey("chain table must include a global chain", func() {
-						var entries []blockchain.Chain
+						var entries []types.Chain
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, blockchain.GetGlobalChainName())
+						So(entries[0].Name, ShouldEqual, types.GetGlobalChainName())
 					})
 
 					Reset(func() {
@@ -74,17 +73,17 @@ func TestPosgresBlockchain(t *testing.T) {
 
 			Convey("when ledger table exists", func() {
 				Convey("should return nil with no effect", func() {
-					err := pgChain.Init(blockchain.GetGlobalChainName())
+					err := pgChain.Init(types.GetGlobalChainName())
 					So(err, ShouldBeNil)
 
 					chainTableExists := db.(*gorm.DB).HasTable(ChainTableName)
 					So(chainTableExists, ShouldEqual, true)
 
-					var chains []blockchain.Chain
+					var chains []types.Chain
 					err = db.(*gorm.DB).Find(&chains).Error
 					So(err, ShouldBeNil)
 					So(len(chains), ShouldEqual, 1)
-					So(chains[0].Name, ShouldEqual, blockchain.GetGlobalChainName())
+					So(chains[0].Name, ShouldEqual, types.GetGlobalChainName())
 				})
 
 				Reset(func() {
@@ -94,8 +93,8 @@ func TestPosgresBlockchain(t *testing.T) {
 		})
 
 		Convey(".MakeChainName", func() {
-			Convey("Should replace namespace with empty string if provided name is equal to blockchain.GetGlobalChainName()", func() {
-				name := blockchain.GetGlobalChainName()
+			Convey("Should replace namespace with empty string if provided name is equal to types.GetGlobalChainName()", func() {
+				name := types.GetGlobalChainName()
 				namespace := ""
 				expected := util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
 				actual := pgChain.MakeChainName("namespace_will_be_ignored", name)
@@ -109,7 +108,7 @@ func TestPosgresBlockchain(t *testing.T) {
 		})
 
 		Convey(".CreateChain", func() {
-			err := pgChain.Init(blockchain.GetGlobalChainName())
+			err := pgChain.Init(types.GetGlobalChainName())
 			So(err, ShouldBeNil)
 
 			Convey("Should successfully create a chain", func() {
@@ -145,10 +144,10 @@ func TestPosgresBlockchain(t *testing.T) {
 			Convey(".MakeTxsHash", func() {
 
 				Convey("Should successfully return expected sha256 hash", func() {
-					txs := []*store.Transaction{
-						&store.Transaction{Hash: util.Sha256("a")},
-						&store.Transaction{Hash: util.Sha256("b")},
-						&store.Transaction{Hash: util.Sha256("c")},
+					txs := []*types.Transaction{
+						&types.Transaction{Hash: util.Sha256("a")},
+						&types.Transaction{Hash: util.Sha256("b")},
+						&types.Transaction{Hash: util.Sha256("c")},
 					}
 					hash := MakeTxsHash(txs)
 					So(len(hash), ShouldEqual, 64)
@@ -159,11 +158,11 @@ func TestPosgresBlockchain(t *testing.T) {
 			Convey(".VerifyTxs", func() {
 
 				Convey("Should successfully verify all transactions to be accurate", func() {
-					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
-					tx2 := &store.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
+					tx2 := &types.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx2.Hash = tx2.MakeHash()
-					txs := []*store.Transaction{
+					txs := []*types.Transaction{
 						tx1,
 						tx2,
 					}
@@ -173,13 +172,13 @@ func TestPosgresBlockchain(t *testing.T) {
 				})
 
 				Convey("Should fail if at least one tx hash is invalid", func() {
-					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
-					tx2 := &store.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
+					tx2 := &types.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx2.Hash = tx2.MakeHash()
-					tx3 := &store.Transaction{Number: 3, Ledger: "ledger3", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
+					tx3 := &types.Transaction{Number: 3, Ledger: "ledger3", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx3.Hash = "very very wrong hash"
-					txs := []*store.Transaction{
+					txs := []*types.Transaction{
 						tx1,
 						tx2,
 						tx3,
@@ -205,28 +204,28 @@ func TestPosgresBlockchain(t *testing.T) {
 				})
 
 				Convey("Should return error if no transaction is provided", func() {
-					blk, err := pgChain.CreateBlock("chain1", []*store.Transaction{})
+					blk, err := pgChain.CreateBlock("chain1", []*types.Transaction{})
 					So(blk, ShouldBeNil)
 					So(err, ShouldEqual, types.ErrZeroTransactions)
 				})
 
 				Convey("Should return error if a transaction hash is invalid", func() {
-					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
-					tx2 := &store.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
+					tx2 := &types.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx2.Hash = "wrong hash"
-					txs := []*store.Transaction{tx1, tx2}
+					txs := []*types.Transaction{tx1, tx2}
 					blk, err := pgChain.CreateBlock("chain1", txs)
 					So(blk, ShouldBeNil)
 					So(err.Error(), ShouldContainSubstring, "has an invalid hash")
 				})
 
 				Convey("Should successfully create the first block with expected block values", func() {
-					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
-					tx2 := &store.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
+					tx2 := &types.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx2.Hash = tx2.MakeHash()
-					txs := []*store.Transaction{tx1, tx2}
+					txs := []*types.Transaction{tx1, tx2}
 
 					blk, err := pgChain.CreateBlock("chain1", txs)
 					So(blk, ShouldNotBeNil)
@@ -240,9 +239,9 @@ func TestPosgresBlockchain(t *testing.T) {
 					So(blk.Transactions, ShouldResemble, txsBytes)
 
 					Convey("Should successfully add another block that references the previous block", func() {
-						tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+						tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 						tx1.Hash = tx1.MakeHash()
-						txs := []*store.Transaction{tx1}
+						txs := []*types.Transaction{tx1}
 
 						blk2, err := pgChain.CreateBlock("chain1", txs)
 						So(blk2, ShouldNotBeNil)
@@ -277,9 +276,9 @@ func TestPosgresBlockchain(t *testing.T) {
 
 				Convey("Should successfully return an existing block", func() {
 
-					tx1 := &store.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
+					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
-					txs := []*store.Transaction{tx1}
+					txs := []*types.Transaction{tx1}
 					blk, err := pgChain.CreateBlock("chain1", txs)
 					So(blk, ShouldNotBeNil)
 					So(err, ShouldBeNil)

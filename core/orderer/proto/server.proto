@@ -51,6 +51,7 @@ message Transaction {
     string value = 5;
     string hash = 6;
     int64 createdAt = 9;
+    Block block = 10;
 }
 
 message PutResult {

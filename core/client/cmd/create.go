@@ -4,7 +4,6 @@ import (
 	"github.com/ncodes/cocoon/core/client/cocoon"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/types/client"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +29,7 @@ var createCmd = &cobra.Command{
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
 		ops := new(cocoon.Ops)
-		err := ops.Create(&client.Cocoon{
+		err := ops.Create(&types.Cocoon{
 			URL:            url,
 			Language:       lang,
 			ReleaseTag:     releaseTag,

@@ -9,8 +9,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types/blockchain"
-	"github.com/ncodes/cocoon/core/types/store"
 )
 
 // ChainTableName is the name of the table holding all chain information
@@ -44,26 +42,26 @@ func (b *PostgresBlockchain) Connect(dbAddr string) (interface{}, error) {
 	return b.db, nil
 }
 
-// Init initializes the blockchain. Creates the necessary tables.
+// Init initializes the types. Creates the necessary tables.
 func (b *PostgresBlockchain) Init(globalChainName string) error {
 
 	// create ledger table if not existing
 	if !b.db.HasTable(ChainTableName) {
-		if err := b.db.CreateTable(&blockchain.Chain{}).Error; err != nil {
+		if err := b.db.CreateTable(&types.Chain{}).Error; err != nil {
 			return fmt.Errorf("failed to create blockchain `%s` table. %s", ChainTableName, err)
 		}
 	}
 
 	// create block table if not existing
 	if !b.db.HasTable(BlockTableName) {
-		if err := b.db.CreateTable(&blockchain.Block{}).Error; err != nil {
+		if err := b.db.CreateTable(&types.Block{}).Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", BlockTableName, err)
 		}
 	}
 
 	// Create global vhain if it does not exists
 	var c int
-	if err := b.db.Model(&blockchain.Chain{}).Count(&c).Error; err != nil {
+	if err := b.db.Model(&types.Chain{}).Count(&c).Error; err != nil {
 		return fmt.Errorf("failed to check whether global blockchain exists in the chain list. %s", err)
 	}
 
@@ -78,7 +76,7 @@ func (b *PostgresBlockchain) Init(globalChainName string) error {
 }
 
 // CreateChain creates a new chain
-func (b *PostgresBlockchain) CreateChain(name string, public bool) (*blockchain.Chain, error) {
+func (b *PostgresBlockchain) CreateChain(name string, public bool) (*types.Chain, error) {
 
 	tx := b.db.Begin()
 
@@ -87,7 +85,7 @@ func (b *PostgresBlockchain) CreateChain(name string, public bool) (*blockchain.
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
-	newChain := &blockchain.Chain{
+	newChain := &types.Chain{
 		Name:      name,
 		Public:    public,
 		CreatedAt: time.Now().Unix(),
@@ -106,9 +104,9 @@ func (b *PostgresBlockchain) CreateChain(name string, public bool) (*blockchain.
 }
 
 // GetChain gets a chain
-func (b *PostgresBlockchain) GetChain(name string) (*blockchain.Chain, error) {
+func (b *PostgresBlockchain) GetChain(name string) (*types.Chain, error) {
 
-	var chain blockchain.Chain
+	var chain types.Chain
 	err := b.db.Where("name = ?", name).Find(&chain).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get chain. %s", err)
@@ -121,7 +119,7 @@ func (b *PostgresBlockchain) GetChain(name string) (*blockchain.Chain, error) {
 
 // MakeChainName returns a new chain name prefixed with a namespace
 func (b *PostgresBlockchain) MakeChainName(namespace, name string) string {
-	if name == blockchain.GetGlobalChainName() {
+	if name == types.GetGlobalChainName() {
 		namespace = ""
 	}
 	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
@@ -129,7 +127,7 @@ func (b *PostgresBlockchain) MakeChainName(namespace, name string) string {
 
 // MakeTxsHash takes a slice of transactions and returns a SHA256
 // hash of the transactions
-func MakeTxsHash(txs []*store.Transaction) string {
+func MakeTxsHash(txs []*types.Transaction) string {
 	var txHashes = make([]string, len(txs))
 	for _, tx := range txs {
 		txHashes = append(txHashes, tx.Hash)
@@ -139,7 +137,7 @@ func MakeTxsHash(txs []*store.Transaction) string {
 
 // VerifyTxs checks whether the hashs of a trnsactions are valid hashs
 /// based on the hash algorithm defined by Transaction.MakeHash.
-func VerifyTxs(txs []*store.Transaction) (*store.Transaction, bool) {
+func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 	for _, tx := range txs {
 		if tx.Hash != tx.MakeHash() {
 			return tx, false
@@ -151,7 +149,7 @@ func VerifyTxs(txs []*store.Transaction) (*store.Transaction, bool) {
 // CreateBlock creates a new block. It creates a chained structure by setting the new block's previous hash
 // value to the has of the last block of the chain specified. The new block's hash is calculated from the hash of
 // all the contained transaction hashes.
-func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store.Transaction) (*blockchain.Block, error) {
+func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*types.Transaction) (*types.Block, error) {
 
 	chain, err := b.GetChain(chainName)
 	if err != nil {
@@ -175,7 +173,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
-	var dummyBlock = blockchain.Block{
+	var dummyBlock = types.Block{
 		Hash: strings.Repeat("0", 64),
 	}
 
@@ -183,7 +181,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	// I included the `has_right_sibling` check to ensure competing transactions are exit/rollback when
 	// when this field is updated by the first transaction to update it. This is a safeguard for when multiple blocks try to
 	// use the last block as their previous block.
-	var lastBlock blockchain.Block
+	var lastBlock types.Block
 	err = dbTx.Where("chain_name = ? AND has_right_sibling = ?", chainName, false).Last(&lastBlock).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		dbTx.Rollback()
@@ -193,7 +191,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	}
 
 	var curBlockCount uint
-	if err = dbTx.Model(&blockchain.Block{}).Where("chain_name = ?", chainName).Count(&curBlockCount).Error; err != nil {
+	if err = dbTx.Model(&types.Block{}).Where("chain_name = ?", chainName).Count(&curBlockCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to get chain `%s` block count. %s", chainName, err)
 	}
 
@@ -209,7 +207,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 	}
 
 	txToJSONBytes, _ := util.ToJSON(transactions)
-	newBlock := &blockchain.Block{
+	newBlock := &types.Block{
 		ID:            util.Sha256(util.UUID4()),
 		Number:        curBlockCount + 1,
 		ChainName:     chainName,
@@ -229,9 +227,9 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*store
 }
 
 // GetBlock fetches a block by its id
-func (b *PostgresBlockchain) GetBlock(id string) (*blockchain.Block, error) {
+func (b *PostgresBlockchain) GetBlock(id string) (*types.Block, error) {
 
-	var block blockchain.Block
+	var block types.Block
 	err := b.db.Where("id = ?", id).First(&block).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get block. %s", err)

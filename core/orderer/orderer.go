@@ -13,8 +13,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types/blockchain"
-	"github.com/ncodes/cocoon/core/types/store"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
@@ -58,8 +56,8 @@ func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
 // and inclusion module
 type Orderer struct {
 	server     *grpc.Server
-	store      store.Store
-	blockchain blockchain.Blockchain
+	store      types.Store
+	blockchain types.Blockchain
 	endedCh    chan bool
 }
 
@@ -97,7 +95,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
-		err = od.store.Init(od.store.MakeLedgerName("", store.GetGlobalLedgerName()))
+		err = od.store.Init(od.store.MakeLedgerName("", types.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -121,7 +119,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		}
 
 		// initialize the blockchain
-		err = od.blockchain.Init(od.blockchain.MakeChainName("", blockchain.GetGlobalChainName()))
+		err = od.blockchain.Init(od.blockchain.MakeChainName("", types.GetGlobalChainName()))
 		if err != nil {
 			log.Info(err)
 			od.Stop(1)
@@ -145,13 +143,13 @@ func (od *Orderer) Stop(exitCode int) int {
 }
 
 // SetStore sets the store implementation to use.
-func (od *Orderer) SetStore(ch store.Store) {
+func (od *Orderer) SetStore(ch types.Store) {
 	log.Infof("Setting store implementation named %s", ch.GetImplmentationName())
 	od.store = ch
 }
 
 // SetBlockchain sets the blockchain implementation
-func (od *Orderer) SetBlockchain(b blockchain.Blockchain) {
+func (od *Orderer) SetBlockchain(b types.Blockchain) {
 	log.Infof("Setting blockchain implementation named %s", b.GetImplmentationName())
 	od.blockchain = b
 }
@@ -221,14 +219,15 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		tx.Key = od.store.MakeTxKey(params.GetCocoonCodeId(), tx.Key)
 	}
 
-	// convert []proto.Transaction to []store.Transaction
+	// convert []proto.Transaction to []types.Transaction
 	txsAsJSON, _ := util.ToJSON(params.GetTransactions())
-	var transactions []*store.Transaction
+	var transactions []*types.Transaction
 	util.FromJSON(txsAsJSON, &transactions)
 
-	var block = new(proto.Block)
+	var block *proto.Block
 	var createBlockFunc func() error
 	if ledger.Chained {
+		block = &proto.Block{}
 		createBlockFunc = func() error {
 			b, err := od.blockchain.CreateBlock(ledgerName, transactions)
 			if b != nil {

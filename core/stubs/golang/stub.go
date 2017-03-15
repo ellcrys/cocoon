@@ -2,9 +2,9 @@ package golang
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,16 +12,11 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/stubs/golang/config"
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
-	"github.com/ncodes/cocoon/core/types/store"
+	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
 	cmap "github.com/orcaman/concurrent-map"
 	"google.golang.org/grpc"
 )
-
-var serverPort = util.Env("COCOON_CODE_PORT", "8000")
-var defaultServer *stubServer
-var log *logging.Logger
-var serverDone chan bool
 
 const (
 	// TxCreateLedger represents a message to create a ledger
@@ -37,8 +32,21 @@ const (
 	TxGet = "GET"
 )
 
-// The default ledger is the global ledger.
 var (
+
+	// serverPort to bind to
+	serverPort = util.Env("COCOON_CODE_PORT", "8000")
+
+	// stub logger
+	log *logging.Logger
+
+	// default running server
+	defaultServer *stubServer
+
+	// stop channel to stop the server/cocoon code
+	serverDone chan bool
+
+	// The default ledger is the global ledger.
 	defaultLedger = GetGlobalLedgerName()
 
 	// txChannels holds the channels to send transaction responses to
@@ -47,9 +55,6 @@ var (
 	// ErrOperationTimeout represents a timeout error that occurs when response
 	// is not received from orderer in time.
 	ErrOperationTimeout = fmt.Errorf("operation timed out")
-
-	// ErrNotFound represents an error about a resource not found
-	ErrNotFound = fmt.Errorf("not found")
 
 	// ErrAlreadyExist represents an error about an already existing resource
 	ErrAlreadyExist = fmt.Errorf("already exists")
@@ -61,9 +66,23 @@ var (
 	// Flag to help tell whether cocoon code is running
 	running = false
 
+	// Number of transactions per block
+	txPerBlock = util.Env("TX_PER_BLOCK", "100")
+
+	// Time between block creation (seconds)
+	blockCreationInterval = util.Env("BLOCK_CREATION_INT", "5")
+
+	// blockMaker creates a collection of blockchain transactions at interval
+	blockMaker *BlockMaker
+
 	// The cocoon code currently running
 	ccode CocoonCode
 )
+
+// GetLogger returns the stubs logger.
+func GetLogger() *logging.Logger {
+	return log
+}
 
 func init() {
 	defaultServer = new(stubServer)
@@ -71,105 +90,9 @@ func init() {
 	log = logging.MustGetLogger("ccode.stub")
 }
 
-// StubServer defines the services of the stub's GRPC connection
-type stubServer struct {
-	port   int
-	stream proto.Stub_TransactServer
-}
-
 // GetGlobalLedgerName returns the name of the global ledger
 func GetGlobalLedgerName() string {
-	return store.GetGlobalLedgerName()
-}
-
-// Transact listens and process invoke and response transactions from
-// the connector.
-func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
-	s.stream = stream
-	for {
-
-		in, err := stream.Recv()
-		if err == io.EOF {
-			return fmt.Errorf("connection with cocoon code has ended")
-		}
-		if err != nil {
-			return fmt.Errorf("failed to read message from connector. %s", err)
-		}
-
-		switch in.Invoke {
-		case true:
-			go func() {
-				log.Debugf("New invoke transaction (%s) from connector", in.GetId())
-				if err = s.handleInvokeTransaction(in); err != nil {
-					log.Error(err.Error())
-					stream.Send(&proto.Tx{
-						Response: true,
-						Id:       in.GetId(),
-						Status:   500,
-						Body:     []byte(err.Error()),
-					})
-				}
-			}()
-		case false:
-			log.Debugf("New response transaction (%s) from connector", in.GetId())
-			go func() {
-				if err = s.handleRespTransaction(in); err != nil {
-					log.Error(err.Error())
-					stream.Send(&proto.Tx{
-						Response: true,
-						Id:       in.GetId(),
-						Status:   500,
-						Body:     []byte(err.Error()),
-					})
-				}
-			}()
-		}
-	}
-}
-
-// handleInvokeTransaction processes invoke transaction requests
-func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
-	switch tx.GetName() {
-	case "function":
-		if !running {
-			return fmt.Errorf("cocoon code is not running. Did you call the Run() method?")
-		}
-
-		functionName := tx.GetParams()[0]
-		result, err := ccode.Invoke(tx.GetId(), functionName, tx.GetParams()[1:])
-		if err != nil {
-			return err
-		}
-
-		// coerce result to json
-		resultJSON, err := util.ToJSON(result)
-		if err != nil {
-			return fmt.Errorf("failed to coerce cocoon code Invoke() result to json string. %s", err)
-		}
-
-		return s.stream.Send(&proto.Tx{
-			Id:       tx.GetId(),
-			Response: true,
-			Status:   200,
-			Body:     resultJSON,
-		})
-
-	default:
-		return fmt.Errorf("Unsupported invoke transaction (%s)", tx.GetName())
-	}
-}
-
-// handleRespTransaction passes the transaction to a response
-// channel with a matching transaction id and deletes the channel afterwards.
-func (s *stubServer) handleRespTransaction(tx *proto.Tx) error {
-	if !txRespChannels.Has(tx.GetId()) {
-		return fmt.Errorf("response transaction (%s) does not have a corresponding response channel", tx.GetId())
-	}
-
-	txRespCh, _ := txRespChannels.Get(tx.GetId())
-	txRespCh.(chan *proto.Tx) <- tx
-	txRespChannels.Remove(tx.GetId())
-	return nil
+	return types.GetGlobalLedgerName()
 }
 
 // Run starts the stub server, takes a cocoon code and attempts to initialize it..
@@ -192,6 +115,11 @@ func Run(cc CocoonCode) {
 	proto.RegisterStubServer(server, defaultServer)
 	go server.Serve(lis)
 
+	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
+	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
+	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
+	go blockMaker.Begin(blockCommitter)
+
 	if err = cc.Init(); err != nil {
 		log.Errorf("cocoode Init() returned error: %s", err)
 		Stop(1)
@@ -205,9 +133,48 @@ func Run(cc CocoonCode) {
 	os.Exit(0)
 }
 
-// GetLogger returns the stubs logger.
-func GetLogger() *logging.Logger {
-	return log
+// blockCommit creates a PUT operation which adds one or many
+// transactions to the store and blockchain and returns the block if
+// if succeed or error if otherwise.
+func blockCommitter(entries []*Entry) interface{} {
+
+	txs := make([]*types.Transaction, len(entries))
+	for i, e := range entries {
+		txs[i] = e.Tx
+	}
+
+	ledgerName := entries[0].Tx.Ledger
+	txsJSON, _ := util.ToJSON(txs)
+
+	var respCh = make(chan *proto.Tx)
+
+	txID := util.UUID4()
+	err := sendTx(&proto.Tx{
+		Id:     txID,
+		Invoke: true,
+		Name:   TxPut,
+		Params: []string{ledgerName},
+		Body:   txsJSON,
+	}, respCh)
+	if err != nil {
+		return fmt.Errorf("failed to put block transaction. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return err
+	}
+
+	if resp.Status != 200 {
+		return fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+	}
+
+	var block types.Block
+	if err = util.FromJSON(resp.Body, &block); err != nil {
+		return fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &block
 }
 
 // sendTx sends a transaction to the cocoon code
@@ -269,11 +236,16 @@ func GetDefaultLedgerName() string {
 
 // CreateLedger creates a new ledger by sending an
 // invoke transaction (TxCreateLedger) to the connector.
-// The final name of the ledger is a sha256 hash of
-// the cocoon code id and the name (e.g SHA256(ccode_id.name))
-func CreateLedger(name string, public bool) (*store.Ledger, error) {
+// If chained is set to true, a blockchain is created and subsequent
+// PUT operations to the ledger will be included in the types. Otherwise,
+// PUT operations will only be incuded in the types.
+func CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
-	// TODO: prevent use of ledger name with punctuations (execept an underscore)
+	if name == GetDefaultLedgerName() {
+		return nil, fmt.Errorf("cannot use the same name as the default ledger")
+	} else if !common.IsValidResName(name) {
+		return nil, fmt.Errorf("invalid ledger name")
+	}
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -286,7 +258,7 @@ func CreateLedger(name string, public bool) (*store.Ledger, error) {
 		Id:     txID,
 		Invoke: true,
 		Name:   TxCreateLedger,
-		Params: []string{name, fmt.Sprintf("%t", public)},
+		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	}, respCh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ledger. %s", err)
@@ -305,7 +277,7 @@ func CreateLedger(name string, public bool) (*store.Ledger, error) {
 		return nil, err
 	}
 
-	var ledger store.Ledger
+	var ledger types.Ledger
 	if err = util.FromJSON(resp.Body, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
@@ -314,7 +286,7 @@ func CreateLedger(name string, public bool) (*store.Ledger, error) {
 }
 
 // GetLedger fetches a ledger
-func GetLedger(ledgerName string) (*store.Ledger, error) {
+func GetLedger(ledgerName string) (*types.Ledger, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -341,34 +313,65 @@ func GetLedger(ledgerName string) (*store.Ledger, error) {
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var ledger store.Ledger
+	var ledger types.Ledger
 	if err = util.FromJSON(resp.Body, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
-	}
-
-	if err == nil && ledger == (store.Ledger{}) {
-		return nil, ErrNotFound
 	}
 
 	return &ledger, nil
 }
 
 // PutIn adds a new transaction to a ledger
-func PutIn(ledgerName string, key string, value []byte) (*store.Transaction, error) {
+func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
 	}
 
-	var respCh = make(chan *proto.Tx)
+	ledger, err := GetLedger(ledgerName)
+	if err != nil {
+		return nil, err
+	}
 
-	txID := util.UUID4()
-	err := sendTx(&proto.Tx{
-		Id:     txID,
+	tx := &types.Transaction{
+		ID:        util.UUID4(),
+		Ledger:    ledger.Name,
+		Key:       key,
+		Value:     string(value),
+		CreatedAt: time.Now().Unix(),
+	}
+	tx.Hash = tx.MakeHash()
+
+	if ledger.Chained {
+		respChan := make(chan interface{})
+		blockMaker.Add(&Entry{
+			Tx:       tx,
+			RespChan: respChan,
+		})
+		result := <-respChan
+
+		switch v := result.(type) {
+		case error:
+			return nil, v
+		case *types.Block:
+			tx.Block = v
+			return tx, err
+		default:
+			return nil, fmt.Errorf("unexpected response %s", err)
+		}
+	}
+
+	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
+
+	var respCh = make(chan *proto.Tx)
+	err = sendTx(&proto.Tx{
+		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   TxPut,
-		Params: []string{ledgerName, txID, key, string(value)},
+		Params: []string{ledgerName},
+		Body:   txJSON,
 	}, respCh)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to put transaction. %s", err)
 	}
@@ -381,21 +384,16 @@ func PutIn(ledgerName string, key string, value []byte) (*store.Transaction, err
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var tx store.Transaction
-	if err = util.FromJSON(resp.Body, &tx); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
-	}
-
-	return &tx, nil
+	return tx, nil
 }
 
 // Put adds a new transaction into the default ledger
-func Put(key string, value []byte) (*store.Transaction, error) {
+func Put(key string, value []byte) (*types.Transaction, error) {
 	return PutIn(GetDefaultLedgerName(), key, value)
 }
 
 // GetFrom returns a transaction by its key and the ledger it belongs to
-func GetFrom(ledgerName, key string) (*store.Transaction, error) {
+func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -422,19 +420,15 @@ func GetFrom(ledgerName, key string) (*store.Transaction, error) {
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
 
-	var tx store.Transaction
+	var tx types.Transaction
 	if err = util.FromJSON(resp.Body, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
-	}
-
-	if err == nil && tx == (store.Transaction{}) {
-		return nil, ErrNotFound
 	}
 
 	return &tx, nil
 }
 
 // Get returns a transaction that belongs to the default legder by its key.
-func Get(key string) (*store.Transaction, error) {
+func Get(key string) (*types.Transaction, error) {
 	return GetFrom(GetDefaultLedgerName(), key)
 }

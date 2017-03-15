@@ -1,4 +1,4 @@
-package client
+package types
 
 // Cocoon represents a smart contract application
 type Cocoon struct {

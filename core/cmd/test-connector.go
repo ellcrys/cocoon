@@ -16,11 +16,11 @@ var testConnectorCmd = &cobra.Command{
 	Long:  `Playground for testing connector during development`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var log = logging.MustGetLogger("connector-test")
-		ordererAddr := ":8002"
-		conn, err := grpc.Dial(ordererAddr, grpc.WithInsecure())
+		connectorAddr := ":8002"
+		conn, err := grpc.Dial(connectorAddr, grpc.WithInsecure())
 		defer conn.Close()
 		if err != nil {
-			log.Fatalf("Failed to connect to connector. Is the connector running on %s", ordererAddr)
+			log.Fatalf("Failed to connect to connector. Is the connector running on %s", connectorAddr)
 		}
 
 		client := proto.NewAPIClient(conn)
