@@ -241,8 +241,8 @@ func GetDefaultLedgerName() string {
 // PUT operations will only be incuded in the types.
 func CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
-	if name == GetDefaultLedgerName() {
-		return nil, fmt.Errorf("cannot use the same name as the default ledger")
+	if name == GetGlobalLedgerName() {
+		return nil, fmt.Errorf("cannot use the same name as the global ledger")
 	} else if !common.IsValidResName(name) {
 		return nil, fmt.Errorf("invalid ledger name")
 	}
