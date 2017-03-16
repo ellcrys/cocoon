@@ -12,7 +12,7 @@ type Store interface {
 	Put(ledger string, txs []*Transaction) error
 	PutThen(ledger string, txs []*Transaction, then func() error) error
 	Get(ledger, key string) (*Transaction, error)
-	GetByID(txID string) (*Transaction, error)
+	GetByID(ledger, txID string) (*Transaction, error)
 	MakeLedgerName(namespace, name string) string
 	MakeTxKey(namespace, name string) string
 	Close() error

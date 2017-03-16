@@ -216,10 +216,10 @@ func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) error {
 }
 
 // GetByID fetches a transaction by its transaction id
-func (s *PostgresStore) GetByID(txID string) (*types.Transaction, error) {
+func (s *PostgresStore) GetByID(ledgerName, txID string) (*types.Transaction, error) {
 	var tx types.Transaction
 
-	err := s.db.Where("id = ?", txID).First(&tx).Error
+	err := s.db.Where("id = ? AND  ledger = ?", txID, ledgerName).First(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to perform find op. %s", err)
 	} else if err == gorm.ErrRecordNotFound {

@@ -279,3 +279,29 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 
 	return &protoTx, nil
 }
+
+// GetByID finds and returns a transaction with a matching ledger name and id
+func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
+
+	_, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+		CocoonCodeId: params.GetCocoonCodeId(),
+		Name:         params.GetLedger(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ledgerName := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
+	tx, err := od.store.GetByID(ledgerName, params.GetId())
+	if err != nil {
+		return nil, err
+	} else if tx == nil && err == nil {
+		return nil, types.ErrTxNotFound
+	}
+
+	txJSON, _ := util.ToJSON(tx)
+	var protoTx proto.Transaction
+	util.FromJSON(txJSON, &protoTx)
+
+	return &protoTx, nil
+}

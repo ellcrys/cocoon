@@ -201,8 +201,9 @@ func TestOrderer(t *testing.T) {
 						So(ledger, ShouldNotBeNil)
 
 						key := util.UUID4()
+						id := util.Sha256(util.UUID4())
 						txs := []*proto.Transaction{
-							{Ledger: ledgerName, Id: util.Sha256(util.UUID4()), Key: key, Value: util.Sha256(util.UUID4())},
+							{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
 						}
 
 						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
@@ -241,6 +242,30 @@ func TestOrderer(t *testing.T) {
 							})
 							So(tx, ShouldNotBeNil)
 							So(err, ShouldBeNil)
+
+							Convey(".GetByID", func() {
+
+								Convey("Should return error if transaction is not found", func() {
+									tx, err := od.GetByID(context.Background(), &proto.GetParams{
+										CocoonCodeId: "cocoon-abc",
+										Ledger:       ledgerName,
+										Id:           "unknown-123",
+									})
+									So(tx, ShouldBeNil)
+									So(err, ShouldEqual, types.ErrTxNotFound)
+								})
+
+								Convey("Should successfully get a transaction by it's id", func() {
+									tx, err := od.GetByID(context.Background(), &proto.GetParams{
+										CocoonCodeId: "cocoon-abc",
+										Ledger:       ledgerName,
+										Id:           id,
+									})
+									So(tx, ShouldNotBeNil)
+									So(err, ShouldBeNil)
+									So(tx.Id, ShouldEqual, id)
+								})
+							})
 						})
 					})
 				})
