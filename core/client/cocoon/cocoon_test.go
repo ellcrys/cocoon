@@ -3,6 +3,7 @@ package cocoon
 import (
 	"testing"
 
+	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

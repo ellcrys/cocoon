@@ -267,7 +267,7 @@ func TestPosgresStore(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgStore.GetByID("unknown_id")
+				tx, err := pgStore.GetByID(types.GetGlobalLedgerName(), "unknown_id")
 				So(tx, ShouldBeNil)
 				So(err, ShouldBeNil)
 			})
@@ -283,7 +283,7 @@ func TestPosgresStore(t *testing.T) {
 				err = pgStore.Put(ledger, []*types.Transaction{tx})
 				So(err, ShouldBeNil)
 
-				tx2, err := pgStore.GetByID(txID)
+				tx2, err := pgStore.GetByID(ledger, txID)
 				So(err, ShouldBeNil)
 				So(tx2, ShouldNotBeNil)
 				So(tx2.Key, ShouldEqual, tx.Key)
