@@ -78,7 +78,7 @@ func TestOrderer(t *testing.T) {
 					So(ledger.Name, ShouldEqual, "myledger")
 					So(ledger.Chained, ShouldEqual, true)
 
-					chain, err := od.types.GetChain(od.types.MakeLedgerName("cocoon-123", "myledger"))
+					chain, err := od.blockchain.GetChain(od.store.MakeLedgerName("cocoon-123", "myledger"))
 					So(err, ShouldBeNil)
 					So(chain, ShouldNotBeNil)
 
@@ -155,7 +155,7 @@ func TestOrderer(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(tx, ShouldNotBeNil)
 						So(tx.Added, ShouldEqual, 2)
-						So(*tx.Block, ShouldResemble, proto.Block{})
+						So(tx.Block, ShouldBeNil)
 					})
 
 					Convey("Should successfully put transactions in a chained ledger and create a block", func() {
