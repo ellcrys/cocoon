@@ -5,8 +5,6 @@ import (
 
 	"fmt"
 
-	"strings"
-
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
@@ -197,13 +195,14 @@ func TestPosgresBlockchain(t *testing.T) {
 				So(chain.Public, ShouldEqual, true)
 
 				Convey("Should return error if chain does not exist", func() {
-					blk, err := pgChain.CreateBlock("unknown", nil)
+					txs := []*types.Transaction{{ID: util.UUID4()}}
+					blk, err := pgChain.CreateBlock(util.RandString(10), "unknown", txs)
 					So(blk, ShouldBeNil)
 					So(err, ShouldEqual, types.ErrChainNotFound)
 				})
 
 				Convey("Should return error if no transaction is provided", func() {
-					blk, err := pgChain.CreateBlock("chain1", []*types.Transaction{})
+					blk, err := pgChain.CreateBlock(util.RandString(10), "chain1", []*types.Transaction{})
 					So(blk, ShouldBeNil)
 					So(err, ShouldEqual, types.ErrZeroTransactions)
 				})
@@ -214,7 +213,7 @@ func TestPosgresBlockchain(t *testing.T) {
 					tx2 := &types.Transaction{Number: 2, Ledger: "ledger2", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123499789}
 					tx2.Hash = "wrong hash"
 					txs := []*types.Transaction{tx1, tx2}
-					blk, err := pgChain.CreateBlock("chain1", txs)
+					blk, err := pgChain.CreateBlock(util.RandString(10), "chain1", txs)
 					So(blk, ShouldBeNil)
 					So(err.Error(), ShouldContainSubstring, "has an invalid hash")
 				})
@@ -226,13 +225,12 @@ func TestPosgresBlockchain(t *testing.T) {
 					tx2.Hash = tx2.MakeHash()
 					txs := []*types.Transaction{tx1, tx2}
 
-					blk, err := pgChain.CreateBlock("chain1", txs)
+					blk, err := pgChain.CreateBlock(util.RandString(10), "chain1", txs)
 					So(blk, ShouldNotBeNil)
 					So(err, ShouldBeNil)
 					So(blk.ChainName, ShouldEqual, "chain1")
 					So(blk.Number, ShouldEqual, 1)
-					So(blk.HasRightSibling, ShouldEqual, false)
-					So(blk.PrevBlockHash, ShouldEqual, strings.Repeat("0", 64))
+					So(blk.PrevBlockHash, ShouldEqual, "78d35f95812750434c1effd6e1882b507d84632ade60848691c0a156e99ab79b")
 					So(blk.Hash, ShouldEqual, MakeTxsHash(txs))
 					txsBytes, _ := util.ToJSON(txs)
 					So(blk.Transactions, ShouldResemble, txsBytes)
@@ -242,12 +240,11 @@ func TestPosgresBlockchain(t *testing.T) {
 						tx1.Hash = tx1.MakeHash()
 						txs := []*types.Transaction{tx1}
 
-						blk2, err := pgChain.CreateBlock("chain1", txs)
+						blk2, err := pgChain.CreateBlock(util.RandString(10), "chain1", txs)
 						So(blk2, ShouldNotBeNil)
 						So(err, ShouldBeNil)
 						So(blk2.ChainName, ShouldEqual, "chain1")
 						So(blk2.Number, ShouldEqual, 2)
-						So(blk2.HasRightSibling, ShouldEqual, false)
 						So(blk2.PrevBlockHash, ShouldEqual, blk.Hash)
 						So(blk2.Hash, ShouldEqual, MakeTxsHash(txs))
 						txsBytes, _ := util.ToJSON(txs)
@@ -278,7 +275,7 @@ func TestPosgresBlockchain(t *testing.T) {
 					tx1 := &types.Transaction{Number: 1, Ledger: "ledger1", ID: "some_id", Key: "key", Value: "value", CreatedAt: 123456789}
 					tx1.Hash = tx1.MakeHash()
 					txs := []*types.Transaction{tx1}
-					blk, err := pgChain.CreateBlock("chain1", txs)
+					blk, err := pgChain.CreateBlock(util.RandString(10), "chain1", txs)
 					So(blk, ShouldNotBeNil)
 					So(err, ShouldBeNil)
 

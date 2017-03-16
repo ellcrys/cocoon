@@ -54,7 +54,8 @@ func (b *PostgresBlockchain) Init(globalChainName string) error {
 
 	// create block table if not existing
 	if !b.db.HasTable(BlockTableName) {
-		if err := b.db.CreateTable(&types.Block{}).Error; err != nil {
+		if err := b.db.CreateTable(&types.Block{}).
+			AddIndex("idx_name_chain_name_id", "chain_name", "id").Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", BlockTableName, err)
 		}
 	}
@@ -147,7 +148,7 @@ func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 }
 
 // CreateBlock creates a new block. It creates a chained structure by setting the new block's previous hash
-// value to the has of the last block of the chain specified. The new block's hash is calculated from the hash of
+// value to the hash of the last block of the chain specified. The new block's hash is calculated from the hash of
 // all the contained transaction hashes.
 func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*types.Transaction) (*types.Block, error) {
 
@@ -177,11 +178,8 @@ func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*t
 	}
 
 	// get last block of chain
-	// I included the `has_right_sibling` check to ensure competing transactions are exit/rollback when
-	// when this field is updated by the first transaction to update it. This is a safeguard for when multiple blocks try to
-	// use the last block as their previous block.
 	var lastBlock types.Block
-	err = dbTx.Where("chain_name = ? AND has_right_sibling = ?", chainName, false).Last(&lastBlock).Error
+	err = dbTx.Where("chain_name = ?", chainName).Last(&lastBlock).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		dbTx.Rollback()
 		return nil, fmt.Errorf("failed to get last block of chain `%s`. %s", chainName, err)
@@ -192,17 +190,6 @@ func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*t
 	var curBlockCount uint
 	if err = dbTx.Model(&types.Block{}).Where("chain_name = ?", chainName).Count(&curBlockCount).Error; err != nil {
 		return nil, fmt.Errorf("failed to get chain `%s` block count. %s", chainName, err)
-	}
-
-	// if last lock is not a dummy block, set has right sibling to true.
-	// This will effective cause all other concurrent attempt to attach a block to the last block
-	// to immediately be aborted.
-	if lastBlock.Hash != dummyBlock.Hash {
-		lastBlock.HasRightSibling = true
-		if err = dbTx.Save(&lastBlock).Error; err != nil {
-			dbTx.Rollback()
-			return nil, fmt.Errorf("failed to update previous block right sibling column. %s", err)
-		}
 	}
 
 	txToJSONBytes, _ := util.ToJSON(transactions)
@@ -229,7 +216,7 @@ func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*t
 func (b *PostgresBlockchain) GetBlock(chainName, id string) (*types.Block, error) {
 
 	var block types.Block
-	err := b.db.Where("id = ? AND chain_name = ?", id, chainName).First(&block).Error
+	err := b.db.Where("chain_name = ? AND id = ?", chainName, id).First(&block).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get block. %s", err)
 	} else if err == gorm.ErrRecordNotFound {

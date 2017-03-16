@@ -69,7 +69,11 @@ func (s *PostgresStore) Init(globalLedgerName string) error {
 
 	// create transaction table if not existing
 	if !s.db.HasTable(TransactionTableName) {
-		if err := s.db.CreateTable(&types.Transaction{}).Error; err != nil {
+		if err := s.db.CreateTable(&types.Transaction{}).
+			AddIndex("idx_name_ledger_key", "ledger", "key").
+			AddIndex("idx_name_ledger_id", "ledger", "id").
+			AddIndex("idx_name_ledger_created_at", "ledger", "created_at").
+			AddIndex("idx_name_ledger_block_id_at", "ledger", "block_id").Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", TransactionTableName, err)
 		}
 	}
@@ -219,7 +223,7 @@ func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) error {
 func (s *PostgresStore) GetByID(ledgerName, txID string) (*types.Transaction, error) {
 	var tx types.Transaction
 
-	err := s.db.Where("id = ? AND  ledger = ?", txID, ledgerName).First(&tx).Error
+	err := s.db.Where("ledger = ? AND  id = ?", ledgerName, txID).First(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to perform find op. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
@@ -233,7 +237,7 @@ func (s *PostgresStore) GetByID(ledgerName, txID string) (*types.Transaction, er
 func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 	var tx types.Transaction
 
-	err := s.db.Where("key = ? AND ledger = ?", key, ledger).Last(&tx).Error
+	err := s.db.Where("ledger = ? AND key = ?", ledger, key).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	} else if err == gorm.ErrRecordNotFound {

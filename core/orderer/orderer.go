@@ -206,6 +206,8 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 // Put creates a new transaction
 func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.PutResult, error) {
 
+	start := time.Now()
+
 	// check if ledger exists
 	ledgerName := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedgerName())
 	ledger, err := od.store.GetLedger(ledgerName)
@@ -249,6 +251,8 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		return nil, err
 	}
 
+	log.Debug("Put(): Time taken: ", time.Since(start))
+
 	return &proto.PutResult{
 		Added: int32(len(transactions)),
 		Block: block,
@@ -258,7 +262,9 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 // Get returns a transaction with a matching key
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
-	_, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	start := time.Now()
+
+	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonCodeId: params.GetCocoonCodeId(),
 		Name:         params.GetLedger(),
 	})
@@ -275,20 +281,24 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		return nil, types.ErrTxNotFound
 	}
 
-	block, err := od.blockchain.GetBlock(ledgerName, tx.BlockID)
-	if err != nil {
-		log.Error(err)
-		return nil, fmt.Errorf("failed to populate block to transaction")
-	} else if block == nil && err == nil {
-		return nil, fmt.Errorf("orphaned transaction")
-	}
+	if ledger.Chained {
+		block, err := od.blockchain.GetBlock(ledgerName, tx.BlockID)
+		if err != nil {
+			log.Error(err)
+			return nil, fmt.Errorf("failed to populate block to transaction")
+		} else if block == nil && err == nil {
+			return nil, fmt.Errorf("orphaned transaction")
+		}
 
-	tx.Block = block
-	tx.BlockID = ""
+		tx.Block = block
+		tx.BlockID = ""
+	}
 
 	txJSON, _ := util.ToJSON(tx)
 	var protoTx proto.Transaction
 	util.FromJSON(txJSON, &protoTx)
+
+	log.Debug("Get(): Time taken: ", time.Since(start))
 
 	return &protoTx, nil
 }
@@ -296,7 +306,7 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 // GetByID finds and returns a transaction with a matching id
 func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
-	_, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonCodeId: params.GetCocoonCodeId(),
 		Name:         params.GetLedger(),
 	})
@@ -312,16 +322,18 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 		return nil, types.ErrTxNotFound
 	}
 
-	block, err := od.blockchain.GetBlock(ledgerName, tx.BlockID)
-	if err != nil {
-		log.Error(err)
-		return nil, fmt.Errorf("failed to populate block to transaction")
-	} else if block == nil && err == nil {
-		return nil, fmt.Errorf("orphaned transaction")
-	}
+	if ledger.Chained {
+		block, err := od.blockchain.GetBlock(ledgerName, tx.BlockID)
+		if err != nil {
+			log.Error(err)
+			return nil, fmt.Errorf("failed to populate block to transaction")
+		} else if block == nil && err == nil {
+			return nil, fmt.Errorf("orphaned transaction")
+		}
 
-	tx.Block = block
-	tx.BlockID = ""
+		tx.Block = block
+		tx.BlockID = ""
+	}
 
 	txJSON, _ := util.ToJSON(tx)
 	var protoTx proto.Transaction

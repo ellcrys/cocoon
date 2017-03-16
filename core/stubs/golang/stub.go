@@ -339,6 +339,8 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 // PutIn adds a new transaction to a ledger
 func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
+	start := time.Now()
+
 	if !isConnected() {
 		return nil, ErrNotConnected
 	}
@@ -364,6 +366,8 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 			RespChan: respChan,
 		})
 		result := <-respChan
+
+		log.Debug("Put(): Time taken: ", time.Since(start))
 
 		switch v := result.(type) {
 		case error:
@@ -398,6 +402,8 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 	if resp.Status != 200 {
 		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
 	}
+
+	log.Debug("Put(): Time taken: ", time.Since(start))
 
 	return tx, nil
 }

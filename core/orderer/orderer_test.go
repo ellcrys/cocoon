@@ -203,6 +203,7 @@ func TestOrderer(t *testing.T) {
 					So(ledger, ShouldNotBeNil)
 
 					key := util.UUID4()
+					fmt.Println("Key: ", key)
 					id := util.Sha256(util.UUID4())
 					txs := []*proto.Transaction{
 						{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
@@ -237,6 +238,7 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should successfully get a transaction", func() {
+						fmt.Println("Key 2: ", key)
 						tx, err := od.Get(context.Background(), &proto.GetParams{
 							CocoonCodeId: "cocoon-abc",
 							Ledger:       ledgerName,
