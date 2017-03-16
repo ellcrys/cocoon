@@ -87,6 +87,11 @@ func GetLogger() *logging.Logger {
 	return log
 }
 
+// SetDebugLevel sets the default logger debug level
+func SetDebugLevel(level logging.Level) {
+	logging.SetLevel(level, log.Module)
+}
+
 func init() {
 	defaultServer = new(stubServer)
 	config.ConfigureLogger()
@@ -123,13 +128,17 @@ func Run(cc CocoonCode) {
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
 
-	if err = cc.Init(); err != nil {
-		log.Errorf("cocoode Init() returned error: %s", err)
-		Stop(1)
-	}
-
-	running = true
 	ccode = cc
+
+	// run Init() after 1 second to give time for connector to connect
+	time.AfterFunc(1*time.Second, func() {
+		if err = cc.Init(); err != nil {
+			log.Errorf("cocoode Init() returned error: %s", err)
+			Stop(1)
+		} else {
+			running = true
+		}
+	})
 
 	<-serverDone
 	log.Info("Cocoon code stopped")

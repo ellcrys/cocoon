@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

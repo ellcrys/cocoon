@@ -20,7 +20,6 @@ type stubServer struct {
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 	s.stream = stream
 	for {
-
 		in, err := stream.Recv()
 		if err == io.EOF {
 			return fmt.Errorf("connection with cocoon code has ended")
@@ -112,7 +111,7 @@ func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
 		return s.stream.Send(resp)
 
 	default:
-		return fmt.Errorf("Unsupported invoke transaction (%s)", tx.GetName())
+		return fmt.Errorf("Unsupported invoke transaction named '%s'", tx.GetName())
 	}
 }
 

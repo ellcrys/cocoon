@@ -1,7 +1,6 @@
 package orderer
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
+	context "golang.org/x/net/context"
 )
 
 var dbname = "test_db_" + util.RandString(5)
