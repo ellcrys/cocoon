@@ -7,6 +7,7 @@ service Orderer {
     rpc Put(PutTransactionParams) returns (PutResult);
     rpc Get(GetParams) returns (Transaction);
     rpc GetByID(GetParams) returns (Transaction);
+    rpc GetBlockByID(GetBlockParams) returns (Block);
 }
 
 message CreateLedgerParams {
@@ -34,6 +35,12 @@ message GetParams {
     string ledger = 4;   
 }
 
+message GetBlockParams {
+    string cocoonCodeId = 1; 
+    string id = 2;
+    string ledger = 4;   
+}
+
 message Ledger {
     int64 number = 1;
     string hash = 2;
@@ -53,7 +60,8 @@ message Transaction {
     string value = 5;
     string hash = 6;
     int64 createdAt = 9;
-    Block block = 10;
+    string blockId = 10;
+    Block block = 11;
 }
 
 message PutResult {

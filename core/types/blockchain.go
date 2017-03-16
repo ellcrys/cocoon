@@ -8,6 +8,6 @@ type Blockchain interface {
 	MakeChainName(namespace, name string) string
 	CreateChain(name string, public bool) (*Chain, error)
 	GetChain(name string) (*Chain, error)
-	CreateBlock(chainName string, transactions []*Transaction) (*Block, error)
-	GetBlock(id string) (*Block, error)
+	CreateBlock(id, chainName string, transactions []*Transaction) (*Block, error)
+	GetBlock(chainName, id string) (*Block, error)
 }

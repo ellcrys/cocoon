@@ -179,6 +179,8 @@ func (c *Client) handleInvokeTransaction(tx *proto.Tx) error {
 		return c.get(tx, false)
 	case stub.TxGetByID:
 		return c.get(tx, true)
+	case stub.TxGetBlockByID:
+		return c.getBlock(tx)
 	default:
 		return c.stream.Send(&proto.Tx{
 			Id:       tx.GetId(),

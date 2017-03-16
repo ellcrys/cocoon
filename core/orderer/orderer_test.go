@@ -159,25 +159,26 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should successfully put transactions in a chained ledger and create a block", func() {
-						ledgerName := util.UUID4()
-						ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+						chainedLedgerName := util.UUID4()
+						chainName := od.blockchain.MakeChainName("cocoon-abc", chainedLedgerName)
+						chainedLedger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
 							CocoonCodeId: "cocoon-abc",
-							Name:         ledgerName,
+							Name:         chainedLedgerName,
 							Public:       true,
 							Chained:      true,
 						})
 						So(err, ShouldBeNil)
-						So(ledger, ShouldNotBeNil)
-						So(ledger.Chained, ShouldEqual, true)
+						So(chainedLedger, ShouldNotBeNil)
+						So(chainedLedger.Chained, ShouldEqual, true)
 
 						txs := []*proto.Transaction{
-							{Ledger: ledgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
-							{Ledger: ledgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
+							{Ledger: chainedLedgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
+							{Ledger: chainedLedgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
 						}
 
 						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
 							CocoonCodeId: "cocoon-abc",
-							LedgerName:   ledgerName,
+							LedgerName:   chainedLedger.Name,
 							Transactions: txs,
 						})
 
@@ -185,89 +186,118 @@ func TestOrderer(t *testing.T) {
 						So(tx, ShouldNotBeNil)
 						So(tx.Added, ShouldEqual, 2)
 						So(tx.Block, ShouldNotBeNil)
-						So(tx.Block.PrevBlockHash, ShouldEqual, strings.Repeat("0", 64))
+						So(tx.Block.PrevBlockHash, ShouldEqual, util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64))))
 						So(tx.Block.Number, ShouldEqual, 1)
 					})
+				})
 
-					Convey(".Get", func() {
+				Convey(".Get", func() {
 
-						ledgerName := util.UUID4()
-						ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+					ledgerName := util.UUID4()
+					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+						CocoonCodeId: "cocoon-abc",
+						Name:         ledgerName,
+						Public:       true,
+					})
+					So(err, ShouldBeNil)
+					So(ledger, ShouldNotBeNil)
+
+					key := util.UUID4()
+					id := util.Sha256(util.UUID4())
+					txs := []*proto.Transaction{
+						{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
+					}
+
+					tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
+						CocoonCodeId: "cocoon-abc",
+						LedgerName:   ledgerName,
+						Transactions: txs,
+					})
+					So(tx, ShouldNotBeNil)
+					So(err, ShouldBeNil)
+
+					Convey("Should return error if ledger does not exist", func() {
+						tx, err := od.Get(context.Background(), &proto.GetParams{
 							CocoonCodeId: "cocoon-abc",
-							Name:         ledgerName,
-							Public:       true,
+							Ledger:       "unknown",
+							Key:          "wrong",
 						})
-						So(err, ShouldBeNil)
-						So(ledger, ShouldNotBeNil)
+						So(tx, ShouldBeNil)
+						So(err, ShouldResemble, types.ErrLedgerNotFound)
+					})
 
-						key := util.UUID4()
-						id := util.Sha256(util.UUID4())
-						txs := []*proto.Transaction{
-							{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
-						}
-
-						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
+					Convey("Should return transaction error if key does not exist in ledger", func() {
+						tx, err := od.Get(context.Background(), &proto.GetParams{
 							CocoonCodeId: "cocoon-abc",
-							LedgerName:   ledgerName,
-							Transactions: txs,
+							Ledger:       ledgerName,
+							Key:          "wrong",
+						})
+						So(tx, ShouldBeNil)
+						So(err, ShouldResemble, types.ErrTxNotFound)
+					})
+
+					Convey("Should successfully get a transaction", func() {
+						tx, err := od.Get(context.Background(), &proto.GetParams{
+							CocoonCodeId: "cocoon-abc",
+							Ledger:       ledgerName,
+							Key:          key,
 						})
 						So(tx, ShouldNotBeNil)
 						So(err, ShouldBeNil)
 
-						Convey("Should return error if ledger does not exist", func() {
-							tx, err := od.Get(context.Background(), &proto.GetParams{
-								CocoonCodeId: "cocoon-abc",
-								Ledger:       "unknown",
-								Key:          "wrong",
-							})
-							So(tx, ShouldBeNil)
-							So(err, ShouldResemble, types.ErrLedgerNotFound)
-						})
+						Convey(".GetByID", func() {
 
-						Convey("Should return transaction error if key does not exist in ledger", func() {
-							tx, err := od.Get(context.Background(), &proto.GetParams{
-								CocoonCodeId: "cocoon-abc",
-								Ledger:       ledgerName,
-								Key:          "wrong",
-							})
-							So(tx, ShouldBeNil)
-							So(err, ShouldResemble, types.ErrTxNotFound)
-						})
-
-						Convey("Should successfully get a transaction", func() {
-							tx, err := od.Get(context.Background(), &proto.GetParams{
-								CocoonCodeId: "cocoon-abc",
-								Ledger:       ledgerName,
-								Key:          key,
-							})
-							So(tx, ShouldNotBeNil)
-							So(err, ShouldBeNil)
-
-							Convey(".GetByID", func() {
-
-								Convey("Should return error if transaction is not found", func() {
-									tx, err := od.GetByID(context.Background(), &proto.GetParams{
-										CocoonCodeId: "cocoon-abc",
-										Ledger:       ledgerName,
-										Id:           "unknown-123",
-									})
-									So(tx, ShouldBeNil)
-									So(err, ShouldEqual, types.ErrTxNotFound)
+							Convey("Should return error if transaction is not found", func() {
+								tx, err := od.GetByID(context.Background(), &proto.GetParams{
+									CocoonCodeId: "cocoon-abc",
+									Ledger:       ledgerName,
+									Id:           "unknown-123",
 								})
+								So(tx, ShouldBeNil)
+								So(err, ShouldEqual, types.ErrTxNotFound)
+							})
 
-								Convey("Should successfully get a transaction by it's id", func() {
-									tx, err := od.GetByID(context.Background(), &proto.GetParams{
-										CocoonCodeId: "cocoon-abc",
-										Ledger:       ledgerName,
-										Id:           id,
-									})
-									So(tx, ShouldNotBeNil)
-									So(err, ShouldBeNil)
-									So(tx.Id, ShouldEqual, id)
+							Convey("Should successfully get a transaction by it's id", func() {
+								tx, err := od.GetByID(context.Background(), &proto.GetParams{
+									CocoonCodeId: "cocoon-abc",
+									Ledger:       ledgerName,
+									Id:           id,
 								})
+								So(tx, ShouldNotBeNil)
+								So(err, ShouldBeNil)
+								So(tx.Id, ShouldEqual, id)
 							})
 						})
 					})
+				})
+
+				Convey(".GetBlockByID", func() {
+					ledgerName := util.UUID4() + "-okay"
+					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+						CocoonCodeId: "cocoon-abc",
+						Name:         ledgerName,
+						Public:       true,
+						Chained:      true,
+					})
+					So(err, ShouldBeNil)
+					So(ledger, ShouldNotBeNil)
+
+					key := util.UUID4()
+					id := util.Sha256(util.UUID4())
+					txs := []*proto.Transaction{
+						{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
+					}
+
+					result, err := od.Put(context.Background(), &proto.PutTransactionParams{
+						CocoonCodeId: "cocoon-abc",
+						LedgerName:   ledgerName,
+						Transactions: txs,
+					})
+
+					So(result, ShouldNotBeNil)
+					So(err, ShouldBeNil)
+					So(result.Block, ShouldNotBeNil)
+					So(result.Added, ShouldEqual, 1)
 				})
 			})
 		})

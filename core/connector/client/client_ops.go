@@ -164,3 +164,35 @@ func (c *Client) get(tx *proto.Tx, byID bool) error {
 
 	return nil
 }
+
+// getBlock gets a block by its ledger name and id
+func (c *Client) getBlock(tx *proto.Tx) error {
+
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	if err != nil {
+		return err
+	}
+	defer ordererConn.Close()
+
+	odc := order_proto.NewOrdererClient(ordererConn)
+	block, err := odc.GetBlockByID(context.Background(), &order_proto.GetBlockParams{
+		CocoonCodeId: c.cocoonID,
+		Ledger:       tx.GetParams()[0],
+		Id:           tx.GetParams()[1],
+	})
+
+	if err != nil {
+		return err
+	}
+
+	body, _ := util.ToJSON(block)
+
+	c.stream.Send(&proto.Tx{
+		Response: true,
+		Status:   200,
+		Id:       tx.GetId(),
+		Body:     body,
+	})
+
+	return nil
+}

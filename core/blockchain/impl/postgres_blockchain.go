@@ -149,7 +149,7 @@ func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 // CreateBlock creates a new block. It creates a chained structure by setting the new block's previous hash
 // value to the has of the last block of the chain specified. The new block's hash is calculated from the hash of
 // all the contained transaction hashes.
-func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*types.Transaction) (*types.Block, error) {
+func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*types.Transaction) (*types.Block, error) {
 
 	chain, err := b.GetChain(chainName)
 	if err != nil {
@@ -172,9 +172,8 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*types
 	if err != nil {
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
-
 	var dummyBlock = types.Block{
-		Hash: strings.Repeat("0", 64),
+		Hash: util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64))),
 	}
 
 	// get last block of chain
@@ -208,7 +207,7 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*types
 
 	txToJSONBytes, _ := util.ToJSON(transactions)
 	newBlock := &types.Block{
-		ID:            util.Sha256(util.UUID4()),
+		ID:            id,
 		Number:        curBlockCount + 1,
 		ChainName:     chainName,
 		PrevBlockHash: lastBlock.Hash,
@@ -226,11 +225,11 @@ func (b *PostgresBlockchain) CreateBlock(chainName string, transactions []*types
 	return newBlock, nil
 }
 
-// GetBlock fetches a block by its id
-func (b *PostgresBlockchain) GetBlock(id string) (*types.Block, error) {
+// GetBlock fetches a block by its chain name and id
+func (b *PostgresBlockchain) GetBlock(chainName, id string) (*types.Block, error) {
 
 	var block types.Block
-	err := b.db.Where("id = ?", id).First(&block).Error
+	err := b.db.Where("id = ? AND chain_name = ?", id, chainName).First(&block).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get block. %s", err)
 	} else if err == gorm.ErrRecordNotFound {

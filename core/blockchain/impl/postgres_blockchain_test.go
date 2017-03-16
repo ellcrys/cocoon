@@ -11,7 +11,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -269,7 +268,7 @@ func TestPosgresBlockchain(t *testing.T) {
 				So(chain.Public, ShouldEqual, true)
 
 				Convey("Should return error nil and nil if block does not exists", func() {
-					block, err := pgChain.GetBlock("unknown_id")
+					block, err := pgChain.GetBlock(chain.Name, "unknown_id")
 					So(block, ShouldBeNil)
 					So(err, ShouldBeNil)
 				})
@@ -283,7 +282,7 @@ func TestPosgresBlockchain(t *testing.T) {
 					So(blk, ShouldNotBeNil)
 					So(err, ShouldBeNil)
 
-					block, err := pgChain.GetBlock(blk.ID)
+					block, err := pgChain.GetBlock(chain.Name, blk.ID)
 					So(err, ShouldBeNil)
 					So(block, ShouldNotBeNil)
 					So(block.ID, ShouldEqual, blk.ID)

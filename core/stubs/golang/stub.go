@@ -33,6 +33,9 @@ const (
 
 	// TxGetByID represents a message to get a transaction by id
 	TxGetByID = "GET_BY_ID"
+
+	// TxGetBlockByID represents a message to get ledger's block by id
+	TxGetBlockByID = "GET_BLOCK_BY_ID"
 )
 
 var (
@@ -480,4 +483,38 @@ func GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 // GetByID returns a transaction that belongs to the default legder by its id.
 func GetByID(id string) (*types.Transaction, error) {
 	return GetByIDFrom(GetDefaultLedgerName(), id)
+}
+
+// GetBlockFrom returns a block belonging to a ledger by its id
+func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
+
+	if !isConnected() {
+		return nil, ErrNotConnected
+	}
+
+	var respCh = make(chan *proto.Tx)
+	err := sendTx(&proto.Tx{
+		Id:     util.UUID4(),
+		Invoke: true,
+		Name:   TxGetBlockByID,
+		Params: []string{ledgerName, id},
+	}, respCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+	}
+
+	var blk types.Block
+	if err = util.FromJSON(resp.Body, &blk); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &blk, nil
 }
