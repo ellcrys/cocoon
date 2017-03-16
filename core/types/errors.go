@@ -3,6 +3,9 @@ package types
 import "fmt"
 import "strings"
 
+// ErrCocoonCodeNotRunning indicates a launched cocoon that isn't running a cocoon code
+var ErrCocoonCodeNotRunning = fmt.Errorf("cocoon code is not running")
+
 // ErrIdentityNotFound indicates a non-existing identity
 var ErrIdentityNotFound = fmt.Errorf("identity not found")
 

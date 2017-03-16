@@ -120,8 +120,12 @@ func (c *Client) put(tx *proto.Tx) error {
 	return nil
 }
 
-// get gets a transaction by its key
-func (c *Client) get(tx *proto.Tx) error {
+// get gets a transaction by its key.
+// If byID is set, it will find the transaction by id specified in tx.Id.
+func (c *Client) get(tx *proto.Tx, byID bool) error {
+
+	var result *order_proto.Transaction
+	var err error
 
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
@@ -130,11 +134,20 @@ func (c *Client) get(tx *proto.Tx) error {
 	defer ordererConn.Close()
 
 	odc := order_proto.NewOrdererClient(ordererConn)
-	result, err := odc.Get(context.Background(), &order_proto.GetParams{
-		CocoonCodeId: c.cocoonID,
-		Ledger:       tx.GetParams()[0],
-		Key:          tx.GetParams()[1],
-	})
+
+	if !byID {
+		result, err = odc.Get(context.Background(), &order_proto.GetParams{
+			CocoonCodeId: c.cocoonID,
+			Ledger:       tx.GetParams()[0],
+			Key:          tx.GetParams()[1],
+		})
+	} else {
+		result, err = odc.GetByID(context.Background(), &order_proto.GetParams{
+			CocoonCodeId: c.cocoonID,
+			Ledger:       tx.GetParams()[0],
+			Id:           tx.GetParams()[1],
+		})
+	}
 
 	if err != nil {
 		return err

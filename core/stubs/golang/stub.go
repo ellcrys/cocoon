@@ -30,6 +30,9 @@ const (
 
 	// TxGet represents a message to get a transaction
 	TxGet = "GET"
+
+	// TxGetByID represents a message to get a transaction by id
+	TxGetByID = "GET_BY_ID"
 )
 
 var (
@@ -400,10 +403,8 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	}
 
 	var respCh = make(chan *proto.Tx)
-
-	txID := util.UUID4()
 	err := sendTx(&proto.Tx{
-		Id:     txID,
+		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   TxGet,
 		Params: []string{ledgerName, key},
@@ -431,4 +432,43 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 // Get returns a transaction that belongs to the default legder by its key.
 func Get(key string) (*types.Transaction, error) {
 	return GetFrom(GetDefaultLedgerName(), key)
+}
+
+// GetByIDFrom returns a transaction by its id and the ledger it belongs to
+func GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
+
+	if !isConnected() {
+		return nil, ErrNotConnected
+	}
+
+	var respCh = make(chan *proto.Tx)
+	err := sendTx(&proto.Tx{
+		Id:     util.UUID4(),
+		Invoke: true,
+		Name:   TxGetByID,
+		Params: []string{ledgerName, id},
+	}, respCh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transaction. %s", err)
+	}
+
+	resp, err := AwaitTxChan(respCh)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status != 200 {
+		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+	}
+
+	var tx types.Transaction
+	if err = util.FromJSON(resp.Body, &tx); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	return &tx, nil
+}
+
+// GetByID returns a transaction that belongs to the default legder by its id.
+func GetByID(id string) (*types.Transaction, error) {
+	return GetByIDFrom(GetDefaultLedgerName(), id)
 }
