@@ -5,6 +5,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/types"
 )
 
 // StripRPCErrorPrefix takes an error return from the RPC client and removes the
@@ -50,4 +53,25 @@ func ReRunOnError(f func() error, times int, delay *time.Duration) error {
 		}
 	}
 	return err
+}
+
+// AwaitTxChanX takes a response channel and waits to receive a response
+// from it. If no error occurs, it returns the response. It
+// returns ErrOperationTimeout if it waited for maxDur and got no response.
+func AwaitTxChanX(ch chan *proto.Tx, maxDur time.Duration) (*proto.Tx, error) {
+	for {
+		select {
+		case r := <-ch:
+			return r, nil
+		case <-time.After(maxDur):
+			return nil, types.ErrOperationTimeout
+		}
+	}
+}
+
+// AwaitTxChan takes a response channel and waits to receive a response
+// from it. If no error occurs, it returns the response. It
+// returns ErrOperationTimeout if it waited 2 minutes and got no response.
+func AwaitTxChan(ch chan *proto.Tx) (*proto.Tx, error) {
+	return AwaitTxChanX(ch, 2*time.Minute)
 }

@@ -38,10 +38,6 @@ var (
 	// txChannels holds the channels to send transaction responses to
 	txRespChannels = cmap.New()
 
-	// ErrOperationTimeout represents a timeout error that occurs when response
-	// is not received from orderer in time.
-	ErrOperationTimeout = fmt.Errorf("operation timed out")
-
 	// ErrAlreadyExist represents an error about an already existing resource
 	ErrAlreadyExist = fmt.Errorf("already exists")
 
@@ -155,7 +151,7 @@ func blockCommitter(entries []*Entry) interface{} {
 		return fmt.Errorf("failed to put block transaction. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return err
 	}
@@ -192,20 +188,6 @@ func Stop(exitCode int) {
 	serverDone <- true
 	log.Info("Cocoon code exiting with exit code %d", exitCode)
 	os.Exit(exitCode)
-}
-
-// AwaitTxChan takes a response channel and waits to receive a response
-// from it. If no error occurs, it returns the response. It
-// returns ErrOperationTimeout if it waited 5 minutes and got no response.
-func AwaitTxChan(ch chan *proto.Tx) (*proto.Tx, error) {
-	for {
-		select {
-		case r := <-ch:
-			return r, nil
-		case <-time.After(5 * time.Minute):
-			return nil, ErrOperationTimeout
-		}
-	}
 }
 
 // isConnected checks if connection with the connector
@@ -259,7 +241,7 @@ func CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 		return nil, fmt.Errorf("failed to create ledger. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +282,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 		return nil, fmt.Errorf("failed to get ledger. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +357,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 		return nil, fmt.Errorf("failed to put transaction. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +393,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +432,7 @@ func GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +471,7 @@ func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	}
 
-	resp, err := AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}

@@ -27,6 +27,10 @@ var ErrZeroTransactions = fmt.Errorf("zero transactions not allowed")
 // ErrBlockNotFound indicates a missing block
 var ErrBlockNotFound = fmt.Errorf("block not found")
 
+// ErrOperationTimeout represents a timeout error that occurs when response
+// is not received from orderer in time.
+var ErrOperationTimeout = fmt.Errorf("operation timed out")
+
 // IsPrevBlockConcurrentAccessError checks whether an error is one created when
 // attempt is made to access a previous block that is currently being updated by a concurrent transaction.
 func IsPrevBlockConcurrentAccessError(err error) bool {

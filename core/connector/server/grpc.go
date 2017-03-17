@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
-	stub "github.com/ncodes/cocoon/core/stubs/golang"
 	stub_proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -77,7 +77,7 @@ func (api *APIServer) Invoke(ctx context.Context, req *proto.InvokeRequest) (*pr
 		return nil, err
 	}
 
-	resp, err := stub.AwaitTxChan(respCh)
+	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
