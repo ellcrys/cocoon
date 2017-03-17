@@ -147,6 +147,12 @@ func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 	return nil, true
 }
 
+// MakeGenesisBlockHash creates the standard hash for the first block of a chain
+// whic is a sha256 hash of a concantenated chain name and 64 chars of `0`.
+func MakeGenesisBlockHash(chainName string) string {
+	return util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64)))
+}
+
 // CreateBlock creates a new block. It creates a chained structure by setting the new block's previous hash
 // value to the hash of the last block of the chain specified. The new block's hash is calculated from the hash of
 // all the contained transaction hashes.
@@ -174,7 +180,7 @@ func (b *PostgresBlockchain) CreateBlock(id, chainName string, transactions []*t
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 	var dummyBlock = types.Block{
-		Hash: util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64))),
+		Hash: MakeGenesisBlockHash(chainName),
 	}
 
 	// get last block of chain
