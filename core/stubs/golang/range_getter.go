@@ -10,29 +10,43 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
+var (
+	// ErrNoTransaction represents a lack of transaction
+	ErrNoTransaction = fmt.Errorf("no transaction")
+)
+
 // RangeGetter defines a means to fetch keys of
 // a specific range with support for
 type RangeGetter struct {
 	ledgerName string
 	start      string
 	end        string
+	inclusive  bool
 	limit      int
 	offset     int
 	txs        []*types.Transaction
 	curIndex   int
+	curPage    int
+	Error      error
 }
 
-// NewRangeGetter creates a new range getter
-func NewRangeGetter(ledgerName string, start, end string) *RangeGetter {
+// NewRangeGetter creates a new range getter.
+// Set start and end key will get transactions between those keys. However, the end key is
+// not included by default. Set inclusive to true to include the end key. Set only start to
+// get all keys matching that key as a prefix or set only end key to get match keys as a surfix.
+func NewRangeGetter(ledgerName string, start, end string, inclusive bool) *RangeGetter {
 	return &RangeGetter{
 		ledgerName: ledgerName,
 		start:      start,
 		end:        end,
-		limit:      10,
+		inclusive:  inclusive,
+		limit:      25,
 		offset:     0,
+		curPage:    0,
 	}
 }
 
+// fetch transactions
 func (rg *RangeGetter) fetch() error {
 
 	var respCh = make(chan *proto.Tx)
@@ -40,7 +54,7 @@ func (rg *RangeGetter) fetch() error {
 		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   types.TxRangeGet,
-		Params: []string{rg.ledgerName, rg.start, rg.end, strconv.Itoa(rg.limit), strconv.Itoa(rg.offset)},
+		Params: []string{rg.ledgerName, rg.start, rg.end, strconv.FormatBool(rg.inclusive), strconv.Itoa(rg.limit), strconv.Itoa(rg.offset)},
 	}, respCh)
 	if err != nil {
 		return fmt.Errorf("failed to get transactions. %s", err)
@@ -60,24 +74,51 @@ func (rg *RangeGetter) fetch() error {
 	}
 
 	rg.txs = append(rg.txs, txs...)
+
+	rg.curPage++
+	rg.offset = rg.curPage * rg.limit
 	return nil
 }
 
-// HasRow determines whether more rows exists.
-func (rg *RangeGetter) HasRow() (bool, error) {
+// HasNext determines whether more rows exists.
+func (rg *RangeGetter) HasNext() bool {
+
 	if !isConnected() {
-		return false, ErrNotConnected
+		rg.Error = ErrNotConnected
+		return false
 	}
 
 	if len(rg.txs) == 0 {
 		if err := rg.fetch(); err != nil {
-			return false, err
+			rg.Error = err
+			return false
 		}
 		if len(rg.txs) == 0 {
-			return false, nil
+			rg.Error = ErrNoTransaction
+			return false
 		}
-		rg.curIndex = 0
 	}
 
-	return true, nil
+	return true
+}
+
+// Next returns a transaction if available or nil
+func (rg *RangeGetter) Next() *types.Transaction {
+	if len(rg.txs) == 0 {
+		return nil
+	}
+
+	tx := rg.txs[0]
+	rg.txs = rg.txs[1:]
+	return tx
+}
+
+// Reset the state for reuse
+func (rg *RangeGetter) Reset() {
+	rg.txs = []*types.Transaction{}
+	rg.limit = 10
+	rg.offset = 0
+	rg.curPage = 0
+	rg.curIndex = 0
+	rg.Error = nil
 }

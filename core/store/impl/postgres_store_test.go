@@ -389,9 +389,29 @@ func TestPosgresStore(t *testing.T) {
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
-				txs, err := pgStore.GetRange(ledger, "", "account", true, 10, 0)
+				txs, err := pgStore.GetRange(ledger, "", "%account", true, 10, 0)
 				So(err, ShouldBeNil)
 				So(len(txs), ShouldEqual, 2)
+			})
+
+			Convey("Should successfully return expected transaction limit ", func() {
+				ledger := util.Sha256(util.UUID4())
+				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
+				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "ben.account", Value: "110"}
+				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "glen.account", Value: "200"}
+				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				txs, err := pgStore.GetRange(ledger, "", "%account", true, 1, 0)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 1)
+				So(txs[0].Key, ShouldEqual, "ben.account")
+
+				txs, err = pgStore.GetRange(ledger, "", "%account", true, 1, 1)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 1)
+				So(txs[0].Key, ShouldEqual, "glen.account")
 			})
 
 			Reset(func() {

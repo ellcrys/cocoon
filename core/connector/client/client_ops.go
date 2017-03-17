@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -199,5 +200,39 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 
 // getRange fetches transactions with keys between a specified range.
 func (c *Client) getRange(tx *proto.Tx) error {
+
+	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	if err != nil {
+		return err
+	}
+	defer ordererConn.Close()
+
+	limit, _ := strconv.Atoi(tx.GetParams()[4])
+	offset, _ := strconv.Atoi(tx.GetParams()[5])
+
+	odc := order_proto.NewOrdererClient(ordererConn)
+	txs, err := odc.GetRange(context.Background(), &order_proto.GetRangeParams{
+		CocoonCodeId: c.cocoonID,
+		Ledger:       tx.GetParams()[0],
+		StartKey:     tx.GetParams()[1],
+		EndKey:       tx.GetParams()[2],
+		Inclusive:    tx.GetParams()[3] == "true",
+		Limit:        int32(limit),
+		Offset:       int32(offset),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	body, _ := util.ToJSON(txs.Transactions)
+
+	c.stream.Send(&proto.Tx{
+		Response: true,
+		Status:   200,
+		Id:       tx.GetId(),
+		Body:     body,
+	})
+
 	return nil
 }

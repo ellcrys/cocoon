@@ -70,10 +70,7 @@ func (s *PostgresStore) Init(globalLedgerName string) error {
 	// create transaction table if not existing
 	if !s.db.HasTable(TransactionTableName) {
 		if err := s.db.CreateTable(&types.Transaction{}).
-			AddIndex("idx_name_ledger_key", "ledger", "key").
-			AddIndex("idx_name_ledger_id", "ledger", "id").
-			AddIndex("idx_name_ledger_created_at", "ledger", "created_at").
-			AddIndex("idx_name_ledger_block_id_at", "ledger", "block_id").Error; err != nil {
+			AddIndex("idx_name_ledger_key_created_at", "ledger", "key", "created_at").Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", TransactionTableName, err)
 		}
 	}
@@ -94,8 +91,8 @@ func (s *PostgresStore) Init(globalLedgerName string) error {
 	return nil
 }
 
-// Destroy removes the database structure of the chain.
-// Will only work in a test environment
+// Destroy removes the database tables.
+// Will only work in a test environment (Test Only!!!)
 func Destroy(dbAddr string) error {
 
 	if os.Getenv("APP_ENV") != "test" {
@@ -108,6 +105,32 @@ func Destroy(dbAddr string) error {
 	}
 
 	return db.DropTable(types.Ledger{}, types.Transaction{}).Error
+}
+
+// Clear truncatest the database tables.
+// Will only work in a test environment (Test Only!!!)
+func Clear(dbAddr string) error {
+
+	if os.Getenv("APP_ENV") != "test" {
+		return fmt.Errorf("Cowardly refusing to do it! Can only call Destroy() in test environment")
+	}
+
+	db, err := gorm.Open("postgres", dbAddr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to store backend")
+	}
+
+	err = db.Delete(types.Transaction{}).Error
+	if err != nil {
+		return err
+	}
+
+	err = db.Delete(types.Ledger{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CreateLedgerThen creates a new ledger and accepts an additional operation (via the thenFunc) to be
@@ -263,15 +286,20 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 	} else if len(startKey) > 0 && len(endKey) == 0 {
 		q = s.db.Where("ledger = ? AND key like ?", ledger, startKey+"%")
 	} else {
-		q = s.db.Where("ledger = ? AND key like ?", ledger, "%"+endKey)
+		// setting endKey only is a little tricky as the call code may construct
+		// through a secondary process or rule, so add the '%' operator will most likely
+		// result in wrong query. So we just let the external decide where to put it.
+		q = s.db.Where("ledger = ? AND key like ?", ledger, endKey)
 	}
 
-	err = q.Limit(limit).Offset(offset).Find(&txs).Error
+	err = q.Limit(limit).Offset(offset).Order("created_at desc").Find(&txs).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transactions. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
+
+	util.Printify(txs)
 
 	return txs, nil
 }
@@ -283,13 +311,13 @@ func (s *PostgresStore) MakeLedgerName(namespace, name string) string {
 	if name == types.GetGlobalLedgerName() {
 		namespace = ""
 	}
-	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
+	return fmt.Sprintf("%s.%s", namespace, name)
 }
 
 // MakeTxKey creates a transaction key name for use for creating or querying a transaction.
 // Accepts a namespace value and the key name.
 func (s *PostgresStore) MakeTxKey(namespace, name string) string {
-	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
+	return fmt.Sprintf("%s.%s", namespace, name)
 }
 
 // Close releases any resource held

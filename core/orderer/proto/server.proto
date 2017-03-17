@@ -8,6 +8,7 @@ service Orderer {
     rpc Get(GetParams) returns (Transaction);
     rpc GetByID(GetParams) returns (Transaction);
     rpc GetBlockByID(GetBlockParams) returns (Block);
+    rpc GetRange(GetRangeParams) returns (Transactions);
 }
 
 message CreateLedgerParams {
@@ -30,15 +31,25 @@ message GetLedgerParams {
 
 message GetParams {
     string cocoonCodeId = 1; 
-    string id = 2;
-    string key = 3;
-    string ledger = 4;   
+    string ledger = 2;   
+    string id = 3;
+    string key = 4;
 }
 
 message GetBlockParams {
     string cocoonCodeId = 1; 
-    string id = 2;
-    string ledger = 4;   
+    string ledger = 2;   
+    string id = 3;
+}
+
+message GetRangeParams {
+    string cocoonCodeId = 1;
+    string ledger = 2;
+    string startKey = 3;
+    string endKey = 4;
+    bool inclusive = 5;
+    int32 limit = 6;
+    int32 offset = 7;
 }
 
 message Ledger {
@@ -62,6 +73,10 @@ message Transaction {
     int64 createdAt = 9;
     string blockId = 10;
     Block block = 11;
+}
+
+message Transactions {
+    repeated Transaction transactions = 1;
 }
 
 message PutResult {

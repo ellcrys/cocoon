@@ -12,9 +12,9 @@ import (
 // sharing the same ledger name.
 type Transaction struct {
 	Number    uint   `json:"number,omitempty" gorm:"primary_key"`
-	Ledger    string `json:"ledger" gorm:"type:varchar(64);index:idx_name_ledger_name"`
+	Ledger    string `json:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name"`
 	ID        string `json:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
-	Key       string `json:"key" gorm:"type:varchar(64)"`
+	Key       string `json:"key" gorm:"type:varchar(128);index:idx_name_key"`
 	Value     string `json:"value" gorm:"type:text"`
 	Hash      string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	BlockID   string `json:"blockId,omitempty"`

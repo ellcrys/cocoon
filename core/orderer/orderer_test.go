@@ -1,7 +1,6 @@
 package orderer
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -95,14 +94,25 @@ func TestOrderer(t *testing.T) {
 				})
 
 				Convey(".GetLedger", func() {
+
+					ledgerName := util.RandString(10)
+					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+						CocoonCodeId: "cocoon-123",
+						Name:         ledgerName,
+						Public:       true,
+						Chained:      true,
+					})
+					So(err, ShouldBeNil)
+					So(ledger, ShouldNotBeNil)
+
 					Convey("Should successfully return ledger with matching name", func() {
 						ledger, err := od.GetLedger(context.Background(), &proto.GetLedgerParams{
 							CocoonCodeId: "cocoon-123",
-							Name:         "myledger",
+							Name:         ledgerName,
 						})
 						So(err, ShouldBeNil)
 						So(ledger, ShouldNotBeNil)
-						So(ledger.Name, ShouldEqual, "myledger")
+						So(ledger.Name, ShouldEqual, ledgerName)
 						So(ledger.Chained, ShouldEqual, true)
 					})
 
@@ -113,6 +123,10 @@ func TestOrderer(t *testing.T) {
 						})
 						So(err, ShouldResemble, types.ErrLedgerNotFound)
 						So(ledger, ShouldBeNil)
+					})
+
+					Reset(func() {
+						impl.Clear(storeConStr)
 					})
 				})
 
@@ -160,7 +174,6 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should successfully put transactions in a chained ledger and create a block", func() {
 						chainedLedgerName := util.UUID4()
-						chainName := od.blockchain.MakeChainName("cocoon-abc", chainedLedgerName)
 						chainedLedger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
 							CocoonCodeId: "cocoon-abc",
 							Name:         chainedLedgerName,
@@ -186,7 +199,7 @@ func TestOrderer(t *testing.T) {
 						So(tx, ShouldNotBeNil)
 						So(tx.Added, ShouldEqual, 2)
 						So(tx.Block, ShouldNotBeNil)
-						So(tx.Block.PrevBlockHash, ShouldEqual, util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64))))
+						So(tx.Block.PrevBlockHash, ShouldEqual, blkch_impl.MakeGenesisBlockHash(od.store.MakeLedgerName("cocoon-abc", chainedLedgerName)))
 						So(tx.Block.Number, ShouldEqual, 1)
 					})
 				})
@@ -301,6 +314,75 @@ func TestOrderer(t *testing.T) {
 					So(result.Block, ShouldNotBeNil)
 					So(result.Added, ShouldEqual, 1)
 				})
+
+				Convey(".GetRange", func() {
+
+					ledgerName := util.UUID4()
+					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
+						CocoonCodeId: "cocoon-abc",
+						Name:         ledgerName,
+						Public:       true,
+						Chained:      true,
+					})
+					So(err, ShouldBeNil)
+					So(ledger, ShouldNotBeNil)
+
+					txs := []*proto.Transaction{
+						{Id: util.RandString(10), Key: "account.ken", Value: util.Sha256(util.UUID4())},
+						{Id: util.RandString(10), Key: "account.glen", Value: util.Sha256(util.UUID4())},
+						{Id: util.RandString(10), Key: "x", Value: util.Sha256(util.UUID4())},
+					}
+
+					result, err := od.Put(context.Background(), &proto.PutTransactionParams{
+						CocoonCodeId: "cocoon-abc",
+						LedgerName:   ledgerName,
+						Transactions: txs,
+					})
+
+					So(result, ShouldNotBeNil)
+					So(err, ShouldBeNil)
+
+					Convey("Should return exepected transaction range with inclusive option disabled", func() {
+						txs, err := od.GetRange(context.Background(), &proto.GetRangeParams{
+							CocoonCodeId: "cocoon-abc",
+							Ledger:       ledgerName,
+							StartKey:     "account",
+							EndKey:       "x",
+							Inclusive:    false,
+							Limit:        10,
+						})
+						So(txs, ShouldNotBeNil)
+						So(err, ShouldBeNil)
+						So(len(txs.Transactions), ShouldEqual, 2)
+					})
+
+					Convey("Should return exepected transaction range with inclusive option enabled", func() {
+						txs, err := od.GetRange(context.Background(), &proto.GetRangeParams{
+							CocoonCodeId: "cocoon-abc",
+							Ledger:       ledgerName,
+							StartKey:     "account",
+							EndKey:       "x",
+							Inclusive:    true,
+							Limit:        10,
+						})
+
+						So(txs, ShouldNotBeNil)
+						So(err, ShouldBeNil)
+						So(len(txs.Transactions), ShouldEqual, 3)
+					})
+
+					Reset(func() {
+						impl.Clear(storeConStr)
+					})
+				})
+
+				Reset(func() {
+					impl.Clear(storeConStr)
+				})
+			})
+
+			Reset(func() {
+				impl.Clear(storeConStr)
 			})
 		})
 

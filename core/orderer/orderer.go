@@ -232,6 +232,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 	var createBlockFunc func() error
 	if ledger.Chained {
 		block = &proto.Block{}
+
 		createBlockFunc = func() error {
 			b, err := od.blockchain.CreateBlock(blockID, ledgerName, transactions)
 			if b != nil {
@@ -365,4 +366,41 @@ func (od *Orderer) GetBlockByID(ctx context.Context, params *proto.GetBlockParam
 	util.FromJSON(blkJSON, &protoBlk)
 
 	return &protoBlk, nil
+}
+
+// GetRange fetches transactions between a range of keys
+func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (*proto.Transactions, error) {
+
+	name := od.store.MakeLedgerName(params.GetCocoonCodeId(), params.GetLedger())
+	ledger, err := od.store.GetLedger(name)
+	if err != nil {
+		return nil, err
+	} else if ledger == nil && err == nil {
+		return nil, types.ErrLedgerNotFound
+	}
+
+	if len(params.GetStartKey()) > 0 {
+		params.StartKey = od.store.MakeTxKey(params.GetCocoonCodeId(), params.GetStartKey())
+	}
+
+	if len(params.GetEndKey()) > 0 {
+		if len(params.GetStartKey()) > 0 {
+			params.EndKey = od.store.MakeTxKey(params.GetCocoonCodeId(), params.GetEndKey())
+		} else {
+			params.EndKey = od.store.MakeTxKey(params.GetCocoonCodeId(), "%"+params.GetEndKey())
+		}
+	}
+
+	txs, err := od.store.GetRange(name, params.GetStartKey(), params.GetEndKey(), params.GetInclusive(), int(params.GetLimit()), int(params.GetOffset()))
+	if err != nil {
+		return nil, err
+	}
+
+	txsJSON, _ := util.ToJSON(txs)
+	var protoTxs []*proto.Transaction
+	util.FromJSON(txsJSON, &protoTxs)
+
+	return &proto.Transactions{
+		Transactions: protoTxs,
+	}, nil
 }

@@ -123,7 +123,7 @@ func (b *PostgresBlockchain) MakeChainName(namespace, name string) string {
 	if name == types.GetGlobalChainName() {
 		namespace = ""
 	}
-	return util.Sha256(fmt.Sprintf("%s.%s", namespace, name))
+	return fmt.Sprintf("%s.%s", namespace, name)
 }
 
 // MakeTxsHash takes a slice of transactions and returns a SHA256
