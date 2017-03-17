@@ -247,6 +247,35 @@ func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 	return &tx, nil
 }
 
+// GetRange detches transactions with keys included in a specified range.
+func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool, limit, offset int) ([]*types.Transaction, error) {
+
+	var err error
+	var txs []*types.Transaction
+	var q *gorm.DB
+
+	if len(startKey) > 0 && len(endKey) > 0 {
+		if !inclusive {
+			q = s.db.Where("ledger = ? AND key >= ? AND key < ?", ledger, startKey, endKey)
+		} else {
+			q = s.db.Where("ledger = ? AND key >= ? OR key <= ?", ledger, startKey+"%", endKey+"%")
+		}
+	} else if len(startKey) > 0 && len(endKey) == 0 {
+		q = s.db.Where("ledger = ? AND key like ?", ledger, startKey+"%")
+	} else {
+		q = s.db.Where("ledger = ? AND key like ?", ledger, "%"+endKey)
+	}
+
+	err = q.Limit(limit).Offset(offset).Find(&txs).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("failed to get transactions. %s", err)
+	} else if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return txs, nil
+}
+
 // MakeLedgerName creates a ledger name for use for creating or querying a ledger.
 // Accepts a namespace value and the ledger name.
 // If name provided is same as the GlobalLedgerName, then no namespace is required.

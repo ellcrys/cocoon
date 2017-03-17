@@ -181,6 +181,8 @@ func (c *Client) handleInvokeTransaction(tx *proto.Tx) error {
 		return c.get(tx, true)
 	case types.TxGetBlockByID:
 		return c.getBlock(tx)
+	case types.TxRangeGet:
+		return c.getRange(tx)
 	default:
 		return c.stream.Send(&proto.Tx{
 			Id:       tx.GetId(),

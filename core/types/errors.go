@@ -3,33 +3,35 @@ package types
 import "fmt"
 import "strings"
 
-// ErrCocoonCodeNotRunning indicates a launched cocoon that isn't running a cocoon code
-var ErrCocoonCodeNotRunning = fmt.Errorf("cocoon code is not running")
+var (
+	// ErrCocoonCodeNotRunning indicates a launched cocoon that isn't running a cocoon code
+	ErrCocoonCodeNotRunning = fmt.Errorf("cocoon code is not running")
 
-// ErrIdentityNotFound indicates a non-existing identity
-var ErrIdentityNotFound = fmt.Errorf("identity not found")
+	// ErrIdentityNotFound indicates a non-existing identity
+	ErrIdentityNotFound = fmt.Errorf("identity not found")
 
-// ErrIdentityAlreadyExists indicates existence of an identity
-var ErrIdentityAlreadyExists = fmt.Errorf("An identity with matching email already exists")
+	// ErrIdentityAlreadyExists indicates existence of an identity
+	ErrIdentityAlreadyExists = fmt.Errorf("An identity with matching email already exists")
 
-// ErrLedgerNotFound indicates a missing ledger
-var ErrLedgerNotFound = fmt.Errorf("ledger not found")
+	// ErrLedgerNotFound indicates a missing ledger
+	ErrLedgerNotFound = fmt.Errorf("ledger not found")
 
-// ErrTxNotFound indicates a missing transaction
-var ErrTxNotFound = fmt.Errorf("transaction not found")
+	// ErrTxNotFound indicates a missing transaction
+	ErrTxNotFound = fmt.Errorf("transaction not found")
 
-// ErrChainNotFound indicates a missing chain
-var ErrChainNotFound = fmt.Errorf("chain not found")
+	// ErrChainNotFound indicates a missing chain
+	ErrChainNotFound = fmt.Errorf("chain not found")
 
-// ErrZeroTransactions indicates a transaction list has zeto transactions
-var ErrZeroTransactions = fmt.Errorf("zero transactions not allowed")
+	// ErrZeroTransactions indicates a transaction list has zeto transactions
+	ErrZeroTransactions = fmt.Errorf("zero transactions not allowed")
 
-// ErrBlockNotFound indicates a missing block
-var ErrBlockNotFound = fmt.Errorf("block not found")
+	// ErrBlockNotFound indicates a missing block
+	ErrBlockNotFound = fmt.Errorf("block not found")
 
-// ErrOperationTimeout represents a timeout error that occurs when response
-// is not received from orderer in time.
-var ErrOperationTimeout = fmt.Errorf("operation timed out")
+	// ErrOperationTimeout represents a timeout error that occurs when response
+	// is not received from orderer in time.
+	ErrOperationTimeout = fmt.Errorf("operation timed out")
+)
 
 // IsPrevBlockConcurrentAccessError checks whether an error is one created when
 // attempt is made to access a previous block that is currently being updated by a concurrent transaction.

@@ -18,4 +18,7 @@ const (
 
 	// TxGetBlockByID represents a message to get ledger's block by id
 	TxGetBlockByID = "GET_BLOCK_BY_ID"
+
+	// TxRangeGet represents a message to get a range of transactions
+	TxRangeGet = "RANGE_GET"
 )

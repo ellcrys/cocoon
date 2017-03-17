@@ -330,6 +330,75 @@ func TestPosgresStore(t *testing.T) {
 			})
 		})
 
+		Convey(".GetRange", func() {
+
+			err := pgStore.Init(types.GetGlobalLedgerName())
+			So(err, ShouldBeNil)
+
+			Convey("Should successfully return expected transactions and exclude end key when `includeEndKey` is false", func() {
+				ledger := util.Sha256(util.UUID4())
+				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
+				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
+				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
+				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
+				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				txs, err := pgStore.GetRange(ledger, "a", "z", false, 10, 0)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 3)
+			})
+
+			Convey("Should successfully return expected transactions and include end key when `includeEndKey` is true", func() {
+				ledger := util.Sha256(util.UUID4())
+				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
+				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
+				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
+				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
+				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				txs, err := pgStore.GetRange(ledger, "account", "z", true, 10, 0)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 4)
+			})
+
+			Convey("Should successfully return transactions with matching startKey if only startKey is provided` is true", func() {
+				ledger := util.Sha256(util.UUID4())
+				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
+				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
+				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
+				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
+				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				txs, err := pgStore.GetRange(ledger, "account", "", true, 10, 0)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 3)
+			})
+
+			Convey("Should successfully return transactions with matching endKey if only endKey is provided` is true", func() {
+				ledger := util.Sha256(util.UUID4())
+				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
+				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "ben.account", Value: "110"}
+				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "glen.account", Value: "200"}
+				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
+				So(tx, ShouldNotBeNil)
+				So(err, ShouldBeNil)
+
+				txs, err := pgStore.GetRange(ledger, "", "account", true, 10, 0)
+				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 2)
+			})
+
+			Reset(func() {
+				RestDB()
+			})
+		})
+
 		Reset(func() {
 			RestDB()
 		})

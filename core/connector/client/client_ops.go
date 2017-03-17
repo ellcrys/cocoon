@@ -196,3 +196,8 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 
 	return nil
 }
+
+// getRange fetches transactions with keys between a specified range.
+func (c *Client) getRange(tx *proto.Tx) error {
+	return nil
+}
