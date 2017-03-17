@@ -18,26 +18,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	// TxCreateLedger represents a message to create a ledger
-	TxCreateLedger = "CREATE_LEDGER"
-
-	// TxPut represents a message to create a transaction
-	TxPut = "PUT"
-
-	// TxGetLedger represents a message to get a ledger
-	TxGetLedger = "GET_LEDGER"
-
-	// TxGet represents a message to get a transaction
-	TxGet = "GET"
-
-	// TxGetByID represents a message to get a transaction by id
-	TxGetByID = "GET_BY_ID"
-
-	// TxGetBlockByID represents a message to get ledger's block by id
-	TxGetBlockByID = "GET_BLOCK_BY_ID"
-)
-
 var (
 
 	// serverPort to bind to
@@ -167,7 +147,7 @@ func blockCommitter(entries []*Entry) interface{} {
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
-		Name:   TxPut,
+		Name:   types.TxPut,
 		Params: []string{ledgerName},
 		Body:   txsJSON,
 	}, respCh)
@@ -272,7 +252,7 @@ func CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
-		Name:   TxCreateLedger,
+		Name:   types.TxCreateLedger,
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	}, respCh)
 	if err != nil {
@@ -313,7 +293,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
-		Name:   TxGetLedger,
+		Name:   types.TxGetLedger,
 		Params: []string{ledgerName},
 	}, respCh)
 	if err != nil {
@@ -386,7 +366,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 	err = sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		Name:   TxPut,
+		Name:   types.TxPut,
 		Params: []string{ledgerName},
 		Body:   txJSON,
 	}, respCh)
@@ -424,7 +404,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		Name:   TxGet,
+		Name:   types.TxGet,
 		Params: []string{ledgerName, key},
 	}, respCh)
 	if err != nil {
@@ -463,7 +443,7 @@ func GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		Name:   TxGetByID,
+		Name:   types.TxGetByID,
 		Params: []string{ledgerName, id},
 	}, respCh)
 	if err != nil {
@@ -502,7 +482,7 @@ func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		Name:   TxGetBlockByID,
+		Name:   types.TxGetBlockByID,
 		Params: []string{ledgerName, id},
 	}, respCh)
 	if err != nil {

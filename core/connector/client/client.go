@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/ncodes/cocoon/core/orderer"
-	stub "github.com/ncodes/cocoon/core/stubs/golang"
 	proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	cmap "github.com/orcaman/concurrent-map"
 	context "golang.org/x/net/context"
@@ -169,17 +169,17 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 // handleInvokeTransaction processes invoke transaction requests
 func (c *Client) handleInvokeTransaction(tx *proto.Tx) error {
 	switch tx.GetName() {
-	case stub.TxCreateLedger:
+	case types.TxCreateLedger:
 		return c.createLedger(tx)
-	case stub.TxPut:
+	case types.TxPut:
 		return c.put(tx)
-	case stub.TxGetLedger:
+	case types.TxGetLedger:
 		return c.getLedger(tx)
-	case stub.TxGet:
+	case types.TxGet:
 		return c.get(tx, false)
-	case stub.TxGetByID:
+	case types.TxGetByID:
 		return c.get(tx, true)
-	case stub.TxGetBlockByID:
+	case types.TxGetBlockByID:
 		return c.getBlock(tx)
 	default:
 		return c.stream.Send(&proto.Tx{
