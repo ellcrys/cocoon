@@ -491,7 +491,7 @@ func GetByID(id string) (*types.Transaction, error) {
 	return GetByIDFrom(GetDefaultLedgerName(), id)
 }
 
-// GetBlockFrom returns a block belonging to a ledger by its id
+// GetBlockFrom returns a block from a ledger by its block id
 func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
 	if !isConnected() {
@@ -523,4 +523,9 @@ func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	}
 
 	return &blk, nil
+}
+
+// GetBlock returns a block from the default ledger by its block id
+func GetBlock(id string) (*types.Block, error) {
+	return GetBlockFrom(GetDefaultLedgerName(), id)
 }
