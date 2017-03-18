@@ -119,6 +119,7 @@ func (b *BlockMaker) Begin(committerFunc func([]*Entry) interface{}) {
 
 // Stop stops the block maker
 func (b *BlockMaker) Stop() {
+	b.t.Stop()
 	close(b.stop)
 }
 
