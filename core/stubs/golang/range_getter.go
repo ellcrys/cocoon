@@ -30,17 +30,33 @@ type RangeGetter struct {
 	Error      error
 }
 
-// NewRangeGetter creates a new range getter.
+// NewRangeGetterFrom creates a new range getter to traverse a specific ledger.
 // Set start and end key will get transactions between those keys. However, the end key is
 // not included by default. Set inclusive to true to include the end key. Set only start to
 // get all keys matching that key as a prefix or set only end key to get match keys as a surfix.
-func NewRangeGetter(ledgerName string, start, end string, inclusive bool) *RangeGetter {
+func NewRangeGetterFrom(ledgerName string, start, end string, inclusive bool) *RangeGetter {
 	return &RangeGetter{
 		ledgerName: ledgerName,
 		start:      start,
 		end:        end,
 		inclusive:  inclusive,
-		limit:      25,
+		limit:      50,
+		offset:     0,
+		curPage:    0,
+	}
+}
+
+// NewRangeGetter creates a new range getter to traverse the default ledger.
+// Set start and end key will get transactions between those keys. However, the end key is
+// not included by default. Set inclusive to true to include the end key. Set only start to
+// get all keys matching that key as a prefix or set only end key to get match keys as a surfix.
+func NewRangeGetter(start, end string, inclusive bool) *RangeGetter {
+	return &RangeGetter{
+		ledgerName: GetDefaultLedgerName(),
+		start:      start,
+		end:        end,
+		inclusive:  inclusive,
+		limit:      50,
 		offset:     0,
 		curPage:    0,
 	}
@@ -65,7 +81,7 @@ func (rg *RangeGetter) fetch() error {
 		return err
 	}
 	if resp.Status != 200 {
-		return fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var txs []*types.Transaction

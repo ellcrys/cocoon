@@ -292,7 +292,13 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 		q = s.db.Where("ledger = ? AND key like ?", ledger, endKey)
 	}
 
-	err = q.Limit(limit).Offset(offset).Order("created_at desc").Find(&txs).Error
+	err = q.
+		Limit(limit).
+		Offset(offset).
+		Select("DISTINCT ON (key) *").
+		Order("key").
+		Order("created_at desc").
+		Find(&txs).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transactions. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
