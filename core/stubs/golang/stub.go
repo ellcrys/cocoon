@@ -184,6 +184,9 @@ func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 
 // Stop stub and cocoon code
 func Stop(exitCode int) {
+	if blockMaker != nil {
+		blockMaker.Stop()
+	}
 	defaultServer.stream = nil
 	serverDone <- true
 	log.Info("Cocoon code exiting with exit code %d", exitCode)

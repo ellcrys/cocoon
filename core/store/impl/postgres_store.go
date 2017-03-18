@@ -299,8 +299,6 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 		return nil, nil
 	}
 
-	util.Printify(txs)
-
 	return txs, nil
 }
 
