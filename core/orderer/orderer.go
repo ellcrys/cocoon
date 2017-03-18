@@ -241,6 +241,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 				block.Hash = b.Hash
 				block.Number = int64(b.Number)
 				block.PrevBlockHash = b.PrevBlockHash
+				block.Transactions = b.Transactions
 				block.CreatedAt = b.CreatedAt
 			}
 			return err
