@@ -33,14 +33,8 @@ var (
 	ErrOperationTimeout = fmt.Errorf("operation timed out")
 )
 
-// IsPrevBlockConcurrentAccessError checks whether an error is one created when
-// attempt is made to access a previous block that is currently being updated by a concurrent transaction.
-func IsPrevBlockConcurrentAccessError(err error) bool {
-	return err.Error() == "failed to update previous block right sibling column. pq: could not serialize access due to concurrent update"
-}
-
-// IsDuplicatePrevHashError checks whether an error is one created when a transaction attempts to
-// create a record with a prev hash value already used by a previous commited transaction.
-func IsDuplicatePrevHashError(err error) bool {
-	return strings.Contains(err.Error(), `pq: duplicate key value violates unique constraint "idx_name_prev_hash"`)
+// IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to
+// create a block with a prev block hash value already used.
+func IsDuplicatePrevBlockHashError(err error) bool {
+	return strings.Contains(err.Error(), `pq: duplicate key value violates unique constraint "idx_name_prev_block_hash"`)
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
@@ -234,16 +235,30 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		block = &proto.Block{}
 
 		createBlockFunc = func() error {
-			b, err := od.blockchain.CreateBlock(blockID, ledgerName, transactions)
-			if b != nil {
-				block.Id = b.ID
-				block.ChainName = b.ChainName
-				block.Hash = b.Hash
-				block.Number = int64(b.Number)
-				block.PrevBlockHash = b.PrevBlockHash
-				block.Transactions = b.Transactions
-				block.CreatedAt = b.CreatedAt
-			}
+			var err error
+			retryDelay := time.Duration(2) * time.Second
+			common.ReRunOnError(func() error {
+				b, _err := od.blockchain.CreateBlock(blockID, ledgerName, transactions)
+				if b != nil {
+					block.Id = b.ID
+					block.ChainName = b.ChainName
+					block.Hash = b.Hash
+					block.Number = int64(b.Number)
+					block.PrevBlockHash = b.PrevBlockHash
+					block.Transactions = b.Transactions
+					block.CreatedAt = b.CreatedAt
+				}
+
+				err = _err
+
+				// If error is not a duplicate previous block hash error, don't re-run.
+				// return nil to end the re-run routine
+				if _err != nil && !types.IsDuplicatePrevBlockHashError(_err) {
+					return nil
+				}
+
+				return _err
+			}, 5, &retryDelay)
 			return err
 		}
 	}
