@@ -3,17 +3,28 @@ package common
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
+
+	"strings"
 
 	"github.com/ncodes/cocoon/core/stubs/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// StripRPCErrorPrefix takes an error return from the RPC client and removes the
-// prefixed `rpc error: code = 2 desc =` statement
-func StripRPCErrorPrefix(err []byte) []byte {
-	return []byte(strings.TrimSpace(strings.Replace(string(err), "rpc error: code = 2 desc =", "", -1)))
+// GetRPCErrDesc takes a grpc generated error and returns the description.
+// If error is not grpc generated, it returns err.Error().
+func GetRPCErrDesc(err error) string {
+	if strings.HasPrefix(strings.ToLower(err.Error()), "rpc error:") {
+		ss := strings.Split(err.Error(), "=")
+		return strings.TrimSpace(ss[len(ss)-1])
+	}
+	return err.Error()
+}
+
+// CompareErr compares two error string values. Returns 0 if equal.
+// Removes GRPC prefixes if available.
+func CompareErr(errA, errB error) int {
+	return strings.Compare(GetRPCErrDesc(errA), GetRPCErrDesc(errB))
 }
 
 // ToRPCError creates an RPC error message

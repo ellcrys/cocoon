@@ -9,6 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/grpc/proto"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/scheduler"
@@ -21,14 +22,6 @@ import (
 
 var log = logging.MustGetLogger("api.grpc")
 
-// scheduler represents the cluster scheduler implementation (nomad, kubernetes, etc)
-var sch scheduler.Scheduler
-
-// SetScheduler sets the default cluster
-func SetScheduler(s scheduler.Scheduler) {
-	sch = s
-}
-
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource
 // allocation etc
@@ -37,11 +30,14 @@ type API struct {
 	endedCh          chan bool
 	orderDiscoTicker *time.Ticker
 	orderersAddr     []string
+	scheduler        scheduler.Scheduler
 }
 
 // NewAPI creates a new GRPCAPI object
-func NewAPI() *API {
-	return new(API)
+func NewAPI(scheduler scheduler.Scheduler) *API {
+	return &API{
+		scheduler: scheduler,
+	}
 }
 
 // Start starts the server
@@ -87,7 +83,7 @@ func (api *API) Stop(exitCode int) int {
 
 // Deploy starts a new cocoon. The scheduler creates a job based on the requests
 func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
-	depInfo, err := sch.Deploy(
+	depInfo, err := api.scheduler.Deploy(
 		req.GetId(),
 		req.GetLanguage(),
 		req.GetUrl(),
@@ -177,27 +173,28 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 
-	// check if cocoon with matching ID already exists
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonCodeId: "",
-		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
-		Ledger:       types.GetGlobalLedgerName(),
+	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
+		Id: req.GetId(),
 	})
 
-	if err != nil {
+	if err != nil && err != types.ErrCocoonNotFound {
 		return nil, err
-	} else if *tx != (orderer_proto.Transaction{}) {
+	} else if err != types.ErrCocoonNotFound {
 		return nil, fmt.Errorf("cocoon with matching ID already exists")
 	}
 
 	value, _ := util.ToJSON(req)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		Id:           req.GetId(),
 		CocoonCodeId: "",
 		LedgerName:   types.GetGlobalLedgerName(),
-		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
-		Value:        value,
+		Transactions: []*orderer_proto.Transaction{
+			&orderer_proto.Transaction{
+				Id:        util.UUID4(),
+				Key:       fmt.Sprintf("cocoon.%s", req.GetId()),
+				Value:     string(value),
+				CreatedAt: time.Now().Unix(),
+			},
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -223,25 +220,30 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 
 	// check if release with matching ID already exists
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	_, err = odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("release.%s", req.GetId()),
 		Ledger:       types.GetGlobalLedgerName(),
 	})
 
-	if err != nil {
+	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, err
-	} else if *tx != (orderer_proto.Transaction{}) {
+	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, fmt.Errorf("release already exists")
 	}
 
 	value, _ := util.ToJSON(req)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		Id:           req.GetId(),
 		CocoonCodeId: "",
 		LedgerName:   types.GetGlobalLedgerName(),
-		Key:          fmt.Sprintf("release.%s", req.GetId()),
-		Value:        value,
+		Transactions: []*orderer_proto.Transaction{
+			&orderer_proto.Transaction{
+				Id:        util.UUID4(),
+				Key:       fmt.Sprintf("release.%s", req.GetId()),
+				Value:     string(value),
+				CreatedAt: time.Now().Unix(),
+			},
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -269,10 +271,11 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 		Key:          fmt.Sprintf("cocoon.%s", req.GetId()),
 		Ledger:       types.GetGlobalLedgerName(),
 	})
-	if err != nil {
+
+	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, err
-	} else if *tx == (orderer_proto.Transaction{}) {
-		return nil, fmt.Errorf("cocoon not found")
+	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
+		return nil, types.ErrCocoonNotFound
 	}
 
 	return &proto.Response{
@@ -293,15 +296,15 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	_, err = odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonCodeId: "",
 		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
 		Ledger:       types.GetGlobalLedgerName(),
 	})
 
-	if err != nil {
+	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, err
-	} else if *tx == (orderer_proto.Transaction{}) {
+	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
 		return nil, types.ErrIdentityNotFound
 	}
 
@@ -323,17 +326,13 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	defer ordererConn.Close()
 
 	// check if identity already exists
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonCodeId: "",
-		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
-		Ledger:       types.GetGlobalLedgerName(),
+	_, err = api.GetIdentity(ctx, &proto.GetIdentityRequest{
+		Email: req.GetEmail(),
 	})
 
-	if err != nil {
+	if err != nil && err != types.ErrIdentityNotFound {
 		return nil, err
-	} else if *tx != (orderer_proto.Transaction{}) {
+	} else if err == nil {
 		return nil, types.ErrIdentityAlreadyExists
 	}
 
@@ -344,12 +343,19 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	})
 
 	txID := util.UUID4()
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		Id:           txID,
 		CocoonCodeId: "",
 		LedgerName:   types.GetGlobalLedgerName(),
-		Key:          fmt.Sprintf("identity.%s", req.GetEmail()),
-		Value:        value,
+		Transactions: []*orderer_proto.Transaction{
+			&orderer_proto.Transaction{
+				Id:        txID,
+				Key:       fmt.Sprintf("identity.%s", req.GetEmail()),
+				Value:     string(value),
+				CreatedAt: time.Now().Unix(),
+			},
+		},
 	})
 	if err != nil {
 		return nil, err

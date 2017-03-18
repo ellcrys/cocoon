@@ -4,6 +4,7 @@ import (
 	"github.com/ncodes/cocoon/core/client/cocoon"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -12,7 +13,7 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new cocoon configuration locally",
-	Long:  `Create or construct a cocoon locally before deploying to the live platform`,
+	Long:  `Create a cocoon on the blockchain`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")
@@ -41,14 +42,14 @@ var createCmd = &cobra.Command{
 			SigThreshold:   sigThreshold,
 		})
 		if err != nil {
-			log.Fatalf("%s", common.StripRPCErrorPrefix([]byte(err.Error())))
+			log.Fatalf("%s", common.GetRPCErrDesc(err))
 		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(createCmd)
-	createCmd.Flags().StringP("url", "u", "", "Deploys a cocoon code to the platform")
+	createCmd.Flags().StringP("url", "u", "", "The github repository url of the cocoon code")
 	createCmd.Flags().StringP("lang", "l", "", "The langauges the cocoon code is written in")
 	createCmd.Flags().StringP("release-tag", "r", "", "The github release tag. Defaults to `latest`")
 	createCmd.Flags().StringP("build-param", "b", "", "Build parameters to apply during cocoon code build process")
@@ -56,5 +57,5 @@ func init() {
 	createCmd.Flags().StringP("cpu-share", "c", "1x", "The share of cpu to allocate. e.g 1x or 2x")
 	createCmd.Flags().Int32P("instances", "i", 1, "The number of instances to run")
 	createCmd.Flags().Int32P("num-sig", "s", 1, "The number of signatories")
-	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required confirm an update")
+	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required to confirm a new release")
 }

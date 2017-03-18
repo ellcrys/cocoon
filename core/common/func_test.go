@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -13,9 +14,9 @@ import (
 
 func TestFunc(t *testing.T) {
 	Convey("Func", t, func() {
-		Convey(".StripRPCErrorPrefix", func() {
+		Convey(".GetRPCErrDesc", func() {
 			Convey("Should remove rpc error = 2 from error", func() {
-				bs := StripRPCErrorPrefix([]byte("rpc error: code = 2 desc = something bad happened"))
+				bs := GetRPCErrDesc(errors.New("rpc error: code = 2 desc = something bad happened"))
 				So(string(bs), ShouldEqual, "something bad happened")
 			})
 		})
@@ -81,6 +82,16 @@ func TestFunc(t *testing.T) {
 				}, 3, &delay)
 				So(err, ShouldBeNil)
 				So(runCount, ShouldEqual, 3)
+			})
+		})
+
+		Convey(".CompareErr", func() {
+			Convey("Should successfully match both errors", func() {
+				So(CompareErr(errors.New("a"), errors.New("a")), ShouldEqual, 0)
+			})
+			Convey("Should return non zero (-1 or 1) if errors don't match", func() {
+				So(CompareErr(errors.New("a"), errors.New("b")), ShouldEqual, -1)
+				So(CompareErr(errors.New("b"), errors.New("a")), ShouldEqual, 1)
 			})
 		})
 	})

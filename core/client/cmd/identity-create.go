@@ -25,7 +25,7 @@ var identityCreateCmd = &cobra.Command{
 		}
 
 		if err := identity.Create(args[0]); err != nil {
-			log.Fatalf("%s", common.StripRPCErrorPrefix([]byte(err.Error())))
+			log.Fatalf("%s", common.GetRPCErrDesc(err))
 		}
 	},
 }

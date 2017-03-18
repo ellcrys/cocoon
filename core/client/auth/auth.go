@@ -52,7 +52,7 @@ func Login(email, password string) error {
 		if err != nil {
 			return err
 		}
-		if err = b.Put([]byte("user.session_toke"), resp.Body); err != nil {
+		if err = b.Put([]byte("user.session_token"), resp.Body); err != nil {
 			return err
 		}
 		return nil

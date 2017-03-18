@@ -31,6 +31,9 @@ var (
 	// ErrOperationTimeout represents a timeout error that occurs when response
 	// is not received from orderer in time.
 	ErrOperationTimeout = fmt.Errorf("operation timed out")
+
+	// ErrCocoonNotFound represents a missing/unknown cocoon
+	ErrCocoonNotFound = fmt.Errorf("cocoon not found")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

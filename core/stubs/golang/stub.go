@@ -157,7 +157,7 @@ func blockCommitter(entries []*Entry) interface{} {
 	}
 
 	if resp.Status != 200 {
-		return fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var block types.Block
@@ -250,7 +250,7 @@ func CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 	}
 
 	if resp.Status != 200 {
-		err = fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		err = fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 		if strings.Contains(err.Error(), "already exists") {
 			return nil, ErrAlreadyExist
 		}
@@ -290,7 +290,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var ledger types.Ledger
@@ -365,7 +365,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
@@ -401,7 +401,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var tx types.Transaction
@@ -440,7 +440,7 @@ func GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var tx types.Transaction
@@ -479,7 +479,7 @@ func GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 		return nil, err
 	}
 	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.StripRPCErrorPrefix(resp.Body))
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
 	var blk types.Block

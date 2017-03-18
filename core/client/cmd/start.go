@@ -10,7 +10,7 @@ import (
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
-	Use:   "start",
+	Use:   "start id",
 	Short: "Starts a new or stopped cocoon",
 	Long:  `Starts a new or stopped cocoon`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 
 		ops := new(cocoon.Ops)
 		if err := ops.Start(args[0]); err != nil {
-			log.Fatalf("%s", common.StripRPCErrorPrefix([]byte(err.Error())))
+			log.Fatalf("%s", common.GetRPCErrDesc(err))
 		}
 	},
 }

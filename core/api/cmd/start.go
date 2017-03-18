@@ -32,10 +32,9 @@ var startCmd = &cobra.Command{
 
 		nomad := scheduler.NewNomad()
 		nomad.SetAddr(schedulerAddr, false)
-		grpc.SetScheduler(nomad)
+		api := grpc.NewAPI(nomad)
 
 		var endedCh = make(chan bool)
-		api := grpc.NewAPI()
 		api.Start(bindAddr, endedCh)
 		<-endedCh
 	},
