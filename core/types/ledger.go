@@ -19,3 +19,9 @@ type Ledger struct {
 	Chained   bool   `json:"chained"`
 	CreatedAt int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
 }
+
+// ToJSON returns the json equivalent of this object
+func (l *Ledger) ToJSON() []byte {
+	json, _ := util.ToJSON(l)
+	return json
+}

@@ -36,3 +36,6 @@ import:
   version: v3.0.0
 - package: gopkg.in/oleiade/lane.v1
   version: ^1.0.0
+- package: github.com/ncodes/cstruct
+- package: github.com/ncodes/cstructs
+  version: 8f931014c922979c6668c7fb4f1a7fe4e3eb0a4e

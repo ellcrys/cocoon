@@ -9,6 +9,7 @@ service API {
     rpc Deploy(DeployRequest) returns (Response);
     rpc GetCocoon(GetCocoonRequest) returns (Response);
     rpc GetIdentity(GetIdentityRequest) returns (Response);
+    rpc AddCocoonToIdentity(AddCocoonToIdentityRequest) returns (Response);
 }
 
 message LoginRequest {
@@ -16,9 +17,14 @@ message LoginRequest {
     string password = 2;
 }
 
+message AddCocoonToIdentityRequest {
+    string email = 1;
+    string cocoonId = 2;
+}
+
 message CreateCocoonRequest {
-    string id = 1;
-    string url = 2;
+    string ID = 1;
+    string URL = 2;
     string language = 3;
     string releaseTag = 4;
     bytes buildParam = 5;
@@ -32,7 +38,8 @@ message CreateCocoonRequest {
 }
 
 message GetCocoonRequest {
-    string id = 1;
+    string ID = 1;
+    string Identity = 2;
 }
 
 message GetIdentityRequest {
@@ -40,9 +47,9 @@ message GetIdentityRequest {
 }
 
 message CreateReleaseRequest {
-    string id = 1;
+    string ID = 1;
     string cocoonID = 2;
-    string url = 3;
+    string URL = 3;
     string language = 4;
     string releaseTag = 5;
     bytes buildParam = 6;
@@ -51,13 +58,13 @@ message CreateReleaseRequest {
 }
 
 message DeployRequest {
-    string id = 1;
-    string url = 2;
+    string ID = 1;
+    string URL = 2;
     string language = 3;
     string releaseTag = 4;
     bytes buildParam = 5;
     string memory = 6;
-    string cpuShare = 7;
+    string CPUShare = 7;
 }
 
 message CreateIdentityRequest {
@@ -66,7 +73,7 @@ message CreateIdentityRequest {
 }
 
 message Response {
-    string id = 1;
+    string ID = 1;
     int32 status = 2;
     bytes body = 3;
 }

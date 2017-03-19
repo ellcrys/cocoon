@@ -18,8 +18,6 @@ var identityCreateCmd = &cobra.Command{
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
-		identity := identity.NewIdentity()
-
 		if len(args) == 0 {
 			log.Fatal("Email is required")
 		}

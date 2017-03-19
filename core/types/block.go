@@ -23,3 +23,9 @@ func (b *Block) GetTransactions() ([]*Transaction, error) {
 	}
 	return txs, nil
 }
+
+// ToJSON returns the json equivalent of this object
+func (b *Block) ToJSON() []byte {
+	json, _ := util.ToJSON(b)
+	return json
+}

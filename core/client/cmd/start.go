@@ -22,8 +22,7 @@ var startCmd = &cobra.Command{
 			log.Fatal("Cocoon ID is required")
 		}
 
-		ops := new(cocoon.Ops)
-		if err := ops.Start(args[0]); err != nil {
+		if err := cocoon.Start(args[0]); err != nil {
 			log.Fatalf("%s", common.GetRPCErrDesc(err))
 		}
 	},

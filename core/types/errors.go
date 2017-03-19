@@ -11,7 +11,7 @@ var (
 	ErrIdentityNotFound = fmt.Errorf("identity not found")
 
 	// ErrIdentityAlreadyExists indicates existence of an identity
-	ErrIdentityAlreadyExists = fmt.Errorf("An identity with matching email already exists")
+	ErrIdentityAlreadyExists = fmt.Errorf("an identity with matching email already exists")
 
 	// ErrLedgerNotFound indicates a missing ledger
 	ErrLedgerNotFound = fmt.Errorf("ledger not found")
@@ -34,6 +34,9 @@ var (
 
 	// ErrCocoonNotFound represents a missing/unknown cocoon
 	ErrCocoonNotFound = fmt.Errorf("cocoon not found")
+
+	// ErrInvalidOrExpiredToken represents an invalid/expired access token
+	ErrInvalidOrExpiredToken = fmt.Errorf("access token is invalid or expired")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

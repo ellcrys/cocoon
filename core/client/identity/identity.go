@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/grpc/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
@@ -25,18 +25,8 @@ func init() {
 	log.SetBackend(config.MessageOnlyBackend)
 }
 
-// Identity represents a person or an organization
-// in on the platform.
-type Identity struct {
-}
-
-// NewIdentity creates a new Identity
-func NewIdentity() *Identity {
-	return new(Identity)
-}
-
 // Create a new identity
-func (i *Identity) Create(email string) error {
+func Create(email string) error {
 
 	var err error
 
@@ -89,5 +79,10 @@ func (i *Identity) Create(email string) error {
 	log.Info("==> Successfully created a new identity")
 	log.Info("==> ID:", email)
 
+	return nil
+}
+
+// AddCocoon adds a cocoon to an identities collection
+func AddCocoon(email string, cocoon *types.Cocoon) error {
 	return nil
 }

@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/grpc"
+	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +32,7 @@ var startCmd = &cobra.Command{
 
 		nomad := scheduler.NewNomad()
 		nomad.SetAddr(schedulerAddr, false)
-		api := grpc.NewAPI(nomad)
+		api := api.NewAPI(nomad)
 
 		var endedCh = make(chan bool)
 		api.Start(bindAddr, endedCh)

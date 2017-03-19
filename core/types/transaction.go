@@ -31,3 +31,9 @@ func (t *Transaction) MakeHash() string {
 		crypto.ToBase64([]byte(t.Value)),
 		t.CreatedAt))
 }
+
+// ToJSON returns the json equivalent of this object
+func (t *Transaction) ToJSON() []byte {
+	json, _ := util.ToJSON(t)
+	return json
+}

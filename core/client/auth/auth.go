@@ -5,7 +5,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/grpc/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/client/db"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"

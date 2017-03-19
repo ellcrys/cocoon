@@ -29,8 +29,7 @@ var createCmd = &cobra.Command{
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
-		ops := new(cocoon.Ops)
-		err := ops.Create(&types.Cocoon{
+		err := cocoon.Create(&types.Cocoon{
 			URL:            url,
 			Language:       lang,
 			ReleaseTag:     releaseTag,

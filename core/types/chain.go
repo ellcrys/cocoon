@@ -17,3 +17,9 @@ type Chain struct {
 	Public    bool   `json:"public"`
 	CreatedAt int64  `json:"createdAt"`
 }
+
+// ToJSON returns the json equivalent of this object
+func (c *Chain) ToJSON() []byte {
+	json, _ := util.ToJSON(c)
+	return json
+}

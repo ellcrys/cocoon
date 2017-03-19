@@ -20,6 +20,11 @@ import (
 
 var log = logging.MustGetLogger("orderer")
 
+// SetLogLevel sets the log level of the logger
+func SetLogLevel(l logging.Level) {
+	logging.SetLevel(l, log.Module)
+}
+
 // DiscoverOrderers fetches a list of orderer service addresses
 // via consul service discovery API. For development purpose,
 // If DEV_ORDERER_ADDR is set, it will fetch the orderer

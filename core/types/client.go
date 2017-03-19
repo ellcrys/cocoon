@@ -1,7 +1,10 @@
 package types
 
+import "github.com/ellcrys/util"
+
 // Cocoon represents a smart contract application
 type Cocoon struct {
+	Identity       string
 	ID             string
 	URL            string
 	ReleaseTag     string
@@ -16,6 +19,12 @@ type Cocoon struct {
 	Signatories    []string
 }
 
+// ToJSON returns the json equivalent of this object
+func (c *Cocoon) ToJSON() []byte {
+	json, _ := util.ToJSON(c)
+	return json
+}
+
 // Release represents a new update to a cocoon's
 // configuration
 type Release struct {
@@ -27,4 +36,10 @@ type Release struct {
 	BuildParam  string
 	SigApproved int32
 	SigDenied   int32
+}
+
+// ToJSON returns the json equivalent of this object
+func (r *Release) ToJSON() []byte {
+	json, _ := util.ToJSON(r)
+	return json
 }

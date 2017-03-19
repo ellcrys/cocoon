@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"path"
 
@@ -45,4 +46,25 @@ func GetFirstByPrefix(db *bolt.DB, bucket, prefix string) ([]byte, []byte, error
 		return nil
 	})
 	return k, v, err
+}
+
+// GetUserSessionToken returns the user session token
+func GetUserSessionToken() (string, error) {
+
+	var userToken []byte
+	err := defaultDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("auth"))
+		if b != nil {
+			userToken = b.Get([]byte("user.session_token"))
+		}
+		return nil
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to read user session")
+	} else if len(userToken) == 0 {
+		return "", fmt.Errorf("no active session. Please login")
+	}
+
+	return string(userToken), nil
 }

@@ -1,5 +1,5 @@
-hash: b51f0320599422e8e826be8ae86b550ee0fc0630d8108c7f3e810a23bd91475d
-updated: 2017-03-15T12:12:51.691024596+01:00
+hash: b0ccf2ad5aff8308393bc9bbd7af892e0eea88a5c8c996ea8dd60a7ac108091a
+updated: 2017-03-19T07:44:20.645607843+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -14,18 +14,18 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: ce07fb6b0f1b8765b92022e45f96bd4349812e06
+  version: 3476dbfb369a05aff504826721704f192a3f2788
   subpackages:
-  - apitypes.
-  - apitypes./blkiodev
-  - apitypes./container
-  - apitypes./filters
-  - apitypes./mount
-  - apitypes./network
-  - apitypes./registry
-  - apitypes./strslice
-  - apitypes./swarm
-  - apitypes./versions
+  - api/types
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/filters
+  - api/types/mount
+  - api/types/network
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/versions
   - opts
   - pkg/archive
   - pkg/fileutils
@@ -55,6 +55,8 @@ imports:
   version: d9e8acdabb878df9e9bb4ce880d9e9ec5a194f26
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
+- name: github.com/fatih/structs
+  version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/franela/goreq
   version: fc08df6ca2d4a0d1a5ae24739aa268863943e723
 - name: github.com/fsnotify/fsnotify
@@ -96,7 +98,7 @@ imports:
   - hstore
   - oid
 - name: github.com/magiconair/properties
-  version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+  version: 0d05d44b762d864525491ddf4dd16d6624a9ab40
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -111,6 +113,10 @@ imports:
   version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/ncodes/cocoon-util
   version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
+- name: github.com/ncodes/cstruct
+  version: 99abde9f4cf236f701ded1fffa05e08b3faf91ac
+- name: github.com/ncodes/cstructs
+  version: 8f931014c922979c6668c7fb4f1a7fe4e3eb0a4e
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
 - name: github.com/ncodes/go-spin
@@ -120,12 +126,12 @@ imports:
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: github.com/opencontainers/runc
-  version: 31980a53ae7887b2c8f8715d13c3eb486c27b6cf
+  version: d27094036343c79ca29023ad530fa5be3d9b06c2
   subpackages:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/orcaman/concurrent-map
-  version: 33c5bcbc98a8c1699b433720ec85c48dd6a62a6e
+  version: 6ebc666e129e5ea0416b75f4da96a9e8de147195
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
@@ -137,7 +143,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 242673bbc820e051ef00033e274d32e08ece9e15
 - name: github.com/Sirupsen/logrus
-  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/smartystreets/goconvey
   version: 3bd662eac601ad6436e64776af2e112069eb2edc
   subpackages:
@@ -157,7 +163,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
-  version: 0b5690fd875739811249ca79d24afd8f89f188c6
+  version: 84f94806c67f59dd7ae87bc5351f7a9c94a4558d
 - name: github.com/square/go-jose
   version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
   subpackages:
@@ -168,7 +174,7 @@ imports:
   subpackages:
   - codec
 - name: golang.org/x/crypto
-  version: 728b753d0135da6801d45a38e6f43ff55779c5c2
+  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
   subpackages:
   - bcrypt
   - blowfish
