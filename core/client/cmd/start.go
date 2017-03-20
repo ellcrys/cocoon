@@ -23,7 +23,12 @@ var startCmd = &cobra.Command{
 		}
 
 		if err := cocoon.Start(args[0]); err != nil {
-			log.Fatalf("%s", common.GetRPCErrDesc(err))
+			desc := common.GetRPCErrDesc(err)
+			switch desc {
+			case "unknown service proto.API":
+				desc = "unable to connect to the cluster"
+			}
+			log.Fatalf("%s", desc)
 		}
 	},
 }
