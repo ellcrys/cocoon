@@ -71,7 +71,7 @@ func Create(cocoon *types.Cocoon) error {
 		URL:            cocoon.URL,
 		Language:       cocoon.Language,
 		ReleaseTag:     cocoon.ReleaseTag,
-		BuildParam:     []byte(cocoon.BuildParam),
+		BuildParam:     cocoon.BuildParam,
 		Memory:         cocoon.Memory,
 		CPUShare:       cocoon.CPUShare,
 		Releases:       cocoon.Releases,
@@ -97,7 +97,7 @@ func Create(cocoon *types.Cocoon) error {
 		URL:        cocoon.URL,
 		Language:   cocoon.Language,
 		ReleaseTag: cocoon.ReleaseTag,
-		BuildParam: []byte(cocoon.BuildParam),
+		BuildParam: cocoon.BuildParam,
 	})
 
 	if err != nil {
@@ -117,7 +117,7 @@ func Create(cocoon *types.Cocoon) error {
 }
 
 // Deploy creates and sends a deploy request to the server
-func deploy(cocoon *types.Cocoon) error {
+func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -126,7 +126,7 @@ func deploy(cocoon *types.Cocoon) error {
 	defer conn.Close()
 
 	client := proto.NewAPIClient(conn)
-	resp, err := client.Deploy(context.Background(), &proto.DeployRequest{
+	resp, err := client.Deploy(ctx, &proto.DeployRequest{
 		ID:         cocoon.ID,
 		URL:        cocoon.URL,
 		Language:   cocoon.Language,
@@ -165,7 +165,8 @@ func Start(id string) error {
 	stopSpinner := util.Spinner("Please wait")
 	cl := proto.NewAPIClient(conn)
 	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID: id,
+		ID:       id,
+		Identity: types.NewIdentity(userSession.Email, "").GetHashedEmail(),
 	})
 
 	if err != nil {
@@ -182,7 +183,7 @@ func Start(id string) error {
 	var cocoon types.Cocoon
 	err = util.FromJSON(resp.Body, &cocoon)
 
-	if err = deploy(&cocoon); err != nil {
+	if err = deploy(ctx, &cocoon); err != nil {
 		stopSpinner()
 		return err
 	}

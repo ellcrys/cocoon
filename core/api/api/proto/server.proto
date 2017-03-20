@@ -27,7 +27,7 @@ message CreateCocoonRequest {
     string URL = 2;
     string language = 3;
     string releaseTag = 4;
-    bytes buildParam = 5;
+    string buildParam = 5;
     string memory = 6;
     string CPUShare = 7;
     repeated string releases = 8;
@@ -52,7 +52,7 @@ message CreateReleaseRequest {
     string URL = 3;
     string language = 4;
     string releaseTag = 5;
-    bytes buildParam = 6;
+    string buildParam = 6;
     int32 sigApproved = 7;
     int32 sigDenied = 8;
 }
