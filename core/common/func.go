@@ -86,3 +86,8 @@ func AwaitTxChanX(ch chan *proto.Tx, maxDur time.Duration) (*proto.Tx, error) {
 func AwaitTxChan(ch chan *proto.Tx) (*proto.Tx, error) {
 	return AwaitTxChanX(ch, 2*time.Minute)
 }
+
+// MBToByte returns the amount of bytes in a MB.
+func MBToByte(mb int64) int64 {
+	return (1048576 * mb)
+}

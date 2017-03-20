@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server"
@@ -41,7 +42,7 @@ func getRequest() (*launcher.Request, error) {
 		URL:         ccURL,
 		Tag:         ccTag,
 		Lang:        ccLang,
-		DiskLimit:   util.ToInt64(diskLimit),
+		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 	}, nil
 }
