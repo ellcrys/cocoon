@@ -14,6 +14,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/ncodes/cstructs"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
@@ -181,9 +182,8 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 	// replace hashed name to user readable name
 	ledger.Name = params.GetName()
 
-	ledgerJSON, _ := util.ToJSON(ledger)
 	var protoLedger proto.Ledger
-	util.FromJSON(ledgerJSON, &protoLedger)
+	cstructs.Copy(ledger, &protoLedger)
 
 	return &protoLedger, nil
 }
@@ -202,9 +202,8 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 	// replace hashed name to user readable name
 	ledger.Name = params.GetName()
 
-	ledgerJSON, _ := util.ToJSON(ledger)
 	var protoLedger proto.Ledger
-	util.FromJSON(ledgerJSON, &protoLedger)
+	cstructs.Copy(ledger, &protoLedger)
 
 	return &protoLedger, nil
 }
@@ -223,16 +222,17 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		return nil, types.ErrLedgerNotFound
 	}
 
+	// copy individual tx from []proto.Transaction to []types.Transaction
+	// and set transactions key and block id
 	blockID := util.Sha256(util.UUID4())
-	for _, tx := range params.GetTransactions() {
+	var transactions = make([]*types.Transaction, len(params.GetTransactions()))
+	for i, protoTx := range params.GetTransactions() {
+		var tx = types.Transaction{}
+		cstructs.Copy(protoTx, &tx)
 		tx.Key = od.store.MakeTxKey(params.GetCocoonCodeId(), tx.Key)
-		tx.BlockId = blockID
+		tx.BlockID = blockID
+		transactions[i] = &tx
 	}
-
-	// convert []proto.Transaction to []types.Transaction
-	txsAsJSON, _ := util.ToJSON(params.GetTransactions())
-	var transactions []*types.Transaction
-	util.FromJSON(txsAsJSON, &transactions)
 
 	var block *proto.Block
 	var createBlockFunc func() error
@@ -316,9 +316,8 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		tx.BlockID = ""
 	}
 
-	txJSON, _ := util.ToJSON(tx)
 	var protoTx proto.Transaction
-	util.FromJSON(txJSON, &protoTx)
+	cstructs.Copy(tx, &protoTx)
 
 	log.Debug("Get(): Time taken: ", time.Since(start))
 
@@ -357,9 +356,8 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 		tx.BlockID = ""
 	}
 
-	txJSON, _ := util.ToJSON(tx)
 	var protoTx proto.Transaction
-	util.FromJSON(txJSON, &protoTx)
+	cstructs.Copy(tx, &protoTx)
 
 	return &protoTx, nil
 }
@@ -382,9 +380,8 @@ func (od *Orderer) GetBlockByID(ctx context.Context, params *proto.GetBlockParam
 		return nil, types.ErrBlockNotFound
 	}
 
-	blkJSON, _ := util.ToJSON(blk)
 	var protoBlk proto.Block
-	util.FromJSON(blkJSON, &protoBlk)
+	cstructs.Copy(blk, &protoBlk)
 
 	return &protoBlk, nil
 }
@@ -417,9 +414,13 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 		return nil, err
 	}
 
-	txsJSON, _ := util.ToJSON(txs)
-	var protoTxs []*proto.Transaction
-	util.FromJSON(txsJSON, &protoTxs)
+	// copy individual tx from []types.Transaction to []proto.Transaction
+	var protoTxs = make([]*proto.Transaction, len(txs))
+	for i, tx := range txs {
+		var protoTx = proto.Transaction{}
+		cstructs.Copy(tx, &protoTx)
+		protoTxs[i] = &protoTx
+	}
 
 	return &proto.Transactions{
 		Transactions: protoTxs,

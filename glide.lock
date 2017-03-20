@@ -1,6 +1,8 @@
-hash: b0ccf2ad5aff8308393bc9bbd7af892e0eea88a5c8c996ea8dd60a7ac108091a
-updated: 2017-03-19T07:44:20.645607843+01:00
+hash: 49d3f270d3e55317cae53b64f8117db0b689c632a11a1f299e27cc532e62f8a9
+updated: 2017-03-20T10:40:11.646453762+01:00
 imports:
+- name: github.com/asaskevich/govalidator
+  version: 397c84d57feadd5cc210fd9a1c09895033d0893b
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
@@ -98,7 +100,7 @@ imports:
   - hstore
   - oid
 - name: github.com/magiconair/properties
-  version: 0d05d44b762d864525491ddf4dd16d6624a9ab40
+  version: 6806cf261c13880f296ed31331873191e4d87b47
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -113,14 +115,14 @@ imports:
   version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/ncodes/cocoon-util
   version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
-- name: github.com/ncodes/cstruct
-  version: 99abde9f4cf236f701ded1fffa05e08b3faf91ac
 - name: github.com/ncodes/cstructs
-  version: 8f931014c922979c6668c7fb4f1a7fe4e3eb0a4e
+  version: ceebf9da91137bf39d30cefc2aa81a3e92a1c356
 - name: github.com/ncodes/go-dockerclient
   version: f3718aa8ef19b3ba11d3a665e4f9b7a2d2ad7d24
 - name: github.com/ncodes/go-spin
   version: ddabc69b6151945c05fc40e2ae3f2fc9396b77a2
+- name: github.com/ncodes/mapstructure
+  version: c7b2f614d5cd8bd739a2271d2c548a1026259c4b
 - name: github.com/olebedev/emitter
   version: 9110dbae3d07cb26c2993dbf3bdbd0aad98329f9
 - name: github.com/op/go-logging

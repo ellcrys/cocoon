@@ -15,6 +15,7 @@ import (
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
+	logging "github.com/op/go-logging"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
 	context "golang.org/x/net/context"
 )
@@ -43,6 +44,7 @@ func dropDB(t *testing.T) error {
 func startOrderer(startCB func(*Orderer, chan bool)) {
 	endCh := make(chan bool)
 	addr := util.Env("ORDERER_ADDR", "127.0.0.1:7001")
+	SetLogLevel(logging.CRITICAL)
 	newOrderer := NewOrderer()
 	newOrderer.SetStore(new(impl.PostgresStore))
 	newOrderer.SetBlockchain(new((blkch_impl.PostgresBlockchain)))
@@ -216,7 +218,6 @@ func TestOrderer(t *testing.T) {
 					So(ledger, ShouldNotBeNil)
 
 					key := util.UUID4()
-					fmt.Println("Key: ", key)
 					id := util.Sha256(util.UUID4())
 					txs := []*proto.Transaction{
 						{Ledger: ledgerName, Id: id, Key: key, Value: util.Sha256(util.UUID4())},
@@ -251,7 +252,6 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should successfully get a transaction", func() {
-						fmt.Println("Key 2: ", key)
 						tx, err := od.Get(context.Background(), &proto.GetParams{
 							CocoonCodeId: "cocoon-abc",
 							Ledger:       ledgerName,
