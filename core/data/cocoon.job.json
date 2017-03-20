@@ -46,7 +46,7 @@
               {
                 "Name": "cocoons-{{ID}}",
                 "Tags": ["{{ID}}"],
-                "PortLabel": "connector",
+                "PortLabel": "connector-grpc",
                 "Checks": [
                   {
                     "Id": "",
@@ -82,7 +82,7 @@
                 {
                   "MBits": {{MBits}},
                   "DynamicPorts":[
-                    { "Label":"connector"},
+                    { "Label":"connector-grpc"},
                     { "Label":"connector-http"}
                   ]
                 }
