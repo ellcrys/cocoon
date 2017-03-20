@@ -82,7 +82,7 @@
                 {
                   "MBits": {{MBits}},
                   "DynamicPorts":[
-                    { "Label":"connector"}
+                    { "Label":"connector"},
                     { "Label":"connector-http"}
                   ]
                 }
