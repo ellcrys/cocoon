@@ -56,7 +56,7 @@
                 "Interval": 10000000000,
                 "Protocol": "http"
               }]
-            }],
+            ],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-connector.sh",
               "SCRIPTS_DIR": "/local/scripts"
