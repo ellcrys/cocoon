@@ -43,9 +43,19 @@
               "COCOON_DISK_LIMIT": "{{DiskMB}}"
             },
             "Services": [{
-              "Name": "{{ID}}",
+              "Name": "cocoons-{{ID}}",
               "Tags": ["{{ID}}"],
-              "PortLabel": "connector"   
+              "PortLabel": "connector",
+              "Checks": [{
+                "Id": "",
+                "Name": "alive",
+                "Type": "tcp",
+                "Path": "/ok",
+                "Port": "connector-http",
+                "Timeout": 2000000000,
+                "Interval": 10000000000,
+                "Protocol": "http"
+              }]
             }],
             "Meta": {
               "DEPLOY_SCRIPT_NAME": "run-connector.sh",
@@ -69,6 +79,7 @@
                   "MBits": {{MBits}},
                   "DynamicPorts":[
                     { "Label":"connector"}
+                    { "Label":"connector-http"}
                   ]
                 }
               ]

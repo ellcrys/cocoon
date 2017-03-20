@@ -42,7 +42,7 @@ var startCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(startCmd)
-	startCmd.Flags().StringP("bind-addr", "", ":8004", "The address to bind to. Expect format ip:port.")
+	startCmd.Flags().StringP("bind-addr", "", ":8005", "The address to bind to. Expect format ip:port.")
 	startCmd.Flags().StringP("scheduler-addr", "", "", "The address to the scheduler")
 	startCmd.Flags().BoolP("scheduler-addr-https", "", true, "Whether to use https when accessing the scheduler")
 }

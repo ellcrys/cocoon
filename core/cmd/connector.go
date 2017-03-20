@@ -72,16 +72,21 @@ var connectorCmd = &cobra.Command{
 		go lchr.Launch(req)
 
 		// start grpc API server
-		apiServer := server.NewAPIServer(lchr)
-		apiServerAddr := util.Env("NOMAD_IP_connector", "")
-		apiServerPort := util.Env("NOMAD_PORT_connector", "8002")
-		go apiServer.Start(fmt.Sprintf("%s:%s", apiServerAddr, apiServerPort), make(chan bool, 1))
+		grpcServer := server.NewAPIServer(lchr)
+		grpcServerAddr := util.Env("NOMAD_IP_connector", "")
+		grpcServerPort := util.Env("NOMAD_PORT_connector", "8002")
+		go grpcServer.Start(fmt.Sprintf("%s:%s", grpcServerAddr, grpcServerPort), make(chan bool, 1))
+
+		httpServer := server.NewHTTPServer()
+		httpServerAddr := util.Env("NOMAD_IP_connector-http", "")
+		httpServerPort := util.Env("NOMAD_PORT_connector-http", "8003")
+		go httpServer.Start(fmt.Sprintf("%s:%s", httpServerAddr, httpServerPort))
 
 		if <-waitCh {
-			apiServer.Stop(1)
+			grpcServer.Stop(1)
 			log.Fatal("launcher has failed")
 		} else {
-			apiServer.Stop(0)
+			grpcServer.Stop(0)
 		}
 
 		log.Info("launcher successfully exited")
