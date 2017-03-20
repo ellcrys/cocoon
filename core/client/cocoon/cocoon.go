@@ -20,8 +20,8 @@ import (
 
 var log = logging.MustGetLogger("api.client")
 
-// APIAddress is the remote address to the cluster server
-var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8004")
+// APIAddress is the remote address to the cluster server (TODO: change this to production address)
+var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8005")
 
 func init() {
 	log.SetBackend(config.MessageOnlyBackend)
