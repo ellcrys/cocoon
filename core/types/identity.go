@@ -11,6 +11,14 @@ type Identity struct {
 	ClientSessions []string
 }
 
+// NewIdentity creates a new Identity
+func NewIdentity(email, password string) *Identity {
+	return &Identity{
+		Email:    email,
+		Password: password,
+	}
+}
+
 // GetHashedEmail returuns the hashed version of the email
 func (i *Identity) GetHashedEmail() string {
 	return util.Sha256(strings.ToLower(strings.TrimSpace(i.Email)))

@@ -8,6 +8,7 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/client/db"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -47,12 +48,17 @@ func Login(email, password string) error {
 		return fmt.Errorf("%s", resp.Body)
 	}
 
+	userSession := &types.UserSession{
+		Email: email,
+		Token: string(resp.Body),
+	}
+
 	err = db.GetDefaultDB().Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("auth"))
 		if err != nil {
 			return err
 		}
-		if err = b.Put([]byte("user.session_token"), resp.Body); err != nil {
+		if err = b.Put([]byte("auth.user_session"), userSession.ToJSON()); err != nil {
 			return err
 		}
 		return nil

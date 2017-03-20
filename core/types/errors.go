@@ -37,6 +37,9 @@ var (
 
 	// ErrInvalidOrExpiredToken represents an invalid/expired access token
 	ErrInvalidOrExpiredToken = fmt.Errorf("access token is invalid or expired")
+
+	// ErrClientNoActiveSession represents a lack of active user session on the client
+	ErrClientNoActiveSession = fmt.Errorf("No active session. Please login")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

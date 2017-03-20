@@ -37,6 +37,11 @@ func Create(cocoon *types.Cocoon) error {
 		return err
 	}
 
+	userSession, err := db.GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
 	release := types.Release{
 		ID:         util.UUID4(),
 		CocoonID:   cocoon.ID,
@@ -54,16 +59,11 @@ func Create(cocoon *types.Cocoon) error {
 	}
 	defer conn.Close()
 
-	userSessionToken, err := db.GetUserSessionToken()
-	if err != nil {
-		return err
-	}
-
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 
 	client := proto.NewAPIClient(conn)
-	md := metadata.Pairs("access_token", userSessionToken)
+	md := metadata.Pairs("access_token", userSession.Token)
 	ctx := context.Background()
 	ctx = metadata.NewContext(ctx, md)
 	resp, err := client.CreateCocoon(ctx, &proto.CreateCocoonRequest{
@@ -83,7 +83,7 @@ func Create(cocoon *types.Cocoon) error {
 	if err != nil {
 		stopSpinner()
 		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
-			return fmt.Errorf("No active session. Please login")
+			return types.ErrClientNoActiveSession
 		}
 		return err
 	} else if resp.Status != 200 {
@@ -147,6 +147,15 @@ func deploy(cocoon *types.Cocoon) error {
 // Start starts a new or stopped cocoon code
 func Start(id string) error {
 
+	userSession, err := db.GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	md := metadata.Pairs("access_token", userSession.Token)
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, md)
+
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
@@ -155,12 +164,15 @@ func Start(id string) error {
 
 	stopSpinner := util.Spinner("Please wait")
 	cl := proto.NewAPIClient(conn)
-	resp, err := cl.GetCocoon(context.Background(), &proto.GetCocoonRequest{
+	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
 		ID: id,
 	})
 
 	if err != nil {
 		stopSpinner()
+		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
+			return types.ErrClientNoActiveSession
+		}
 		return err
 	} else if resp.Status != 200 {
 		stopSpinner()

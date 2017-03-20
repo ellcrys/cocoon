@@ -61,7 +61,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	defer ordererConn.Close()
 
 	resp, err := api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: req.GetEmail(),
+		Email: types.NewIdentity(req.GetEmail(), "").GetHashedEmail(),
 	})
 
 	if err != nil && err != types.ErrIdentityNotFound {

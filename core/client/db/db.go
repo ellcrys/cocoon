@@ -7,7 +7,9 @@ import (
 	"path"
 
 	"github.com/boltdb/bolt"
+	"github.com/ellcrys/util"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/ncodes/cocoon/core/types"
 )
 
 var defaultDB *bolt.DB
@@ -48,23 +50,29 @@ func GetFirstByPrefix(db *bolt.DB, bucket, prefix string) ([]byte, []byte, error
 	return k, v, err
 }
 
-// GetUserSessionToken returns the user session token
-func GetUserSessionToken() (string, error) {
+// GetUserSessionToken returns the user session
+func GetUserSessionToken() (*types.UserSession, error) {
 
-	var userToken []byte
-	err := defaultDB.View(func(tx *bolt.Tx) error {
+	var err error
+	var userSession types.UserSession
+
+	err = defaultDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("auth"))
 		if b != nil {
-			userToken = b.Get([]byte("user.session_token"))
+			userSessionBytes := b.Get([]byte("auth.user_session"))
+			if len(userSessionBytes) == 0 {
+				return nil
+			}
+			err = util.FromJSON(userSessionBytes, &userSession)
 		}
 		return nil
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to read user session")
-	} else if len(userToken) == 0 {
-		return "", fmt.Errorf("no active session. Please login")
+		return nil, fmt.Errorf("failed to read user session")
+	} else if userSession.Token == "" {
+		return nil, types.ErrClientNoActiveSession
 	}
 
-	return string(userToken), nil
+	return &userSession, nil
 }
