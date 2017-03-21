@@ -52,6 +52,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
+		To: link.GetCocoonID(),
 		Name:   types.TxCreateLedger,
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	}, respCh)
@@ -81,7 +82,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 }
 
 // GetLedger fetches a ledger
-func GetLedger(ledgerName string) (*types.Ledger, error) {
+func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -93,6 +94,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
+		To: link.GetCocoonID(),
 		Name:   types.TxGetLedger,
 		Params: []string{ledgerName},
 	}, respCh)
@@ -117,7 +119,7 @@ func GetLedger(ledgerName string) (*types.Ledger, error) {
 }
 
 // PutIn adds a new transaction to a ledger
-func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
+func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
 
@@ -125,7 +127,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 		return nil, ErrNotConnected
 	}
 
-	ledger, err := GetLedger(ledgerName)
+	ledger, err := link.GetLedger(ledgerName)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +168,7 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 	err = sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
+		To: link.GetCocoonID(),
 		Name:   types.TxPut,
 		Params: []string{ledgerName},
 		Body:   txJSON,
@@ -189,12 +192,12 @@ func PutIn(ledgerName string, key string, value []byte) (*types.Transaction, err
 }
 
 // Put adds a new transaction into the default ledger
-func Put(key string, value []byte) (*types.Transaction, error) {
-	return PutIn(GetDefaultLedgerName(), key, value)
+func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
+	return link.PutIn(GetDefaultLedgerName(), key, value)
 }
 
 // GetFrom returns a transaction by its key and the ledger it belongs to
-func GetFrom(ledgerName, key string) (*types.Transaction, error) {
+func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 	if !isConnected() {
 		return nil, ErrNotConnected
@@ -205,6 +208,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   types.TxGet,
+		To: link.GetCocoonID(),
 		Params: []string{ledgerName, key},
 	}, respCh)
 	if err != nil {
@@ -229,7 +233,7 @@ func GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 // Get returns a transaction that belongs to the default legder by its key.
 func (link *Link) Get(key string) (*types.Transaction, error) {
-	return GetFrom(GetDefaultLedgerName(), key)
+	return link.GetFrom(GetDefaultLedgerName(), key)
 }
 
 // GetByIDFrom returns a transaction by its id and the ledger it belongs to
@@ -244,6 +248,7 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   types.TxGetByID,
+		To: link.GetCocoonID(),
 		Params: []string{ledgerName, id},
 	}, respCh)
 	if err != nil {
@@ -282,6 +287,7 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
+		To: link.GetCocoonID(),
 		Name:   types.TxGetBlockByID,
 		Params: []string{ledgerName, id},
 	}, respCh)

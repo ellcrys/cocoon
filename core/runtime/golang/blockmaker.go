@@ -4,6 +4,8 @@ import (
 	"sort"
 	"time"
 
+	"fmt"
+
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"gopkg.in/oleiade/lane.v1"
@@ -15,6 +17,7 @@ var logBlockMaker = logging.MustGetLogger("ccode.stub.blockmaker")
 // and a response channel to send the block information
 type Entry struct {
 	Tx       *types.Transaction
+	To       string
 	RespChan chan interface{}
 }
 
@@ -28,7 +31,7 @@ func (e Entries) Len() int {
 
 // Less checks whether i is less than j
 func (e Entries) Less(i, j int) bool {
-	return e[i].Tx.Ledger < e[j].Tx.Ledger
+	return fmt.Sprintf("%s.%s", e[i].To, e[i].Tx.Ledger) < fmt.Sprintf("%s.%s", e[j].To, e[j].Tx.Ledger)
 }
 
 // Swap swaps i and j
@@ -123,13 +126,17 @@ func (b *BlockMaker) Stop() {
 	close(b.stop)
 }
 
+// groupEntriesByLedgerName creates a group of entries where all entries
+// in a group all have the same LedgerName and To value.
 func (b *BlockMaker) groupEntriesByLedgerName(entries Entries) [][]*Entry {
 	sort.Sort(entries)
 	var grp = [][]*Entry{}
 	var curLedgerName = ""
+	var curTo = ""
 	for _, entry := range entries {
-		if entry.Tx.Ledger != curLedgerName {
+		if entry.Tx.Ledger != curLedgerName || entry.To != curTo {
 			curLedgerName = entry.Tx.Ledger
+			curTo = entry.To
 			grp = append(grp, []*Entry{})
 		}
 		grp[len(grp)-1] = append(grp[len(grp)-1], entry)

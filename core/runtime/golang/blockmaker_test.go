@@ -89,21 +89,30 @@ func TestBlockMaker(t *testing.T) {
 		Convey(".groupEntriesByLedgerName", func() {
 			Convey("Should return expected entries in expected order", func() {
 				ch1 := make(chan interface{})
-				a := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1}
-				a2 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1}
-				c := &Entry{Tx: &types.Transaction{Ledger: "c"}, RespChan: ch1}
-				b := &Entry{Tx: &types.Transaction{Ledger: "b"}, RespChan: ch1}
-				ab := &Entry{Tx: &types.Transaction{Ledger: "ab"}, RespChan: ch1}
-				entries := []*Entry{a, a2, c, b, ab}
+				var entries Entries = []*Entry{}
+				a := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "c1"}
+				a2 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "c1"}
+				c := &Entry{Tx: &types.Transaction{Ledger: "c"}, RespChan: ch1, To: "c3"}
+				b := &Entry{Tx: &types.Transaction{Ledger: "b"}, RespChan: ch1, To: "c2"}
+				ab := &Entry{Tx: &types.Transaction{Ledger: "ab"}, RespChan: ch1, To: "c4"}
+				a3 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "ab"}
+				entries = append(entries, a)
+				entries = append(entries, a2)
+				entries = append(entries, c)
+				entries = append(entries, b)
+				entries = append(entries, ab)
+				entries = append(entries, a3)
 				grp := bm.groupEntriesByLedgerName(entries)
 				expected := [][]*Entry{
+					[]*Entry{a3},
 					[]*Entry{a, a2},
-					[]*Entry{ab},
 					[]*Entry{b},
 					[]*Entry{c},
+					[]*Entry{ab},
 				}
 				So(grp, ShouldResemble, expected)
 			})
+
 		})
 	})
 }

@@ -86,7 +86,7 @@ func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
 			}()
 
 			functionName := tx.GetParams()[0]
-			result, err := ccode.OnInvoke(NewLink(""), tx.GetId(), functionName, tx.GetParams()[1:])
+			result, err := ccode.OnInvoke(defaultLink, tx.GetId(), functionName, tx.GetParams()[1:])
 			if err != nil {
 				return err
 			}

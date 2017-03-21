@@ -31,6 +31,9 @@ var (
 	// stop channel to stop the server/cocoon code
 	serverDone chan bool
 
+	// Default runtime link
+	defaultLink = NewLink("")
+
 	// The default ledger is the global ledger.
 	defaultLedger = GetGlobalLedgerName()
 
@@ -110,7 +113,7 @@ func Run(cc CocoonCode) {
 
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
-		if err = cc.OnInit(NewLink("")); err != nil {
+		if err = cc.OnInit(defaultLink); err != nil {
 			log.Errorf("cocoode OnInit() returned error: %s", err)
 			Stop(1)
 		} else {
@@ -128,6 +131,12 @@ func Run(cc CocoonCode) {
 // if succeed or error if otherwise.
 func blockCommitter(entries []*Entry) interface{} {
 
+	var block types.Block
+
+	if len(entries) == 0 {
+		return block
+	}
+
 	txs := make([]*types.Transaction, len(entries))
 	for i, e := range entries {
 		txs[i] = e.Tx
@@ -143,6 +152,7 @@ func blockCommitter(entries []*Entry) interface{} {
 		Id:     txID,
 		Invoke: true,
 		Name:   types.TxPut,
+		To: entries[0].To,
 		Params: []string{ledgerName},
 		Body:   txsJSON,
 	}, respCh)
@@ -159,7 +169,6 @@ func blockCommitter(entries []*Entry) interface{} {
 		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
 	}
 
-	var block types.Block
 	if err = util.FromJSON(resp.Body, &block); err != nil {
 		return fmt.Errorf("failed to unmarshall response data")
 	}
@@ -200,7 +209,7 @@ func isConnected() bool {
 
 // SetDefaultLedger sets the default ledger
 func SetDefaultLedger(name string) error {
-	_, err := GetLedger(name)
+	_, err := defaultLink.GetLedger(name)
 	if err != nil {
 		return err
 	}
