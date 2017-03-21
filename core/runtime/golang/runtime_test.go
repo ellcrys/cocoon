@@ -79,9 +79,9 @@ func TestStub(t *testing.T) {
 		SetDebugLevel(logging.CRITICAL)
 		Convey("GoStub", t, func() {
 
-			Convey(".GetGlobalLedgerName", func() {
+			Convey(".GetGlobalLedger", func() {
 				Convey("Should return the expected value set in types.GetGlobalLedgerName()", func() {
-					So(GetGlobalLedgerName(), ShouldEqual, types.GetGlobalLedgerName())
+					So(GetGlobalLedger(), ShouldEqual, types.GetGlobalLedgerName())
 				})
 			})
 

@@ -14,7 +14,8 @@ import (
 // Link provides access to external services
 // like ledgers, cocoon codes, event and messaging services.
 type Link struct {
-	cocoonID string
+	cocoonID      string
+	defaultLedger string
 }
 
 // NewLink creates a new instance that represents
@@ -25,9 +26,25 @@ func NewLink(cocoonID string) *Link {
 	}
 }
 
+// SetDefaultLedger sets this link's default ledger
+func (link *Link) SetDefaultLedger(name string) {
+	link.defaultLedger = name
+}
+
+// GetDefaultLedger returns the link's default ledger
+func (link *Link) GetDefaultLedger() string {
+	return link.defaultLedger
+}
+
 // GetCocoonID returns the cocoon id attached to this link
 func (link *Link) GetCocoonID() string {
 	return link.cocoonID
+}
+
+// NewRangeGetter creates an instance of a RangeGetter bounded to the default ledger
+// and cocoon id of this link.
+func (link *Link) NewRangeGetter(start, end string, inclusive bool) *RangeGetter {
+	return NewRangeGetter(link.GetDefaultLedger(), link.GetCocoonID(), start, end, inclusive)
 }
 
 // CreateLedger creates a new ledger by sending an
@@ -37,7 +54,7 @@ func (link *Link) GetCocoonID() string {
 // PUT operations will only be incuded in the types.
 func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
-	if util.Sha256(name) == GetGlobalLedgerName() {
+	if util.Sha256(name) == GetGlobalLedger() {
 		return nil, fmt.Errorf("cannot use a reserved name")
 	} else if !common.IsValidResName(name) {
 		return nil, fmt.Errorf("invalid ledger name")
@@ -194,7 +211,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 // Put adds a new transaction into the default ledger
 func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
-	return link.PutIn(GetDefaultLedgerName(), key, value)
+	return link.PutIn(link.GetDefaultLedger(), key, value)
 }
 
 // GetFrom returns a transaction by its key and the ledger it belongs to
@@ -234,7 +251,7 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 // Get returns a transaction that belongs to the default legder by its key.
 func (link *Link) Get(key string) (*types.Transaction, error) {
-	return link.GetFrom(GetDefaultLedgerName(), key)
+	return link.GetFrom(link.GetDefaultLedger(), key)
 }
 
 // GetByIDFrom returns a transaction by its id and the ledger it belongs to
@@ -274,7 +291,7 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 
 // GetByID returns a transaction that belongs to the default legder by its id.
 func (link *Link) GetByID(id string) (*types.Transaction, error) {
-	return link.GetByIDFrom(GetDefaultLedgerName(), id)
+	return link.GetByIDFrom(link.GetDefaultLedger(), id)
 }
 
 // GetBlockFrom returns a block from a ledger by its block id
@@ -314,5 +331,5 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
 // GetBlock returns a block from the default ledger by its block id
 func (link *Link) GetBlock(id string) (*types.Block, error) {
-	return link.GetBlockFrom(GetDefaultLedgerName(), id)
+	return link.GetBlockFrom(link.GetDefaultLedger(), id)
 }

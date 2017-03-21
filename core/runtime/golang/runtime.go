@@ -34,9 +34,6 @@ var (
 	// Default runtime link
 	defaultLink = NewLink("")
 
-	// The default ledger is the global ledger.
-	defaultLedger = GetGlobalLedgerName()
-
 	// txChannels holds the channels to send transaction responses to
 	txRespChannels = cmap.New()
 
@@ -79,11 +76,6 @@ func init() {
 	log = logging.MustGetLogger("ccode.stub")
 }
 
-// GetGlobalLedgerName returns the name of the global ledger
-func GetGlobalLedgerName() string {
-	return types.GetGlobalLedgerName()
-}
-
 // Run starts the stub server, takes a cocoon code and attempts to initialize it..
 func Run(cc CocoonCode) {
 
@@ -108,6 +100,8 @@ func Run(cc CocoonCode) {
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
+
+	defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
 
 	ccode = cc
 
@@ -152,7 +146,7 @@ func blockCommitter(entries []*Entry) interface{} {
 		Id:     txID,
 		Invoke: true,
 		Name:   types.TxPut,
-		To: entries[0].To,
+		To:     entries[0].To,
 		Params: []string{ledgerName},
 		Body:   txsJSON,
 	}, respCh)
@@ -207,17 +201,7 @@ func isConnected() bool {
 	return defaultServer.stream != nil
 }
 
-// SetDefaultLedger sets the default ledger
-func SetDefaultLedger(name string) error {
-	_, err := defaultLink.GetLedger(name)
-	if err != nil {
-		return err
-	}
-	defaultLedger = name
-	return nil
-}
-
-// GetDefaultLedgerName returns the name of the default ledger.
-func GetDefaultLedgerName() string {
-	return defaultLedger
+// GetGlobalLedger returns the name of the global ledger.
+func GetGlobalLedger() string {
+	return types.GetGlobalLedgerName()
 }

@@ -18,6 +18,7 @@ var (
 // RangeGetter defines a means to fetch keys of
 // a specific range with support for
 type RangeGetter struct {
+	to         string
 	ledgerName string
 	start      string
 	end        string
@@ -30,29 +31,14 @@ type RangeGetter struct {
 	Error      error
 }
 
-// NewRangeGetterFrom creates a new range getter to traverse a specific ledger.
+// NewRangeGetter creates a new range getter to traverse a specific ledger.
 // Set start and end key will get transactions between those keys. However, the end key is
 // not included by default. Set inclusive to true to include the end key. Set only start to
 // get all keys matching that key as a prefix or set only end key to get match keys as a surfix.
-func NewRangeGetterFrom(ledgerName string, start, end string, inclusive bool) *RangeGetter {
+func NewRangeGetter(ledgerName, to, start, end string, inclusive bool) *RangeGetter {
 	return &RangeGetter{
+		to:         to,
 		ledgerName: ledgerName,
-		start:      start,
-		end:        end,
-		inclusive:  inclusive,
-		limit:      50,
-		offset:     0,
-		curPage:    0,
-	}
-}
-
-// NewRangeGetter creates a new range getter to traverse the default ledger.
-// Set start and end key will get transactions between those keys. However, the end key is
-// not included by default. Set inclusive to true to include the end key. Set only start to
-// get all keys matching that key as a prefix or set only end key to get match keys as a surfix.
-func NewRangeGetter(start, end string, inclusive bool) *RangeGetter {
-	return &RangeGetter{
-		ledgerName: GetDefaultLedgerName(),
 		start:      start,
 		end:        end,
 		inclusive:  inclusive,
@@ -69,6 +55,7 @@ func (rg *RangeGetter) fetch() error {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
+		To:     rg.to,
 		Name:   types.TxRangeGet,
 		Params: []string{rg.ledgerName, rg.start, rg.end, strconv.FormatBool(rg.inclusive), strconv.Itoa(rg.limit), strconv.Itoa(rg.offset)},
 	}, respCh)
