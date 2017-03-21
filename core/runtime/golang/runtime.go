@@ -76,6 +76,11 @@ func init() {
 	log = logging.MustGetLogger("ccode.stub")
 }
 
+// GetID returns the cocoon id
+func GetID() string {
+	return os.Getenv("COCOON_ID")
+}
+
 // Run starts the stub server, takes a cocoon code and attempts to initialize it..
 func Run(cc CocoonCode) {
 

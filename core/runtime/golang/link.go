@@ -27,8 +27,9 @@ func NewLink(cocoonID string) *Link {
 }
 
 // SetDefaultLedger sets this link's default ledger
-func (link *Link) SetDefaultLedger(name string) {
+func (link *Link) SetDefaultLedger(name string) *Link {
 	link.defaultLedger = name
+	return link
 }
 
 // GetDefaultLedger returns the link's default ledger

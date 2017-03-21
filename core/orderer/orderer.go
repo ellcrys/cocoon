@@ -288,7 +288,7 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 
 	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
-		Name:         params.GetLedger(),
+		Name:     params.GetLedger(),
 	})
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 
 	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
-		Name:         params.GetLedger(),
+		Name:     params.GetLedger(),
 	})
 	if err != nil {
 		return nil, err
