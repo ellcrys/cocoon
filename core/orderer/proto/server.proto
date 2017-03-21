@@ -12,38 +12,38 @@ service Orderer {
 }
 
 message CreateLedgerParams {
-    string cocoonCodeId = 1;
+    string cocoonID = 1;
     string name = 2;
     bool public = 3;
     bool chained = 4;
 }
 
 message PutTransactionParams {
-    string cocoonCodeId = 1;
+    string cocoonID = 1;
     string ledgerName = 2;
     repeated Transaction transactions = 3;
 }
 
 message GetLedgerParams {
-    string cocoonCodeId = 1;
+    string cocoonID = 1;
     string name = 2;
 }
 
 message GetParams {
-    string cocoonCodeId = 1; 
+    string cocoonID = 1; 
     string ledger = 2;   
     string id = 3;
     string key = 4;
 }
 
 message GetBlockParams {
-    string cocoonCodeId = 1; 
+    string cocoonID = 1; 
     string ledger = 2;   
     string id = 3;
 }
 
 message GetRangeParams {
-    string cocoonCodeId = 1;
+    string cocoonID = 1;
     string ledger = 2;
     string startKey = 3;
     string endKey = 4;

@@ -69,7 +69,7 @@ func TestOrderer(t *testing.T) {
 
 				Convey("Should create a ledger and chain", func() {
 					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-						CocoonCodeId: "cocoon-123",
+						CocoonID: "cocoon-123",
 						Name:         "myledger",
 						Public:       true,
 						Chained:      true,
@@ -85,7 +85,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return error if ledger with same name exists", func() {
 						ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-							CocoonCodeId: "cocoon-123",
+							CocoonID: "cocoon-123",
 							Name:         "myledger",
 							Public:       false,
 						})
@@ -99,7 +99,7 @@ func TestOrderer(t *testing.T) {
 
 					ledgerName := util.RandString(10)
 					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-						CocoonCodeId: "cocoon-123",
+						CocoonID: "cocoon-123",
 						Name:         ledgerName,
 						Public:       true,
 						Chained:      true,
@@ -109,7 +109,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should successfully return ledger with matching name", func() {
 						ledger, err := od.GetLedger(context.Background(), &proto.GetLedgerParams{
-							CocoonCodeId: "cocoon-123",
+							CocoonID: "cocoon-123",
 							Name:         ledgerName,
 						})
 						So(err, ShouldBeNil)
@@ -120,7 +120,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return error if no legder with matching cocoon id and name", func() {
 						ledger, err := od.GetLedger(context.Background(), &proto.GetLedgerParams{
-							CocoonCodeId: "cocoon-124",
+							CocoonID: "cocoon-124",
 							Name:         "myledger",
 						})
 						So(err, ShouldResemble, types.ErrLedgerNotFound)
@@ -137,7 +137,7 @@ func TestOrderer(t *testing.T) {
 					Convey("Should return error if ledger does not exists", func() {
 
 						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
-							CocoonCodeId: "cocoon-123",
+							CocoonID: "cocoon-123",
 							LedgerName:   "unknown",
 							Transactions: []*proto.Transaction{},
 						})
@@ -150,7 +150,7 @@ func TestOrderer(t *testing.T) {
 
 						ledgerName := util.UUID4()
 						ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Name:         ledgerName,
 							Public:       true,
 						})
@@ -163,7 +163,7 @@ func TestOrderer(t *testing.T) {
 						}
 
 						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							LedgerName:   ledgerName,
 							Transactions: txs,
 						})
@@ -177,7 +177,7 @@ func TestOrderer(t *testing.T) {
 					Convey("Should successfully put transactions in a chained ledger and create a block", func() {
 						chainedLedgerName := util.UUID4()
 						chainedLedger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Name:         chainedLedgerName,
 							Public:       true,
 							Chained:      true,
@@ -192,7 +192,7 @@ func TestOrderer(t *testing.T) {
 						}
 
 						tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							LedgerName:   chainedLedger.Name,
 							Transactions: txs,
 						})
@@ -210,7 +210,7 @@ func TestOrderer(t *testing.T) {
 
 					ledgerName := util.UUID4()
 					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						Name:         ledgerName,
 						Public:       true,
 					})
@@ -224,7 +224,7 @@ func TestOrderer(t *testing.T) {
 					}
 
 					tx, err := od.Put(context.Background(), &proto.PutTransactionParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						LedgerName:   ledgerName,
 						Transactions: txs,
 					})
@@ -233,7 +233,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return error if ledger does not exist", func() {
 						tx, err := od.Get(context.Background(), &proto.GetParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Ledger:       "unknown",
 							Key:          "wrong",
 						})
@@ -243,7 +243,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return transaction error if key does not exist in ledger", func() {
 						tx, err := od.Get(context.Background(), &proto.GetParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Ledger:       ledgerName,
 							Key:          "wrong",
 						})
@@ -253,7 +253,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should successfully get a transaction", func() {
 						tx, err := od.Get(context.Background(), &proto.GetParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Ledger:       ledgerName,
 							Key:          key,
 						})
@@ -264,7 +264,7 @@ func TestOrderer(t *testing.T) {
 
 							Convey("Should return error if transaction is not found", func() {
 								tx, err := od.GetByID(context.Background(), &proto.GetParams{
-									CocoonCodeId: "cocoon-abc",
+									CocoonID: "cocoon-abc",
 									Ledger:       ledgerName,
 									Id:           "unknown-123",
 								})
@@ -274,7 +274,7 @@ func TestOrderer(t *testing.T) {
 
 							Convey("Should successfully get a transaction by it's id", func() {
 								tx, err := od.GetByID(context.Background(), &proto.GetParams{
-									CocoonCodeId: "cocoon-abc",
+									CocoonID: "cocoon-abc",
 									Ledger:       ledgerName,
 									Id:           id,
 								})
@@ -289,7 +289,7 @@ func TestOrderer(t *testing.T) {
 				Convey(".GetBlockByID", func() {
 					ledgerName := util.UUID4() + "-okay"
 					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						Name:         ledgerName,
 						Public:       true,
 						Chained:      true,
@@ -304,7 +304,7 @@ func TestOrderer(t *testing.T) {
 					}
 
 					result, err := od.Put(context.Background(), &proto.PutTransactionParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						LedgerName:   ledgerName,
 						Transactions: txs,
 					})
@@ -319,7 +319,7 @@ func TestOrderer(t *testing.T) {
 
 					ledgerName := util.UUID4()
 					ledger, err := od.CreateLedger(context.Background(), &proto.CreateLedgerParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						Name:         ledgerName,
 						Public:       true,
 						Chained:      true,
@@ -334,7 +334,7 @@ func TestOrderer(t *testing.T) {
 					}
 
 					result, err := od.Put(context.Background(), &proto.PutTransactionParams{
-						CocoonCodeId: "cocoon-abc",
+						CocoonID: "cocoon-abc",
 						LedgerName:   ledgerName,
 						Transactions: txs,
 					})
@@ -344,7 +344,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return exepected transaction range with inclusive option disabled", func() {
 						txs, err := od.GetRange(context.Background(), &proto.GetRangeParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Ledger:       ledgerName,
 							StartKey:     "account",
 							EndKey:       "x",
@@ -358,7 +358,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should return exepected transaction range with inclusive option enabled", func() {
 						txs, err := od.GetRange(context.Background(), &proto.GetRangeParams{
-							CocoonCodeId: "cocoon-abc",
+							CocoonID: "cocoon-abc",
 							Ledger:       ledgerName,
 							StartKey:     "account",
 							EndKey:       "x",

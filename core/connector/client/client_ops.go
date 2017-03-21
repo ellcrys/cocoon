@@ -16,6 +16,11 @@ import (
 // a new ledger.
 func (c *Client) createLedger(tx *proto.Tx) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
@@ -24,10 +29,10 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 
 	odc := order_proto.NewOrdererClient(ordererConn)
 	result, err := odc.CreateLedger(context.Background(), &order_proto.CreateLedgerParams{
-		CocoonCodeId: c.cocoonID,
-		Name:         tx.GetParams()[0],
-		Chained:      tx.GetParams()[1] == "true",
-		Public:       tx.GetParams()[2] == "true",
+		CocoonID: cocoonID,
+		Name:     tx.GetParams()[0],
+		Chained:  tx.GetParams()[1] == "true",
+		Public:   tx.GetParams()[2] == "true",
 	})
 	if err != nil {
 		return err
@@ -48,6 +53,11 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 // getLedger fetches a ledger by its name and cocoon code id
 func (c *Client) getLedger(tx *proto.Tx) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
@@ -56,15 +66,14 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 
 	// if name is the global ledger, then a cocoon code id is not required.
 	name := tx.GetParams()[0]
-	cocoonCodeID := c.cocoonID
 	if name == types.GetGlobalLedgerName() {
-		cocoonCodeID = ""
+		cocoonID = ""
 	}
 
 	odc := order_proto.NewOrdererClient(ordererConn)
 	result, err := odc.GetLedger(context.Background(), &order_proto.GetLedgerParams{
-		Name:         name,
-		CocoonCodeId: cocoonCodeID,
+		Name:     name,
+		CocoonID: cocoonID,
 	})
 
 	if err != nil {
@@ -86,6 +95,11 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 // put adds a new transaction to a ledger
 func (c *Client) put(tx *proto.Tx) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	var txs []*order_proto.Transaction
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
@@ -100,7 +114,7 @@ func (c *Client) put(tx *proto.Tx) error {
 
 	odc := order_proto.NewOrdererClient(ordererConn)
 	result, err := odc.Put(context.Background(), &order_proto.PutTransactionParams{
-		CocoonCodeId: c.cocoonID,
+		CocoonID:     cocoonID,
 		LedgerName:   tx.GetParams()[0],
 		Transactions: txs,
 	})
@@ -125,6 +139,11 @@ func (c *Client) put(tx *proto.Tx) error {
 // If byID is set, it will find the transaction by id specified in tx.Id.
 func (c *Client) get(tx *proto.Tx, byID bool) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	var result *order_proto.Transaction
 	var err error
 
@@ -138,15 +157,15 @@ func (c *Client) get(tx *proto.Tx, byID bool) error {
 
 	if !byID {
 		result, err = odc.Get(context.Background(), &order_proto.GetParams{
-			CocoonCodeId: c.cocoonID,
-			Ledger:       tx.GetParams()[0],
-			Key:          tx.GetParams()[1],
+			CocoonID: cocoonID,
+			Ledger:   tx.GetParams()[0],
+			Key:      tx.GetParams()[1],
 		})
 	} else {
 		result, err = odc.GetByID(context.Background(), &order_proto.GetParams{
-			CocoonCodeId: c.cocoonID,
-			Ledger:       tx.GetParams()[0],
-			Id:           tx.GetParams()[1],
+			CocoonID: cocoonID,
+			Ledger:   tx.GetParams()[0],
+			Id:       tx.GetParams()[1],
 		})
 	}
 
@@ -169,6 +188,11 @@ func (c *Client) get(tx *proto.Tx, byID bool) error {
 // getBlock gets a block by its ledger name and id
 func (c *Client) getBlock(tx *proto.Tx) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
@@ -177,9 +201,9 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 
 	odc := order_proto.NewOrdererClient(ordererConn)
 	block, err := odc.GetBlockByID(context.Background(), &order_proto.GetBlockParams{
-		CocoonCodeId: c.cocoonID,
-		Ledger:       tx.GetParams()[0],
-		Id:           tx.GetParams()[1],
+		CocoonID: cocoonID,
+		Ledger:   tx.GetParams()[0],
+		Id:       tx.GetParams()[1],
 	})
 
 	if err != nil {
@@ -201,6 +225,11 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 // getRange fetches transactions with keys between a specified range.
 func (c *Client) getRange(tx *proto.Tx) error {
 
+	var cocoonID = c.cocoonID
+	if len(tx.To) > 0 {
+		cocoonID = tx.GetTo()
+	}
+
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
 	if err != nil {
 		return err
@@ -212,13 +241,13 @@ func (c *Client) getRange(tx *proto.Tx) error {
 
 	odc := order_proto.NewOrdererClient(ordererConn)
 	txs, err := odc.GetRange(context.Background(), &order_proto.GetRangeParams{
-		CocoonCodeId: c.cocoonID,
-		Ledger:       tx.GetParams()[0],
-		StartKey:     tx.GetParams()[1],
-		EndKey:       tx.GetParams()[2],
-		Inclusive:    tx.GetParams()[3] == "true",
-		Limit:        int32(limit),
-		Offset:       int32(offset),
+		CocoonID:  cocoonID,
+		Ledger:    tx.GetParams()[0],
+		StartKey:  tx.GetParams()[1],
+		EndKey:    tx.GetParams()[2],
+		Inclusive: tx.GetParams()[3] == "true",
+		Limit:     int32(limit),
+		Offset:    int32(offset),
 	})
 
 	if err != nil {
