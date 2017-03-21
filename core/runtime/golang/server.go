@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -86,7 +86,7 @@ func (s *stubServer) handleInvokeTransaction(tx *proto.Tx) error {
 			}()
 
 			functionName := tx.GetParams()[0]
-			result, err := ccode.Invoke(tx.GetId(), functionName, tx.GetParams()[1:])
+			result, err := ccode.Invoke(NewLink(), tx.GetId(), functionName, tx.GetParams()[1:])
 			if err != nil {
 				return err
 			}

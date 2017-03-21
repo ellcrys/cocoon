@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	. "github.com/smartystreets/goconvey/convey"
@@ -21,12 +21,12 @@ type TestCocoonCode struct {
 }
 
 // Init method initializes the app
-func (c *TestCocoonCode) Init() error {
+func (c *TestCocoonCode) Init(l *Link) error {
 	return nil
 }
 
 // Invoke process invoke transactions
-func (c *TestCocoonCode) Invoke(txID, function string, params []string) (interface{}, error) {
+func (c *TestCocoonCode) Invoke(l *Link, txID, function string, params []string) (interface{}, error) {
 	return params, nil
 }
 

@@ -7,7 +7,7 @@ import (
 
 	"strings"
 
-	"github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 )
 

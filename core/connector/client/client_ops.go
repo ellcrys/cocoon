@@ -7,7 +7,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/orderer"
 	order_proto "github.com/ncodes/cocoon/core/orderer/proto"
-	"github.com/ncodes/cocoon/core/stubs/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )

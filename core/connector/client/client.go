@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/ncodes/cocoon/core/orderer"
-	proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
+	proto "github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	cmap "github.com/orcaman/concurrent-map"

@@ -10,7 +10,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
-	stub_proto "github.com/ncodes/cocoon/core/stubs/golang/proto"
+	stub_proto "github.com/ncodes/cocoon/core/runtime/golang/proto"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
