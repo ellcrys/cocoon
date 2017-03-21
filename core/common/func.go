@@ -44,7 +44,7 @@ func IsUniqueConstraintError(err error, column string) bool {
 // IsValidResName checks whether a name is a accepted
 // resource name format.
 func IsValidResName(name string) bool {
-	match, _ := regexp.Match("(?i)^[a-z_]+$", []byte(name))
+	match, _ := regexp.Match("(?i)^[a-z0-9_]+$", []byte(name))
 	return match
 }
 
