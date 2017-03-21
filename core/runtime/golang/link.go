@@ -14,11 +14,19 @@ import (
 // Link provides access to external services
 // like ledgers, cocoon codes, event and messaging services.
 type Link struct {
+	cocoonID string
 }
 
 // NewLink creates a new instance
-func NewLink() *Link {
-	return &Link{}
+func NewLink(cocoonID string) *Link {
+	return &Link{
+		cocoonID: cocoonID,
+	}
+}
+
+// GetCocoonID returns the cocoon id attached to this link
+func (link *Link) GetCocoonID() string {
+	return link.cocoonID
 }
 
 // CreateLedger creates a new ledger by sending an

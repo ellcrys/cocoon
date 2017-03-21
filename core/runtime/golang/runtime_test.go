@@ -21,12 +21,12 @@ type TestCocoonCode struct {
 }
 
 // Init method initializes the app
-func (c *TestCocoonCode) Init(l *Link) error {
+func (c *TestCocoonCode) OnInit(l *Link) error {
 	return nil
 }
 
 // Invoke process invoke transactions
-func (c *TestCocoonCode) Invoke(l *Link, txID, function string, params []string) (interface{}, error) {
+func (c *TestCocoonCode) OnInvoke(l *Link, txID, function string, params []string) (interface{}, error) {
 	return params, nil
 }
 

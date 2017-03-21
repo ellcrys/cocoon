@@ -110,8 +110,8 @@ func Run(cc CocoonCode) {
 
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
-		if err = cc.Init(NewLink()); err != nil {
-			log.Errorf("cocoode Init() returned error: %s", err)
+		if err = cc.OnInit(NewLink("")); err != nil {
+			log.Errorf("cocoode OnInit() returned error: %s", err)
 			Stop(1)
 		} else {
 			running = true
@@ -212,4 +212,3 @@ func SetDefaultLedger(name string) error {
 func GetDefaultLedgerName() string {
 	return defaultLedger
 }
-
