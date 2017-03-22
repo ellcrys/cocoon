@@ -30,8 +30,8 @@ job "orderer" {
       
       config {
         image = "ncodes/cocoon-launcher:latest"
-        command = "ls"
-        args = []
+        command = "bash"
+        args = ["run.sh"]
         work_dir = "/local/scripts"
         port_map {}
       }
