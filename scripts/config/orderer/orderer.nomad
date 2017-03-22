@@ -36,7 +36,7 @@ job "orderer" {
 
       artifact {
         source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/config/orderer/run.sh"
-        destination = "/go/run.sh"
+        destination = "/go"
       }
 
       logs {
