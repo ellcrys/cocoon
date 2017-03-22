@@ -15,9 +15,9 @@ job "orderer" {
     count = 1
 
     restart {
-      attempts = 10
-      interval = "10s"
-      delay = "5s"
+      attempts = 5
+      interval = "30s"
+      delay = "10s"
       mode = "delay"
     }
 
