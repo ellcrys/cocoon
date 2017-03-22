@@ -2,12 +2,12 @@ package scheduler
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/data"
 	logging "github.com/op/go-logging"
 )
 
@@ -17,20 +17,20 @@ var log = logging.MustGetLogger("nomad")
 var SupportedCocoonCodeLang = []string{"go"}
 
 // SupportedMemory represents the allowed cocoon memory choices
-var SupportedMemory = map[string]interface{}{
+var SupportedMemory = map[string]int{
 	"512m": 512,
 	"1g":   1024,
 	"2g":   2048,
 }
 
 // SupportedCPUShare represents the allowed cocoon cpu share choices
-var SupportedCPUShare = map[string]interface{}{
+var SupportedCPUShare = map[string]int{
 	"1x": 100,
 	"2x": 200,
 }
 
 // SupportedDiskSpace represents the allowed cocoon disk space
-var SupportedDiskSpace = map[string]interface{}{
+var SupportedDiskSpace = map[string]int{
 	"1x": 300,
 	"2x": 500,
 }
@@ -55,19 +55,6 @@ func (sc *Nomad) SetAddr(addr string, https bool) {
 		scheme = "https://"
 	}
 	sc.API = scheme + addr
-}
-
-// PrepareJobSpec creates a new job specification
-// by passing the nomad job spec through a template
-// engine with some values.
-func (cl *Nomad) PrepareJobSpec(tempData map[string]interface{}) ([]byte, error) {
-	temp, err := data.Asset("cocoon.job.json")
-	if err != nil {
-		return nil, err
-	}
-
-	str := util.RenderTemp(string(temp), tempData)
-	return []byte(str), nil
 }
 
 // deployJob registers a new job
@@ -99,11 +86,6 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare str
 	if err = common.ValidateDeployment(url, lang, buildParams); err != nil {
 		return nil, err
 	}
-	if !util.InStringSlice(util.GetMapKeys(SupportedMemory), memory) {
-		return nil, fmt.Errorf("Invalid memory value. Expects one of these: %v", util.GetMapKeys(SupportedMemory))
-	} else if !util.InStringSlice(util.GetMapKeys(SupportedCPUShare), cpuShare) {
-		return nil, fmt.Errorf("Invalid cpu share value. Expects one of these: %v", util.GetMapKeys(SupportedCPUShare))
-	}
 
 	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
 
@@ -117,26 +99,21 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, memory, cpuShare str
 		img = "ncodes/cocoon-launcher:latest"
 	}
 
-	cocoonData := map[string]interface{}{
-		"ID":                jobID,
-		"Count":             1,
-		"MemoryMB":          SupportedMemory[memory].(int),
-		"CPU":               SupportedCPUShare[cpuShare].(int),
-		"DiskMB":            SupportedDiskSpace[cpuShare].(int),
-		"MBits":             1000,
-		"Image":             img,
-		"CocoonCodeURL":     url,
-		"CocoonCodeLang":    lang,
-		"CocoonCodeTag":     tag,
-		"CocoonBuildParams": buildParams,
-	}
+	job := NewJob(jobID, 1)
+	job.GetSpec().Region = "global"
+	job.GetSpec().Datacenters = []string{"dc1"}
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_TAG"] = tag
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
+	job.GetSpec().TaskGroups[0].Tasks[0].Config.Image = img
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.CPU = SupportedCPUShare[cpuShare]
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = SupportedMemory[memory]
+	job.GetSpec().TaskGroups[0].Resources.CPU = SupportedCPUShare[cpuShare]
+	job.GetSpec().TaskGroups[0].Resources.MemoryMB = SupportedMemory[memory]
 
-	jobSpec, err := sc.PrepareJobSpec(cocoonData)
-
-	if err != nil {
-		return nil, fmt.Errorf("system: failed to prepare job spec. %s", err)
-	}
-
+	jobSpec, _ := util.ToJSON(job)
 	resp, status, err := sc.deployJob(string(jobSpec))
 	if err != nil {
 		return nil, fmt.Errorf("system: failed to deploy job spec. %s", err)

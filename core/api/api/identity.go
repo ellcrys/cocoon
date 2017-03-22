@@ -56,7 +56,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		LedgerName:   types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
@@ -90,7 +90,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		Key:          api.makeIdentityKey(req.GetEmail()),
 		Ledger:       types.GetGlobalLedgerName(),
 	})

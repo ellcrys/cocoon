@@ -41,7 +41,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	// check if release with matching ID already exists
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		Key:          api.makeReleaseKey(release.ID),
 		Ledger:       types.GetGlobalLedgerName(),
 	})
@@ -54,7 +54,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 
 	value, _ := util.ToJSON(req)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		LedgerName:   types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{

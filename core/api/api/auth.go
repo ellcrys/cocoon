@@ -99,8 +99,8 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	// overwrite identity
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonCodeId: "",
-		LedgerName:   types.GetGlobalLedgerName(),
+		CocoonID:   "",
+		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),

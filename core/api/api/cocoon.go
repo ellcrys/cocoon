@@ -60,7 +60,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	value, _ := util.ToJSON(cocoon)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		LedgerName:   types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
@@ -93,7 +93,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonCodeId: "",
+		CocoonID: "",
 		Key:          api.makeCocoonKey(req.Identity, req.GetID()),
 		Ledger:       types.GetGlobalLedgerName(),
 	})
