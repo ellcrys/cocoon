@@ -29,7 +29,8 @@ job "orderer" {
       driver = "docker"
       config {
         image = "ncodes/cocoon-launcher:latest"
-        command = "pwd"
+        command = "ls"
+        work_dir = "/go"
         port_map {}
       }
 
