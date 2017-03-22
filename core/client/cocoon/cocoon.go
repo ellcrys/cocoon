@@ -136,6 +136,7 @@ func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 		BuildParam: []byte(cocoon.BuildParam),
 		Memory:     cocoon.Memory,
 		CPUShare:   cocoon.CPUShare,
+		Link:       cocoon.Link,
 	})
 	if err != nil {
 		return err
