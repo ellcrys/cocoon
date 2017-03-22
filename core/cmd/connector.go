@@ -73,9 +73,9 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		grpcServer := server.NewAPIServer(lchr)
-		// grpcServerAddr := util.Env("NOMAD_IP_connector_grpc", "")
-		// grpcServerPort := util.Env("NOMAD_PORT_connector_grpc", "8002")
-		//go grpcServer.Start(fmt.Sprintf("%s:%s", grpcServerAddr, grpcServerPort), make(chan bool, 1))
+		grpcServerAddr := util.Env("NOMAD_IP_connector_grpc", "")
+		grpcServerPort := util.Env("NOMAD_PORT_connector_grpc", "8002")
+		go grpcServer.Start(fmt.Sprintf("%s:%s", grpcServerAddr, grpcServerPort), make(chan bool, 1))
 
 		httpServer := server.NewHTTPServer()
 		httpServerAddr := util.Env("NOMAD_IP_connector_http", "")
