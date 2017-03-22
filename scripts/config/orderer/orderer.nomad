@@ -25,7 +25,7 @@ job "orderer" {
       size = 300
     }
 
-    task "redis" {
+    task "orderer" {
       driver = "docker"
       config {
         image = "ncodes/cocoon-launcher:latest"
@@ -49,14 +49,14 @@ job "orderer" {
         memory = 256 
         network {
           mbits = 1000
-          port "orderer-grpc" {}
+          port "orderer_grpc" {}
         }
       }
 
       service {
         name = "orderer"
         tags = []
-        port = "orderer-grpc"
+        port = "orderer_grpc"
         check {
           name     = "alive"
           type     = "tcp"
