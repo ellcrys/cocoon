@@ -8,4 +8,5 @@ git clone --depth=1 https://github.com/ncodes/cocoon
 
 # start the orderer
 cd cocoon
+glide install
 go run core/main.go
