@@ -11,7 +11,7 @@ job "orderer" {
     max_parallel = 1
   }
 
-  group "cache" {
+  group "orderers" {
     count = 1
 
     restart {
