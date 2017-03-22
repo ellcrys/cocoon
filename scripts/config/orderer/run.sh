@@ -1,6 +1,6 @@
 # Run an orderer
 repoParent = "/go/src/github.com/ncodes"
-mkdir $repoParent
+mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
