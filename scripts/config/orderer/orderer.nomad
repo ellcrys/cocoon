@@ -29,7 +29,7 @@ job "orderer" {
       driver = "docker"
       config {
         image = "ncodes/cocoon-launcher:latest"
-        command = "bash"
+        command = "pwd"
         port_map {}
       }
 
