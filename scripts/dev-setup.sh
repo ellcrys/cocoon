@@ -1,3 +1,4 @@
+# Bootstrap the entire platform for development or test
 
-# run the orderer
+# Run the orderer
 nomad run config/orderer/orderer.nomad

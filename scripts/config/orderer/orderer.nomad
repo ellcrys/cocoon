@@ -33,6 +33,7 @@ job "orderer" {
         command = "bash"
         args = ["run.sh"]
         work_dir = "/local/scripts"
+        network_mode = "host"
         port_map {}
       }
 
