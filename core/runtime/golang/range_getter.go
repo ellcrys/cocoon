@@ -55,7 +55,7 @@ func (rg *RangeGetter) fetch() error {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		To:     rg.to,
+		LinkTo:     rg.to,
 		Name:   types.TxRangeGet,
 		Params: []string{rg.ledgerName, rg.start, rg.end, strconv.FormatBool(rg.inclusive), strconv.Itoa(rg.limit), strconv.Itoa(rg.offset)},
 	}, respCh)

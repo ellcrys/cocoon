@@ -158,7 +158,7 @@ func blockCommitter(entries []*Entry) interface{} {
 		Id:     txID,
 		Invoke: true,
 		Name:   types.TxPut,
-		To:     entries[0].To,
+		LinkTo:     entries[0].To,
 		Params: []string{ledgerName},
 		Body:   txsJSON,
 	}, respCh)

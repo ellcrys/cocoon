@@ -90,12 +90,12 @@ func TestBlockMaker(t *testing.T) {
 			Convey("Should return expected entries in expected order", func() {
 				ch1 := make(chan interface{})
 				var entries Entries = []*Entry{}
-				a := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "c1"}
-				a2 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "c1"}
-				c := &Entry{Tx: &types.Transaction{Ledger: "c"}, RespChan: ch1, To: "c3"}
-				b := &Entry{Tx: &types.Transaction{Ledger: "b"}, RespChan: ch1, To: "c2"}
-				ab := &Entry{Tx: &types.Transaction{Ledger: "ab"}, RespChan: ch1, To: "c4"}
-				a3 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, To: "ab"}
+				a := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, LinkTo: "c1"}
+				a2 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, LinkTo: "c1"}
+				c := &Entry{Tx: &types.Transaction{Ledger: "c"}, RespChan: ch1, LinkTo: "c3"}
+				b := &Entry{Tx: &types.Transaction{Ledger: "b"}, RespChan: ch1, LinkTo: "c2"}
+				ab := &Entry{Tx: &types.Transaction{Ledger: "ab"}, RespChan: ch1, LinkTo: "c4"}
+				a3 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, LinkTo: "ab"}
 				entries = append(entries, a)
 				entries = append(entries, a2)
 				entries = append(entries, c)

@@ -15,7 +15,7 @@ message Tx {
     bool invoke = 1;
     bool response = 2;
     int32 status = 3;
-    string To = 4;
+    string LinkTo = 4;
     string Id = 5;
     string name = 6;
     repeated string params = 7;

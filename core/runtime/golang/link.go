@@ -71,7 +71,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Name:   types.TxCreateLedger,
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	}, respCh)
@@ -113,7 +113,7 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 	err := sendTx(&proto.Tx{
 		Id:     txID,
 		Invoke: true,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Name:   types.TxGetLedger,
 		Params: []string{ledgerName},
 	}, respCh)
@@ -187,7 +187,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	err = sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Name:   types.TxPut,
 		Params: []string{ledgerName},
 		Body:   txJSON,
@@ -227,7 +227,7 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   types.TxGet,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName, key},
 	}, respCh)
 	if err != nil {
@@ -267,7 +267,7 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 		Id:     util.UUID4(),
 		Invoke: true,
 		Name:   types.TxGetByID,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName, id},
 	}, respCh)
 	if err != nil {
@@ -306,7 +306,7 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	err := sendTx(&proto.Tx{
 		Id:     util.UUID4(),
 		Invoke: true,
-		To:     link.GetCocoonID(),
+		LinkTo: link.GetCocoonID(),
 		Name:   types.TxGetBlockByID,
 		Params: []string{ledgerName, id},
 	}, respCh)

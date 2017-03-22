@@ -17,8 +17,8 @@ import (
 func (c *Client) createLedger(tx *proto.Tx) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
@@ -54,8 +54,8 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 func (c *Client) getLedger(tx *proto.Tx) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
@@ -96,8 +96,8 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 func (c *Client) put(tx *proto.Tx) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	var txs []*order_proto.Transaction
@@ -140,8 +140,8 @@ func (c *Client) put(tx *proto.Tx) error {
 func (c *Client) get(tx *proto.Tx, byID bool) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	var result *order_proto.Transaction
@@ -189,8 +189,8 @@ func (c *Client) get(tx *proto.Tx, byID bool) error {
 func (c *Client) getBlock(tx *proto.Tx) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
@@ -226,8 +226,8 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 func (c *Client) getRange(tx *proto.Tx) error {
 
 	var cocoonID = c.cocoonID
-	if len(tx.To) > 0 {
-		cocoonID = tx.GetTo()
+	if len(tx.GetLinkTo()) > 0 {
+		cocoonID = tx.GetLinkTo()
 	}
 
 	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
