@@ -7,4 +7,5 @@ cd $repoParent
 git clone --depth=1 https://github.com/ncodes/cocoon
 
 # start the orderer
+cd cocoon
 go run core/main.go
