@@ -101,8 +101,6 @@ func (lc *Launcher) Launch(req *Request) {
 		return
 	}
 
-	return
-
 	newContainer, err := lc.prepareContainer(req, lang)
 	if err != nil {
 		log.Error(err.Error())
