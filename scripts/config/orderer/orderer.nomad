@@ -29,15 +29,14 @@ job "orderer" {
       driver = "docker"
       config {
         image = "ncodes/cocoon-launcher:latest"
+        command = "bash"
         port_map {}
       }
 
-    //   artifact {
-    //     source = "http://foo.com/artifact.tar.gz"
-    //     options {
-    //       checksum = "md5:c4aa853ad2215426eb7d70a21922e794"
-    //     }
-    //   }
+      artifact {
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/config/orderer/run.sh"
+        destination = "/go"
+      }
 
       logs {
         max_files     = 10
