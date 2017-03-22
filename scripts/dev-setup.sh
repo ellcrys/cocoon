@@ -1,3 +1,3 @@
 
 # run the orderer
-nomad run scripts/config/orderer/orderer.nomad
+nomad run config/orderer/orderer.nomad
