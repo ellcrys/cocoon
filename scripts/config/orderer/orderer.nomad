@@ -27,6 +27,7 @@ job "orderer" {
 
     task "orderer" {
       driver = "docker"
+      
       config {
         image = "ncodes/cocoon-launcher:latest"
         command = "ls"
@@ -36,7 +37,7 @@ job "orderer" {
 
       artifact {
         source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/config/orderer/run.sh"
-        destination = "/go"
+        destination = "/local/scripts"
       }
 
       logs {
