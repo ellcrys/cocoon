@@ -195,18 +195,6 @@ func NewJob(id string, count int) *NomadJob {
 									Name:      fmt.Sprintf("cocoons-%s", id),
 									Tags:      []string{id},
 									PortLabel: "connector-grpc",
-									// Checks: []Check{
-									// 	Check{
-									// 		ID:       "",
-									// 		Name:     "alive",
-									// 		Type:     "tcp",
-									// 		Path:     "/ok",
-									// 		Port:     "connector-http",
-									// 		Timeout:  2000000000,
-									// 		Interval: 10000000000,
-									// 		Protocol: "http",
-									// 	},
-									// },
 								},
 							},
 							Meta: map[string]string{
