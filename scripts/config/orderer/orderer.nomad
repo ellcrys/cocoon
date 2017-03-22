@@ -31,7 +31,8 @@ job "orderer" {
       config {
         image = "ncodes/cocoon-launcher:latest"
         command = "ls"
-        work_dir = "/go"
+        args = []
+        work_dir = "/local/scripts"
         port_map {}
       }
 
