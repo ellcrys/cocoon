@@ -76,8 +76,15 @@ func init() {
 	log = logging.MustGetLogger("ccode.stub")
 }
 
-// GetID returns the cocoon id
+// GetID returns the cocoon id. However, it will return the
+// natively linked cocoon id if this cocoon is linked to another
+// cocoon.
 func GetID() string {
+	return util.Env("COCOON_LINK", os.Getenv("COCOON_ID"))
+}
+
+// GetCocoonID returns the unique cocoon id
+func GetCocoonID() string {
 	return os.Getenv("COCOON_ID")
 }
 

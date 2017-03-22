@@ -31,9 +31,10 @@ message CreateCocoonRequest {
     string memory = 6;
     string CPUShare = 7;
     repeated string releases = 8;
-    int32 numSignatories = 9;
-    int32 sigThreshold = 10;
-    repeated string signatories = 11;
+    string link = 9;
+    int32 numSignatories = 10;
+    int32 sigThreshold = 11;
+    repeated string signatories = 12;
 }
 
 message GetCocoonRequest {
@@ -52,8 +53,9 @@ message CreateReleaseRequest {
     string language = 4;
     string releaseTag = 5;
     string buildParam = 6;
-    int32 sigApproved = 7;
-    int32 sigDenied = 8;
+    string link = 7;
+    int32 sigApproved = 8;
+    int32 sigDenied = 9;
 }
 
 message DeployRequest {
@@ -64,6 +66,7 @@ message DeployRequest {
     bytes buildParam = 5;
     string memory = 6;
     string CPUShare = 7;
+    string link = 8;
 }
 
 message CreateIdentityRequest {

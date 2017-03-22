@@ -37,6 +37,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		req.GetURL(),
 		req.GetReleaseTag(),
 		string(req.GetBuildParam()),
+		req.GetLink(),
 		req.GetMemory(),
 		req.GetCPUShare(),
 	)

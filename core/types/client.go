@@ -14,6 +14,7 @@ type Cocoon struct {
 	CPUShare       string   `structs:"CPUShare" mapstructure:"CPUShare"`
 	NumSignatories int32    `structs:"numSignatories" mapstructure:"numSignatories"`
 	SigThreshold   int32    `structs:"sigThreshold" mapstructure:"sigThreshold"`
+	Link           string   `structs:"link" mapstructure:"link"`
 	Releases       []string `structs:"releases" mapstructure:"releases"`
 	Signatories    []string `structs:"signatories" mapstructure:"signatories"`
 }
@@ -33,6 +34,7 @@ type Release struct {
 	ReleaseTag  string `structs:"releaseTag" mapstructure:"releaseTag"`
 	Language    string `structs:"language" mapstructure:"language"`
 	BuildParam  string `structs:"buildParam" mapstructure:"buildParam"`
+	Link        string `structs:"link" mapstructure:"link"`
 	SigApproved int32  `structs:"sigApproved" mapstructure:"sigApproved"`
 	SigDenied   int32  `structs:"sigDenied" mapstructure:"sigDenied"`
 }

@@ -141,6 +141,7 @@ func (lc *Launcher) prepareContainer(req *Request, lang Language) (*docker.Conta
 		[]string{
 			fmt.Sprintf("COCOON_ID=%s", req.ID),
 			fmt.Sprintf("COCOON_CODE_PORT=%s", cocoonCodePort),
+			fmt.Sprintf("COCOON_LINK=%s", req.Link),
 		})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new container to run cocoon code. %s ", err.Error())

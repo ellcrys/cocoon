@@ -28,6 +28,7 @@ func getRequest() (*launcher.Request, error) {
 	ccLang := os.Getenv("COCOON_CODE_LANG")
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
+	ccLink := os.Getenv("COCOON_LINK")
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -44,6 +45,7 @@ func getRequest() (*launcher.Request, error) {
 		Lang:        ccLang,
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
+		Link:        ccLink,
 	}, nil
 }
 

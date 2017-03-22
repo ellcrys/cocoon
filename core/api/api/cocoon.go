@@ -51,17 +51,30 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		return nil, fmt.Errorf("cocoon with matching ID already exists")
 	}
 
+	// if a link cocoon id is provided, check if the linked cocoon exists
+	if len(cocoon.Link) > 0 {
+		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID:       cocoon.Link,
+			Identity: cocoon.Identity,
+		})
+		if err != nil && err != types.ErrCocoonNotFound {
+			return nil, err
+		} else if err == types.ErrCocoonNotFound {
+			return nil, fmt.Errorf("cannot link to a non-existing cocoon")
+		}
+	}
+
 	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
 	if err != nil {
 		return nil, err
 	}
 	defer ordererConn.Close()
 
-	value, _ := util.ToJSON(cocoon)
+	value := cocoon.ToJSON()
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID: "",
-		LedgerName:   types.GetGlobalLedgerName(),
+		CocoonID:   "",
+		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
@@ -94,8 +107,8 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:          api.makeCocoonKey(req.Identity, req.GetID()),
-		Ledger:       types.GetGlobalLedgerName(),
+		Key:      api.makeCocoonKey(req.Identity, req.GetID()),
+		Ledger:   types.GetGlobalLedgerName(),
 	})
 
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {

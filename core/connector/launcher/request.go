@@ -8,4 +8,5 @@ type Request struct {
 	Lang        string
 	DiskLimit   int64
 	BuildParams string
+	Link        string
 }

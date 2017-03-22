@@ -49,6 +49,7 @@ func Create(cocoon *types.Cocoon) error {
 		ReleaseTag: cocoon.ReleaseTag,
 		Language:   cocoon.Language,
 		BuildParam: cocoon.BuildParam,
+		Link:       cocoon.Link,
 	}
 
 	cocoon.Releases = []string{release.ID}
@@ -73,6 +74,7 @@ func Create(cocoon *types.Cocoon) error {
 		ReleaseTag:     cocoon.ReleaseTag,
 		BuildParam:     cocoon.BuildParam,
 		Memory:         cocoon.Memory,
+		Link:           cocoon.Link,
 		CPUShare:       cocoon.CPUShare,
 		Releases:       cocoon.Releases,
 		NumSignatories: cocoon.NumSignatories,
@@ -94,6 +96,7 @@ func Create(cocoon *types.Cocoon) error {
 		ID:         release.ID,
 		CocoonID:   cocoon.ID,
 		URL:        cocoon.URL,
+		Link:       cocoon.Link,
 		Language:   cocoon.Language,
 		ReleaseTag: cocoon.ReleaseTag,
 		BuildParam: cocoon.BuildParam,
