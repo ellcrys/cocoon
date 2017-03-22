@@ -75,7 +75,6 @@ func Create(cocoon *types.Cocoon) error {
 		Memory:         cocoon.Memory,
 		CPUShare:       cocoon.CPUShare,
 		Releases:       cocoon.Releases,
-		Instances:      cocoon.Instances,
 		NumSignatories: cocoon.NumSignatories,
 		SigThreshold:   cocoon.SigThreshold,
 	})

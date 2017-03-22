@@ -25,7 +25,6 @@ var createCmd = &cobra.Command{
 		buildParams, _ := cmd.Flags().GetString("build-param")
 		memory, _ := cmd.Flags().GetString("memory")
 		cpuShare, _ := cmd.Flags().GetString("cpu-share")
-		instances, _ := cmd.Flags().GetInt32("instances")
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
@@ -36,7 +35,6 @@ var createCmd = &cobra.Command{
 			BuildParam:     buildParams,
 			Memory:         memory,
 			CPUShare:       cpuShare,
-			Instances:      instances,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,
 		})
@@ -54,7 +52,6 @@ func init() {
 	createCmd.Flags().StringP("build-param", "b", "", "Build parameters to apply during cocoon code build process")
 	createCmd.Flags().StringP("memory", "m", "512m", "The amount of memory to allocate. e.g 512m, 1g or 2g")
 	createCmd.Flags().StringP("cpu-share", "c", "1x", "The share of cpu to allocate. e.g 1x or 2x")
-	createCmd.Flags().Int32P("instances", "i", 1, "The number of instances to run")
 	createCmd.Flags().Int32P("num-sig", "s", 1, "The number of signatories")
 	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required to confirm a new release")
 }

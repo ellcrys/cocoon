@@ -31,10 +31,9 @@ message CreateCocoonRequest {
     string memory = 6;
     string CPUShare = 7;
     repeated string releases = 8;
-    int32 instances = 9;
-    int32 numSignatories = 10;
-    int32 sigThreshold = 11;
-    repeated string signatories = 12;
+    int32 numSignatories = 9;
+    int32 sigThreshold = 10;
+    repeated string signatories = 11;
 }
 
 message GetCocoonRequest {

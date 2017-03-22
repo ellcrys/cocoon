@@ -48,8 +48,6 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("CPU share is required")
 	} else if !util.InStringSlice(supportedCPUShare, c.CPUShare) {
 		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShare)
-	} else if c.Instances > 10 {
-		return fmt.Errorf("Instances value is currently limited to 10")
 	}
 
 	return nil
