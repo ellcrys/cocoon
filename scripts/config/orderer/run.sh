@@ -1,5 +1,5 @@
 # Run an orderer
-repoParent = "/go/src/github.com/ncodes"
+repoParent="/go/src/github.com/ncodes"
 mkdir -p $repoParent
 cd $repoParent
 
