@@ -56,6 +56,7 @@ job "api" {
         network {
           mbits = 100
           port "api_grpc" {}
+          port "CAP_PORT" {}
         }
       }
 
