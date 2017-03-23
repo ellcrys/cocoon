@@ -48,7 +48,7 @@ type Task struct {
 	Driver          string
 	Config          Config
 	Env             map[string]string
-	Services        []Service
+	Services        []NomadService
 	Meta            map[string]string
 	LogConfig       LogConfig
 	Templates       []Template
@@ -112,8 +112,8 @@ type LogConfig struct {
 	MaxFileSizeMB int
 }
 
-// Service defines a service
-type Service struct {
+// NomadService defines a service
+type NomadService struct {
 	Name      string
 	Tags      []string
 	PortLabel string
@@ -190,8 +190,8 @@ func NewJob(id string, count int) *NomadJob {
 								"COCOON_BUILD_PARAMS": "",
 								"COCOON_DISK_LIMIT":   "",
 							},
-							Services: []Service{
-								Service{
+							Services: []NomadService{
+								NomadService{
 									Name:      fmt.Sprintf("cocoons-%s", id),
 									Tags:      []string{id},
 									PortLabel: "connector-grpc",

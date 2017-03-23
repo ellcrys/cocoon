@@ -48,7 +48,6 @@ job "api" {
       }
       
       env {
-    
       }
 
       resources {

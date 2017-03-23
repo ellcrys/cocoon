@@ -48,8 +48,8 @@ var apiCmdStart = &cobra.Command{
 
 		// set bind address from environment var set by scheduler
 		if len(bindAddr) == 0 {
-			ip := util.Env("NOMAD_IP_api_grpc", "127.0.0.1")
-			port := util.Env("NOMAD_PORT_api_grpc", "8005")
+			ip := util.Env(scheduler.Getenv("IP_api_grpc"), "127.0.0.1")
+			port := util.Env(scheduler.Getenv("PORT_api_grpc"), "8005")
 			bindAddr = fmt.Sprintf("%s:%s", ip, port)
 		}
 

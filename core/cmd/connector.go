@@ -9,6 +9,7 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server"
+	"github.com/ncodes/cocoon/core/scheduler"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -75,13 +76,13 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		grpcServer := server.NewAPIServer(lchr)
-		grpcServerAddr := util.Env("NOMAD_IP_connector_grpc", "")
-		grpcServerPort := util.Env("NOMAD_PORT_connector_grpc", "8002")
+		grpcServerAddr := util.Env(scheduler.Getenv("IP_connector_grpc"), "")
+		grpcServerPort := util.Env(scheduler.Getenv("PORT_connector_grpc"), "8002")
 		go grpcServer.Start(fmt.Sprintf("%s:%s", grpcServerAddr, grpcServerPort), make(chan bool, 1))
 
 		// httpServer := server.NewHTTPServer()
-		// httpServerAddr := util.Env("NOMAD_IP_connector_http", "")
-		// httpServerPort := util.Env("NOMAD_PORT_connector_http", "8003")
+		// httpServerAddr := util.Env(scheduler.Getenv("IP_connector_http"), "")
+		// httpServerPort := util.Env(scheduler.Getenv("PORT_connector_http"), "8003")
 		// go httpServer.Start(fmt.Sprintf("%s:%s", httpServerAddr, httpServerPort))
 
 		if <-waitCh {

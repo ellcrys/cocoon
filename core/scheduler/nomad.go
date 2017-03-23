@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"os"
+
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
@@ -131,4 +133,15 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 		ID:     jobID,
 		EvalID: jobInfo["EvalID"].(string),
 	}, nil
+}
+
+// Getenv returns an environment variable value based on the schedulers
+// naming convention.
+func Getenv(env string) string {
+	return os.Getenv("NOMAD_" + env)
+}
+
+// GetServices fetches all the instances of a service
+func (sc *Nomad) GetServices(serviceID string) []Service {
+	return nil
 }
