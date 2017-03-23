@@ -53,11 +53,13 @@ var apiCmdStart = &cobra.Command{
 			bindAddr = fmt.Sprintf("%s:%s", ip, port)
 		}
 
+		nomad := scheduler.NewNomad()
+		nomad.ServiceDiscovery.GetByID(nomad.GetName())
+
 		if len(schedulerAddr) == 0 {
 			log.Fatal("scheduler address not set in flag or environment variable")
 		}
 
-		nomad := scheduler.NewNomad()
 		nomad.SetAddr(schedulerAddr, false)
 		api := api.NewAPI(nomad)
 

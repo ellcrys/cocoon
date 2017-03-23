@@ -41,13 +41,24 @@ var SupportedDiskSpace = map[string]int{
 // scheduler.Scheduler interface. Every interaction with
 // the scheduler is handled here.
 type Nomad struct {
-	schedulerAddr string
-	API           string
+	schedulerAddr    string
+	API              string
+	ServiceDiscovery ServiceDiscovery
 }
 
 // NewNomad creates a nomad scheduler object
 func NewNomad() *Nomad {
-	return new(Nomad)
+	return &Nomad{
+		ServiceDiscovery: &NomadServiceDiscovery{
+			ConsulAddr: util.Env("CONSUL_ADDR", "127.0.0.7:4646"),
+			Protocol:   "http",
+		},
+	}
+}
+
+// GetName returns the scheduler name
+func (sc *Nomad) GetName() string {
+	return "nomad"
 }
 
 // SetAddr sets the nomad's API endpoint
@@ -143,5 +154,18 @@ func Getenv(env string) string {
 
 // GetServices fetches all the instances of a service
 func (sc *Nomad) GetServices(serviceID string) []Service {
+	return nil
+}
+
+// NomadServiceDiscovery provides service discovery to the nomad schedulerAddr
+// by querying a consul server
+type NomadServiceDiscovery struct {
+	ConsulAddr string
+	Protocol   string
+}
+
+// GetByID fetches a services instances by the service id.
+func (nsd *NomadServiceDiscovery) GetByID(id string) []Service {
+	log.Info("Hello")
 	return nil
 }
