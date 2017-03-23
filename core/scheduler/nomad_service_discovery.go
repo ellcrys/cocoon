@@ -57,18 +57,27 @@ func (nsd *NomadServiceDiscovery) GetByID(name string, query map[string]string) 
 
 	var services []*Service
 	for _, srv := range _services {
+
 		serviceAddr := ""
 		if srv["ServiceAddress"] == nil {
 			serviceAddr = srv["Address"].(string)
 		} else {
 			serviceAddr = srv["ServiceAddress"].(string)
 		}
+
+		tags := []string{}
+		if srv["ServiceTags"] != nil {
+			for _, tag := range srv["ServiceTags"].([]interface{}) {
+				tags = append(tags, tag.(string))
+			}
+		}
+
 		services = append(services, &Service{
 			Name: srv["ServiceName"].(string),
 			ID:   srv["ID"].(string),
 			IP:   serviceAddr,
 			Port: fmt.Sprintf("%d", srv["ServicePort"]),
-			Tags: srv["ServiceTags"].([]interface{}),
+			Tags: tags,
 		})
 	}
 
