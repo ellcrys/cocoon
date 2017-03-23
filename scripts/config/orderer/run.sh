@@ -1,4 +1,8 @@
-# Run an orderer
+# Run an orderer. 
+# Expects the following variables to be use to configure the orderer. 
+# ORDERER_ADDR=127.0.0.1:8001
+# STORE_CON_STR=host=localhost user=ned dbname=cocoon sslmode=disable password=
+
 repoParent="/go/src/github.com/ncodes"
 mkdir -p $repoParent
 cd $repoParent
