@@ -48,6 +48,7 @@ job "api" {
       }
       
       env {
+          CONSUL_ADDR = "localhost:8500"
       }
 
       resources {
