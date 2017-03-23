@@ -48,7 +48,11 @@ var apiCmdStart = &cobra.Command{
 		}
 
 		if len(schedulerAddr) == 0 {
-			nomad.ServiceDiscovery.GetByID(nomad.GetName(), nil)
+			services, err := nomad.ServiceDiscovery.GetByID(nomad.GetName(), nil)
+			if err != nil {
+				log.Fatalf("failed to get scheduler service from discovery service. %s", err)
+			}
+			util.Printify(services)
 		}
 
 		if len(schedulerAddr) == 0 {
