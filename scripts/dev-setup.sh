@@ -2,3 +2,6 @@
 
 # Run the orderer
 nomad run config/orderer/orderer.nomad
+
+# Run the API
+nomad run config/api/api.nomad
