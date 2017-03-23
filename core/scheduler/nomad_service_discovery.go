@@ -64,7 +64,7 @@ func (nsd *NomadServiceDiscovery) GetByID(name string, query map[string]string) 
 			serviceAddr = srv["ServiceAddress"].(string)
 		}
 		services = append(services, &Service{
-			Name: srv["Name"].(string),
+			Name: srv["ServiceName"].(string),
 			ID:   srv["ID"].(string),
 			IP:   serviceAddr,
 			Port: fmt.Sprintf("%s", srv["ServicePort"]),
