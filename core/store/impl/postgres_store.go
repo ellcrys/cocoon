@@ -43,7 +43,7 @@ func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 	var err error
 	s.db, err = gorm.Open("postgres", dbAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to store backend")
+		return nil, fmt.Errorf("failed to connect to store backend. %s", err)
 	}
 
 	s.db.LogMode(false)
