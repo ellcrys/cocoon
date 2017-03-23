@@ -47,12 +47,15 @@ var apiCmdStart = &cobra.Command{
 			schedulerAddr = os.Getenv("SCHEDULER_ADDR")
 		}
 
+		// Try to discover scheduler address
 		if len(schedulerAddr) == 0 {
 			services, err := nomad.ServiceDiscovery.GetByID(nomad.GetName(), map[string]string{"tag": "http"})
 			if err != nil {
 				log.Fatalf("failed to get scheduler service from discovery service. %s", err)
 			}
-			util.Printify(services)
+			if len(services) > 0 {
+				schedulerAddr = fmt.Sprintf("%s:%f", services[0].IP, services[1].Port)
+			}
 		}
 
 		if len(schedulerAddr) == 0 {
