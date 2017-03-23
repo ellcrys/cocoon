@@ -6,6 +6,7 @@ type Service struct {
 	ID   string
 	IP   string
 	Port string
+	Tags []string
 }
 
 // ServiceDiscovery defines an interface for
