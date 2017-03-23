@@ -64,7 +64,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		}
 	}
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 // GetCocoon fetches a cocoon
 func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}

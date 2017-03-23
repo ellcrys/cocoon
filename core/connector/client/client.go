@@ -30,7 +30,7 @@ type Client struct {
 	conCtx           context.Context
 	conCancel        context.CancelFunc
 	orderDiscoTicker *time.Ticker
-	orderersAddr     []string
+	ordererAddrs    []string
 	stream           proto.Stub_TransactClient
 	cocoonID         string
 }
@@ -77,13 +77,25 @@ func (c *Client) Connect() error {
 	go func() {
 		c.orderDiscoTicker = time.NewTicker(60 * time.Second)
 		for _ = range c.orderDiscoTicker.C {
-			c.orderersAddr = orderer.DiscoverOrderers()
+			var ordererAddrs []string
+			ordererAddrs, err := orderer.DiscoverOrderers()
+			if err != nil {
+				log.Error(err.Error())
+				continue
+			}
+			c.ordererAddrs = ordererAddrs
 		}
 	}()
 
-	c.orderersAddr = orderer.DiscoverOrderers()
-	if len(c.orderersAddr) > 0 {
-		log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(c.orderersAddr))
+	var ordererAddrs []string
+	ordererAddrs, err := orderer.DiscoverOrderers()
+	if err != nil {
+		return err
+	}
+	c.ordererAddrs = ordererAddrs
+
+	if len(c.ordererAddrs) > 0 {
+		log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(c.ordererAddrs))
 	} else {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}

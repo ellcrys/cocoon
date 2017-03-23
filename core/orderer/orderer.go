@@ -13,6 +13,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	logging "github.com/op/go-logging"
@@ -30,25 +31,41 @@ func SetLogLevel(l logging.Level) {
 // via consul service discovery API. For development purpose,
 // If DEV_ORDERER_ADDR is set, it will fetch the orderer
 // address from the env variable.
-func DiscoverOrderers() []string {
+func DiscoverOrderers() ([]string, error) {
+
 	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
-		return []string{os.Getenv("DEV_ORDERER_ADDR")}
+		return []string{os.Getenv("DEV_ORDERER_ADDR")}, nil
 	}
-	// TODO: Retrieve from consul service API (not implemented)
-	return []string{}
+
+	ds := scheduler.NomadServiceDiscovery{
+		ConsulAddr: util.Env("CONSUL_ADDR", "localhost:8500"),
+		Protocol:   "http",
+	}
+
+	_orderers, err := ds.GetByID("orderers", nil)
+	if err != nil {
+		return []string{}, nil
+	}
+
+	var orderers []string
+	for _, orderer := range _orderers {
+		orderers = append(orderers, fmt.Sprintf("%s:%f", orderer.IP, orderer.Port))
+	}
+
+	return orderers, nil
 }
 
 // DialOrderer returns a connection to a orderer from a list of addresses. It randomly
 // picks an orderer address from the list for orderers.
-func DialOrderer(orderersAddr []string) (*grpc.ClientConn, error) {
+func DialOrderer(ordererAddrs []string) (*grpc.ClientConn, error) {
 	var ordererAddr string
 
-	if len(orderersAddr) == 0 {
+	if len(ordererAddrs) == 0 {
 		return nil, fmt.Errorf("no known orderer address")
-	} else if len(orderersAddr) == 1 {
-		ordererAddr = orderersAddr[0]
+	} else if len(ordererAddrs) == 1 {
+		ordererAddr = ordererAddrs[0]
 	} else {
-		ordererAddr = orderersAddr[util.RandNum(0, len(orderersAddr))]
+		ordererAddr = ordererAddrs[util.RandNum(0, len(ordererAddrs))]
 	}
 
 	client, err := grpc.Dial(ordererAddr, grpc.WithInsecure())

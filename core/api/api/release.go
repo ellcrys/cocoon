@@ -30,7 +30,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 		return nil, err
 	}
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}

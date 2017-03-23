@@ -61,7 +61,7 @@ job "orderer" {
       }
 
       service {
-        name = "orderer"
+        name = "orderers"
         tags = []
         port = "ORDERER_RPC"
         check {

@@ -22,7 +22,7 @@ type API struct {
 	server           *grpc.Server
 	endedCh          chan bool
 	orderDiscoTicker *time.Ticker
-	orderersAddr     []string
+	ordererAddrs     []string
 	scheduler        scheduler.Scheduler
 }
 
@@ -46,19 +46,31 @@ func (api *API) Start(addr string, endedCh chan bool) {
 	time.AfterFunc(2*time.Second, func() {
 		log.Infof("Started server on port %s", strings.Split(addr, ":")[1])
 
-		api.orderersAddr = orderer.DiscoverOrderers()
-		if len(api.orderersAddr) > 0 {
-			log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(api.orderersAddr))
-		} else {
-			log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
+		var ordererAddrs []string
+		ordererAddrs, err := orderer.DiscoverOrderers()
+		if err != nil {
+			log.Fatalf("failed to discover orderer. %s", err)
 		}
+		api.ordererAddrs = ordererAddrs
+
+		if len(api.ordererAddrs) > 0 {
+			log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(api.ordererAddrs))
+			return
+		}
+
+		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	})
 
 	// start a ticker to continously discover orderer addresses
 	go func() {
 		api.orderDiscoTicker = time.NewTicker(60 * time.Second)
 		for _ = range api.orderDiscoTicker.C {
-			api.orderersAddr = orderer.DiscoverOrderers()
+			ordererAddrs, err := orderer.DiscoverOrderers()
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			api.ordererAddrs = ordererAddrs
 		}
 	}()
 

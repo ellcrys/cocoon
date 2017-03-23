@@ -21,7 +21,7 @@ func (c *Client) createLedger(tx *proto.Tx) error {
 		cocoonID = tx.GetLinkTo()
 	}
 
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (c *Client) getLedger(tx *proto.Tx) error {
 		cocoonID = tx.GetLinkTo()
 	}
 
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (c *Client) put(tx *proto.Tx) error {
 	}
 
 	var txs []*order_proto.Transaction
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (c *Client) get(tx *proto.Tx, byID bool) error {
 	var result *order_proto.Transaction
 	var err error
 
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (c *Client) getBlock(tx *proto.Tx) error {
 		cocoonID = tx.GetLinkTo()
 	}
 
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func (c *Client) getRange(tx *proto.Tx) error {
 		cocoonID = tx.GetLinkTo()
 	}
 
-	ordererConn, err := orderer.DialOrderer(c.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(c.ordererAddrs)
 	if err != nil {
 		return err
 	}

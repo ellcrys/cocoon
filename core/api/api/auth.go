@@ -54,7 +54,7 @@ func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) 
 // Login authenticates a user and returns a JWT token
 func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}

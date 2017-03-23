@@ -31,7 +31,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 		return nil, err
 	}
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 // GetIdentity fetches an identity by its email
 func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 // AddCocoonToIdentity adds a cocoon id to the collection of cocoon's owned by an identity
 func (api *API) AddCocoonToIdentity(ctx context.Context, req *proto.AddCocoonToIdentityRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.orderersAddr)
+	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
 	if err != nil {
 		return nil, err
 	}
