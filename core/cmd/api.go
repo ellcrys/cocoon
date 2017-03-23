@@ -38,6 +38,7 @@ var apiCmdStart = &cobra.Command{
 	Long:  "Start the API server",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		nomad := scheduler.NewNomad()
 		bindAddr, _ := cmd.Flags().GetString("bind-addr")
 		schedulerAddr, _ := cmd.Flags().GetString("scheduler-addr")
 
@@ -46,18 +47,19 @@ var apiCmdStart = &cobra.Command{
 			schedulerAddr = os.Getenv("SCHEDULER_ADDR")
 		}
 
+		if len(schedulerAddr) == 0 {
+			nomad.ServiceDiscovery.GetByID(nomad.GetName())
+		}
+
+		if len(schedulerAddr) == 0 {
+			log.Fatal("scheduler address not set in flag or environment variable")
+		}
+
 		// set bind address from environment var set by scheduler
 		if len(bindAddr) == 0 {
 			ip := util.Env(scheduler.Getenv("IP_API_GRPC"), "127.0.0.1")
 			port := util.Env(scheduler.Getenv("PORT_API_GRPC"), "8005")
 			bindAddr = fmt.Sprintf("%s:%s", ip, port)
-		}
-
-		nomad := scheduler.NewNomad()
-		nomad.ServiceDiscovery.GetByID(nomad.GetName())
-
-		if len(schedulerAddr) == 0 {
-			log.Fatal("scheduler address not set in flag or environment variable")
 		}
 
 		nomad.SetAddr(schedulerAddr, false)
