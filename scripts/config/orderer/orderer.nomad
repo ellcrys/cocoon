@@ -55,7 +55,7 @@ job "orderer" {
         cpu    = 500
         memory = 256 
         network {
-          mbits = 1000
+          mbits = 100
           port "orderer_grpc" {}
         }
       }
