@@ -5,7 +5,7 @@ type Service struct {
 	Name string
 	ID   string
 	IP   string
-	Port string
+	Port float64
 	Tags []string
 }
 
