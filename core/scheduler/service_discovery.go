@@ -2,6 +2,7 @@ package scheduler
 
 // Service defines a service
 type Service struct {
+	Name string
 	ID   string
 	IP   string
 	Port string
@@ -10,5 +11,5 @@ type Service struct {
 // ServiceDiscovery defines an interface for
 // finding services within a cluster
 type ServiceDiscovery interface {
-	GetByID(id string) []Service
+	GetByID(name string, query map[string]string) ([]*Service, error)
 }

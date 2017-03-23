@@ -55,14 +55,14 @@ job "api" {
         memory = 256 
         network {
           mbits = 100
-          port "API_GRPC" {}
+          port "API_RPC" {}
         }
       }
 
       service {
         name = "api"
         tags = []
-        port = "API_GRPC"
+        port = "API_RPC"
         check {
           name     = "alive"
           type     = "tcp"

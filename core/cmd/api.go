@@ -48,7 +48,7 @@ var apiCmdStart = &cobra.Command{
 		}
 
 		if len(schedulerAddr) == 0 {
-			nomad.ServiceDiscovery.GetByID(nomad.GetName())
+			nomad.ServiceDiscovery.GetByID(nomad.GetName(), nil)
 		}
 
 		if len(schedulerAddr) == 0 {
@@ -57,8 +57,8 @@ var apiCmdStart = &cobra.Command{
 
 		// set bind address from environment var set by scheduler
 		if len(bindAddr) == 0 {
-			ip := util.Env(scheduler.Getenv("IP_API_GRPC"), "127.0.0.1")
-			port := util.Env(scheduler.Getenv("PORT_API_GRPC"), "8005")
+			ip := util.Env(scheduler.Getenv("IP_API_RPC"), "127.0.0.1")
+			port := util.Env(scheduler.Getenv("PORT_API_RPC"), "8005")
 			bindAddr = fmt.Sprintf("%s:%s", ip, port)
 		}
 

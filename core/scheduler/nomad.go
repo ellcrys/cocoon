@@ -50,7 +50,7 @@ type Nomad struct {
 func NewNomad() *Nomad {
 	return &Nomad{
 		ServiceDiscovery: &NomadServiceDiscovery{
-			ConsulAddr: util.Env("CONSUL_ADDR", "127.0.0.7:4646"),
+			ConsulAddr: util.Env("CONSUL_ADDR", "127.0.0.7:8500"),
 			Protocol:   "http",
 		},
 	}
@@ -82,6 +82,7 @@ func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
 	if err != nil {
 		return "", 0, err
 	}
+	defer res.Body.Close()
 
 	respStr, _ := res.Body.ToString()
 	return respStr, res.StatusCode, nil

@@ -56,14 +56,14 @@ job "orderer" {
         memory = 256 
         network {
           mbits = 100
-          port "ORDERER_GRPC" {}
+          port "ORDERER_RPC" {}
         }
       }
 
       service {
         name = "orderer"
         tags = []
-        port = "ORDERER_GRPC"
+        port = "ORDERER_RPC"
         check {
           name     = "alive"
           type     = "tcp"
