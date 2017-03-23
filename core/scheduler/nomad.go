@@ -50,7 +50,7 @@ type Nomad struct {
 func NewNomad() *Nomad {
 	return &Nomad{
 		ServiceDiscovery: &NomadServiceDiscovery{
-			ConsulAddr: util.Env("CONSUL_ADDR", "127.0.0.7:8500"),
+			ConsulAddr: util.Env("CONSUL_ADDR", "localhost:8500"),
 			Protocol:   "http",
 		},
 	}
