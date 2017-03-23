@@ -46,6 +46,10 @@ job "orderer" {
         max_files     = 10
         max_file_size = 10
       }
+      
+      env {
+        STORE_CON_STR = "host=localhost user=postgres dbname=cocoon sslmode=disable password="
+      }
 
       resources {
         cpu    = 500
