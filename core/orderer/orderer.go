@@ -302,13 +302,13 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
 	start := time.Now()
+	log.Error("Get it")
 
 	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
 	})
 	if err != nil {
-		log.Error("Something bad happened")
 		return nil, err
 	}
 
