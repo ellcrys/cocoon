@@ -149,8 +149,8 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 
 // Getenv returns an environment variable value based on the schedulers
 // naming convention.
-func Getenv(env string) string {
-	return os.Getenv("NOMAD_" + env)
+func Getenv(env, defaultVal string) string {
+	return util.Env(os.Getenv("NOMAD_"+env), defaultVal)
 }
 
 // GetServices fetches all the instances of a service
