@@ -49,6 +49,7 @@ job "api" {
       
       env {
           CONSUL_ADDR = "localhost:8500"
+          API_SIGN_KEY = "nssjj&%70g$#d",
       }
 
       resources {
@@ -61,7 +62,7 @@ job "api" {
       }
 
       service {
-        name = "api"
+        name = "apis"
         tags = []
         port = "API_RPC"
         check {

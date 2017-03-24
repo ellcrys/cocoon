@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = logging.MustGetLogger("api.grpc")
+var log = logging.MustGetLogger("api.rpc")
 
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource
