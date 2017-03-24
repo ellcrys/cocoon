@@ -49,7 +49,7 @@ job "api" {
       
       env {
           CONSUL_ADDR = "localhost:8500"
-          API_SIGN_KEY = "nssjj&%70g$#d",
+          API_SIGN_KEY = "x/A%D*G-KaPdSgVkYp3s6v9y$B&E(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUjXn2r",
       }
 
       resources {
@@ -57,7 +57,9 @@ job "api" {
         memory = 256 
         network {
           mbits = 100
-          port "API_RPC" {}
+          port "API_RPC" {
+              static = "8005"
+          }
         }
       }
 
