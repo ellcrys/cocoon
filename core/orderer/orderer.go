@@ -49,7 +49,7 @@ func DiscoverOrderers() ([]string, error) {
 
 	var orderers []string
 	for _, orderer := range _orderers {
-		orderers = append(orderers, fmt.Sprintf("%s:%f", orderer.IP, orderer.Port))
+		orderers = append(orderers, fmt.Sprintf("%s:%d", orderer.IP, int(orderer.Port)))
 	}
 
 	return orderers, nil
