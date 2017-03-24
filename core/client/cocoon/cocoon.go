@@ -2,6 +2,7 @@ package cocoon
 
 import (
 	"fmt"
+	"time"
 
 	context "golang.org/x/net/context"
 
@@ -65,7 +66,7 @@ func Create(cocoon *types.Cocoon) error {
 
 	client := proto.NewAPIClient(conn)
 	md := metadata.Pairs("access_token", userSession.Token)
-	ctx := context.Background()
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
 	ctx = metadata.NewContext(ctx, md)
 	resp, err := client.CreateCocoon(ctx, &proto.CreateCocoonRequest{
 		ID:             cocoon.ID,
