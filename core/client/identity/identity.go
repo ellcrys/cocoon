@@ -45,7 +45,6 @@ func Create(email string) error {
 	})
 
 	if err != nil && common.ToRPCError(2, types.ErrIdentityNotFound).Error() != err.Error() {
-		log.Debugf("Bad - %s", err.Error())
 		stopSpinner()
 		return err
 	} else if resp != nil {
