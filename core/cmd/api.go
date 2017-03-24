@@ -6,7 +6,6 @@ import (
 
 	"fmt"
 
-	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -64,9 +63,7 @@ var apiCmdStart = &cobra.Command{
 
 		// set bind address from environment var set by scheduler
 		if len(bindAddr) == 0 {
-			ip := util.Env(scheduler.Getenv("IP_API_RPC_"), "127.0.0.1")
-			port := util.Env(scheduler.Getenv("PORT_API_RPC"), "8005")
-			bindAddr = fmt.Sprintf("%s:%s", ip, port)
+			bindAddr = scheduler.Getenv("ADDR_API_RPC", "127.0.0.1:8005")
 		}
 
 		nomad.SetAddr(schedulerAddr, false)
