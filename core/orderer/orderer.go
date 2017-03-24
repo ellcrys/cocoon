@@ -308,6 +308,7 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		Name:     params.GetLedger(),
 	})
 	if err != nil {
+		log.Error("Something bad happened")
 		return nil, err
 	}
 

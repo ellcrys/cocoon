@@ -98,7 +98,6 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	})
 
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
-		log.Info("In here ")
 		return nil, err
 	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
 		return nil, types.ErrIdentityNotFound
