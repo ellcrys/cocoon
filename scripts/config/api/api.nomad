@@ -66,7 +66,7 @@ job "api" {
       service {
         name = "apis"
         tags = []
-        port = "8500"
+        port = "8005"
         check {
           name     = "alive"
           type     = "tcp"
