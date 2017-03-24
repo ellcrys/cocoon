@@ -34,9 +34,7 @@ job "api" {
         args = ["run.sh"]
         work_dir = "/local/scripts"
         network_mode = "host"
-        port_map {
-            API_RPC = 8005
-        }
+        port_map { }
       }
 
       artifact {
@@ -59,6 +57,9 @@ job "api" {
         memory = 256 
         network {
           mbits = 100
+          port "API_RPC" {
+              static = "8005"
+          }
         }
       }
 
