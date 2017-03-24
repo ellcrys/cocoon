@@ -68,8 +68,6 @@ func DialOrderer(ordererAddrs []string) (*grpc.ClientConn, error) {
 		ordererAddr = ordererAddrs[util.RandNum(0, len(ordererAddrs))]
 	}
 
-	util.Printify(ordererAddrs)
-
 	client, err := grpc.Dial(ordererAddr, grpc.WithInsecure())
 	if err != nil {
 		return nil, err

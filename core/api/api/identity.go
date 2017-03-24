@@ -23,8 +23,6 @@ func (api *API) makeIdentityKey(email string) string {
 // CreateIdentity creates a new identity
 func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityRequest) (*proto.Response, error) {
 
-	log.Debug("Creating identity")
-
 	var identity types.Identity
 	cstructs.Copy(req, &identity)
 	req = nil
@@ -90,7 +88,6 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	defer ordererConn.Close()
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
 		Key:      api.makeIdentityKey(req.GetEmail()),

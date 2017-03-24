@@ -2,6 +2,7 @@ package identity
 
 import (
 	"fmt"
+	"time"
 
 	context "golang.org/x/net/context"
 
@@ -38,7 +39,8 @@ func Create(email string) error {
 	stopSpinner := util.Spinner("Please wait")
 
 	client := proto.NewAPIClient(conn)
-	resp, err := client.GetIdentity(context.Background(), &proto.GetIdentityRequest{
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
+	resp, err := client.GetIdentity(ctx, &proto.GetIdentityRequest{
 		Email: email,
 	})
 
