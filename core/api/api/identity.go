@@ -23,6 +23,8 @@ func (api *API) makeIdentityKey(email string) string {
 // CreateIdentity creates a new identity
 func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityRequest) (*proto.Response, error) {
 
+	log.Debug("Creating identity")
+
 	var identity types.Identity
 	cstructs.Copy(req, &identity)
 	req = nil
@@ -56,8 +58,8 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID: "",
-		LedgerName:   types.GetGlobalLedgerName(),
+		CocoonID:   "",
+		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        txID,
@@ -91,8 +93,8 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:          api.makeIdentityKey(req.GetEmail()),
-		Ledger:       types.GetGlobalLedgerName(),
+		Key:      api.makeIdentityKey(req.GetEmail()),
+		Ledger:   types.GetGlobalLedgerName(),
 	})
 
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
