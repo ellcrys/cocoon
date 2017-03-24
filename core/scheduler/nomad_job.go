@@ -194,7 +194,7 @@ func NewJob(id string, count int) *NomadJob {
 								NomadService{
 									Name:      fmt.Sprintf("cocoons-%s", id),
 									Tags:      []string{id},
-									PortLabel: "connector-grpc",
+									PortLabel: "CONNECTOR_RPC",
 								},
 							},
 							Meta: map[string]string{
@@ -220,7 +220,7 @@ func NewJob(id string, count int) *NomadJob {
 									Network{
 										MBits: 1000,
 										DynamicPorts: []DynamicPort{
-											DynamicPort{Label: "connector-grpc"},
+											DynamicPort{Label: "CONNECTOR_RPC"},
 											DynamicPort{Label: "connector-http"},
 										},
 									},
