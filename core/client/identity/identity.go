@@ -30,12 +30,10 @@ func Create(email string) error {
 
 	var err error
 
-	log.Debug("ADDR: ", APIAddress)
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
-	log.Debug("Done dialling ", APIAddress)
 
 	stopSpinner := util.Spinner("Please wait")
 

@@ -90,14 +90,15 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	defer ordererConn.Close()
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
-	// ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	resp, err := odc.Get(context.Background(), &orderer_proto.GetParams{
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
+	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
 		Key:      api.makeIdentityKey(req.GetEmail()),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+		log.Info("In here ")
 		return nil, err
 	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
 		return nil, types.ErrIdentityNotFound
