@@ -107,7 +107,7 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	fmt.Println(">>>> ", c.getCCAddr())
+	log.Info(">>>> ", c.getCCAddr())
 
 	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
 	if err != nil {
