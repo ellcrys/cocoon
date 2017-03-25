@@ -30,7 +30,7 @@ var loginCmd = &cobra.Command{
 		}
 
 		if err = auth.Login(args[0], string(password)); err != nil {
-			log.Fatalf("%s", common.GetRPCErrDesc(err))
+			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

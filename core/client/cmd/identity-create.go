@@ -23,7 +23,7 @@ var identityCreateCmd = &cobra.Command{
 		}
 
 		if err := identity.Create(args[0]); err != nil {
-			log.Fatalf("%s", common.GetRPCErrDesc(err))
+			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

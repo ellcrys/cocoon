@@ -28,7 +28,7 @@ var startCmd = &cobra.Command{
 			case "unknown service proto.API":
 				desc = "unable to connect to the cluster"
 			}
-			log.Fatalf("%s", desc)
+			log.Fatalf("%s", common.CapitalizeString(desc))
 		}
 	},
 }

@@ -41,7 +41,7 @@ var createCmd = &cobra.Command{
 			SigThreshold:   sigThreshold,
 		})
 		if err != nil {
-			log.Fatalf("%s", common.GetRPCErrDesc(err))
+			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

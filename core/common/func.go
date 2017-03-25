@@ -91,3 +91,11 @@ func AwaitTxChan(ch chan *proto.Tx) (*proto.Tx, error) {
 func MBToByte(mb int64) int64 {
 	return (1048576 * mb)
 }
+
+// CapitalizeString capitalizes the first character of all sentences in a given string.
+func CapitalizeString(str string) string {
+	var re = regexp.MustCompile(`^([a-z]{1})|\.[ ]+?([a-z]{1})`)
+	return re.ReplaceAllStringFunc(str, func(c string) string {
+		return strings.ToUpper(c)
+	})
+}

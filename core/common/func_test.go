@@ -94,5 +94,17 @@ func TestFunc(t *testing.T) {
 				So(CompareErr(errors.New("b"), errors.New("a")), ShouldEqual, 1)
 			})
 		})
+
+		Convey(".CapitalizeString", func() {
+			Convey("Should successfully capitalize strings", func() {
+				cases := [][]string{
+					[]string{"the people are smiling", "The people are smiling"},
+					[]string{"the people are smiling. they love the President", "The people are smiling. They love the President"},
+				}
+				for _, c := range cases {
+					So(CapitalizeString(c[0]), ShouldEqual, c[1])
+				}
+			})
+		})
 	})
 }
