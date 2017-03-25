@@ -117,10 +117,11 @@ func (c *Client) Connect() error {
 
 	c.stub = proto.NewStubClient(conn)
 
-	time.Sleep(20 * time.Second)
-	if err = c.Do(conn); err != nil {
-		return err
-	}
+	// if err = c.Do(conn); err != nil {
+	// 	return err
+	// }
+	s := make(chan bool)
+	<-s
 
 	return nil
 }
