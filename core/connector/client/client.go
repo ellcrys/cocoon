@@ -115,13 +115,11 @@ func (c *Client) Connect() error {
 
 	log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 
-	// c.stub = proto.NewStubClient(conn)
+	c.stub = proto.NewStubClient(conn)
 
-	// if err = c.Do(conn); err != nil {
-	// 	return err
-	// }
-	s := make(chan bool)
-	<-s
+	if err = c.Do(conn); err != nil {
+		return err
+	}
 
 	return nil
 }
