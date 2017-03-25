@@ -25,21 +25,19 @@ var txRespChannels = cmap.New()
 // Client represents a cocoon code GRPC client
 // that interacts with a cocoon code.
 type Client struct {
-	ccodePort        string
+	ccodeAddr        string
 	stub             proto.StubClient
 	conCtx           context.Context
 	conCancel        context.CancelFunc
 	orderDiscoTicker *time.Ticker
-	ordererAddrs    []string
+	ordererAddrs     []string
 	stream           proto.Stub_TransactClient
 	cocoonID         string
 }
 
 // NewClient creates a new cocoon code client
-func NewClient(ccodePort string) *Client {
-	return &Client{
-		ccodePort: ccodePort,
-	}
+func NewClient() *Client {
+	return &Client{}
 }
 
 // SetCocoonID sets the cocoon id
@@ -47,13 +45,18 @@ func (c *Client) SetCocoonID(id string) {
 	c.cocoonID = id
 }
 
-// getCCPort returns the cocoon code port.
-// For development, if DEV_COCOON_CODE_PORT is set, it connects to it.
-func (c *Client) getCCPort() string {
-	if devCCodePort := os.Getenv("DEV_COCOON_CODE_PORT"); len(devCCodePort) > 0 {
-		return devCCodePort
+// SetCocoonCodeAddr sets the cocoon code bind address
+func (c *Client) SetCocoonCodeAddr(ccAddr string) {
+	c.ccodeAddr = ccAddr
+}
+
+// getCCAddr returns the cocoon code bind address.
+// For development, if DEV_COCOON_ADDR is set, it connects to it.
+func (c *Client) getCCAddr() string {
+	if devCCodeAddr := os.Getenv("DEV_COCOON_ADDR"); len(devCCodeAddr) > 0 {
+		return devCCodeAddr
 	}
-	return c.ccodePort
+	return c.ccodeAddr
 }
 
 // Close the stream and cancel connections
@@ -100,13 +103,13 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", c.getCCPort()), grpc.WithInsecure())
+	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
 	}
 	defer conn.Close()
 
-	log.Debugf("Now connected to cocoon code at port=%s", c.getCCPort())
+	log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 
 	c.stub = proto.NewStubClient(conn)
 

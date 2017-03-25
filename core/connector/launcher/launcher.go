@@ -45,14 +45,11 @@ type Launcher struct {
 	req              *Request
 }
 
-// cocoonCodePort is the port the cococoon code server is listening on
-var cocoonCodePort = util.Env("COCOON_CODE_PORT", "8000")
-
 // NewLauncher creates a new launcher
 func NewLauncher(waitCh chan bool) *Launcher {
 	return &Launcher{
 		waitCh:  waitCh,
-		client:  client.NewClient(cocoonCodePort),
+		client:  client.NewClient(),
 		monitor: monitor.NewMonitor(),
 	}
 }
@@ -77,13 +74,14 @@ func (lc *Launcher) Launch(req *Request) {
 
 	dckClient = client
 	lc.client.SetCocoonID(req.ID)
+	lc.client.SetCocoonCodeAddr(req.CocoonAddr)
 	lc.monitor.SetDockerClient(dckClient)
 
 	// No need downloading, building and starting a cocoon code
-	// if DEV_COCOON_CODE_PORT has been specified. This means a dev cocoon code
-	// is running at that port. Just start the connector's client.
-	if devCocoonCodePort := os.Getenv("DEV_COCOON_CODE_PORT"); len(devCocoonCodePort) > 0 {
-		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodePort)
+	// if DEV_COCOON_ADDR has been specified. This means a dev cocoon code
+	// is running at that address. Just start the connector's client.
+	if devCocoonCodeAddr := os.Getenv("DEV_COCOON_ADDR"); len(devCocoonCodeAddr) > 0 {
+		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodeAddr)
 		if err = lc.GetClient().Connect(); err != nil {
 			log.Error(err)
 			lc.Stop(true)
@@ -140,7 +138,7 @@ func (lc *Launcher) prepareContainer(req *Request, lang Language) (*docker.Conta
 		lang,
 		[]string{
 			fmt.Sprintf("COCOON_ID=%s", req.ID),
-			fmt.Sprintf("COCOON_CODE_PORT=%s", cocoonCodePort),
+			fmt.Sprintf("COCOON_ADDR=%s", req.CocoonAddr),
 			fmt.Sprintf("COCOON_LINK=%s", req.Link),
 		})
 	if err != nil {
@@ -429,15 +427,15 @@ func (lc *Launcher) createContainer(name string, lang Language, env []string) (*
 			WorkingDir: lang.GetSourceRootDir(),
 			Tty:        true,
 			ExposedPorts: map[docker.Port]struct{}{
-				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
+				docker.Port(fmt.Sprintf("%s/tcp", strings.Split(lc.req.CocoonAddr, ":")[1])): struct{}{},
 			},
 			Cmd: []string{"bash"},
 			Env: env,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: map[docker.Port][]docker.PortBinding{
-				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
-					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
+				docker.Port(fmt.Sprintf("%s/tcp", strings.Split(lc.req.CocoonAddr, ":")[1])): []docker.PortBinding{
+					docker.PortBinding{HostIP: "127.0.0.1", HostPort: strings.Split(lc.req.CocoonAddr, ":")[1]},
 				},
 			},
 		},

@@ -1,3 +1,5 @@
+// Package golang includes The runtime, which is just a stub that connects the cocoon code to the connector's RPC
+// server. The runtime provides access to APIs for various operations.
 package golang
 
 import (
@@ -6,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"strings"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
@@ -19,8 +23,8 @@ import (
 
 var (
 
-	// serverPort to bind to
-	serverPort = util.Env("COCOON_CODE_PORT", "8000")
+	// serverAddr to bind to
+	serverAddr = util.Env("COCOON_ADDR", "127.0.0.1:8000")
 
 	// stub logger
 	log *logging.Logger
@@ -98,12 +102,12 @@ func Run(cc CocoonCode) {
 
 	serverDone = make(chan bool, 1)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", serverPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s", serverAddr))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s", serverPort)
+		log.Fatalf("failed to listen on port=%s", strings.Split(serverAddr, ":")[1])
 	}
 
-	log.Infof("Started stub service at port=%s", serverPort)
+	log.Infof("Started stub service at port=%s", strings.Split(serverAddr, ":")[1])
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, defaultServer)
 	go server.Serve(lis)
@@ -158,7 +162,7 @@ func blockCommitter(entries []*Entry) interface{} {
 		Id:     txID,
 		Invoke: true,
 		Name:   types.TxPut,
-		LinkTo:     entries[0].To,
+		LinkTo: entries[0].To,
 		Params: []string{ledgerName},
 		Body:   txsJSON,
 	}, respCh)
