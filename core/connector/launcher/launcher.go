@@ -600,13 +600,13 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 
 // getDefaultFirewall returns the default firewall rules
 // for a cocoon container.
-func (lc *Launcher) getDefaultFirewall() string {
+func (lc *Launcher) getDefaultFirewall(ccodePort string) string {
 	return strings.TrimSpace(`iptables -F && 
 			iptables -P INPUT ACCEPT && 
 			iptables -P FORWARD DROP &&
 			iptables -P OUTPUT DROP &&
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A INPUT -p tcp --sport 8000 -j ACCEPT
+			iptables -A INPUT -p tcp --sport ` + ccodePort + ` -j ACCEPT
 			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
 			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
 			for ip in $dnsIPs;
@@ -620,7 +620,7 @@ func (lc *Launcher) getDefaultFirewall() string {
 
 // configFirewall configures the container firewall.
 func (lc *Launcher) configFirewall(container *docker.Container, req *Request) error {
-	cmd := []string{"bash", "-c", lc.getDefaultFirewall()}
+	cmd := []string{"bash", "-c", lc.getDefaultFirewall(strings.Split(lc.req.CocoonAddr, ":")[1])}
 	return lc.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
