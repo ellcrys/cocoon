@@ -24,7 +24,7 @@ import (
 var (
 
 	// serverAddr to bind to
-	serverAddr = util.Env("COCOON_ADDR", "127.0.0.1:8000")
+	serverAddr = util.Env("COCOON_ADDR", ":8000")
 
 	// stub logger
 	log *logging.Logger
