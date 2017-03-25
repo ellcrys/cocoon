@@ -585,9 +585,9 @@ func (lc *Launcher) run(container *docker.Container, lang Language) error {
 		case "before":
 			log.Info("Starting cocoon code")
 		case "after":
-			// if err := lc.client.Connect(); err != nil {
-			// 	return err
-			// }
+			if err := lc.client.Connect(); err != nil {
+				return err
+			}
 		case "end":
 			if val.(int) == 0 {
 				log.Info("Cocoon code successfully stop")
