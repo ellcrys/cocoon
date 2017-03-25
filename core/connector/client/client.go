@@ -61,8 +61,12 @@ func (c *Client) getCCAddr() string {
 
 // Close the stream and cancel connections
 func (c *Client) Close() {
-	c.stream.CloseSend()
-	c.conCancel()
+	if c.stream != nil {
+		c.stream.CloseSend()
+	}
+	if c.conCancel != nil {
+		c.conCancel()
+	}
 }
 
 // GetStream returns the grpc stream connected to the grpc cocoon code server
