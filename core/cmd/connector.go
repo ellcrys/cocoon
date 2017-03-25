@@ -81,8 +81,6 @@ var connectorCmd = &cobra.Command{
 		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", "127.0.0.1:8002")
 		go grpcServer.Start(addr, make(chan bool, 1))
 
-		util.Printify(req)
-
 		// httpServer := server.NewHTTPServer()
 		// httpServerAddr := util.Env(scheduler.Getenv("IP_connector_http"), "")
 		// httpServerPort := util.Env(scheduler.Getenv("PORT_connector_http"), "8003")
