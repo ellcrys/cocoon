@@ -53,7 +53,7 @@ var apiCmdStart = &cobra.Command{
 				log.Fatalf("failed to get scheduler service from discovery service. %s", err)
 			}
 			if len(services) > 0 {
-				schedulerAddr = fmt.Sprintf("%s:%f", services[0].IP, services[0].Port)
+				schedulerAddr = fmt.Sprintf("%s:%d", services[0].IP, int(services[0].Port))
 			}
 		}
 
