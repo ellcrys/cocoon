@@ -107,13 +107,13 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
-	}
-	defer conn.Close()
+	// conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
+	// if err != nil {
+	// 	return fmt.Errorf("failed to connect to cocoon code server. %s", err)
+	// }
+	// defer conn.Close()
 
-	log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
+	// log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 
 	// c.stub = proto.NewStubClient(conn)
 
