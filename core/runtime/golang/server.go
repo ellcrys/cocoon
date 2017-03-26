@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
@@ -11,14 +12,36 @@ import (
 
 // StubServer defines the services of the stub's GRPC connection
 type stubServer struct {
-	port   int
-	stream proto.Stub_TransactServer
+	port                  int
+	stream                proto.Stub_TransactServer
+	streamKeepAliveTicker *time.Ticker
+}
+
+// keepStreamAlive periodically sends a keep alive message to the stream
+// to prevent transport from closing.
+func (s *stubServer) keepStreamAlive() {
+	streamKeepAliveTicker := time.NewTicker(30 * time.Second)
+	for _ = range streamKeepAliveTicker.C {
+		if defaultServer.stream != nil {
+			defaultServer.stream.Send(&proto.Tx{
+				Invoke: true,
+				Status: -100,
+			})
+			log.Debug("Sent keep alive message to stream")
+		}
+	}
 }
 
 // Transact listens and process invoke and response transactions from
 // the connector.
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 	s.stream = stream
+
+	if s.streamKeepAliveTicker != nil {
+		s.streamKeepAliveTicker.Stop()
+	}
+	s.keepStreamAlive()
+
 	for {
 		log.Info("Waiting for new message")
 		in, err := stream.Recv()
@@ -31,7 +54,7 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 
 		// keep alive message
 		if in.Invoke && in.Status == -100 {
-			log.Info("A keep alive message received")
+			log.Debug("A keep alive message received")
 			continue
 		}
 

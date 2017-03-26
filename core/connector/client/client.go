@@ -167,7 +167,7 @@ func (c *Client) Do() error {
 		return fmt.Errorf("failed to start transaction stream with cocoon code. %s", err)
 	}
 
-	//go c.keepStreamAlive()
+	go c.keepStreamAlive()
 
 	for {
 		in, err := c.stream.Recv()
@@ -176,6 +176,12 @@ func (c *Client) Do() error {
 		}
 		if err != nil {
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
+		}
+
+		// keep alive message
+		if in.Invoke && in.Status == -100 {
+			log.Debug("A keep alive message received")
+			continue
 		}
 
 		switch in.Invoke {
