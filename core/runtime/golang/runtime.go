@@ -110,7 +110,10 @@ func Run(cc CocoonCode) {
 	log.Infof("Started stub service at port=%s", strings.Split(serverAddr, ":")[1])
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, defaultServer)
-	go server.Serve(lis)
+	go func() {
+		server.Serve(lis)
+		log.Info("Server has stopped")
+	}()
 
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
