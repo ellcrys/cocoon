@@ -184,6 +184,7 @@ func (c *Client) Do() error {
 			if grpc.ErrorDesc(err) == "transport is closing" {
 				conn.Close()
 				c.streamKeepAliveTicker.Stop()
+				log.Info("Retrying...")
 				return c.Do()
 			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
