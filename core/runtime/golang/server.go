@@ -30,14 +30,13 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 		}
 
 		log.Info("Received new message")
+		util.Printify(in)
 
 		// keep alive message
 		if in.Invoke && in.Status == 0 {
 			log.Info("A keep alive message")
 			continue
 		}
-
-		util.Printify(in)
 
 		switch in.Invoke {
 		case true:
