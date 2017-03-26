@@ -213,6 +213,9 @@ func Stop(exitCode int) {
 	if blockMaker != nil {
 		blockMaker.Stop()
 	}
+	if defaultServer.streamKeepAliveTicker != nil {
+		defaultServer.streamKeepAliveTicker.Stop()
+	}
 	defaultServer.stream = nil
 	serverDone <- true
 	running = false
