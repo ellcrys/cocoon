@@ -181,6 +181,10 @@ func (c *Client) Do() error {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
 		if err != nil {
+			if grpc.ErrorDesc(err) == "transport is closing" {
+				time.Sleep(1 * time.Second)
+				continue
+			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
 
