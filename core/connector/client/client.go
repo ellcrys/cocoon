@@ -87,6 +87,7 @@ func (c *Client) keepStreamAlive() {
 				Invoke: true,
 				Status: 0,
 			})
+			log.Debug("Sent keep alive message to stream")
 		}
 	}
 }
@@ -146,6 +147,8 @@ func (c *Client) Connect() error {
 		if err = c.Do(); err != nil {
 			log.Error(err)
 		}
+
+		log.Debug("Redialling cocoon code")
 	}
 
 	return nil
