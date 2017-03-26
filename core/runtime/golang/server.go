@@ -18,10 +18,9 @@ type stubServer struct {
 // Transact listens and process invoke and response transactions from
 // the connector.
 func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
-	log.Info("++++++++ Transaction called")
 	s.stream = stream
 	for {
-		log.Info("Waiting for messages")
+		log.Info("Waiting for new message")
 		in, err := stream.Recv()
 		if err == io.EOF {
 			return fmt.Errorf("connection with cocoon code has ended")
@@ -30,10 +29,15 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 			return fmt.Errorf("failed to read message from connector. %s", err)
 		}
 
+		log.Info("Received new message")
+
 		// keep alive message
 		if in.Invoke && in.Status == 0 {
+			log.Info("A keep alive message")
 			continue
 		}
+
+		util.Printify(in)
 
 		switch in.Invoke {
 		case true:
