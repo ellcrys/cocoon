@@ -40,6 +40,9 @@ var (
 
 	// ErrClientNoActiveSession represents a lack of active user session on the client
 	ErrClientNoActiveSession = fmt.Errorf("No active session. Please login")
+
+	// ErrUninitializedStream represents a stream with nil value
+	ErrUninitializedStream = fmt.Errorf("stream appears to be uninitialized")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

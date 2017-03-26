@@ -34,6 +34,7 @@ type Client struct {
 	stream                proto.Stub_TransactClient
 	cocoonID              string
 	streamKeepAliveTicker *time.Ticker
+	stopped               bool
 }
 
 // NewClient creates a new cocoon code client
@@ -62,6 +63,7 @@ func (c *Client) getCCAddr() string {
 
 // Close the stream and cancel connections
 func (c *Client) Close() {
+	c.stopped = true
 	if c.stream != nil {
 		c.stream.CloseSend()
 		c.stream = nil
@@ -134,7 +136,7 @@ func (c *Client) Connect() error {
 		log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 	})
 
-	for c.stream != nil {
+	for !c.stopped {
 
 		conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
 		if err != nil {
@@ -264,6 +266,7 @@ func (c *Client) SendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 			return err
 		}
 		log.Debugf("Successfully sent transaction (%s) to cocoon code", tx.GetId())
+		return nil
 	}
-	return nil
+	return types.ErrUninitializedStream
 }
