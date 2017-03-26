@@ -69,17 +69,18 @@ func (c *Client) Close() {
 	if c.conCancel != nil {
 		c.conCancel()
 	}
+	c.orderDiscoTicker.Stop()
+	c.streamKeepAliveTicker.Stop()
 }
 
 func (c *Client) keepStreamAlive() {
-	c.streamKeepAliveTicker = time.NewTicker(20 * time.Second)
+	c.streamKeepAliveTicker = time.NewTicker(30 * time.Second)
 	for _ = range c.streamKeepAliveTicker.C {
 		if c.stream != nil {
 			c.stream.Send(&proto.Tx{
 				Invoke: true,
 				Status: 0,
 			})
-			log.Info("Sent keep alive message successfully")
 		}
 	}
 }
@@ -163,19 +164,20 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 		if err == io.EOF {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
+
 		if err != nil {
 			if strings.Contains(err.Error(), "context canceled") {
 				log.Info("Connection to cocoon code closed")
 				return nil
 			}
+
 			if grpc.ErrorDesc(err) == "transport is closing" {
 				log.Error(err.Error())
-				c.stream.Send(&proto.Tx{
-					Response: true,
-					Id:       "error",
-					Status:   500,
-					Body:     []byte("server error"),
-				})
+				log.Info("Renewing connection")
+				c.stream, err = c.stub.Transact(c.conCtx)
+				if err != nil {
+					return fmt.Errorf("failed to start renewed transaction stream with cocoon code. %s", err)
+				}
 				continue
 			} else {
 				return fmt.Errorf("failed to read message from cocoon code. %s", err)
