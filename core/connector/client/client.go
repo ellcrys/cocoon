@@ -73,6 +73,8 @@ func (c *Client) Close() {
 	c.streamKeepAliveTicker.Stop()
 }
 
+// keepStreamAlive periodically sends a keep alive message to the stream
+// to prevent transport from closing.
 func (c *Client) keepStreamAlive() {
 	c.streamKeepAliveTicker = time.NewTicker(30 * time.Second)
 	for _ = range c.streamKeepAliveTicker.C {
@@ -171,7 +173,9 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 				return nil
 			}
 
+			// if keepStreamAlive isn't helping to stop this, then we just renew the stream
 			if grpc.ErrorDesc(err) == "transport is closing" {
+				c.stream.CloseSend()
 				log.Error(err.Error())
 				log.Info("Renewing connection")
 				c.stream, err = c.stub.Transact(c.conCtx)
