@@ -153,6 +153,7 @@ func startServer(server *grpc.Server, lis net.Listener, restartLimit int) {
 			log.Info("Restarting server")
 			continue
 		}
+		log.Info("Server stopped with no error")
 		break
 	}
 }
