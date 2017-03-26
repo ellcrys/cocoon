@@ -136,22 +136,22 @@ func (c *Client) Connect() error {
 		log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 	})
 
-	for !c.stopped {
+	// for !c.stopped {
 
-		conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
-		if err != nil {
-			return fmt.Errorf("failed to connect to cocoon code server. %s", err)
-		}
-		defer conn.Close()
-
-		c.stub = proto.NewStubClient(conn)
-
-		if err = c.Do(); err != nil {
-			log.Error(err)
-		}
-
-		log.Debug("Redialling cocoon code")
+	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
 	}
+	defer conn.Close()
+
+	c.stub = proto.NewStubClient(conn)
+
+	if err = c.Do(); err != nil {
+		log.Error(err)
+	}
+
+	// log.Debug("Redialling cocoon code")
+	// }
 
 	return nil
 }
