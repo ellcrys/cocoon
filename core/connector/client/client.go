@@ -129,18 +129,21 @@ func (c *Client) Connect() error {
 		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	}
 
-	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
-	}
-	defer conn.Close()
-
 	log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 
-	c.stub = proto.NewStubClient(conn)
+	for c.stream != nil {
 
-	if err = c.Do(conn); err != nil {
-		return err
+		conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
+		if err != nil {
+			return fmt.Errorf("failed to connect to cocoon code server. %s", err)
+		}
+		defer conn.Close()
+
+		c.stub = proto.NewStubClient(conn)
+
+		if err = c.Do(); err != nil {
+			log.Error(err)
+		}
 	}
 
 	return nil
@@ -149,7 +152,7 @@ func (c *Client) Connect() error {
 // Do starts a request loop that continously asks the
 // server for transactions. When it receives a transaction,
 // it processes it and returns the result.
-func (c *Client) Do(conn *grpc.ClientConn) error {
+func (c *Client) Do() error {
 
 	var err error
 
@@ -170,29 +173,8 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 		if err == io.EOF {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
-
 		if err != nil {
-			if strings.Contains(err.Error(), "context canceled") {
-				log.Info("Connection to cocoon code closed")
-				return nil
-			}
-
-			// if keepStreamAlive isn't helping to stop this, then we just renew the stream
-			if grpc.ErrorDesc(err) == "transport is closing" {
-				c.stream.CloseSend()
-				log.Error(err.Error())
-				log.Info("Renewing connection")
-
-				// create a context so we have complete controll of the connection
-				c.conCtx, c.conCancel = context.WithCancel(context.Background())
-				c.stream, err = c.stub.Transact(c.conCtx)
-				if err != nil {
-					return fmt.Errorf("failed to start renewed transaction stream with cocoon code. %s", err)
-				}
-				continue
-			} else {
-				return fmt.Errorf("failed to read message from cocoon code. %s", err)
-			}
+			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
 
 		switch in.Invoke {
