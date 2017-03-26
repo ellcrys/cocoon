@@ -28,6 +28,11 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 			return fmt.Errorf("failed to read message from connector. %s", err)
 		}
 
+		// keep alive message
+		if in.Invoke && in.Status == 0 {
+			continue
+		}
+
 		switch in.Invoke {
 		case true:
 			go func() {

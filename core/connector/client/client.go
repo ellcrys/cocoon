@@ -25,14 +25,15 @@ var txRespChannels = cmap.New()
 // Client represents a cocoon code GRPC client
 // that interacts with a cocoon code.
 type Client struct {
-	ccodeAddr        string
-	stub             proto.StubClient
-	conCtx           context.Context
-	conCancel        context.CancelFunc
-	orderDiscoTicker *time.Ticker
-	ordererAddrs     []string
-	stream           proto.Stub_TransactClient
-	cocoonID         string
+	ccodeAddr             string
+	stub                  proto.StubClient
+	conCtx                context.Context
+	conCancel             context.CancelFunc
+	orderDiscoTicker      *time.Ticker
+	ordererAddrs          []string
+	stream                proto.Stub_TransactClient
+	cocoonID              string
+	streamKeepAliveTicker *time.Ticker
 }
 
 // NewClient creates a new cocoon code client
@@ -63,9 +64,23 @@ func (c *Client) getCCAddr() string {
 func (c *Client) Close() {
 	if c.stream != nil {
 		c.stream.CloseSend()
+		c.stream = nil
 	}
 	if c.conCancel != nil {
 		c.conCancel()
+	}
+}
+
+func (c *Client) keepStreamAlive() {
+	c.streamKeepAliveTicker = time.NewTicker(20 * time.Second)
+	for _ = range c.streamKeepAliveTicker.C {
+		if c.stream != nil {
+			c.stream.Send(&proto.Tx{
+				Invoke: true,
+				Status: 0,
+			})
+			log.Info("Sent keep alive message successfully")
+		}
 	}
 }
 
@@ -139,6 +154,8 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 	if err != nil {
 		return fmt.Errorf("failed to start transaction stream with cocoon code. %s", err)
 	}
+
+	go c.keepStreamAlive()
 
 	for {
 
