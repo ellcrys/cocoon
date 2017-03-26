@@ -74,7 +74,8 @@ func (lc *Launcher) Launch(req *Request) {
 
 	dckClient = client
 	lc.client.SetCocoonID(req.ID)
-	lc.client.SetCocoonCodeAddr(req.CocoonAddr)
+	log.Info("Connecting to: ", req.CocoonAddr)
+	lc.client.SetCocoonCodeAddr("127.0.0.1" + req.CocoonAddr)
 	lc.monitor.SetDockerClient(dckClient)
 
 	// No need downloading, building and starting a cocoon code

@@ -77,7 +77,7 @@ func SetDebugLevel(level logging.Level) {
 func init() {
 	defaultServer = new(stubServer)
 	config.ConfigureLogger()
-	log = logging.MustGetLogger("ccode.stub")
+	log = logging.MustGetLogger("ccode.runtime")
 }
 
 // GetID returns the cocoon id. However, it will return the
