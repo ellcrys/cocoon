@@ -100,13 +100,6 @@ func Run(cc CocoonCode) {
 		return
 	}
 
-	go func() {
-		for {
-			log.Info("Alive!!")
-			time.Sleep(10 * time.Second)
-		}
-	}()
-
 	serverDone = make(chan bool, 1)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s", serverAddr))
