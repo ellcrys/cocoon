@@ -151,7 +151,18 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 				log.Info("Connection to cocoon code closed")
 				return nil
 			}
-			return fmt.Errorf("failed to read message from cocoon code. %s", err)
+			if grpc.ErrorDesc(err) == "transport is closing" {
+				log.Error(err.Error())
+				c.stream.Send(&proto.Tx{
+					Response: true,
+					Id:       "error",
+					Status:   500,
+					Body:     []byte("server error"),
+				})
+				continue
+			} else {
+				return fmt.Errorf("failed to read message from cocoon code. %s", err)
+			}
 		}
 
 		switch in.Invoke {
