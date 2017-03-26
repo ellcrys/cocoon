@@ -16,12 +16,13 @@ var testConnectorCmd = &cobra.Command{
 	Long:  `Playground for testing connector during development`,
 	Run: func(cmd *cobra.Command, args []string) {
 		f, _ := cmd.Flags().GetString("func")
+		addr, _ := cmd.Flags().GetString("addr")
 		var log = logging.MustGetLogger("connector-test")
-		connectorAddr := ":8002"
-		conn, err := grpc.Dial(connectorAddr, grpc.WithInsecure())
+
+		conn, err := grpc.Dial(addr, grpc.WithInsecure())
 		defer conn.Close()
 		if err != nil {
-			log.Fatalf("Failed to connect to connector. Is the connector running on %s", connectorAddr)
+			log.Fatalf("Failed to connect to connector. Is the connector running on %s", addr)
 		}
 
 		client := proto.NewAPIClient(conn)
@@ -37,15 +38,6 @@ var testConnectorCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(testConnectorCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
+	testConnectorCmd.Flags().StringP("addr", "a", "127.0.0.1:8002", "The address of the connector")
 	testConnectorCmd.Flags().StringP("func", "f", "", "The function to run")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// testConnectorCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
