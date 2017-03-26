@@ -117,7 +117,24 @@ func Run(cc CocoonCode) {
 	log.Infof("Started stub service at port=%s", strings.Split(serverAddr, ":")[1])
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, defaultServer)
-	go server.Serve(lis)
+
+	// start server with the ability to restart
+	// when it unexpectedly stops.
+	go func() {
+		maxRetries := 5
+		retries := 1
+		for {
+			err := server.Serve(lis)
+			log.Errorf("Server stopped: %s", err)
+			retries++
+			if retries == maxRetries {
+				log.Errorf("RPC server stopped: %s", err)
+				Stop(1)
+				break
+			}
+			log.Info("Restarting server")
+		}
+	}()
 
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
@@ -209,6 +226,7 @@ func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 
 // Stop stub and cocoon code
 func Stop(exitCode int) {
+	running = false
 	if blockMaker != nil {
 		blockMaker.Stop()
 	}
