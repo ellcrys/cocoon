@@ -87,7 +87,7 @@ func (c *Client) keepStreamAlive() {
 		if c.stream != nil {
 			c.stream.Send(&proto.Tx{
 				Invoke: true,
-				Status: 0,
+				Status: -100,
 			})
 			log.Debug("Sent keep alive message to stream")
 		}
