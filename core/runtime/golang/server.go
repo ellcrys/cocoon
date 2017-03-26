@@ -29,13 +29,13 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 			return fmt.Errorf("failed to read message from connector. %s", err)
 		}
 
-		log.Infof("Received new message (%s)", in.GetId())
-
 		// keep alive message
 		if in.Invoke && in.Status == -100 {
 			log.Info("A keep alive message received")
 			continue
 		}
+
+		log.Infof("Received new message (ID: %s)", in.GetId())
 
 		switch in.Invoke {
 		case true:
