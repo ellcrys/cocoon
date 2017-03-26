@@ -69,8 +69,12 @@ func (c *Client) Close() {
 	if c.conCancel != nil {
 		c.conCancel()
 	}
-	c.orderDiscoTicker.Stop()
-	c.streamKeepAliveTicker.Stop()
+	if c.orderDiscoTicker != nil {
+		c.orderDiscoTicker.Stop()
+	}
+	if c.streamKeepAliveTicker != nil {
+		c.streamKeepAliveTicker.Stop()
+	}
 }
 
 // keepStreamAlive periodically sends a keep alive message to the stream
