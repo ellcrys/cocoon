@@ -16,5 +16,6 @@ type Store interface {
 	GetRange(ledger, startKey, endKey string, inclusive bool, limit, lastNum int) ([]*Transaction, error)
 	MakeLedgerName(namespace, name string) string
 	MakeTxKey(namespace, name string) string
+	GetActualKeyFromTxKey(key string) string
 	Close() error
 }

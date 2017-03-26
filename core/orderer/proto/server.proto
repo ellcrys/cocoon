@@ -56,18 +56,21 @@ message Ledger {
     int64 number = 1;
     string hash = 2;
     string name = 3;
-    bool public = 4;
-    bool chained = 5;
-    int64 createdAt = 6;
+    string nameInternal = 4;
+    bool public = 5;
+    bool chained = 6;
+    int64 createdAt = 7;
 }
 
 message Transaction {
     int64 number = 1;
     string ledger = 2;
-    string id = 3;
-    string key = 4;
-    string value = 5;
-    string hash = 6;
+    string ledgerInternal = 3;
+    string id = 4;
+    string key = 5;
+    string keyInternal = 6;
+    string value = 7;
+    string hash = 8;
     int64 createdAt = 9;
     string blockId = 10;
     Block block = 11;

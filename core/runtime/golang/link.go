@@ -8,6 +8,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -166,13 +167,19 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 		return nil, err
 	}
 
+	store := impl.PostgresStore{}
+
 	tx := &types.Transaction{
-		ID:        util.UUID4(),
-		Ledger:    ledger.Name,
-		Key:       key,
-		Value:     string(value),
-		CreatedAt: time.Now().Unix(),
+		ID:             util.UUID4(),
+		Ledger:         ledger.Name,
+		LedgerInternal: store.MakeLedgerName(link.GetCocoonID(), ledger.Name),
+		Key:            key,
+		KeyInternal:    store.MakeTxKey(link.GetCocoonID(), key),
+		Value:          string(value),
+		CreatedAt:      time.Now().Unix(),
 	}
+
+	tx.Hash = tx.MakeHash()
 
 	if ledger.Chained {
 		respChan := make(chan interface{})
@@ -261,6 +268,10 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
+	if tx.Block.ID == "" {
+		tx.Block = nil
+	}
+
 	return &tx, nil
 }
 
@@ -299,6 +310,10 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 	var tx types.Transaction
 	if err = util.FromJSON(resp.Body, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
+	}
+
+	if tx.Block.ID == "" {
+		tx.Block = nil
 	}
 
 	return &tx, nil

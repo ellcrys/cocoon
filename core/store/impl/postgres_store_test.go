@@ -32,7 +32,7 @@ func TestPosgresStore(t *testing.T) {
 				db, err := pgStore.Connect(conStr)
 				So(db, ShouldBeNil)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "failed to connect to store backend")
+				So(err.Error(), ShouldEqual, `failed to connect to store backend. pq: role "wrong" does not exist`)
 			})
 		})
 
@@ -100,6 +100,21 @@ func TestPosgresStore(t *testing.T) {
 				So(hash, ShouldEqual, "2f97bb39bf93e995dcb611632fbb72424722b5e6090a0bc483846e46128eb74b")
 			})
 
+		})
+
+		Convey(".MakeTxKey", func() {
+			Convey("should create expected tx key", func() {
+				key := pgStore.MakeTxKey("namespace", "accounts")
+				So(key, ShouldEqual, "namespace.accounts")
+			})
+		})
+
+		Convey(".GetActualKeyFromTxKey", func() {
+			Convey("should return expected key", func() {
+				txKey := pgStore.MakeTxKey("namespace", "accounts")
+				key := pgStore.GetActualKeyFromTxKey(txKey)
+				So(key, ShouldEqual, "accounts")
+			})
 		})
 
 		Convey(".CreateLedger", func() {

@@ -3,6 +3,7 @@ package impl
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"os"
@@ -322,6 +323,11 @@ func (s *PostgresStore) MakeLedgerName(namespace, name string) string {
 // Accepts a namespace value and the key name.
 func (s *PostgresStore) MakeTxKey(namespace, name string) string {
 	return fmt.Sprintf("%s.%s", namespace, name)
+}
+
+// GetActualKeyFromTxKey returns the real key name from a transaction key
+func (s *PostgresStore) GetActualKeyFromTxKey(key string) string {
+	return strings.Split(key, ".")[1]
 }
 
 // Close releases any resource held
