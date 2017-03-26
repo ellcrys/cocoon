@@ -16,6 +16,7 @@ import (
 type Link struct {
 	cocoonID      string
 	defaultLedger string
+	native        bool
 }
 
 // NewLink creates a new instance that represents
@@ -24,6 +25,20 @@ func NewLink(cocoonID string) *Link {
 	return &Link{
 		cocoonID: cocoonID,
 	}
+}
+
+// NewNativeLink create a new instance of the running cocoon or
+// a natively linked cocoon.
+func NewNativeLink(cocoonID string) *Link {
+	return &Link{
+		cocoonID: cocoonID,
+		native:   true,
+	}
+}
+
+// IsNative checks whether the link is a native link
+func (link *Link) IsNative() bool {
+	return link.native
 }
 
 // SetDefaultLedger sets this link's default ledger

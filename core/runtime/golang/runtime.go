@@ -36,7 +36,7 @@ var (
 	serverDone chan bool
 
 	// Default runtime link
-	defaultLink = NewLink("")
+	defaultLink = NewNativeLink(GetID())
 
 	// txChannels holds the channels to send transaction responses to
 	txRespChannels = cmap.New()
