@@ -125,7 +125,7 @@ func Run(cc CocoonCode) {
 	time.AfterFunc(1*time.Second, func() {
 		if err = cc.OnInit(defaultLink); err != nil {
 			log.Errorf("cocoode OnInit() returned error: %s", err)
-			Stop(1)
+			Stop(2)
 		} else {
 			running = true
 		}
@@ -227,7 +227,7 @@ func Stop(exitCode int) {
 	}
 	defaultServer.stream = nil
 	serverDone <- true
-	running = falseå
+	running = false
 	log.Info("Cocoon code exiting with exit code %d", exitCode)
 	os.Exit(exitCode)
 }
