@@ -88,12 +88,11 @@ var connectorCmd = &cobra.Command{
 
 		if <-waitCh {
 			grpcServer.Stop(1)
-			log.Fatal("launcher has failed")
 		} else {
 			grpcServer.Stop(0)
 		}
 
-		log.Info("launcher successfully exited")
+		log.Info("connector stopped")
 	},
 }
 

@@ -137,10 +137,7 @@ func (c *Client) Connect() error {
 	})
 
 	if err = c.Do(); err != nil {
-		if !strings.Contains(err.Error(), "code = 2") {
-			log.Error(err)
-			return err
-		}
+		return err
 	}
 
 	return nil
@@ -170,7 +167,7 @@ func (c *Client) Do() error {
 		return fmt.Errorf("failed to start transaction stream with cocoon code. %s", err)
 	}
 
-	go c.keepStreamAlive()
+	//go c.keepStreamAlive()
 
 	for {
 		in, err := c.stream.Recv()
@@ -178,9 +175,6 @@ func (c *Client) Do() error {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
 		if err != nil {
-			if grpc.ErrorDesc(err) == "transport is closing" {
-				return types.ErrTransportClosing
-			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
 
