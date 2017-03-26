@@ -247,8 +247,10 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		var tx = types.Transaction{}
 		cstructs.Copy(protoTx, &tx)
 		tx.Key = od.store.MakeTxKey(params.GetCocoonID(), tx.Key)
-		tx.BlockID = blockID
 		transactions[i] = &tx
+		if ledger.Chained {
+			tx.BlockID = blockID
+		}
 	}
 
 	var block *proto.Block
