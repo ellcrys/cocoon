@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/launcher"
 	"github.com/ncodes/cocoon/core/connector/server/proto"
@@ -64,7 +63,7 @@ func (api *APIServer) Invoke(ctx context.Context, req *proto.InvokeRequest) (*pr
 	log.Infof("New invoke transaction (%s)", req.GetId())
 
 	var respCh = make(chan *stub_proto.Tx)
-	var txID = util.UUID4()
+	var txID = req.GetId()
 	err := api.launcher.GetClient().SendTx(&stub_proto.Tx{
 		Id:     txID,
 		Invoke: true,
