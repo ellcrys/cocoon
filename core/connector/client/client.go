@@ -136,14 +136,12 @@ func (c *Client) Connect() error {
 		log.Debugf("Now connected to cocoon code at port=%s", strings.Split(c.getCCAddr(), ":")[1])
 	})
 
-	// for !c.stopped {
-
 	if err = c.Do(); err != nil {
-		log.Error(err)
+		if !strings.Contains(err.Error(), "code = 2") {
+			log.Error(err)
+			return err
+		}
 	}
-
-	// log.Debug("Redialling cocoon code")
-	// }
 
 	return nil
 }
@@ -175,17 +173,13 @@ func (c *Client) Do() error {
 	go c.keepStreamAlive()
 
 	for {
-
 		in, err := c.stream.Recv()
 		if err == io.EOF {
 			return fmt.Errorf("connection with cocoon code has ended")
 		}
 		if err != nil {
 			if grpc.ErrorDesc(err) == "transport is closing" {
-				conn.Close()
-				c.streamKeepAliveTicker.Stop()
-				log.Info("Retrying...")
-				return c.Do()
+				return types.ErrTransportClosing
 			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
