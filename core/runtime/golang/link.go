@@ -173,7 +173,6 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 		Value:     string(value),
 		CreatedAt: time.Now().Unix(),
 	}
-	tx.Hash = tx.MakeHash()
 
 	if ledger.Chained {
 		respChan := make(chan interface{})

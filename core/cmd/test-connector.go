@@ -15,6 +15,7 @@ var testConnectorCmd = &cobra.Command{
 	Short: "Playground for testing connector during development",
 	Long:  `Playground for testing connector during development`,
 	Run: func(cmd *cobra.Command, args []string) {
+		f, _ := cmd.Flags().GetString("func")
 		var log = logging.MustGetLogger("connector-test")
 		connectorAddr := ":8002"
 		conn, err := grpc.Dial(connectorAddr, grpc.WithInsecure())
@@ -26,7 +27,7 @@ var testConnectorCmd = &cobra.Command{
 		client := proto.NewAPIClient(conn)
 		resp, err := client.Invoke(context.Background(), &proto.InvokeRequest{
 			Id:       util.UUID4(),
-			Function: "get.balance",
+			Function: f,
 			Params:   []string{"accountxxxxx"},
 		})
 
@@ -41,7 +42,7 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// testConnectorCmd.PersistentFlags().String("foo", "", "A help for foo")
+	testConnectorCmd.PersistentFlags().String("func", "f", "The function to run")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
