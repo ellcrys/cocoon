@@ -110,24 +110,7 @@ func Run(cc CocoonCode) {
 	log.Infof("Started stub service at port=%s", strings.Split(serverAddr, ":")[1])
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, defaultServer)
-
-	// start server with the ability to restart
-	// when it unexpectedly stops.
-	go func() {
-		maxRetries := 5
-		retries := 1
-		for {
-			err := server.Serve(lis)
-			log.Errorf("Server stopped: %s", err)
-			retries++
-			if retries == maxRetries {
-				log.Errorf("RPC server stopped: %s", err)
-				Stop(1)
-				break
-			}
-			log.Info("Restarting server")
-		}
-	}()
+	go startServer(server, lis, 5)
 
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
@@ -153,12 +136,34 @@ func Run(cc CocoonCode) {
 	os.Exit(0)
 }
 
+// startServer starts the server with the ability to restart it a
+// number of times should it unexpectedly fail
+func startServer(server *grpc.Server, lis net.Listener, restartLimit int) {
+	retries := 1
+	for {
+		err := server.Serve(lis)
+		if err != nil {
+			log.Errorf("Server stopped: %s", err)
+			retries++
+			if retries == restartLimit {
+				log.Errorf("RPC server stopped: %s", err)
+				Stop(1)
+				break
+			}
+			log.Info("Restarting server")
+			continue
+		}
+		break
+	}
+}
+
 // blockCommit creates a PUT operation which adds one or many
 // transactions to the store and blockchain and returns the block if
 // if succeed or error if otherwise.
 func blockCommitter(entries []*Entry) interface{} {
 
 	var block types.Block
+	var respCh = make(chan *proto.Tx)
 
 	if len(entries) == 0 {
 		return block
@@ -171,8 +176,6 @@ func blockCommitter(entries []*Entry) interface{} {
 
 	ledgerName := entries[0].Tx.Ledger
 	txsJSON, _ := util.ToJSON(txs)
-
-	var respCh = make(chan *proto.Tx)
 
 	txID := util.UUID4()
 	err := sendTx(&proto.Tx{
@@ -219,12 +222,12 @@ func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
 
 // Stop stub and cocoon code
 func Stop(exitCode int) {
-	running = false
 	if blockMaker != nil {
 		blockMaker.Stop()
 	}
 	defaultServer.stream = nil
 	serverDone <- true
+	running = falseå
 	log.Info("Cocoon code exiting with exit code %d", exitCode)
 	os.Exit(exitCode)
 }
