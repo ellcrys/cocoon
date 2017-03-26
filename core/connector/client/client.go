@@ -257,11 +257,13 @@ func (c *Client) handleRespTransaction(tx *proto.Tx) error {
 // and saves the response channel. The response channel will
 // be passed a response when it is available in the Transact loop.
 func (c *Client) SendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
-	txRespChannels.Set(tx.GetId(), respCh)
-	if err := c.stream.Send(tx); err != nil {
-		txRespChannels.Remove(tx.GetId())
-		return err
+	if c.stream != nil {
+		txRespChannels.Set(tx.GetId(), respCh)
+		if err := c.stream.Send(tx); err != nil {
+			txRespChannels.Remove(tx.GetId())
+			return err
+		}
+		log.Debugf("Successfully sent transaction (%s) to cocoon code", tx.GetId())
 	}
-	log.Debugf("Successfully sent transaction (%s) to cocoon code", tx.GetId())
 	return nil
 }
