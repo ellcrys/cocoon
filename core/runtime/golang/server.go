@@ -40,7 +40,7 @@ func (s *stubServer) Transact(stream proto.Stub_TransactServer) error {
 	if s.streamKeepAliveTicker != nil {
 		s.streamKeepAliveTicker.Stop()
 	}
-	s.keepStreamAlive()
+	go s.keepStreamAlive()
 
 	for {
 		log.Info("Waiting for new message")
