@@ -138,14 +138,6 @@ func (c *Client) Connect() error {
 
 	// for !c.stopped {
 
-	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
-	}
-	defer conn.Close()
-
-	c.stub = proto.NewStubClient(conn)
-
 	if err = c.Do(); err != nil {
 		log.Error(err)
 	}
@@ -162,6 +154,14 @@ func (c *Client) Connect() error {
 func (c *Client) Do() error {
 
 	var err error
+
+	conn, err := grpc.Dial(c.getCCAddr(), grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to connect to cocoon code server. %s", err)
+	}
+	defer conn.Close()
+
+	c.stub = proto.NewStubClient(conn)
 
 	// create a context so we have complete controll of the connection
 	c.conCtx, c.conCancel = context.WithCancel(context.Background())
@@ -182,8 +182,9 @@ func (c *Client) Do() error {
 		}
 		if err != nil {
 			if grpc.ErrorDesc(err) == "transport is closing" {
-				time.Sleep(1 * time.Second)
-				continue
+				conn.Close()
+				c.streamKeepAliveTicker.Stop()
+				return c.Do()
 			}
 			return fmt.Errorf("failed to read message from cocoon code. %s", err)
 		}
