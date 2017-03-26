@@ -182,6 +182,9 @@ func (c *Client) Do(conn *grpc.ClientConn) error {
 				c.stream.CloseSend()
 				log.Error(err.Error())
 				log.Info("Renewing connection")
+
+				// create a context so we have complete controll of the connection
+				c.conCtx, c.conCancel = context.WithCancel(context.Background())
 				c.stream, err = c.stub.Transact(c.conCtx)
 				if err != nil {
 					return fmt.Errorf("failed to start renewed transaction stream with cocoon code. %s", err)
