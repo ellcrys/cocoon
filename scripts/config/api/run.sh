@@ -5,7 +5,7 @@ mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
-git clone --depth=1 -b=connector-redesign https://github.com/ncodes/cocoon
+git clone --depth=1 -b connector-redesign https://github.com/ncodes/cocoon
 
 # start the orderer
 cd cocoon
