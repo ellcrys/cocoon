@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/ncodes/cocoon/core/connector"
@@ -34,14 +33,15 @@ func NewRPCServer(connector *connector.Connector) *RPCServer {
 func (rpc *RPCServer) Start(addr string, startedCh chan bool, endedCh chan bool) {
 
 	rpc.endedCh = endedCh
+	_, port, _ := net.SplitHostPort(addr)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s", addr))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
+		log.Fatalf("failed to listen on port=%s. Err: %s", port, err)
 	}
 
 	time.AfterFunc(2*time.Second, func() {
-		log.Infof("Started GRPC API server on port %s", strings.Split(addr, ":")[1])
+		log.Infof("Started GRPC API server on port %s", port)
 		startedCh <- true
 	})
 

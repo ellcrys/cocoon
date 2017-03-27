@@ -402,6 +402,7 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
+	_, cocoonCodePort, _ := net.SplitHostPort(cn.req.CocoonAddr)
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -410,15 +411,15 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 			WorkingDir: lang.GetSourceRootDir(),
 			Tty:        true,
 			ExposedPorts: map[docker.Port]struct{}{
-				docker.Port(fmt.Sprintf("%s/tcp", strings.Split(cn.req.CocoonAddr, ":")[1])): struct{}{},
+				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
 			},
 			Cmd: []string{"bash"},
 			Env: env,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: map[docker.Port][]docker.PortBinding{
-				docker.Port(fmt.Sprintf("%s/tcp", strings.Split(cn.req.CocoonAddr, ":")[1])): []docker.PortBinding{
-					docker.PortBinding{HostIP: "127.0.0.1", HostPort: strings.Split(cn.req.CocoonAddr, ":")[1]},
+				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
+					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
 				},
 			},
 		},
