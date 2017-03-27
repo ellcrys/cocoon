@@ -25,7 +25,7 @@ var testConnectorCmd = &cobra.Command{
 			log.Fatalf("Failed to connect to connector. Is the connector running on %s", addr)
 		}
 
-		client := proto.NewAPIClient(conn)
+		client := proto.NewRPCClient(conn)
 		resp, err := client.Invoke(context.Background(), &proto.InvokeRequest{
 			Id:       util.UUID4(),
 			Function: f,

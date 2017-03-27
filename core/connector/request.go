@@ -1,4 +1,4 @@
-package launcher
+package connector
 
 // Request defines a launch request
 type Request struct {

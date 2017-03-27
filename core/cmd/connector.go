@@ -7,7 +7,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/connector/launcher"
+	"github.com/ncodes/cocoon/core/connector"
 	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/scheduler"
 	logging "github.com/op/go-logging"
@@ -20,7 +20,7 @@ func init() {
 
 // creates a deployment request with argument
 // fetched from the environment.
-func getRequest() (*launcher.Request, error) {
+func getRequest() (*connector.Request, error) {
 
 	// get cocoon code github link and language
 	ccID := os.Getenv("COCOON_ID")
@@ -40,7 +40,7 @@ func getRequest() (*launcher.Request, error) {
 		return nil, fmt.Errorf("Cocoon code url not set @ $COCOON_CODE_LANG")
 	}
 
-	return &launcher.Request{
+	return &connector.Request{
 		ID:          ccID,
 		URL:         ccURL,
 		Tag:         ccTag,
@@ -60,36 +60,34 @@ var connectorCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		waitCh := make(chan bool, 1)
+		serverStartedCh := make(chan bool)
 
 		var log = logging.MustGetLogger("connector")
-		log.Info("Connector started. Initiating cocoon code launch procedure.")
+		log.Info("Connector has started")
 
 		// get request
+		log.Info("Collecting and validating launch request")
 		req, err := getRequest()
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
+		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
-		// install cooncode
-		lchr := launcher.NewLauncher(waitCh)
-		lchr.AddLanguage(launcher.NewGo(req))
-		go lchr.Launch(req)
+		cn := connector.NewConnector(waitCh)
+		cn.AddLanguage(connector.NewGo(req))
 
 		// start grpc API server
-		grpcServer := server.NewAPIServer(lchr)
-		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", "127.0.0.1:8002")
-		go grpcServer.Start(addr, make(chan bool, 1))
-
-		// httpServer := server.NewHTTPServer()
-		// httpServerAddr := util.Env(scheduler.Getenv("IP_connector_http"), "")
-		// httpServerPort := util.Env(scheduler.Getenv("PORT_connector_http"), "8003")
-		// go httpServer.Start(fmt.Sprintf("%s:%s", httpServerAddr, httpServerPort))
+		rpcServer := server.NewRPCServer(cn)
+		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", "0.0.0.0:8002")
+		go rpcServer.Start(addr, serverStartedCh, make(chan bool, 1))
+		<-serverStartedCh
+		go cn.Launch(req, addr)
 
 		if <-waitCh {
-			grpcServer.Stop(1)
+			rpcServer.Stop(1)
 		} else {
-			grpcServer.Stop(0)
+			rpcServer.Stop(0)
 		}
 
 		log.Info("connector stopped")

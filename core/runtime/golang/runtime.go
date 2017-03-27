@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/runtime/golang/config"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
@@ -140,7 +139,7 @@ func Run(cc CocoonCode) {
 func startServer(server *grpc.Server, lis net.Listener) {
 	err := server.Serve(lis)
 	if err != nil {
-		log.Errorf("Server stopped: %s", err)
+		log.Errorf("server has stopped: %s", err)
 		Stop(1)
 	}
 }
@@ -148,51 +147,51 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // blockCommit creates a PUT operation which adds one or many
 // transactions to the store and blockchain and returns the block if
 // if succeed or error if otherwise.
-func blockCommitter(entries []*Entry) interface{} {
+// func blockCommitter(entries []*Entry) interface{} {
 
-	var block types.Block
-	var respCh = make(chan *proto.Tx)
+// 	var block types.Block
+// 	var respCh = make(chan *proto.Tx)
 
-	if len(entries) == 0 {
-		return block
-	}
+// 	if len(entries) == 0 {
+// 		return block
+// 	}
 
-	txs := make([]*types.Transaction, len(entries))
-	for i, e := range entries {
-		txs[i] = e.Tx
-	}
+// 	txs := make([]*types.Transaction, len(entries))
+// 	for i, e := range entries {
+// 		txs[i] = e.Tx
+// 	}
 
-	ledgerName := entries[0].Tx.Ledger
-	txsJSON, _ := util.ToJSON(txs)
+// 	ledgerName := entries[0].Tx.Ledger
+// 	txsJSON, _ := util.ToJSON(txs)
 
-	txID := util.UUID4()
-	err := sendTx(&proto.Tx{
-		Id:     txID,
-		Invoke: true,
-		Name:   types.TxPut,
-		LinkTo: entries[0].To,
-		Params: []string{ledgerName},
-		Body:   txsJSON,
-	}, respCh)
-	if err != nil {
-		return fmt.Errorf("failed to put block transaction. %s", err)
-	}
+// 	txID := util.UUID4()
+// 	err := sendTx(&proto.Tx{
+// 		Id:     txID,
+// 		Invoke: true,
+// 		Name:   types.TxPut,
+// 		LinkTo: entries[0].To,
+// 		Params: []string{ledgerName},
+// 		Body:   txsJSON,
+// 	}, respCh)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to put block transaction. %s", err)
+// 	}
 
-	resp, err := common.AwaitTxChan(respCh)
-	if err != nil {
-		return err
-	}
+// 	resp, err := common.AwaitTxChan(respCh)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if resp.Status != 200 {
-		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
-	}
+// 	if resp.Status != 200 {
+// 		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
+// 	}
 
-	if err = util.FromJSON(resp.Body, &block); err != nil {
-		return fmt.Errorf("failed to unmarshall response data")
-	}
+// 	if err = util.FromJSON(resp.Body, &block); err != nil {
+// 		return fmt.Errorf("failed to unmarshall response data")
+// 	}
 
-	return &block
-}
+// 	return &block
+// }
 
 // sendTx sends a transaction to the cocoon code
 // and saves the response channel. The response channel will
@@ -213,10 +212,10 @@ func Stop(exitCode int) {
 	if blockMaker != nil {
 		blockMaker.Stop()
 	}
-	if defaultServer.streamKeepAliveTicker != nil {
-		defaultServer.streamKeepAliveTicker.Stop()
-	}
-	defaultServer.stream = nil
+	// if defaultServer.streamKeepAliveTicker != nil {
+	// 	defaultServer.streamKeepAliveTicker.Stop()
+	// }
+	// defaultServer.stream = nil
 	serverDone <- true
 	running = false
 	log.Info("Cocoon code exiting with exit code %d", exitCode)
@@ -225,9 +224,9 @@ func Stop(exitCode int) {
 
 // isConnected checks if connection with the connector
 // is active.
-func isConnected() bool {
-	return defaultServer.stream != nil
-}
+// func isConnected() bool {
+// 	return defaultServer.stream != nil
+// }
 
 // GetGlobalLedger returns the name of the global ledger.
 func GetGlobalLedger() string {

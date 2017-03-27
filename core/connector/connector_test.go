@@ -1,4 +1,4 @@
-package launcher
+package connector
 
 import (
 	"testing"

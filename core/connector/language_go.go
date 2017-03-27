@@ -1,4 +1,4 @@
-package launcher
+package connector
 
 import (
 	"os"
@@ -20,6 +20,7 @@ type Go struct {
 	userHome    string
 	imgGoPath   string
 	repoURL     string
+	env         map[string]string
 	buildParams map[string]interface{}
 }
 
@@ -32,6 +33,7 @@ func NewGo(req *Request) *Go {
 		userHome:  os.Getenv("HOME"),
 		imgGoPath: "/go",
 		req:       req,
+		env:       map[string]string{},
 	}
 	g.setUserHomeDir()
 	return g
@@ -55,6 +57,13 @@ func (g *Go) setUserHomeDir() error {
 	}
 	g.userHome = usr.HomeDir
 	return nil
+}
+
+// SetRunEnv adds enviroment variables to be added when the run script is constructed.
+func (g *Go) SetRunEnv(env map[string]string) {
+	for k, v := range env {
+		g.env[k] = v
+	}
 }
 
 // GetDownloadDestination returns the location to save
@@ -124,7 +133,18 @@ func (g *Go) GetBuildScript() string {
 // of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
 // ccode binary located in the mount destination.
 func (g *Go) GetRunScript() []string {
-	script := []string{strings.Join([]string{"ccode"}, " && ")}
+
+	// prepare environment variables
+	env := []string{}
+	for k, v := range g.env {
+		env = append(env, fmt.Sprintf("export %s=%s", k, v))
+	}
+
+	script := []string{
+		"bash",
+		"-c",
+		strings.Join(env, " && ") + " && ccode",
+	}
 
 	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
 	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {

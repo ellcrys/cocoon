@@ -114,64 +114,64 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for API service
+// Client API for RPC service
 
-type APIClient interface {
+type RPCClient interface {
 	Invoke(ctx context.Context, in *InvokeRequest, opts ...grpc.CallOption) (*InvokeResponse, error)
 }
 
-type aPIClient struct {
+type rPCClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewAPIClient(cc *grpc.ClientConn) APIClient {
-	return &aPIClient{cc}
+func NewRPCClient(cc *grpc.ClientConn) RPCClient {
+	return &rPCClient{cc}
 }
 
-func (c *aPIClient) Invoke(ctx context.Context, in *InvokeRequest, opts ...grpc.CallOption) (*InvokeResponse, error) {
+func (c *rPCClient) Invoke(ctx context.Context, in *InvokeRequest, opts ...grpc.CallOption) (*InvokeResponse, error) {
 	out := new(InvokeResponse)
-	err := grpc.Invoke(ctx, "/proto.API/Invoke", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/proto.RPC/Invoke", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for API service
+// Server API for RPC service
 
-type APIServer interface {
+type RPCServer interface {
 	Invoke(context.Context, *InvokeRequest) (*InvokeResponse, error)
 }
 
-func RegisterAPIServer(s *grpc.Server, srv APIServer) {
-	s.RegisterService(&_API_serviceDesc, srv)
+func RegisterRPCServer(s *grpc.Server, srv RPCServer) {
+	s.RegisterService(&_RPC_serviceDesc, srv)
 }
 
-func _API_Invoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RPC_Invoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(InvokeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(APIServer).Invoke(ctx, in)
+		return srv.(RPCServer).Invoke(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.API/Invoke",
+		FullMethod: "/proto.RPC/Invoke",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).Invoke(ctx, req.(*InvokeRequest))
+		return srv.(RPCServer).Invoke(ctx, req.(*InvokeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _API_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.API",
-	HandlerType: (*APIServer)(nil),
+var _RPC_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.RPC",
+	HandlerType: (*RPCServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Invoke",
-			Handler:    _API_Invoke_Handler,
+			Handler:    _RPC_Invoke_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -190,7 +190,7 @@ var fileDescriptor0 = []byte{
 	0x8c, 0x8b, 0xad, 0x20, 0xb1, 0x28, 0x31, 0xb7, 0x58, 0x82, 0x59, 0x81, 0x59, 0x83, 0x33, 0x08,
 	0xca, 0x53, 0x0a, 0xe0, 0xe2, 0x83, 0x19, 0x5a, 0x5c, 0x90, 0x9f, 0x57, 0x9c, 0x4a, 0x92, 0xa9,
 	0x42, 0x5c, 0x2c, 0x49, 0xf9, 0x29, 0x95, 0x12, 0xcc, 0x0a, 0x8c, 0x1a, 0x3c, 0x41, 0x60, 0xb6,
-	0x91, 0x0d, 0x17, 0xb3, 0x63, 0x80, 0xa7, 0x90, 0x29, 0x17, 0x1b, 0xc4, 0x60, 0x21, 0x11, 0x88,
+	0x91, 0x0d, 0x17, 0x73, 0x50, 0x80, 0xb3, 0x90, 0x29, 0x17, 0x1b, 0xc4, 0x60, 0x21, 0x11, 0x88,
 	0x37, 0xf4, 0x50, 0x1c, 0x2f, 0x25, 0x8a, 0x26, 0x0a, 0xb1, 0x3d, 0x89, 0x0d, 0x2c, 0x6a, 0x0c,
-	0x08, 0x00, 0x00, 0xff, 0xff, 0x65, 0x19, 0x22, 0x94, 0x02, 0x01, 0x00, 0x00,
+	0x08, 0x00, 0x00, 0xff, 0xff, 0x77, 0x0e, 0x30, 0x6c, 0x02, 0x01, 0x00, 0x00,
 }

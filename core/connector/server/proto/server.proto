@@ -1,7 +1,7 @@
 syntax = "proto3";
 package proto;
 
-service API {
+service RPC {
     rpc Invoke(InvokeRequest) returns (InvokeResponse);
 }
 

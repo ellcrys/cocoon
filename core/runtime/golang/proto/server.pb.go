@@ -33,21 +33,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto1.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// Tx represent an invoke transaction or a response transaction.
-// An invoke transaction sets `invoke` field to true and the `response` field
-// to false and vice versa for a response transaction. The `name` field is used
-// to differentiate the kind of transactions. The params field should be used to
-// set invoke parameters and body should hold response body.
-// `status` field should hold the appropriate status number to signify success of failure.
 type Tx struct {
-	Invoke   bool     `protobuf:"varint,1,opt,name=invoke" json:"invoke,omitempty"`
-	Response bool     `protobuf:"varint,2,opt,name=response" json:"response,omitempty"`
-	Status   int32    `protobuf:"varint,3,opt,name=status" json:"status,omitempty"`
-	LinkTo   string   `protobuf:"bytes,4,opt,name=LinkTo" json:"LinkTo,omitempty"`
-	Id       string   `protobuf:"bytes,5,opt,name=Id" json:"Id,omitempty"`
-	Name     string   `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
-	Params   []string `protobuf:"bytes,7,rep,name=params" json:"params,omitempty"`
-	Body     []byte   `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
+	Status int32    `protobuf:"varint,1,opt,name=status" json:"status,omitempty"`
+	Id     string   `protobuf:"bytes,2,opt,name=Id" json:"Id,omitempty"`
+	Name   string   `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Params []string `protobuf:"bytes,4,rep,name=params" json:"params,omitempty"`
+	Body   []byte   `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
 }
 
 func (m *Tx) Reset()                    { *m = Tx{} }
@@ -55,32 +46,11 @@ func (m *Tx) String() string            { return proto1.CompactTextString(m) }
 func (*Tx) ProtoMessage()               {}
 func (*Tx) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Tx) GetInvoke() bool {
-	if m != nil {
-		return m.Invoke
-	}
-	return false
-}
-
-func (m *Tx) GetResponse() bool {
-	if m != nil {
-		return m.Response
-	}
-	return false
-}
-
 func (m *Tx) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
-}
-
-func (m *Tx) GetLinkTo() string {
-	if m != nil {
-		return m.LinkTo
-	}
-	return ""
 }
 
 func (m *Tx) GetId() string {
@@ -126,7 +96,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Stub service
 
 type StubClient interface {
-	Transact(ctx context.Context, opts ...grpc.CallOption) (Stub_TransactClient, error)
+	Invoke(ctx context.Context, in *Tx, opts ...grpc.CallOption) (*Tx, error)
 }
 
 type stubClient struct {
@@ -137,103 +107,68 @@ func NewStubClient(cc *grpc.ClientConn) StubClient {
 	return &stubClient{cc}
 }
 
-func (c *stubClient) Transact(ctx context.Context, opts ...grpc.CallOption) (Stub_TransactClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Stub_serviceDesc.Streams[0], c.cc, "/proto.Stub/Transact", opts...)
+func (c *stubClient) Invoke(ctx context.Context, in *Tx, opts ...grpc.CallOption) (*Tx, error) {
+	out := new(Tx)
+	err := grpc.Invoke(ctx, "/proto.Stub/Invoke", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &stubTransactClient{stream}
-	return x, nil
-}
-
-type Stub_TransactClient interface {
-	Send(*Tx) error
-	Recv() (*Tx, error)
-	grpc.ClientStream
-}
-
-type stubTransactClient struct {
-	grpc.ClientStream
-}
-
-func (x *stubTransactClient) Send(m *Tx) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *stubTransactClient) Recv() (*Tx, error) {
-	m := new(Tx)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // Server API for Stub service
 
 type StubServer interface {
-	Transact(Stub_TransactServer) error
+	Invoke(context.Context, *Tx) (*Tx, error)
 }
 
 func RegisterStubServer(s *grpc.Server, srv StubServer) {
 	s.RegisterService(&_Stub_serviceDesc, srv)
 }
 
-func _Stub_Transact_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(StubServer).Transact(&stubTransactServer{stream})
-}
-
-type Stub_TransactServer interface {
-	Send(*Tx) error
-	Recv() (*Tx, error)
-	grpc.ServerStream
-}
-
-type stubTransactServer struct {
-	grpc.ServerStream
-}
-
-func (x *stubTransactServer) Send(m *Tx) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *stubTransactServer) Recv() (*Tx, error) {
-	m := new(Tx)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _Stub_Invoke_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Tx)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(StubServer).Invoke(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Stub/Invoke",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StubServer).Invoke(ctx, req.(*Tx))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _Stub_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Stub",
 	HandlerType: (*StubServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
+	Methods: []grpc.MethodDesc{
 		{
-			StreamName:    "Transact",
-			Handler:       _Stub_Transact_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
+			MethodName: "Invoke",
+			Handler:    _Stub_Invoke_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "server.proto",
 }
 
 func init() { proto1.RegisterFile("server.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 208 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x44, 0x8f, 0xb1, 0x6a, 0x03, 0x31,
-	0x0c, 0x86, 0x91, 0x73, 0x77, 0x75, 0x44, 0xe8, 0xa0, 0xa1, 0x88, 0x4c, 0xa6, 0x74, 0xf0, 0x50,
-	0x42, 0x69, 0x9f, 0x22, 0xd0, 0xc9, 0xf5, 0x0b, 0xf8, 0x7a, 0x1e, 0x42, 0x88, 0x7d, 0xd8, 0x4e,
-	0x48, 0xdf, 0xac, 0x8f, 0x57, 0xec, 0x1c, 0xcd, 0xa4, 0xff, 0xfb, 0xa5, 0x6f, 0x10, 0x6e, 0xb2,
-	0x4f, 0x17, 0x9f, 0x76, 0x73, 0x8a, 0x25, 0x52, 0xdf, 0xc6, 0xf3, 0x2f, 0xa0, 0xb0, 0x57, 0x7a,
-	0xc2, 0xe1, 0x10, 0x2e, 0xf1, 0xe8, 0x19, 0x14, 0x68, 0x69, 0x16, 0xa2, 0x2d, 0xca, 0xe4, 0xf3,
-	0x1c, 0x43, 0xf6, 0x2c, 0xda, 0xe6, 0x9f, 0xab, 0x93, 0x8b, 0x2b, 0xe7, 0xcc, 0x2b, 0x05, 0xba,
-	0x37, 0x0b, 0xd5, 0xfe, 0xf3, 0x10, 0x8e, 0x36, 0x72, 0xa7, 0x40, 0xaf, 0xcd, 0x42, 0xf4, 0x88,
-	0x62, 0x3f, 0x71, 0xdf, 0x3a, 0xb1, 0x9f, 0x88, 0xb0, 0x0b, 0xee, 0xe4, 0x79, 0x68, 0x4d, 0xcb,
-	0xd5, 0x9d, 0x5d, 0x72, 0xa7, 0xcc, 0x0f, 0x6a, 0x55, 0xdd, 0x1b, 0xd5, 0xdb, 0x31, 0x4e, 0x3f,
-	0x2c, 0x15, 0xe8, 0x8d, 0x69, 0xf9, 0xfd, 0x15, 0xbb, 0xaf, 0x72, 0x1e, 0xe9, 0x05, 0xa5, 0x4d,
-	0x2e, 0x64, 0xf7, 0x5d, 0x68, 0x7d, 0xfb, 0x6e, 0x67, 0xaf, 0xdb, 0x7b, 0xd4, 0xf0, 0x06, 0xe3,
-	0xd0, 0xe8, 0xe3, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xb6, 0xaa, 0x54, 0x4c, 0x06, 0x01, 0x00, 0x00,
+	// 160 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x4e, 0x2d, 0x2a,
+	0x4b, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x39, 0x5c, 0x4c,
+	0x21, 0x15, 0x42, 0x62, 0x5c, 0x6c, 0xc5, 0x25, 0x89, 0x25, 0xa5, 0xc5, 0x12, 0x8c, 0x0a, 0x8c,
+	0x1a, 0xac, 0x41, 0x50, 0x9e, 0x10, 0x1f, 0x17, 0x93, 0x67, 0x8a, 0x04, 0x93, 0x02, 0xa3, 0x06,
+	0x67, 0x10, 0x93, 0x67, 0x8a, 0x90, 0x10, 0x17, 0x4b, 0x5e, 0x62, 0x6e, 0xaa, 0x04, 0x33, 0x58,
+	0x04, 0xcc, 0x06, 0xe9, 0x2d, 0x48, 0x2c, 0x4a, 0xcc, 0x2d, 0x96, 0x60, 0x51, 0x60, 0xd6, 0xe0,
+	0x0c, 0x82, 0xf2, 0x40, 0x6a, 0x93, 0xf2, 0x53, 0x2a, 0x25, 0x58, 0x15, 0x18, 0x35, 0x78, 0x82,
+	0xc0, 0x6c, 0x23, 0x35, 0x2e, 0x96, 0xe0, 0x92, 0xd2, 0x24, 0x21, 0x39, 0x2e, 0x36, 0xcf, 0xbc,
+	0xb2, 0xfc, 0xec, 0x54, 0x21, 0x4e, 0x88, 0x73, 0xf4, 0x42, 0x2a, 0xa4, 0x10, 0xcc, 0x24, 0x36,
+	0x30, 0xcb, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x1b, 0x9a, 0x66, 0x50, 0xb3, 0x00, 0x00, 0x00,
 }

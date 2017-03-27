@@ -1,4 +1,4 @@
-package launcher
+package connector
 
 // Language defines a cocoon code language
 // and its unique deployment procudures.
@@ -12,4 +12,5 @@ type Language interface {
 	GetBuildScript() string
 	GetRunScript() []string
 	SetBuildParams(map[string]interface{}) error
+	SetRunEnv(env map[string]string)
 }
