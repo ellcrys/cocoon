@@ -79,7 +79,7 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		rpcServer := server.NewRPCServer(cn)
-		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", ":8002")
+		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", "127.0.0.1:8002")
 		go rpcServer.Start(addr, serverStartedCh, make(chan bool, 1))
 		<-serverStartedCh
 		go cn.Launch(req, addr)

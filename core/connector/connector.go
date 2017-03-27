@@ -2,6 +2,7 @@ package connector
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 
@@ -40,6 +41,7 @@ type Connector struct {
 	containerRunning bool
 	monitor          *monitor.Monitor
 	req              *Request
+	connectorRPCAddr string
 }
 
 // NewConnector creates a new connector
@@ -54,6 +56,7 @@ func NewConnector(waitCh chan bool) *Connector {
 func (cn *Connector) Launch(req *Request, connectorAddr string) {
 
 	cn.req = req
+	cn.connectorRPCAddr = connectorAddr
 
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
@@ -91,16 +94,9 @@ func (cn *Connector) Launch(req *Request, connectorAddr string) {
 		return
 	}
 
-	ip, err := cn.GetContainerIP(newContainer.ID)
-	if err != nil {
-		log.Error("failed to get new container IP")
-		cn.Stop(true)
-		return
-	}
-
 	lang.SetRunEnv(map[string]string{
 		"COCOON_ID":      req.ID,
-		"CONNECTOR_ADDR": ip + ":" + strings.Split(connectorAddr, ":")[1],
+		"CONNECTOR_ADDR": cn.connectorRPCAddr,
 		"COCOON_ADDR":    req.CocoonAddr, // cocoon code server will bind to the port of this address
 		"COCOON_LINK":    req.Link,       // the cocoon code id to link to natively
 	})
@@ -453,35 +449,6 @@ func (cn *Connector) stopContainer(id string) error {
 	return nil
 }
 
-// GetContainerIP get the container IP address
-func (cn *Connector) GetContainerIP(containerID string) (string, error) {
-
-	containerStatus, err := dckClient.InspectContainer(containerID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect container. %s", err)
-	}
-
-	// start the container if not started
-	if !containerStatus.State.Running {
-		err := dckClient.StartContainer(containerID, nil)
-		if err != nil {
-			return "", fmt.Errorf("failed start container . %s", err.Error())
-		}
-		cn.containerRunning = true
-	}
-
-	containerStatus, err = dckClient.InspectContainer(containerID)
-	if err != nil {
-		return "", fmt.Errorf("failed to inspect container after starting. %s", err)
-	}
-
-	if bridgeNetInfo, ok := containerStatus.NetworkSettings.Networks["bridge"]; ok {
-		return bridgeNetInfo.IPAddress, nil
-	}
-
-	return "", fmt.Errorf("failed to get bride network information")
-}
-
 // Executes is a general purpose function
 // to execute a command in a running container. If container is not running, it starts it.
 // It accepts the container, a unique name for the execution
@@ -617,14 +584,19 @@ func (cn *Connector) run(container *docker.Container, lang Language) error {
 
 // getDefaultFirewall returns the default firewall rules
 // for a cocoon container.
-func (cn *Connector) getDefaultFirewall(ccodePort string) string {
+func (cn *Connector) getDefaultFirewall() string {
+
+	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.req.CocoonAddr)
+	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
+
 	return strings.TrimSpace(`iptables -F && 
-			iptables -P INPUT ACCEPT && 
+			iptables -P INPUT DROP && 
 			iptables -P FORWARD DROP &&
 			iptables -P OUTPUT DROP &&
-			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A INPUT -p tcp --sport ` + ccodePort + ` -j ACCEPT
 			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT
+			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -A INPUT -p tcp --sport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
 			for ip in $dnsIPs;
 			do 
@@ -637,7 +609,7 @@ func (cn *Connector) getDefaultFirewall(ccodePort string) string {
 
 // configFirewall configures the container firewall.
 func (cn *Connector) configFirewall(container *docker.Container, req *Request) error {
-	cmd := []string{"bash", "-c", cn.getDefaultFirewall(strings.Split(cn.req.CocoonAddr, ":")[1])}
+	cmd := []string{"bash", "-c", cn.getDefaultFirewall()}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
