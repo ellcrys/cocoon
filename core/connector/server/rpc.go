@@ -48,12 +48,17 @@ func (rpc *RPCServer) Start(addr string, startedCh chan bool, endedCh chan bool)
 	rpc.server = grpc.NewServer()
 	proto.RegisterRPCServer(rpc.server, rpc)
 	rpc.server.Serve(lis)
+	rpc.Stop(1)
 }
 
 // Stop stops the orderer and returns an exit capie.
 func (rpc *RPCServer) Stop(exitCode int) int {
-	rpc.server.Stop()
-	close(rpc.endedCh)
+	if rpc.server != nil {
+		rpc.server.Stop()
+	}
+	if rpc.endedCh != nil {
+		close(rpc.endedCh)
+	}
 	return exitCode
 }
 
