@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = logging.MustGetLogger("api.rpc")
+var apiLog = logging.MustGetLogger("api.rpc")
 
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource
@@ -40,25 +40,25 @@ func (api *API) Start(addr string, endedCh chan bool) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s", addr))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
+		apiLog.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
 	}
 
 	time.AfterFunc(2*time.Second, func() {
-		log.Infof("Started server on port %s", strings.Split(addr, ":")[1])
+		apiLog.Infof("Started server on port %s", strings.Split(addr, ":")[1])
 
 		var ordererAddrs []string
 		ordererAddrs, err := orderer.DiscoverOrderers()
 		if err != nil {
-			log.Fatalf("failed to discover orderer. %s", err)
+			apiLog.Fatalf("failed to discover orderer. %s", err)
 		}
 		api.ordererAddrs = ordererAddrs
 
 		if len(api.ordererAddrs) > 0 {
-			log.Infof("Orderer address list updated. Contains %d orderer address(es)", len(api.ordererAddrs))
+			apiLog.Infof("Orderer address list updated. Contains %d orderer address(es)", len(api.ordererAddrs))
 			return
 		}
 
-		log.Warning("No orderer address was found. We won't be able to reach the orderer. ")
+		apiLog.Warning("No orderer address was found. We won't be able to reach the orderer. ")
 	})
 
 	// start a ticker to continously discover orderer addresses
@@ -67,7 +67,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 		for _ = range api.orderDiscoTicker.C {
 			ordererAddrs, err := orderer.DiscoverOrderers()
 			if err != nil {
-				log.Error(err)
+				apiLog.Error(err)
 				continue
 			}
 			api.ordererAddrs = ordererAddrs

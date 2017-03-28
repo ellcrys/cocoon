@@ -589,6 +589,9 @@ func (cn *Connector) getDefaultFirewall() string {
 
 	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.req.CocoonAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
+	if connectorRPCIP == "" {
+		connectorRPCIP = "0.0.0.0"
+	}
 
 	return strings.TrimSpace(`iptables -F && 
 			iptables -P INPUT DROP && 

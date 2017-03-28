@@ -51,7 +51,7 @@ func (rpc *RPCServer) Start(addr string, startedCh chan bool, endedCh chan bool)
 	rpc.Stop(1)
 }
 
-// Stop stops the orderer and returns an exit capie.
+// Stop stops the orderer and returns an exit code.
 func (rpc *RPCServer) Stop(exitCode int) int {
 	if rpc.server != nil {
 		rpc.server.Stop()

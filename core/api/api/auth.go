@@ -94,7 +94,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	})
 	ss, err := token.SignedString([]byte(key))
 	if err != nil {
-		log.Error(err.Error())
+		apiLog.Error(err.Error())
 		return nil, fmt.Errorf("failed to create session token")
 	}
 

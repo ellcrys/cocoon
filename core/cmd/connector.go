@@ -14,6 +14,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	log = logging.MustGetLogger("connector")
+
+	// connector RPC API
+	defaultConnectorRPCAPI = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
+)
+
 func init() {
 	config.ConfigureLogger()
 }
@@ -62,7 +69,6 @@ var connectorCmd = &cobra.Command{
 		waitCh := make(chan bool, 1)
 		serverStartedCh := make(chan bool)
 
-		var log = logging.MustGetLogger("connector")
 		log.Info("Connector has started")
 
 		// get request
@@ -79,7 +85,7 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		rpcServer := server.NewRPCServer(cn)
-		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", "127.0.0.1:8002")
+		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
 		go rpcServer.Start(addr, serverStartedCh, make(chan bool, 1))
 		<-serverStartedCh
 		go cn.Launch(req, addr)

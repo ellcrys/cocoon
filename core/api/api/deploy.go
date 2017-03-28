@@ -43,13 +43,13 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
-			log.Error(err.Error())
+			apiLog.Error(err.Error())
 			return nil, fmt.Errorf("failed to deploy cocoon")
 		}
 		return nil, err
 	}
 
-	log.Infof("Successfully deployed cocoon code %s", depInfo.ID)
+	apiLog.Infof("Successfully deployed cocoon code %s", depInfo.ID)
 
 	return &proto.Response{
 		ID:     req.GetID(),
