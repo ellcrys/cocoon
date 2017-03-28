@@ -2,28 +2,28 @@ package golang
 
 // Link provides access to external services
 // like ledgers, cocoon codes, event and messaging services.
-// type Link struct {
-// 	cocoonID      string
-// 	defaultLedger string
-// 	native        bool
-// }
+type Link struct {
+	cocoonID      string
+	defaultLedger string
+	native        bool
+}
 
-// // NewLink creates a new instance that represents
-// // a link to a cocoon
-// func NewLink(cocoonID string) *Link {
-// 	return &Link{
-// 		cocoonID: cocoonID,
-// 	}
-// }
+// NewLink creates a new instance that represents
+// a link to a cocoon
+func NewLink(cocoonID string) *Link {
+	return &Link{
+		cocoonID: cocoonID,
+	}
+}
 
-// // NewNativeLink create a new instance of the running cocoon or
-// // a natively linked cocoon.
-// func NewNativeLink(cocoonID string) *Link {
-// 	return &Link{
-// 		cocoonID: cocoonID,
-// 		native:   true,
-// 	}
-// }
+// NewNativeLink create a new instance of the running cocoon or
+// a natively linked cocoon.
+func NewNativeLink(cocoonID string) *Link {
+	return &Link{
+		cocoonID: cocoonID,
+		native:   true,
+	}
+}
 
 // // IsNative checks whether the link is a native link
 // func (link *Link) IsNative() bool {

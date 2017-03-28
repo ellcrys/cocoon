@@ -9,5 +9,4 @@ type Request struct {
 	DiskLimit   int64
 	BuildParams string
 	Link        string
-	CocoonAddr  string
 }

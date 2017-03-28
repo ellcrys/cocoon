@@ -1,16 +1,20 @@
 package golang
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"golang.org/x/net/context"
 )
 
 // StubServer defines the services of the stub's GRPC connection
 type stubServer struct {
-	port                  int
-	stream                proto.Stub_TransactServer
-	streamKeepAliveTicker *time.Ticker
+	port int
+}
+
+// Invoke invokes a function on the running cocoon code
+func (server *stubServer) Invoke(context.Context, *proto.Tx) (*proto.Tx, error) {
+	return nil, fmt.Errorf("not implemented yet")
 }
 
 // keepStreamAlive periodically sends a keep alive message to the stream

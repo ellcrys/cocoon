@@ -35,13 +35,14 @@ func init() {
 
 // Connector defines a structure for starting and managing a cocoon (coode)
 type Connector struct {
-	waitCh           chan bool
-	languages        []Language
-	container        *docker.Container
-	containerRunning bool
-	monitor          *monitor.Monitor
-	req              *Request
-	connectorRPCAddr string
+	waitCh            chan bool
+	languages         []Language
+	container         *docker.Container
+	containerRunning  bool
+	monitor           *monitor.Monitor
+	req               *Request
+	connectorRPCAddr  string
+	cocoonCodeRPCAddr string
 }
 
 // NewConnector creates a new connector
@@ -53,10 +54,11 @@ func NewConnector(waitCh chan bool) *Connector {
 }
 
 // Launch starts a cocoon code
-func (cn *Connector) Launch(req *Request, connectorAddr string) {
+func (cn *Connector) Launch(req *Request, connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	cn.req = req
-	cn.connectorRPCAddr = connectorAddr
+	cn.connectorRPCAddr = connectorRPCAddr
+	cn.cocoonCodeRPCAddr = cocoonCodeRPCAddr
 
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
@@ -70,10 +72,11 @@ func (cn *Connector) Launch(req *Request, connectorAddr string) {
 	cn.monitor.SetDockerClient(dckClient)
 
 	// No need downloading, building and starting a cocoon code
-	// if DEV_COCOON_ADDR has been specified. This means a dev cocoon code
+	// if DEV_COCOON_RPC_ADDR has been specified. This means a dev cocoon code
 	// is running at that address. Just start the connector's client.
-	if devCocoonCodeAddr := os.Getenv("DEV_COCOON_ADDR"); len(devCocoonCodeAddr) > 0 {
-		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodeAddr)
+	if devCocoonCodeRPCAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCocoonCodeRPCAddr) > 0 {
+		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
+		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodeRPCAddr)
 		return
 	}
 
@@ -95,10 +98,10 @@ func (cn *Connector) Launch(req *Request, connectorAddr string) {
 	}
 
 	lang.SetRunEnv(map[string]string{
-		"COCOON_ID":      req.ID,
-		"CONNECTOR_ADDR": cn.connectorRPCAddr,
-		"COCOON_ADDR":    req.CocoonAddr, // cocoon code server will bind to the port of this address
-		"COCOON_LINK":    req.Link,       // the cocoon code id to link to natively
+		"COCOON_ID":          req.ID,
+		"CONNECTOR_RPC_ADDR": cn.connectorRPCAddr,
+		"COCOON_RPC_ADDR":    cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
+		"COCOON_LINK":        req.Link,             // the cocoon code id to link to natively
 	})
 
 	go cn.monitor.Monitor()
@@ -402,7 +405,7 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
-	_, cocoonCodePort, _ := net.SplitHostPort(cn.req.CocoonAddr)
+	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
@@ -587,11 +590,8 @@ func (cn *Connector) run(container *docker.Container, lang Language) error {
 // for a cocoon container.
 func (cn *Connector) getDefaultFirewall() string {
 
-	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.req.CocoonAddr)
+	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
-	if connectorRPCIP == "" {
-		connectorRPCIP = "0.0.0.0"
-	}
 
 	return strings.TrimSpace(`iptables -F && 
 			iptables -P INPUT DROP && 

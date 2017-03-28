@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"net"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -37,7 +39,6 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
-	ccAddr := fmt.Sprintf(":%s", scheduler.Getenv("PORT_COCOON_RPC", "8000"))
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -55,7 +56,6 @@ func getRequest() (*connector.Request, error) {
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 		Link:        ccLink,
-		CocoonAddr:  ccAddr,
 	}, nil
 }
 
@@ -80,15 +80,19 @@ var connectorCmd = &cobra.Command{
 		}
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
+		connectorRPCAddr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
+		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_COCOON_RPC", "8000"))
+
 		cn := connector.NewConnector(waitCh)
 		cn.AddLanguage(connector.NewGo(req))
 
 		// start grpc API server
 		rpcServer := server.NewRPCServer(cn)
-		addr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
-		go rpcServer.Start(addr, serverStartedCh, make(chan bool, 1))
+		go rpcServer.Start(connectorRPCAddr, serverStartedCh, make(chan bool, 1))
+
+		// launch the cocoon code
 		<-serverStartedCh
-		go cn.Launch(req, addr)
+		go cn.Launch(req, connectorRPCAddr, cocoonCodeRPCAddr)
 
 		if <-waitCh {
 			rpcServer.Stop(1)

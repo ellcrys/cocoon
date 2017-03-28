@@ -46,9 +46,9 @@ func (c *Client) SetCocoonCodeAddr(ccAddr string) {
 }
 
 // getCCAddr returns the cocoon code bind address.
-// For development, if DEV_COCOON_ADDR is set, it connects to it.
+// For development, if DEV_COCOON_RPC_ADDR is set, it connects to it.
 func (c *Client) getCCAddr() string {
-	if devCCodeAddr := os.Getenv("DEV_COCOON_ADDR"); len(devCCodeAddr) > 0 {
+	if devCCodeAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCCodeAddr) > 0 {
 		return devCCodeAddr
 	}
 	return c.ccodeAddr

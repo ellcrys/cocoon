@@ -23,7 +23,7 @@ import (
 var (
 
 	// serverAddr to bind to
-	serverAddr = util.Env("COCOON_ADDR", ":8000")
+	serverAddr = util.Env("COCOON_RPC_ADDR", ":8000")
 
 	// stub logger
 	log *logging.Logger
@@ -114,9 +114,9 @@ func Run(cc CocoonCode) {
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
-	go blockMaker.Begin(blockCommitter)
+	// go blockMaker.Begin(blockCommitter)
 
-	defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
+	// defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
 
 	ccode = cc
 
@@ -197,13 +197,13 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // and saves the response channel. The response channel will
 // be passed a response when it is available in the Transact loop.
 func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
-	txRespChannels.Set(tx.GetId(), respCh)
-	if err := defaultServer.stream.Send(tx); err != nil {
-		txRespChannels.Remove(tx.GetId())
-		log.Errorf("failed to send transaction [%s] to connector. %s", tx.GetId(), err)
-		return err
-	}
-	log.Debugf("Successfully sent transaction [%s] to connector", tx.GetId())
+	// txRespChannels.Set(tx.GetId(), respCh)
+	// if err := defaultServer.stream.Send(tx); err != nil {
+	// 	txRespChannels.Remove(tx.GetId())
+	// 	log.Errorf("failed to send transaction [%s] to connector. %s", tx.GetId(), err)
+	// 	return err
+	// }
+	// log.Debugf("Successfully sent transaction [%s] to connector", tx.GetId())
 	return nil
 }
 
