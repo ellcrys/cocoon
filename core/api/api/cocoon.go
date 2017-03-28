@@ -8,7 +8,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -64,7 +63,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		}
 	}
 
-	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +97,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 // GetCocoon fetches a cocoon
 func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}

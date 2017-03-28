@@ -7,8 +7,6 @@ import (
 
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
-	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -33,16 +31,6 @@ func TestFunc(t *testing.T) {
 			for _, c := range cases {
 				So(IsValidResName(c[0].(string)), ShouldEqual, c[1].(bool))
 			}
-		})
-
-		Convey(".AwaitTxChanX", func() {
-			Convey("Should return timeout error if channel did not return a value after 1 second", func() {
-				ch := make(chan *proto.Tx)
-				v, err := AwaitTxChanX(ch, 1*time.Second)
-				So(v, ShouldBeNil)
-				So(err, ShouldNotBeNil)
-				So(err, ShouldResemble, types.ErrOperationTimeout)
-			})
 		})
 
 		Convey(".ReRunOnError", func() {

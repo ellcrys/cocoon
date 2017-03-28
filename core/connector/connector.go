@@ -46,19 +46,16 @@ type Connector struct {
 }
 
 // NewConnector creates a new connector
-func NewConnector(waitCh chan bool) *Connector {
+func NewConnector(req *Request, waitCh chan bool) *Connector {
 	return &Connector{
+		req:     req,
 		waitCh:  waitCh,
 		monitor: monitor.NewMonitor(),
 	}
 }
 
 // Launch starts a cocoon code
-func (cn *Connector) Launch(req *Request, connectorRPCAddr, cocoonCodeRPCAddr string) {
-
-	cn.req = req
-	cn.connectorRPCAddr = connectorRPCAddr
-	cn.cocoonCodeRPCAddr = cocoonCodeRPCAddr
+func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
@@ -76,21 +73,21 @@ func (cn *Connector) Launch(req *Request, connectorRPCAddr, cocoonCodeRPCAddr st
 	// is running at that address. Just start the connector's client.
 	if devCocoonCodeRPCAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCocoonCodeRPCAddr) > 0 {
 		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
-		log.Infof("Connecting to dev cocoon code at %s", devCocoonCodeRPCAddr)
+		log.Infof("[Dev] Will interact with cocoon code at %s", devCocoonCodeRPCAddr)
 		return
 	}
 
 	log.Info("Ready to install cocoon code")
-	log.Debugf("Found ccode url=%s and lang=%s", req.URL, req.Lang)
+	log.Debugf("Found ccode url=%s and lang=%s", cn.req.URL, cn.req.Lang)
 
-	lang := cn.GetLanguage(req.Lang)
+	lang := cn.GetLanguage(cn.req.Lang)
 	if lang == nil {
-		log.Errorf("cocoon code language (%s) not supported", req.Lang)
+		log.Errorf("cocoon code language (%s) not supported", cn.req.Lang)
 		cn.Stop(true)
 		return
 	}
 
-	newContainer, err := cn.prepareContainer(req, lang)
+	newContainer, err := cn.prepareContainer(cn.req, lang)
 	if err != nil {
 		log.Error(err.Error())
 		cn.Stop(true)
@@ -98,10 +95,10 @@ func (cn *Connector) Launch(req *Request, connectorRPCAddr, cocoonCodeRPCAddr st
 	}
 
 	lang.SetRunEnv(map[string]string{
-		"COCOON_ID":          req.ID,
+		"COCOON_ID":          cn.req.ID,
 		"CONNECTOR_RPC_ADDR": cn.connectorRPCAddr,
 		"COCOON_RPC_ADDR":    cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
-		"COCOON_LINK":        req.Link,             // the cocoon code id to link to natively
+		"COCOON_LINK":        cn.req.Link,          // the cocoon code id to link to natively
 	})
 
 	go cn.monitor.Monitor()
@@ -111,6 +108,22 @@ func (cn *Connector) Launch(req *Request, connectorRPCAddr, cocoonCodeRPCAddr st
 		cn.Stop(true)
 		return
 	}
+}
+
+// SetAddrs sets the address of the connector and cocoon code RPC servers
+func (cn *Connector) SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr string) {
+	cn.connectorRPCAddr = connectorRPCAddr
+	cn.cocoonCodeRPCAddr = cocoonCodeRPCAddr
+}
+
+// GetRequest returns the current cocoon launch request
+func (cn *Connector) GetRequest() *Request {
+	return cn.req
+}
+
+// GetCocoonCodeRPCAddr returns the RPC address of the cocoon code
+func (cn *Connector) GetCocoonCodeRPCAddr() string {
+	return cn.cocoonCodeRPCAddr
 }
 
 // prepareContainer fetches the cocoon code source, creates a container,

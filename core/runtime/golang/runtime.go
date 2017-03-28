@@ -12,11 +12,14 @@ import (
 	"strings"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/runtime/golang/config"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
 	cmap "github.com/orcaman/concurrent-map"
+	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -24,6 +27,9 @@ var (
 
 	// serverAddr to bind to
 	serverAddr = util.Env("COCOON_RPC_ADDR", ":8000")
+
+	// connector's RPC address
+	connectorRPCAddr = os.Getenv("CONNECTOR_RPC_ADDR")
 
 	// stub logger
 	log *logging.Logger
@@ -114,9 +120,9 @@ func Run(cc CocoonCode) {
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
-	// go blockMaker.Begin(blockCommitter)
+	go blockMaker.Begin(blockCommitter)
 
-	// defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
+	defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
 
 	ccode = cc
 
@@ -147,64 +153,66 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // blockCommit creates a PUT operation which adds one or many
 // transactions to the store and blockchain and returns the block if
 // if succeed or error if otherwise.
-// func blockCommitter(entries []*Entry) interface{} {
+func blockCommitter(entries []*Entry) interface{} {
 
-// 	var block types.Block
-// 	var respCh = make(chan *proto.Tx)
+	var block types.Block
 
-// 	if len(entries) == 0 {
-// 		return block
-// 	}
+	if len(entries) == 0 {
+		return block
+	}
 
-// 	txs := make([]*types.Transaction, len(entries))
-// 	for i, e := range entries {
-// 		txs[i] = e.Tx
-// 	}
+	txs := make([]*types.Transaction, len(entries))
+	for i, e := range entries {
+		txs[i] = e.Tx
+	}
 
-// 	ledgerName := entries[0].Tx.Ledger
-// 	txsJSON, _ := util.ToJSON(txs)
+	ledgerName := entries[0].Tx.Ledger
+	txsJSON, _ := util.ToJSON(txs)
 
-// 	txID := util.UUID4()
-// 	err := sendTx(&proto.Tx{
-// 		Id:     txID,
-// 		Invoke: true,
-// 		Name:   types.TxPut,
-// 		LinkTo: entries[0].To,
-// 		Params: []string{ledgerName},
-// 		Body:   txsJSON,
-// 	}, respCh)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to put block transaction. %s", err)
-// 	}
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
+		Name:   types.TxPut,
+		LinkTo: entries[0].LinkTo,
+		Params: []string{ledgerName},
+		Body:   txsJSON,
+	})
 
-// 	resp, err := common.AwaitTxChan(respCh)
-// 	if err != nil {
-// 		return err
-// 	}
+	if err != nil {
+		return fmt.Errorf("failed to put block transaction: %s", err)
+	}
 
-// 	if resp.Status != 200 {
-// 		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
-// 	}
+	if err = util.FromJSON(result, &block); err != nil {
+		return fmt.Errorf("failed to unmarshall response data")
+	}
 
-// 	if err = util.FromJSON(resp.Body, &block); err != nil {
-// 		return fmt.Errorf("failed to unmarshall response data")
-// 	}
+	return &block
+}
 
-// 	return &block
-// }
+// sendLedgerOp sends a ledger transaction to the
+// connector.
+func sendLedgerOp(op *connector_proto.LedgerOperation) ([]byte, error) {
 
-// sendTx sends a transaction to the cocoon code
-// and saves the response channel. The response channel will
-// be passed a response when it is available in the Transact loop.
-func sendTx(tx *proto.Tx, respCh chan *proto.Tx) error {
-	// txRespChannels.Set(tx.GetId(), respCh)
-	// if err := defaultServer.stream.Send(tx); err != nil {
-	// 	txRespChannels.Remove(tx.GetId())
-	// 	log.Errorf("failed to send transaction [%s] to connector. %s", tx.GetId(), err)
-	// 	return err
-	// }
-	// log.Debugf("Successfully sent transaction [%s] to connector", tx.GetId())
-	return nil
+	client, err := grpc.Dial(connectorRPCAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+
+	ccClient := connector_proto.NewConnectorClient(client)
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	resp, err := ccClient.Transact(ctx, &connector_proto.Request{
+		OpType:   connector_proto.OpType_LedgerOp,
+		LedgerOp: op,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(err))
+	}
+
+	if resp.GetStatus() == 500 {
+		return nil, fmt.Errorf("server error")
+	}
+
+	return resp.GetBody(), nil
 }
 
 // Stop stub and cocoon code

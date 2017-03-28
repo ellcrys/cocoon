@@ -3,7 +3,6 @@ package orderer
 import (
 	"fmt"
 	"net"
-	"os"
 	"strings"
 
 	context "golang.org/x/net/context"
@@ -13,7 +12,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto"
-	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	logging "github.com/op/go-logging"
@@ -25,55 +23,6 @@ var log = logging.MustGetLogger("orderer")
 // SetLogLevel sets the log level of the logger
 func SetLogLevel(l logging.Level) {
 	logging.SetLevel(l, log.Module)
-}
-
-// DiscoverOrderers fetches a list of orderer service addresses
-// via consul service discovery API. For development purpose,
-// If DEV_ORDERER_ADDR is set, it will fetch the orderer
-// address from the env variable.
-func DiscoverOrderers() ([]string, error) {
-
-	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
-		return []string{os.Getenv("DEV_ORDERER_ADDR")}, nil
-	}
-
-	ds := scheduler.NomadServiceDiscovery{
-		ConsulAddr: util.Env("CONSUL_ADDR", "localhost:8500"),
-		Protocol:   "http",
-	}
-
-	_orderers, err := ds.GetByID("orderers", nil)
-	if err != nil {
-		return []string{}, nil
-	}
-
-	var orderers []string
-	for _, orderer := range _orderers {
-		orderers = append(orderers, fmt.Sprintf("%s:%d", orderer.IP, int(orderer.Port)))
-	}
-
-	return orderers, nil
-}
-
-// DialOrderer returns a connection to a orderer from a list of addresses. It randomly
-// picks an orderer address from the list for orderers.
-func DialOrderer(ordererAddrs []string) (*grpc.ClientConn, error) {
-	var ordererAddr string
-
-	if len(ordererAddrs) == 0 {
-		return nil, fmt.Errorf("no known orderer address")
-	} else if len(ordererAddrs) == 1 {
-		ordererAddr = ordererAddrs[0]
-	} else {
-		ordererAddr = ordererAddrs[util.RandNum(0, len(ordererAddrs))]
-	}
-
-	client, err := grpc.Dial(ordererAddr, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }
 
 // Orderer defines a transaction ordering, block creation

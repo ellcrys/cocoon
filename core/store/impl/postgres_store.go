@@ -280,9 +280,9 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 
 	if len(startKey) > 0 && len(endKey) > 0 {
 		if !inclusive {
-			q = s.db.Where("ledger = ? AND key >= ? AND key < ?", ledger, startKey, endKey)
+			q = s.db.Where("ledger = ? AND (key >= ? AND key < ?)", ledger, startKey, endKey)
 		} else {
-			q = s.db.Where("ledger = ? AND key >= ? OR key <= ?", ledger, startKey+"%", endKey+"%")
+			q = s.db.Where("ledger = ? AND (key >= ? OR key <= ?)", ledger, startKey+"%", endKey+"%")
 		}
 	} else if len(startKey) > 0 && len(endKey) == 0 {
 		q = s.db.Where("ledger = ? AND key like ?", ledger, startKey+"%")

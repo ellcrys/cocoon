@@ -81,9 +81,10 @@ var connectorCmd = &cobra.Command{
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
-		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_COCOON_RPC", "8000"))
+		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_COCOON_RPC", "8004"))
 
-		cn := connector.NewConnector(waitCh)
+		cn := connector.NewConnector(req, waitCh)
+		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
 		cn.AddLanguage(connector.NewGo(req))
 
 		// start grpc API server
@@ -92,7 +93,7 @@ var connectorCmd = &cobra.Command{
 
 		// launch the cocoon code
 		<-serverStartedCh
-		go cn.Launch(req, connectorRPCAddr, cocoonCodeRPCAddr)
+		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
 
 		if <-waitCh {
 			rpcServer.Stop(1)

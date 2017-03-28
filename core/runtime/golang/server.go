@@ -3,6 +3,7 @@ package golang
 import (
 	"fmt"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"golang.org/x/net/context"
 )
@@ -13,8 +14,51 @@ type stubServer struct {
 }
 
 // Invoke invokes a function on the running cocoon code
-func (server *stubServer) Invoke(context.Context, *proto.Tx) (*proto.Tx, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func (server *stubServer) Invoke(ctx context.Context, params *proto.InvokeParam) (*proto.InvokeResponse, error) {
+
+	var err error
+	var resp = &proto.InvokeResponse{
+		ID: params.GetID(),
+	}
+
+	// This closure allows us to catch panics from the cocoon code Invoke() method
+	// so cocoon codes will always continue to run
+	func() {
+
+		defer func() {
+			if r := recover(); r != nil {
+				if e, ok := r.(error); ok {
+					err = e
+				} else {
+					err = fmt.Errorf("%s", r)
+				}
+				err = fmt.Errorf("Invoke() panicked: %s", err)
+				log.Errorf(err.Error())
+			}
+		}()
+
+		var result interface{}
+		result, err = ccode.OnInvoke(defaultLink, params.GetID(), params.GetFunction(), params.GetParams())
+		if err != nil {
+			return
+		}
+
+		// coerce result to json
+		resultJSON, err := util.ToJSON(result)
+		if err != nil {
+			err = fmt.Errorf("failed to coerce cocoon code Invoke() result to json string. %s", err)
+			return
+		}
+
+		resp.Status = 200
+		resp.Body = resultJSON
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // keepStreamAlive periodically sends a keep alive message to the stream

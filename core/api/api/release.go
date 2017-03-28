@@ -7,7 +7,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -30,7 +29,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 		return nil, err
 	}
 
-	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +41,8 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:          api.makeReleaseKey(release.ID),
-		Ledger:       types.GetGlobalLedgerName(),
+		Key:      api.makeReleaseKey(release.ID),
+		Ledger:   types.GetGlobalLedgerName(),
 	})
 
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
@@ -54,8 +53,8 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 
 	value, _ := util.ToJSON(req)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID: "",
-		LedgerName:   types.GetGlobalLedgerName(),
+		CocoonID:   "",
+		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),

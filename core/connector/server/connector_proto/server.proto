@@ -1,0 +1,43 @@
+syntax = "proto3";
+package connector_proto;
+
+service Connector {
+    rpc Transact(Request) returns (Response);
+}
+
+// OpType represents operation types
+enum OpType {
+    LedgerOp = 0;
+    CocoonCodeOp = 1;
+}
+
+// Request represents a transaction request which can be
+// either a ledger or cocoon code operation
+message Request {                
+    OpType opType = 1;
+    LedgerOperation ledgerOp = 2;
+    CocoonCodeOperation cocoonCodeOp = 3;
+}
+
+// LedgerOperation represents an operation against the ledger
+message LedgerOperation {
+    string ID = 1;
+    string name = 2;
+    repeated string params = 3;
+    string linkTo = 4;
+    bytes body = 5;
+}
+
+// CocoonCodeOperation represents a cocoon code invoke operation
+message CocoonCodeOperation {
+    string ID = 1;
+    string function = 2;
+    repeated string params = 3;
+}
+
+// Response represents the response
+message Response {
+    string ID = 1; 
+    int32 status = 2;
+    bytes body = 3;
+}
