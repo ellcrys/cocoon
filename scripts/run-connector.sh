@@ -9,6 +9,7 @@ sleep 5
 docker pull ncodes/launch-go:latest
 
 # pull cocoon source
+cd /home
 branch="connector-redesign"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon 
