@@ -1,4 +1,4 @@
-job "connector" {
+job "connector2" {
   datacenters = ["dc1"]
   region = "global"
   type = "service"
@@ -11,7 +11,7 @@ job "connector" {
     max_parallel = 1
   }
 
-  group "connectors" {
+  group "connectors2" {
     count = 1
 
     restart {
@@ -49,7 +49,7 @@ job "connector" {
       }
       
       env {
-        COCOON_ID = "abc"
+        COCOON_ID = "edf"
         COCOON_CODE_URL = "https://github.com/ncodes/cocoon-example-01"
         COCOON_CODE_TAG = ""
         COCOON_CODE_LANG = "go"
