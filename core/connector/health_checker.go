@@ -30,6 +30,8 @@ func NewHealthChecker(cocoonCodeAddr string, onDeadFunc func()) *HealthChecker {
 // if check returns err, it calls the OnDeadFunc and stops the health check.
 func (hc *HealthChecker) Start() {
 
+	log.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
+
 	if hc.check() != nil {
 		if hc.OnDeadFunc != nil {
 			hc.OnDeadFunc()
