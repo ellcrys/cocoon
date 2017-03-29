@@ -15,7 +15,7 @@ cd cocoon
 
 # build the binary
 cd core
-glide --debug update
+glide --debug install
 printf "Building cocoon source \n"
 go build -v -o /bin/cocoon
 
