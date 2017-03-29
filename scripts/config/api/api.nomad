@@ -54,7 +54,7 @@ job "api" {
 
       resources {
         cpu    = 500
-        memory = 256 
+        memory = 512 
         network {
           mbits = 100
           port "API_RPC" {
