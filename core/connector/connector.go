@@ -245,6 +245,10 @@ func (cn *Connector) Stop(failed bool) error {
 		cn.monitor.Stop()
 	}
 
+	if cn.healthCheck != nil {
+		cn.healthCheck.Stop()
+	}
+
 	cn.containerRunning = false
 
 	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
