@@ -627,7 +627,7 @@ func (cn *Connector) getDefaultFirewall() string {
 			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
 			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A INPUT -p tcp --sport ` + cocoonCodeRPCPort + ` -j ACCEPT 
+			iptables -A INPUT -p tcp --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
 			for ip in $dnsIPs;
 			do 
