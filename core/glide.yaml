@@ -19,6 +19,7 @@ import:
   subpackages:
   - dialects/postgres
 - package: github.com/mitchellh/go-homedir
+- package: github.com/ncodes/cocoon-util
 - package: github.com/ncodes/cstructs
 - package: github.com/ncodes/go-dockerclient
 - package: github.com/olebedev/emitter

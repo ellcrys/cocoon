@@ -12,7 +12,6 @@ docker pull ncodes/launch-go:latest
 branch="connector-redesign"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon 
-git checkout $branch
 
 # build the binary
 cd core
