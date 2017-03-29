@@ -4,9 +4,12 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
+
+var logHealthChecker = logging.MustGetLogger("connector.health_checker")
 
 // HealthChecker checks the health status of
 // the cocoon code. It repeatedly calls the cocoon coder
@@ -30,7 +33,7 @@ func NewHealthChecker(cocoonCodeAddr string, onDeadFunc func()) *HealthChecker {
 // if check returns err, it calls the OnDeadFunc and stops the health check.
 func (hc *HealthChecker) Start() {
 
-	log.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
+	logHealthChecker.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
 
 	if hc.check() != nil {
 		if hc.OnDeadFunc != nil {
