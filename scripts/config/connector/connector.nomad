@@ -37,7 +37,7 @@ job "connector" {
         privileged = true
         port_map {}
         volumes = [
-            "/tmp:/tmp",
+            "/tmp:/tmp2",
         ]
       }
 
@@ -58,6 +58,7 @@ job "connector" {
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
         COCOON_DISK_LIMIT = "1024"
+        GLIDE_TMP = "/tmp2"
       }
 
       resources {
