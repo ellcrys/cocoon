@@ -297,7 +297,7 @@ func (cn *Connector) restart() error {
 
 	go func() {
 		if err = cn.run(newContainer, cn.GetLanguage(cn.req.Lang)); err != nil {
-			log.Info(fmt.Errorf("restart: %s", err))
+			log.Errorf("restart: %s", err)
 		}
 	}()
 

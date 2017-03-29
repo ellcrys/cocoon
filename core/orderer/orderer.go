@@ -56,7 +56,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		// establish connection to store backend
 		_, err := od.store.Connect(storeConStr)
 		if err != nil {
-			log.Info(err)
+			log.Info(err.Error())
 			od.Stop(1)
 			return
 		}
@@ -70,7 +70,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 		err = od.store.Init(od.store.MakeLedgerName("", types.GetGlobalLedgerName()))
 		if err != nil {
-			log.Info(err)
+			log.Info(err.Error())
 			od.Stop(1)
 			return
 		}
@@ -85,7 +85,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		if od.blockchain != nil {
 			_, err = od.blockchain.Connect(storeConStr)
 			if err != nil {
-				log.Info(err)
+				log.Info(err.Error())
 				od.Stop(1)
 				return
 			}
@@ -94,7 +94,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		// initialize the blockchain
 		err = od.blockchain.Init(od.blockchain.MakeChainName("", types.GetGlobalChainName()))
 		if err != nil {
-			log.Info(err)
+			log.Info(err.Error())
 			od.Stop(1)
 			return
 		}
