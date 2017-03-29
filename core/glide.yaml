@@ -1,4 +1,4 @@
-package: .
+package: github.com/ncodes/cocoon/core
 import:
 - package: github.com/asaskevich/govalidator
   version: ^5.0.0
