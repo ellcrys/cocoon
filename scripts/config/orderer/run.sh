@@ -8,9 +8,13 @@ mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
-git clone --depth=1 https://github.com/ncodes/cocoon
+branch="connector-redesign"
+git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
+cd cocoon 
+git checkout $branch
 
 # start the orderer
-cd cocoon
-glide install
-go run core/main.go orderer
+cd core
+glide --debug update
+go build -o cocoon
+./cocoon orderer

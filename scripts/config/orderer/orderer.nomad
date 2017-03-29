@@ -55,7 +55,7 @@ job "orderer" {
         cpu    = 500
         memory = 512
         network {
-          mbits = 100
+          mbits = 1000
           port "ORDERER_RPC" {}
         }
       }
