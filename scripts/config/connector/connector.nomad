@@ -36,9 +36,6 @@ job "connector" {
         network_mode = "host"
         privileged = true
         port_map {}
-        volumes = [
-            "/tmp:/tmp2",
-        ]
       }
 
       artifact {
@@ -58,7 +55,7 @@ job "connector" {
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
         COCOON_DISK_LIMIT = "1024"
-        GLIDE_TMP = "/tmp2"
+        GLIDE_TMP = "/home/tmp"
       }
 
       resources {
