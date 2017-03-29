@@ -5,10 +5,13 @@ mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
-git clone --depth=1 -b connector-redesign https://github.com/ncodes/cocoon
+branch="connector-redesign"
+git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
+cd cocoon 
+git checkout $branch
 
 # start the orderer
-cd cocoon/core
+cd core
 glide --debug update
 go build -o cocoon
-cocoon api start
+./cocoon api start
