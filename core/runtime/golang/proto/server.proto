@@ -2,7 +2,12 @@ syntax = "proto3";
 package proto;
 
 service Stub {
+    rpc HealthCheck(Ok) returns (Ok);
     rpc Invoke(InvokeParam) returns (InvokeResponse);
+}
+
+message Ok {
+    int32 status = 1;
 }
 
 message InvokeParam {

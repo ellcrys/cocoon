@@ -13,6 +13,13 @@ type stubServer struct {
 	port int
 }
 
+// HealthCheck returns health status
+func (server *stubServer) HealthCheck(context.Context, *proto.Ok) (*proto.Ok, error) {
+	return &proto.Ok{
+		Status: 200,
+	}, nil
+}
+
 // Invoke invokes a function on the running cocoon code
 func (server *stubServer) Invoke(ctx context.Context, params *proto.InvokeParam) (*proto.InvokeResponse, error) {
 

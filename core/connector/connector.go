@@ -36,13 +36,14 @@ func init() {
 // Connector defines a structure for starting and managing a cocoon (coode)
 type Connector struct {
 	waitCh            chan bool
+	req               *Request
+	connectorRPCAddr  string
+	cocoonCodeRPCAddr string
 	languages         []Language
 	container         *docker.Container
 	containerRunning  bool
 	monitor           *monitor.Monitor
-	req               *Request
-	connectorRPCAddr  string
-	cocoonCodeRPCAddr string
+	healthCheck       *HealthChecker
 }
 
 // NewConnector creates a new connector
@@ -67,6 +68,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	dckClient = client
 	cn.monitor.SetDockerClient(dckClient)
+	cn.healthCheck = NewHealthChecker("127.0.0.1"+cn.cocoonCodeRPCAddr, cn.cocoonUnresponsive)
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_RPC_ADDR has been specified. This means a dev cocoon code
@@ -74,6 +76,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	if devCocoonCodeRPCAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCocoonCodeRPCAddr) > 0 {
 		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
 		log.Infof("[Dev] Will interact with cocoon code at %s", devCocoonCodeRPCAddr)
+		cn.healthCheck.Start()
 		return
 	}
 
@@ -108,6 +111,12 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		cn.Stop(true)
 		return
 	}
+}
+
+// cocoonUnresponsive is called when the cocoon code failed health check
+func (cn *Connector) cocoonUnresponsive() {
+	log.Info("Cocoon code has failed health check. Stopping cocoon code.")
+	cn.Stop(true)
 }
 
 // SetAddrs sets the address of the connector and cocoon code RPC servers
@@ -588,6 +597,7 @@ func (cn *Connector) run(container *docker.Container, lang Language) error {
 		case "before":
 			log.Info("Starting cocoon code")
 		case "after":
+			cn.healthCheck.Start()
 			return nil
 		case "end":
 			if val.(int) == 0 {
