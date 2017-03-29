@@ -278,7 +278,6 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 	if ledger.Chained {
 		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
 		if err != nil {
-			log.Error(err)
 			return nil, fmt.Errorf("failed to populate block to transaction")
 		} else if block == nil && err == nil {
 			return nil, fmt.Errorf("orphaned transaction")
@@ -322,7 +321,6 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 	if ledger.Chained {
 		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
 		if err != nil {
-			log.Error(err)
 			return nil, fmt.Errorf("failed to populate block to transaction")
 		} else if block == nil && err == nil {
 			return nil, fmt.Errorf("orphaned transaction")
@@ -390,9 +388,22 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 		return nil, err
 	}
 
-	// copy individual tx from []types.Transaction to []proto.Transaction
+	// fetch transaction blocks and copy individual tx from []types.Transaction to []proto.Transaction
 	var protoTxs = make([]*proto.Transaction, len(txs))
 	for i, tx := range txs {
+
+		if ledger.Chained {
+			block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to populate block to transaction")
+			} else if block == nil && err == nil {
+				return nil, fmt.Errorf("orphaned transaction")
+			}
+
+			tx.Block = block
+			tx.BlockID = ""
+		}
+
 		tx.KeyInternal = tx.Key
 		tx.Key = od.store.GetActualKeyFromTxKey(tx.Key)
 		tx.LedgerInternal = tx.Ledger
