@@ -56,7 +56,7 @@ job "api" {
         cpu    = 500
         memory = 512 
         network {
-          mbits = 10
+          mbits = 500
           port "API_RPC" {
               static = "8005"
           }
