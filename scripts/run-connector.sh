@@ -15,9 +15,10 @@ cd cocoon
 git checkout $branch
 
 # build the binary
+cd core
 glide --debug update
 printf "Building cocoon source \n"
-go build -v -o /bin/cocoon core/main.go 
+go build -v -o /bin/cocoon
 
 # start connector 
 repoHash=$(git rev-parse HEAD)
