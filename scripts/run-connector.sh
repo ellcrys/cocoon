@@ -9,11 +9,13 @@ sleep 5
 docker pull ncodes/launch-go:latest
 
 # pull cocoon source
-git clone --depth=1 -b connector-redesign https://github.com/ncodes/cocoon
+branch="connector-redesign"
+git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
+cd cocoon 
+git checkout $branch
 
 # build the binary
-cd cocoon
-glide install
+glide --debug update
 printf "Building cocoon source \n"
 go build -v -o /bin/cocoon core/main.go 
 
