@@ -8,7 +8,7 @@ cd $repoParent
 git clone --depth=1 -b connector-redesign https://github.com/ncodes/cocoon
 
 # start the orderer
-cd cocoon
+cd cocoon/core
 glide install
 go build -o cocoon
 cocoon api start
