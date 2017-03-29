@@ -1,9 +1,9 @@
 FROM ncodes/cocoon:latest
 
 # add dependencies
-RUN echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
+#RUN echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
 RUN apt-get update
-RUN apt-get install aufs-tools bridge-utils jq
+RUN apt-get install aufs-tools bridge-utils
 RUN curl https://glide.sh/get | sh
 
 # create working directorys
