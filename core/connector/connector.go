@@ -601,7 +601,7 @@ func (cn *Connector) run(container *docker.Container, lang Language) error {
 		case "before":
 			log.Info("Starting cocoon code")
 		case "after":
-			//cn.healthCheck.Start()
+			cn.healthCheck.Start()
 			return nil
 		case "end":
 			if val.(int) == 0 {
