@@ -196,6 +196,7 @@ func sendLedgerOp(op *connector_proto.LedgerOperation) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 
 	ccClient := connector_proto.NewConnectorClient(client)
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
