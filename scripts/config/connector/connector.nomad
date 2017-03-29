@@ -36,6 +36,9 @@ job "connector" {
         network_mode = "host"
         privileged = true
         port_map {}
+        volumes = [
+            "/tmp:/tmp",
+        ]
       }
 
       artifact {
