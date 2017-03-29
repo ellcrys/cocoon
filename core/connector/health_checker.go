@@ -67,5 +67,7 @@ func (hc *HealthChecker) check() error {
 
 // Stop health check
 func (hc *HealthChecker) Stop() {
-	hc.ticker.Stop()
+	if hc.ticker != nil {
+		hc.ticker.Stop()
+	}
 }
