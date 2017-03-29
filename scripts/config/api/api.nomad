@@ -22,7 +22,7 @@ job "api" {
     }
 
     ephemeral_disk {
-      size = 300
+      size = 1024
     }
 
     task "api" {

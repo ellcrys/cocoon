@@ -22,7 +22,7 @@ job "orderer" {
     }
 
     ephemeral_disk {
-      size = 300
+      size = 1024
     }
 
     task "orderer" {
