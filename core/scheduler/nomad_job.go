@@ -218,10 +218,9 @@ func NewJob(id string, count int) *NomadJob {
 								IOPS:     0,
 								Networks: []Network{
 									Network{
-										MBits: 100,
+										MBits: 1,
 										DynamicPorts: []DynamicPort{
 											DynamicPort{Label: "CONNECTOR_RPC"},
-											//	DynamicPort{Label: "CONNECTOR_HTTP"},
 											DynamicPort{Label: "COCOON_RPC"},
 										},
 									},
