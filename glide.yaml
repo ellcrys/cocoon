@@ -1,40 +1,47 @@
 package: github.com/ncodes/cocoon
 import:
+- package: github.com/asaskevich/govalidator
+  version: ^5.0.0
+- package: github.com/boltdb/bolt
+  version: ^1.3.0
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/dustin/go-humanize
 - package: github.com/ellcrys/crypto
 - package: github.com/ellcrys/util
 - package: github.com/franela/goreq
 - package: github.com/golang/protobuf
   subpackages:
   - proto
-- package: github.com/gorilla/mux
 - package: github.com/goware/urlx
+- package: github.com/jinzhu/gorm
+  version: ^1.0.0
+  subpackages:
+  - dialects/postgres
+- package: github.com/mitchellh/go-homedir
+- package: github.com/ncodes/cstructs
 - package: github.com/ncodes/go-dockerclient
+- package: github.com/olebedev/emitter
 - package: github.com/op/go-logging
+  version: ^1.0.0
+- package: github.com/orcaman/concurrent-map
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
+- package: golang.org/x/crypto
+  subpackages:
+  - bcrypt
+  - ssh/terminal
 - package: golang.org/x/net
   subpackages:
   - context
 - package: google.golang.org/grpc
-- package: github.com/jinzhu/gorm
-  version: ^1.0.0
-- package: github.com/smartystreets/goconvey
+  version: ^1.2.0
   subpackages:
-  - convey
-- package: github.com/orcaman/concurrent-map
-- package: github.com/ncodes/cocoon-util
-- package: github.com/olebedev/emitter
-- package: github.com/dustin/go-humanize
-- package: github.com/mitchellh/go-homedir
-- package: github.com/boltdb/bolt
-  version: ^1.0.0
-  subpackages:
-  - '...'
-- package: github.com/ncodes/go-spin
-  version: ddabc69b6151945c05fc40e2ae3f2fc9396b77a2
-- package: github.com/dgrijalva/jwt-go
-  version: v3.0.0
+  - metadata
 - package: gopkg.in/oleiade/lane.v1
   version: ^1.0.0
-- package: github.com/ncodes/cstructs
-  version: ceebf9da91137bf39d30cefc2aa81a3e92a1c356
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ^1.6.2
+  subpackages:
+  - convey
