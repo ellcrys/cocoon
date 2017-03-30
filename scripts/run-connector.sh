@@ -65,6 +65,6 @@ go build -v -o /bin/cocoon core/main.go
 printf "Running Cocoon Connector"
 cocoon connector
 
-# delete bridge
+# delete bridge 
 trap 'ip link set dev $bridge down; brctl delbr $bridge' TERM INT
 
