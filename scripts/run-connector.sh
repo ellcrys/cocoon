@@ -16,10 +16,11 @@ cd $repoOwnerDir
 branch="connector-redesign"
 printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
-cd cocoon/core
 
 # build the binary
 printf "> Building cocoon"
+cd cocoon
+rm -rf .glide/ && rm -rf vendor
 glide --debug install
 # go build -v -o /bin/cocoon
 
