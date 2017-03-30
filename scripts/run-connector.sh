@@ -1,4 +1,4 @@
-# Launch Script
+# Run the connector 
 
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd &
@@ -22,7 +22,7 @@ printf "> Building cocoon"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
-go build -v -o /bin/cocoon
+go build -v -o /bin/cocoon core
 
 # start connector 
 printf "Running Cocoon Connector"
