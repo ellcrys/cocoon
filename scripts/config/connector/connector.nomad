@@ -37,7 +37,6 @@ job "connector" {
         privileged = true
         port_map {}
         volumes = [
-            "/tmp:/home/tmp",
         ]
       }
 
