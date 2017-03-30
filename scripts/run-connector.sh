@@ -13,7 +13,7 @@ do
    fi
    
    # if bridge ip is taken, 'continue' loop
-   bridgeIP=173.$(shuf -i 1-255 -n 1).$(shuf -i 0-255 -n 1).0
+   bridgeIP=173.$(shuf -i 18-255 -n 1).0.$(shuf -i 0-255 -n 1)
    if ip addr | grep $bridgeIP; then 
         continue
    fi
@@ -29,7 +29,7 @@ do
 done
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
+bash dockerd-entrypoint.sh dockerd --bridge=$bridge/16 &
 printf "> Started docker daemon \n"
 sleep 5
 
