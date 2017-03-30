@@ -1,5 +1,14 @@
+#!/bin/bash
 # Run the connector 
 set -e
+
+trap "echo Booh!" SIGINT SIGTERM
+echo "pid is $$"
+
+while :                 # This is the same as "while true".
+do
+    a=1
+done
 
 # create a bridge 
 printf "> Creating bridge\n"
@@ -54,4 +63,10 @@ go build -v -o /bin/cocoon core/main.go
 
 # start connector 
 printf "Running Cocoon Connector"
-cocoon connector
+trap 'kill -TERM $PID' TERM INT
+cocoon connector &
+PID=$!
+wait $PID
+trap - TERM INT
+wait $PID
+
