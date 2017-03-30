@@ -18,7 +18,7 @@ cd cocoon/core
 # build the binary
 #glide --debug install
 printf "> Sleep for an hour"
-Gsleep 1h
+sleep 1h
 # printf "Building cocoon source \n"
 # go build -v -o /bin/cocoon
 
