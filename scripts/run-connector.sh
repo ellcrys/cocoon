@@ -1,4 +1,5 @@
 # Run the connector 
+set -e
 
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd &
