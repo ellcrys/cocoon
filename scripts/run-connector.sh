@@ -16,13 +16,11 @@ git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon/core
 
 # build the binary
-#glide --debug install
-printf "> Sleep for a day"
-sleep 1d
-# printf "Building cocoon source \n"
-# go build -v -o /bin/cocoon
+printf "> Building cocoon"
+rm -rf .glide/ && rm -rf vendor
+glide --debug install
+go build -v -o /bin/cocoon
 
 # start connector 
-# repoHash=$(git rev-parse HEAD)
-# printf "Cocoon Version: $repoHash \n"
-# cocoon connector
+printf "Running Cocoon Connector"
+cocoon connector
