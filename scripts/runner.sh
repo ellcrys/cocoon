@@ -1,4 +1,4 @@
 # Runner.sh runs fetches the relevant run script for
 # the connector
 
-env
+wget $RUN_SCRIPT_URL
