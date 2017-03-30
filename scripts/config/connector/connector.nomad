@@ -58,7 +58,8 @@ job "connector" {
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
         COCOON_DISK_LIMIT = "1024"
         
-        # The name of the connector runner script and a link to the script
+        # The name of the connector runner script and a link to the script.
+        # The runner script will fetch and run whatever is found in this environment vars.
         RUN_SCRIPT_NAME = "run-connector.sh"
         RUN_SCRIPT_URL = "https://rawgit.com/ncodes/cocoon/connector-redesign/scripts/run-connector.sh"
       }
