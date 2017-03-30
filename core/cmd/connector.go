@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"net"
 
@@ -59,6 +61,15 @@ func getRequest() (*connector.Request, error) {
 	}, nil
 }
 
+// onTerminate calls a function when a terminate or interrupt signal is received.
+func onTerminate(f func(s os.Signal)) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		f(<-sigs)
+	}()
+}
+
 // connectorCmd represents the connector command
 var connectorCmd = &cobra.Command{
 	Use:   "connector",
@@ -86,6 +97,10 @@ var connectorCmd = &cobra.Command{
 		cn := connector.NewConnector(req, waitCh)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
 		cn.AddLanguage(connector.NewGo(req))
+		onTerminate(func(s os.Signal) {
+			log.Info("Terminate signal received. Stopping connector")
+			cn.Stop(false)
+		})
 
 		// start grpc API server
 		rpcServer := server.NewRPCServer(cn)

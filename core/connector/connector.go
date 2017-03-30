@@ -29,6 +29,8 @@ var configLog = logging.MustGetLogger("ccode.config")
 var ccodeLog = logging.MustGetLogger("ccode")
 var dckClient *docker.Client
 
+var bridgeName = os.Getenv("BRIDGE_NAME")
+
 func init() {
 	runLog.SetBackend(config.MessageOnlyBackend)
 }
@@ -227,42 +229,6 @@ func (cn *Connector) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64)
 	return false
 }
 
-// Stop closes the client, stops the container if it is still running
-// and deletes the container. This will effectively bring the launcher
-// to a halt. Set failed parameter to true to set a positve exit code or
-// false for 0 exit code.
-func (cn *Connector) Stop(failed bool) error {
-
-	defer func() {
-		cn.waitCh <- failed
-	}()
-
-	if dckClient == nil || cn.container == nil {
-		return nil
-	}
-
-	if cn.monitor != nil {
-		cn.monitor.Stop()
-	}
-
-	if cn.healthCheck != nil {
-		cn.healthCheck.Stop()
-	}
-
-	cn.containerRunning = false
-
-	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
-		ID:            cn.container.ID,
-		RemoveVolumes: true,
-		Force:         true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to remove container. %s", err)
-	}
-
-	return nil
-}
-
 // restart restarts the cocoon code. The running cocoon code is stopped
 // and relaunched.
 func (cn *Connector) restart() error {
@@ -290,14 +256,15 @@ func (cn *Connector) restart() error {
 
 	newContainer, err := cn.prepareContainer(cn.req, cn.GetLanguage(cn.req.Lang))
 	if err != nil {
-		return fmt.Errorf("restart: %s", err)
+		return fmt.Errorf("restart failed: %s", err)
 	}
 
 	go cn.monitor.Monitor()
 
 	go func() {
 		if err = cn.run(newContainer, cn.GetLanguage(cn.req.Lang)); err != nil {
-			log.Errorf("restart: %s", err)
+			log.Errorf("restart failed: %s", err)
+			cn.Stop(true)
 		}
 	}()
 
@@ -574,6 +541,24 @@ func (cn *Connector) execInContainer(container *docker.Container, name string, c
 	return nil
 }
 
+// deleteBridge deletes the bridge the connector's docker daemon is attached to
+func (cn *Connector) deleteBridge(bridgeName string) error {
+	if bridgeName == "" {
+		return nil
+	}
+
+	args := []string{"-c", `
+		ip link set dev ` + bridgeName + ` down &&
+		brctl delbr ` + bridgeName + `
+	`}
+
+	_, err := exec.Command("bash", args...).Output()
+	if err != nil {
+		return fmt.Errorf("failed to delete bridge. %s", err)
+	}
+	return nil
+}
+
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the languaged.
 func (cn *Connector) build(container *docker.Container, lang Language) error {
@@ -652,4 +637,44 @@ func (cn *Connector) configFirewall(container *docker.Container, req *Request) e
 		}
 		return nil
 	})
+}
+
+// Stop closes the client, stops the container if it is still running
+// and deletes the container. This will effectively bring the launcher
+// to a halt. Set failed parameter to true to set a positve exit code or
+// false for 0 exit code.
+func (cn *Connector) Stop(failed bool) error {
+
+	defer func() {
+		cn.waitCh <- failed
+	}()
+
+	if dckClient == nil || cn.container == nil {
+		return nil
+	}
+
+	if cn.monitor != nil {
+		cn.monitor.Stop()
+	}
+
+	if cn.healthCheck != nil {
+		cn.healthCheck.Stop()
+	}
+
+	cn.containerRunning = false
+
+	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
+		ID:            cn.container.ID,
+		RemoveVolumes: true,
+		Force:         true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to remove container. %s", err)
+	}
+
+	if err = cn.deleteBridge(bridgeName); err != nil {
+		return fmt.Errorf("failed to delete bridge")
+	}
+
+	return nil
 }
