@@ -22,7 +22,7 @@ printf "> Building cocoon"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
-go build -v -o /bin/cocoon core
+go build -v -o /bin/cocoon core/main.go
 
 # start connector 
 printf "Running Cocoon Connector"
