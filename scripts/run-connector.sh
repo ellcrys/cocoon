@@ -9,16 +9,17 @@ sleep 5
 docker pull ncodes/launch-go:latest
 
 # pull cocoon source
-cd /home
+repoOwner=github.com/ncodes
+repoOwnerDir=$GOPATH/src/$repoOwner
+mkdir -p $repoOwnerDir
+cd $repoOwnerDir
 branch="connector-redesign"
-printf "> Fetching cocoon source. [branch=$branch]\n"
-git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
+printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
+git clone --depth=1 -b $branch https://$repoOwner/cocoon
 cd cocoon/core
 
 # build the binary
 printf "> Building cocoon"
-rm -rf .glide/ && rm -rf vendor
-ls /tmp
 glide --debug install
 # go build -v -o /bin/cocoon
 
