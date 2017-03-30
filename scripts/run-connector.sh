@@ -13,6 +13,7 @@ cd /home
 branch="connector-redesign"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon/core
+echo "debug..."
 
 # build the binary
 #glide --debug install
