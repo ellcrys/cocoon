@@ -1,4 +1,4 @@
-job "connector2" {
+job "connector3" {
   datacenters = ["dc1"]
   region = "global"
   type = "service"
