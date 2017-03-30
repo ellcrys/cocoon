@@ -30,6 +30,9 @@ do
    break
 done
 
+# delete bridge 
+trap 'ip link set dev $bridge down; brctl delbr $bridge' TERM INT
+
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
 printf "> Started docker daemon \n"
@@ -57,7 +60,3 @@ go build -v -o /bin/cocoon core/main.go
 # start connector 
 printf "Running Cocoon Connector"
 cocoon connector
-
-# delete bridge 
-trap 'ip link set dev $bridge down; brctl delbr $bridge' TERM INT
-

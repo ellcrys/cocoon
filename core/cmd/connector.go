@@ -67,7 +67,6 @@ func getRequest() (*connector.Request, error) {
 // onTerminate calls a function when a terminate or interrupt signal is received.
 func onTerminate(f func(s os.Signal)) {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	log.Info("Hook to on terminate")
 	go func() {
 		s := <-sigs
 		f(s)
