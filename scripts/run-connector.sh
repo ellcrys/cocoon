@@ -1,8 +1,23 @@
 # Run the connector 
 set -e
 
+# create a bridge 
+printf "> Creating bridge\n"
+bridge=""
+for (( ; ; ))
+do
+   bridge=cc_$(shuf -i 1-10000 -n 1)
+   printf "Create bridge [$bridge]"
+   brctl addbr $bridge
+   ip=$(nmap -n -iR 1 --exclude 10.0.0.0/8,127.0.0.0/8,172.16.0.0/32,192.168.0.0/16,224-255.-.-.- -sL | awk 'FNR==3{print $5  }')
+   ip addr add $ip dev $bridge
+   ip link set dev $bridge up
+   export BRIDGE_NAME=$bridge
+   break
+done
+
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --bridge=docker1 &
+bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
 printf "> Started docker daemon \n"
 sleep 5
 
