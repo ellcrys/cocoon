@@ -68,6 +68,7 @@ job "connector7" {
         network {
           mbits = 1
           port "CONNECTOR_RPC" {}
+          port "COCOON_RPC" {}
         }
       }
 
