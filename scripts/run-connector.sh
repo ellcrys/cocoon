@@ -18,6 +18,7 @@ cd cocoon/core
 # build the binary
 printf "> Building cocoon"
 rm -rf .glide/ && rm -rf vendor
+ls /tmp
 glide --debug install
 # go build -v -o /bin/cocoon
 
