@@ -36,8 +36,6 @@ job "connector5" {
         network_mode = "host"
         privileged = true
         port_map {}
-        volumes = [
-        ]
       }
 
       artifact {
