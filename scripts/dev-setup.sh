@@ -1,7 +1,7 @@
 # Bootstrap the entire platform for development or test
 
 # Run the orderer
-nomad run config/orderer/orderer.nomad
+nomad run dev_config/orderer/orderer.nomad
 
 # Run the API
-nomad run config/api/api.nomad
+nomad run dev_config/api/api.nomad
