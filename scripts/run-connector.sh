@@ -2,23 +2,34 @@
 set -e
 
 # create a bridge 
-# printf "> Creating bridge\n"
-# bridge=""
-# for (( ; ; ))
-# do
-#    bridge=cc_$(shuf -i 1-10000 -n 1)
-#    printf "Create bridge [$bridge]"
-#    brctl addbr $bridge
-#    randIP=173.$(shuf -i 1-255 -n 1).$(shuf -i 0-255 -n 1).0
-#    ip addr add $randIP dev $bridge
-#    ip link set dev $bridge up
-#    export BRIDGE_NAME=$bridge
-#    break
-# done
-randIP=173.$(shuf -i 1-255 -n 1).$(shuf -i 0-255 -n 1).0
+printf "> Creating bridge\n"
+bridge=""
+for (( ; ; ))
+do
+   # if bridge name is taken, 'continue'' loop
+   bridge=cc_$(shuf -i 1-10000 -n 1)
+   if ip addr | grep $bridge; then
+        continue
+   fi
+   
+   # if bridge ip is taken, 'continue' loop
+   bridgeIP=173.$(shuf -i 1-255 -n 1).$(shuf -i 0-255 -n 1).0
+   if ip addr | grep $bridgeIP; then 
+        continue
+   fi
+   
+   brctl addbr $bridge
+   ip addr add $bridgeIP dev $bridge
+   ip link set dev $bridge up
+   
+   export BRIDGE_NAME=$bridge
+   export BRIDGE_IP=bridgeIP
+   printf '> Created bridge \n'
+   break
+done
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --ip=$randIP &
+bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
 printf "> Started docker daemon \n"
 sleep 5
 
