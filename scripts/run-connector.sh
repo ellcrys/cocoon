@@ -1,12 +1,12 @@
 # Launch Script
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd &
+# bash dockerd-entrypoint.sh dockerd &
 printf "Started docker daemon \n"
-sleep 5
+# sleep 5
 
 # pull launch-go image
-docker pull ncodes/launch-go:latest
+# docker pull ncodes/launch-go:latest
 
 # pull cocoon source
 cd /home
