@@ -67,6 +67,4 @@ trap 'kill -TERM $PID' TERM INT
 cocoon connector &
 PID=$!
 wait $PID
-trap - TERM INT
-wait $PID
 
