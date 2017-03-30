@@ -31,7 +31,8 @@ do
 done
 
 # delete bridge 
-trap "ip link set dev $bridge down; brctl delbr $bridge" TERM INT
+# trap "ip link set dev $bridge down; brctl delbr $bridge" TERM INT
+trap "Terminating now!" TERM INT
 
 # start docker daemon
 bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
