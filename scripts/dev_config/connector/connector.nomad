@@ -1,10 +1,10 @@
-job "connector5" {
+job "connector6" {
   datacenters = ["dc1"]
   region = "global"
   type = "service"
   constraint {
-    #attribute = "${attr.kernel.name}"
-    #value     = "linux"
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
   }
   update {
     stagger = "10s"
