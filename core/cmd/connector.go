@@ -65,6 +65,7 @@ func getRequest() (*connector.Request, error) {
 func onTerminate(f func(s os.Signal)) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	log.Info("Hook to on terminate")
 	go func() {
 		f(<-sigs)
 	}()
