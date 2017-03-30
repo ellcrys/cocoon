@@ -1,4 +1,4 @@
-job "connector8" {
+job "connector" {
   datacenters = ["dc1"]
   region = "global"
   type = "service"
@@ -27,6 +27,7 @@ job "connector8" {
 
     task "connector" {
       driver = "docker"
+      kill_timeout = "20s"
       
       config {
         image = "ncodes/cocoon-launcher:latest"
