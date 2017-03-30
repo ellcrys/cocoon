@@ -1,24 +1,24 @@
 # Launch Script
 
 # start docker daemon
-# bash dockerd-entrypoint.sh dockerd &
-printf "Started docker daemon \n"
-# sleep 5
+bash dockerd-entrypoint.sh dockerd &
+printf "> Started docker daemon \n"
+sleep 5
 
 # pull launch-go image
-# docker pull ncodes/launch-go:latest
+docker pull ncodes/launch-go:latest
 
 # pull cocoon source
 cd /home
 branch="connector-redesign"
+printf "> Fetching cocoon source. [branch=$branch]\n"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon/core
-printf "debug..."
 
 # build the binary
 #glide --debug install
-pwd
-bash
+printf "> Sleep for an hour"
+bash sleep 1h
 # printf "Building cocoon source \n"
 # go build -v -o /bin/cocoon
 
