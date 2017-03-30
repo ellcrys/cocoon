@@ -63,8 +63,8 @@ go build -v -o /bin/cocoon core/main.go
 
 # start connector 
 printf "Running Cocoon Connector"
-trap 'kill -TERM $PID' TERM INT
-cocoon connector &
-PID=$!
-wait $PID
+cocoon connector
+
+# delete bridge
+trap 'ip link set dev $bridge down; brctl delbr $bridge' TERM INT
 
