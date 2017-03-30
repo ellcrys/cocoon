@@ -16,7 +16,7 @@ cd cocoon/core
 
 # build the binary
 #glide --debug install
-go-echo-server
+bash
 # printf "Building cocoon source \n"
 # go build -v -o /bin/cocoon
 
