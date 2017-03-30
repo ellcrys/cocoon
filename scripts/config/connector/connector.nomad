@@ -41,7 +41,7 @@ job "connector" {
       }
 
       artifact {
-        source = "https://rawgit.com/ncodes/cocoon/connector-redesign/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}"
+        source = "https://rawgit.com/ncodes/cocoon/connector-redesign/scripts/runner.sh"
         destination = "/local/scripts"
       }
 
