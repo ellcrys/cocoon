@@ -19,7 +19,7 @@ do
    fi
    
    brctl addbr $bridge
-   ip addr add $bridgeIP dev $bridge
+   ip addr add $bridgeIP/16 dev $bridge
    ip link set dev $bridge up
    
    export BRIDGE_NAME=$bridge
@@ -29,7 +29,7 @@ do
 done
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd --bridge=$bridge/16 &
+bash dockerd-entrypoint.sh dockerd --bridge=$bridge &
 printf "> Started docker daemon \n"
 sleep 5
 
