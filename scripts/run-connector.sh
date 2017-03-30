@@ -2,7 +2,7 @@
 set -e
 
 # start docker daemon
-bash dockerd-entrypoint.sh dockerd &
+bash dockerd-entrypoint.sh dockerd --iptables=false &
 printf "> Started docker daemon \n"
 sleep 5
 
