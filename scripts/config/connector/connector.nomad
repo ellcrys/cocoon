@@ -31,7 +31,7 @@ job "connector" {
       config {
         image = "ncodes/cocoon-launcher:latest"
         command = "bash"
-        args = ["${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"]
+        args = ["runner.sh"]
         work_dir = "/local/scripts"
         network_mode = "host"
         privileged = true
@@ -57,7 +57,7 @@ job "connector" {
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
         COCOON_DISK_LIMIT = "1024"
-        GLIDE_TMP = "/home/tmp"
+        RUN_SCRIPT_URL = "https://rawgit.com/ncodes/cocoon/connector-redesign/scripts/run-connector.sh"
       }
 
       resources {
@@ -67,11 +67,6 @@ job "connector" {
           mbits = 1
           port "CONNECTOR_RPC" {}
         }
-      }
-      
-      meta {
-          DEPLOY_SCRIPT_NAME = "run-connector.sh",
-          SCRIPTS_DIR = "/local/scripts",
       }
 
       service {
