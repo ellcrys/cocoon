@@ -23,6 +23,9 @@ var (
 
 	// connector RPC API
 	defaultConnectorRPCAPI = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
+
+	// Signals channel
+	sigs = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -63,11 +66,11 @@ func getRequest() (*connector.Request, error) {
 
 // onTerminate calls a function when a terminate or interrupt signal is received.
 func onTerminate(f func(s os.Signal)) {
-	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	log.Info("Hook to on terminate")
 	go func() {
-		f(<-sigs)
+		s := <-sigs
+		f(s)
 	}()
 }
 
