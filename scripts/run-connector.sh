@@ -2,13 +2,6 @@
 # Run the connector 
 set -e
 
-trap "echo Booh!" SIGINT SIGTERM
-echo "pid is $$"
-
-while :                 # This is the same as "while true".
-do
-    a=1
-done
 
 # create a bridge 
 printf "> Creating bridge\n"
