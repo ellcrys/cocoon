@@ -44,7 +44,7 @@ job "connector" {
       logs {
         max_files     = 10
         max_file_size = 10
-      }
+      } 
       
       env {
         COCOON_ID = "abc"
