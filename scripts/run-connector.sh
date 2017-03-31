@@ -14,7 +14,8 @@ mkdir -p $repoOwnerDir
 cd $repoOwnerDir
 printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
-
+ls /gocode
+sleep 60s
 # # build the binary
 # printf "> Building cocoon"
 # cd cocoon
