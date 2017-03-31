@@ -10,7 +10,7 @@ mkdir -p $GOPATH
 branch="master"
 repoOwner=github.com/ncodes
 repoOwnerDir=$GOPATH/src/$repoOwner
-sudo mkdir -p $repoOwnerDir
+mkdir -p $repoOwnerDir
 cd $repoOwnerDir
 printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
