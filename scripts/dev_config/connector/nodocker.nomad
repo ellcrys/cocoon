@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "touch"
-        args = ["/home/hello.txt"]
+        command = "bash"
+        args = ["-c","touch /home/hello.txt; ls /home; go version"]
       }
 
       artifact {
