@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "which dockerd"
-        args = []
+        command = "which"
+        args = ["dockerd"]
       }
 
       artifact {
