@@ -32,9 +32,10 @@ docker pull ncodes/launch-go:latest
 terminate() {
     printf "Terminate received!!!!\n"
     kill -TERM "$CPID" 2>/dev/null
+    exit 0;
 }
 
-trap terminate SIGINT SIGTERM
+trap terminate TERM
 
 # start connector 
 printf "Running Cocoon Connector"
