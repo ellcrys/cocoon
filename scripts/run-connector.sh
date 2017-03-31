@@ -26,9 +26,18 @@ rm -rf .glide/ && rm -rf vendor
 glide --debug install
 /go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
 
+
 # pull launch-go image
-docker pull ncodes/launch-go:latest
+docker pull ncodes/launch-go:latest 
+
+terminate() {
+    kill -TERM "$CPID" 2>/dev/null
+}
+
+trap terminate SIGINT SIGTERM
 
 # start connector 
 printf "Running Cocoon Connector"
 cocoon connector
+CPID=$!
+wait "$CPID"
