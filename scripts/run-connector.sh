@@ -41,4 +41,5 @@ trap terminate TERM
 printf "Running Cocoon Connector"
 cocoon connector &
 CPID=$!
+printf "Waiting!"
 wait "$CPID"
