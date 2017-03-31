@@ -32,15 +32,14 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "env"
-        args = []
+        command = "which"
+        args = ["docker"]
       }
 
       artifact {
         source = "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh"
         destination = "/local/scripts"
       }
-      
 
       logs {
         max_files     = 10
