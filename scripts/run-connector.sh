@@ -2,15 +2,18 @@
 # Run the connector 
 set -e
 
-env
+# Set up go environment
+export GOPATH=/gocode
+mkdir $GOPATH
+
 # Pull cocoon source
-# branch="master"
-# repoOwner=github.com/ncodes
-# repoOwnerDir=/go/src/$repoOwner
-# sudo mkdir -p $repoOwnerDir
-# cd $repoOwnerDir
-# printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
-# git clone --depth=1 -b $branch https://$repoOwner/cocoon
+branch="master"
+repoOwner=github.com/ncodes
+repoOwnerDir=$GOPATH/src/$repoOwner
+sudo mkdir -p $repoOwnerDir
+cd $repoOwnerDir
+printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
+git clone --depth=1 -b $branch https://$repoOwner/cocoon
 
 # # build the binary
 # printf "> Building cocoon"
