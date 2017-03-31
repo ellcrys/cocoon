@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "echo"
-        args = ["Hello world"]
+        command = "ls"
+        args = ["/local/scripts"]
       }
 
       artifact {
