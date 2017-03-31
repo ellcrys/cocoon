@@ -2,6 +2,8 @@
 # Run the connector 
 set -e
 
+PATH=$PATH:/go/bin
+
 # Set up go environment
 export GOPATH=/gocode
 mkdir -p $GOPATH
@@ -20,9 +22,10 @@ printf "> Building cocoon"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
-go build -v -o /bin/cocoon core/main.go
+/go/bin/go build -v -o /bin/cocoon core/main.go
 which cocoon
 sleep 60
-# # start connector 
+
+# start connector 
 # printf "Running Cocoon Connector"
 # cocoon connector
