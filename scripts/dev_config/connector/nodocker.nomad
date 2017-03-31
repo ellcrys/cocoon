@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "ps"
-        args = ["aux"]
+        command = "nomad"
+        args = ["status"]
       }
 
       artifact {
