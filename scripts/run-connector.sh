@@ -2,8 +2,7 @@
 # Run the connector 
 set -e
 
-touch /go/hello.txt
-ls /go/hello.txt
+env
 # Pull cocoon source
 # branch="master"
 # repoOwner=github.com/ncodes
