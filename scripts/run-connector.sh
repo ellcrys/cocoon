@@ -24,9 +24,7 @@ cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
 /go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
-which cocoon
-sleep 60
 
 # start connector 
-# printf "Running Cocoon Connector"
-# cocoon connector
+printf "Running Cocoon Connector"
+cocoon connector
