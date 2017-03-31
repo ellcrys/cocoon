@@ -38,6 +38,6 @@ trap terminate SIGINT SIGTERM
 
 # start connector 
 printf "Running Cocoon Connector"
-cocoon connector
+cocoon connector &
 CPID=$!
 wait "$CPID"
