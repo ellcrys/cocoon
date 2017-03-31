@@ -27,7 +27,7 @@ glide --debug install
 
 # start docker daemon
 printf "> Starting docker daemon \n"
-bash dockerd-entrypoint.sh dockerd &
+bash dockerd &
 sleep 5
 
 # start connector 
