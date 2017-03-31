@@ -33,7 +33,7 @@ job "connector" {
       
       config {
         command = "bash"
-        args = ["-c","ls /"]
+        args = ["/local/scripts/runner.sh"]
       }
 
       artifact {
