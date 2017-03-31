@@ -14,15 +14,15 @@ mkdir -p $repoOwnerDir
 cd $repoOwnerDir
 printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
-ls /gocode
-sleep 60s
-# # build the binary
-# printf "> Building cocoon"
-# cd cocoon
-# rm -rf .glide/ && rm -rf vendor
-# glide --debug install
-# go build -v -o /bin/cocoon core/main.go
 
+# build the binary
+printf "> Building cocoon"
+cd cocoon
+rm -rf .glide/ && rm -rf vendor
+glide --debug install
+go build -v -o /bin/cocoon core/main.go
+which cocoon
+sleep 60
 # # start connector 
 # printf "Running Cocoon Connector"
 # cocoon connector
