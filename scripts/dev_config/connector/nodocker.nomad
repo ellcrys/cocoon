@@ -33,12 +33,11 @@ job "connector" {
       
       config {
         command = "bash"
-        args = ["/local/scripts/runner.sh"]
+        args = ["local/runner.sh"]
       }
 
       artifact {
         source = "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh"
-        destination = "/local/scripts"
       }
 
       logs {
