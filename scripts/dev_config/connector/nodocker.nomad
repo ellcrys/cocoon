@@ -28,7 +28,7 @@ job "connector" {
     }
 
     task "connector" {
-      driver = "exec"
+      driver = "raw_exec"
       kill_timeout = "20s"
       
       config {
