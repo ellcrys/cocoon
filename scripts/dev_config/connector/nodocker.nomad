@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "sudo"
-        args = ["bash", "/local/scripts/runner.sh"]
+        command = "sudo bash"
+        args = ["/local/scripts/runner.sh"]
       }
 
       artifact {
