@@ -33,7 +33,7 @@ job "connector" {
       
       config {
         command = "bash"
-        args = ["-c","touch /home/hello.txt; ls /home; go version"]
+        args = ["-c","ls /"]
       }
 
       artifact {
