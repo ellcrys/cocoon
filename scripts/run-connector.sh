@@ -4,7 +4,7 @@ set -e
 
 # Set up go environment
 export GOPATH=/gocode
-mkdir $GOPATH
+mkdir -p $GOPATH
 
 # Pull cocoon source
 branch="master"
