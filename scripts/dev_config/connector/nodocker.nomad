@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "/bin/sleep"
-        args = ["60"]
+        command = "echo"
+        args = ["Hello world"]
       }
 
       artifact {
