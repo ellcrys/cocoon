@@ -32,8 +32,8 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "nomad"
-        args = ["status"]
+        command = "touch"
+        args = ["/home/hello.txt"]
       }
 
       artifact {
