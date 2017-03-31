@@ -40,6 +40,7 @@ job "connector" {
         source = "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh"
         destination = "/local/scripts"
       }
+      
 
       logs {
         max_files     = 10
