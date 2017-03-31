@@ -2,9 +2,10 @@
 # Run the connector 
 set -e
 
-PATH=$PATH:/go/bin
 
 # Set up go environment
+export GOROOT=/go
+PATH=$PATH:$GOROOT/bin
 export GOPATH=/gocode
 mkdir -p $GOPATH
 
