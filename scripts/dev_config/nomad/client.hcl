@@ -16,6 +16,7 @@ client {
         "/run/resolvconf" = "/run/resolvconf"
         "/sbin" = "/sbin"
         "/usr" = "/usr"
+        "/go" = "/go"
     }
 }
 
