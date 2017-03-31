@@ -5,8 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -51,28 +50,19 @@ func NewRangeGetter(ledgerName, to, start, end string, inclusive bool) *RangeGet
 // fetch transactions
 func (rg *RangeGetter) fetch() error {
 
-	var respCh = make(chan *proto.Tx)
-	err := sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Invoke: true,
-		LinkTo:     rg.to,
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxRangeGet,
+		LinkTo: rg.to,
 		Params: []string{rg.ledgerName, rg.start, rg.end, strconv.FormatBool(rg.inclusive), strconv.Itoa(rg.limit), strconv.Itoa(rg.offset)},
-	}, respCh)
+	})
+
 	if err != nil {
 		return fmt.Errorf("failed to get transactions. %s", err)
 	}
 
-	resp, err := common.AwaitTxChan(respCh)
-	if err != nil {
-		return err
-	}
-	if resp.Status != 200 {
-		return fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
-	}
-
 	var txs []*types.Transaction
-	if err = util.FromJSON(resp.Body, &txs); err != nil {
+	if err = util.FromJSON(result, &txs); err != nil {
 		return fmt.Errorf("failed to unmarshall response data")
 	}
 
@@ -85,11 +75,6 @@ func (rg *RangeGetter) fetch() error {
 
 // HasNext determines whether more rows exists.
 func (rg *RangeGetter) HasNext() bool {
-
-	if !isConnected() {
-		rg.Error = ErrNotConnected
-		return false
-	}
 
 	if len(rg.txs) == 0 {
 		if err := rg.fetch(); err != nil {

@@ -2,22 +2,22 @@ syntax = "proto3";
 package proto;
 
 service Stub {
-    rpc Transact(stream Tx) returns (stream Tx);
+    rpc HealthCheck(Ok) returns (Ok);
+    rpc Invoke(InvokeParam) returns (InvokeResponse);
 }
 
-// Tx represent an invoke transaction or a response transaction.
-// An invoke transaction sets `invoke` field to true and the `response` field
-// to false and vice versa for a response transaction. The `name` field is used
-// to differentiate the kind of transactions. The params field should be used to 
-// set invoke parameters and body should hold response body.
-// `status` field should hold the appropriate status number to signify success of failure. 
-message Tx {
-    bool invoke = 1;
-    bool response = 2;
-    int32 status = 3;
-    string LinkTo = 4;
-    string Id = 5;
-    string name = 6;
-    repeated string params = 7;
-    bytes body = 8;
+message Ok {
+    int32 status = 1;
+}
+
+message InvokeParam {
+    string ID = 1;
+    string function = 2;
+    repeated string params = 3;
+}
+
+message InvokeResponse {
+    string ID = 1; 
+    int32 status = 2;
+    bytes body = 3;
 }

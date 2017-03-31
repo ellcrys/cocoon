@@ -2,12 +2,11 @@ package golang
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 )
@@ -64,6 +63,11 @@ func (link *Link) NewRangeGetter(start, end string, inclusive bool) *RangeGetter
 	return NewRangeGetter(link.GetDefaultLedger(), link.GetCocoonID(), start, end, inclusive)
 }
 
+// NewRangeGetterFrom creates an instance of a RangeGetter for a specified ledger.
+func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bool) *RangeGetter {
+	return NewRangeGetter(ledgerName, link.GetCocoonID(), start, end, inclusive)
+}
+
 // CreateLedger creates a new ledger by sending an
 // invoke transaction (TxCreateLedger) to the connector.
 // If chained is set to true, a blockchain is created and subsequent
@@ -77,39 +81,19 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 		return nil, fmt.Errorf("invalid ledger name")
 	}
 
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-
-	txID := util.UUID4()
-	err := sendTx(&proto.Tx{
-		Id:     txID,
-		Invoke: true,
-		LinkTo: link.GetCocoonID(),
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxCreateLedger,
+		LinkTo: link.GetCocoonID(),
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create ledger. %s", err)
-	}
+	})
 
-	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
-		return nil, err
-	}
-
-	if resp.Status != 200 {
-		err = fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, ErrAlreadyExist
-		}
 		return nil, err
 	}
 
 	var ledger types.Ledger
-	if err = util.FromJSON(resp.Body, &ledger); err != nil {
+	if err = util.FromJSON(result, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
@@ -119,34 +103,19 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 // GetLedger fetches a ledger
 func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-
-	txID := util.UUID4()
-	err := sendTx(&proto.Tx{
-		Id:     txID,
-		Invoke: true,
-		LinkTo: link.GetCocoonID(),
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxGetLedger,
+		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get ledger. %s", err)
-	}
+	})
 
-	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
 		return nil, err
 	}
-	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
-	}
 
 	var ledger types.Ledger
-	if err = util.FromJSON(resp.Body, &ledger); err != nil {
+	if err = util.FromJSON(result, &ledger); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
@@ -157,10 +126,6 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
-
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
 
 	ledger, err := link.GetLedger(ledgerName)
 	if err != nil {
@@ -204,26 +169,16 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
 
-	var respCh = make(chan *proto.Tx)
-	err = sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Invoke: true,
-		LinkTo: link.GetCocoonID(),
+	_, err = sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxPut,
+		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName},
 		Body:   txJSON,
-	}, respCh)
+	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to put transaction. %s", err)
-	}
-
-	resp, err := common.AwaitTxChan(respCh)
-	if err != nil {
-		return nil, err
-	}
-	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
+		return nil, fmt.Errorf("failed to put transaction: %s", err)
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
@@ -239,32 +194,19 @@ func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
 // GetFrom returns a transaction by its key and the ledger it belongs to
 func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-	err := sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Invoke: true,
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxGet,
 		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName, key},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction. %s", err)
-	}
+	})
 
-	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
-		return nil, err
-	}
-	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
+		return nil, fmt.Errorf("failed to get transaction: %s", err)
 	}
 
 	var tx types.Transaction
-	if err = util.FromJSON(resp.Body, &tx); err != nil {
+	if err = util.FromJSON(result, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
@@ -283,32 +225,19 @@ func (link *Link) Get(key string) (*types.Transaction, error) {
 // GetByIDFrom returns a transaction by its id and the ledger it belongs to
 func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-	err := sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Invoke: true,
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxGetByID,
 		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName, id},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction. %s", err)
-	}
+	})
 
-	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
-		return nil, err
-	}
-	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
+		return nil, fmt.Errorf("failed to get transaction: %s", err)
 	}
 
 	var tx types.Transaction
-	if err = util.FromJSON(resp.Body, &tx); err != nil {
+	if err = util.FromJSON(result, &tx); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 
@@ -327,32 +256,19 @@ func (link *Link) GetByID(id string) (*types.Transaction, error) {
 // GetBlockFrom returns a block from a ledger by its block id
 func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
-	if !isConnected() {
-		return nil, ErrNotConnected
-	}
-
-	var respCh = make(chan *proto.Tx)
-	err := sendTx(&proto.Tx{
-		Id:     util.UUID4(),
-		Invoke: true,
-		LinkTo: link.GetCocoonID(),
+	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+		ID:     util.UUID4(),
 		Name:   types.TxGetBlockByID,
+		LinkTo: link.GetCocoonID(),
 		Params: []string{ledgerName, id},
-	}, respCh)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction. %s", err)
-	}
+	})
 
-	resp, err := common.AwaitTxChan(respCh)
 	if err != nil {
-		return nil, err
-	}
-	if resp.Status != 200 {
-		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(fmt.Errorf("%s", resp.Body)))
+		return nil, fmt.Errorf("failed to get block: %s", err)
 	}
 
 	var blk types.Block
-	if err = util.FromJSON(resp.Body, &blk); err != nil {
+	if err = util.FromJSON(result, &blk); err != nil {
 		return nil, fmt.Errorf("failed to unmarshall response data")
 	}
 

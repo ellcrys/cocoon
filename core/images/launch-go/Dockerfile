@@ -1,8 +1,8 @@
-FROM golang:1.7.5-wheezy
+FROM ncodes/cocoon-go:latest
 
 # add dependencies
 RUN apt-get update
-RUN apt-get -y install aufs-tools iptables
+RUN apt-get -y install aufs-tools iptables git
 RUN curl https://glide.sh/get | sh
 
 # for testing

@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/connector/server/proto"
+	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
-	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -25,11 +26,14 @@ var testConnectorCmd = &cobra.Command{
 			log.Fatalf("Failed to connect to connector. Is the connector running on %s", addr)
 		}
 
-		client := proto.NewAPIClient(conn)
-		resp, err := client.Invoke(context.Background(), &proto.InvokeRequest{
-			Id:       util.UUID4(),
-			Function: f,
-			Params:   []string{"accountxxxxx"},
+		client := connector_proto.NewConnectorClient(conn)
+		resp, err := client.Transact(context.Background(), &connector_proto.Request{
+			OpType: connector_proto.OpType_CocoonCodeOp,
+			CocoonCodeOp: &connector_proto.CocoonCodeOperation{
+				ID:       util.UUID4(),
+				Function: f,
+				Params:   []string{"accountxxxxx"},
+			},
 		})
 
 		log.Info("Sent: ", resp, err)

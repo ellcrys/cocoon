@@ -1,4 +1,4 @@
-FROM golang:1.7.5-wheezy
+FROM ncodes/cocoon-go:latest
 
 # Install DOCKER 1.13 
 ENV DOCKER_BUCKET get.docker.com
@@ -21,7 +21,9 @@ RUN apt-get -y update && apt-get -y install \
         sudo \
 		e2fsprogs \
         xfsprogs \
-		iptables
+		iptables \
+		wget \
+		git
 
 # set up subuid/subgid so that "--userns-remap=default" works out-of-the-box
 RUN set -x \

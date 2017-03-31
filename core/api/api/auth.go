@@ -9,7 +9,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
-	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"golang.org/x/crypto/bcrypt"
@@ -56,7 +55,7 @@ func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) 
 // Login authenticates a user and returns a JWT token
 func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
 
-	ordererConn, err := orderer.DialOrderer(api.ordererAddrs)
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +93,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	})
 	ss, err := token.SignedString([]byte(key))
 	if err != nil {
-		log.Error(err.Error())
+		apiLog.Error(err.Error())
 		return nil, fmt.Errorf("failed to create session token")
 	}
 

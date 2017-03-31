@@ -17,7 +17,7 @@ var logBlockMaker = logging.MustGetLogger("ccode.stub.blockmaker")
 // and a response channel to send the block information
 type Entry struct {
 	Tx       *types.Transaction
-	To       string
+	LinkTo   string
 	RespChan chan interface{}
 }
 
@@ -31,7 +31,7 @@ func (e Entries) Len() int {
 
 // Less checks whether i is less than j
 func (e Entries) Less(i, j int) bool {
-	return fmt.Sprintf("%s.%s", e[i].To, e[i].Tx.Ledger) < fmt.Sprintf("%s.%s", e[j].To, e[j].Tx.Ledger)
+	return fmt.Sprintf("%s.%s", e[i].LinkTo, e[i].Tx.Ledger) < fmt.Sprintf("%s.%s", e[j].LinkTo, e[j].Tx.Ledger)
 }
 
 // Swap swaps i and j
@@ -134,9 +134,9 @@ func (b *BlockMaker) groupEntriesByLedgerName(entries Entries) [][]*Entry {
 	var curLedgerName = ""
 	var curTo = ""
 	for _, entry := range entries {
-		if entry.Tx.Ledger != curLedgerName || entry.To != curTo {
+		if entry.Tx.Ledger != curLedgerName || entry.LinkTo != curTo {
 			curLedgerName = entry.Tx.Ledger
-			curTo = entry.To
+			curTo = entry.LinkTo
 			grp = append(grp, []*Entry{})
 		}
 		grp[len(grp)-1] = append(grp[len(grp)-1], entry)

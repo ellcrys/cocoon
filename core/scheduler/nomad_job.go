@@ -208,7 +208,7 @@ func NewJob(id string, count int) *NomadJob {
 							Templates: []Template{},
 							Artifacts: []Artifact{
 								Artifact{
-									GetterSource: "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
+									GetterSource: "https://raw.githubusercontent.com/ncodes/cocoon/connector-redesign/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
 									RelativeDest: "/local/scripts",
 								},
 							},
@@ -218,10 +218,9 @@ func NewJob(id string, count int) *NomadJob {
 								IOPS:     0,
 								Networks: []Network{
 									Network{
-										MBits: 100,
+										MBits: 1,
 										DynamicPorts: []DynamicPort{
 											DynamicPort{Label: "CONNECTOR_RPC"},
-											//	DynamicPort{Label: "CONNECTOR_HTTP"},
 											DynamicPort{Label: "COCOON_RPC"},
 										},
 									},

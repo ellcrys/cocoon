@@ -135,11 +135,11 @@ func (m *Monitor) Monitor() {
 			log.Error(err.Error())
 		}
 
-		log.Infof("Rx Bytes: %d / Tx Bytes: %d", rxBytes, txBytes)
+		// log.Debugf("Rx Bytes: %d / Tx Bytes: %d", rxBytes, txBytes)
 
 		report := Report{
 			DiskUsage: size,
-			NetRx:     txBytes,
+			NetRx:     rxBytes,
 			NetTx:     txBytes,
 		}
 

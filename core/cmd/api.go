@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var log *logging.Logger
+var apiLog *logging.Logger
 
 func init() {
 	config.ConfigureLogger()
-	log = logging.MustGetLogger("api")
+	apiLog = logging.MustGetLogger("api")
 	goreq.SetConnectTimeout(5 * time.Second)
 }
 
@@ -50,7 +50,7 @@ var apiCmdStart = &cobra.Command{
 		if len(schedulerAddr) == 0 {
 			services, err := nomad.ServiceDiscovery.GetByID(nomad.GetName(), map[string]string{"tag": "http"})
 			if err != nil {
-				log.Fatalf("failed to get scheduler service from discovery service. %s", err)
+				apiLog.Fatalf("failed to get scheduler service from discovery service. %s", err)
 			}
 			if len(services) > 0 {
 				schedulerAddr = fmt.Sprintf("%s:%d", services[0].IP, int(services[0].Port))
@@ -58,7 +58,7 @@ var apiCmdStart = &cobra.Command{
 		}
 
 		if len(schedulerAddr) == 0 {
-			log.Fatal("scheduler address not set in flag or environment variable")
+			apiLog.Fatal("scheduler address not set in flag or environment variable")
 		}
 
 		// set bind address from environment var set by scheduler

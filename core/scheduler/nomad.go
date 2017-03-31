@@ -31,8 +31,8 @@ var SupportedCPUShare = map[string]int{
 
 // SupportedDiskSpace represents the allowed cocoon disk space
 var SupportedDiskSpace = map[string]int{
-	"1x": 300,
-	"2x": 500,
+	"1x": 1024,
+	"2x": 2048,
 }
 
 // Nomad defines a nomad scheduler that implements
