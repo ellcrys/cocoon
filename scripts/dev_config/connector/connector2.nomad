@@ -39,7 +39,7 @@ job "connector2" {
       }
 
       artifact {
-        source = "https://raw.githubusercontent.com/ncodes/cocoon/connector-redesign/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}"
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}"
         destination = "/local/scripts"
       }
 

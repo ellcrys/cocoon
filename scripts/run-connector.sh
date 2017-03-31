@@ -39,7 +39,7 @@ sleep 5
 docker pull ncodes/launch-go:latest
 
 # pull cocoon source
-branch="connector-redesign"
+branch="master"
 repoOwner=github.com/ncodes
 repoOwnerDir=$GOPATH/src/$repoOwner
 mkdir -p $repoOwnerDir
