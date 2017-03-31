@@ -5,9 +5,9 @@ set -e
 
 # Set up go environment
 export GOROOT=/go
-PATH=$PATH:$GOROOT/bin
 export GOPATH=/gocode
-mkdir -p $GOPATH
+PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+mkdir -p $GOPATH/bin
 
 # Pull cocoon source
 branch="master"
@@ -23,7 +23,7 @@ printf "> Building cocoon"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
-/go/bin/go build -v -o /bin/cocoon core/main.go
+/go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
 which cocoon
 sleep 60
 
