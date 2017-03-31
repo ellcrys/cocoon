@@ -17,7 +17,6 @@ client {
         "/sbin" = "/sbin"
         "/usr" = "/usr"
         "/go" = "/go"
-        "/var" = "/var"
     }
 }
 
