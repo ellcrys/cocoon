@@ -32,7 +32,7 @@ job "connector" {
       kill_timeout = "20s"
       
       config {
-        command = "sudo bash"
+        command = "bash"
         args = ["/local/scripts/runner.sh"]
       }
 
