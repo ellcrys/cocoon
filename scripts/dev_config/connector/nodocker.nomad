@@ -29,7 +29,6 @@ job "connector" {
 
     task "connector" {
       driver = "raw_exec"
-      kill_timeout = "20s"
       
       config {
         command = "bash"
