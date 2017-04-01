@@ -142,13 +142,15 @@ func (cn *Connector) GetCocoonCodeRPCAddr() string {
 // and configures default firewall.
 func (cn *Connector) prepareContainer(req *Request, lang Language) (*docker.Container, error) {
 
+	var containerID = util.Env("CONTAINER_ID", req.ID)
+
 	_, err := cn.fetchSource(req, lang)
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure cocoon code isn't already launched on a container
-	c, err := cn.getContainer(req.ID)
+	c, err := cn.getContainer(containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
 	} else if c != nil {
