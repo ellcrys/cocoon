@@ -26,7 +26,7 @@ job "connector" {
     ephemeral_disk {
       size = 1024
     }
-
+ 
     task "connector" {
       driver = "raw_exec"
       
