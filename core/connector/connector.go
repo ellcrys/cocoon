@@ -404,10 +404,10 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
 		Config: &docker.Config{
-			Image:      lang.GetImage(),
-			Labels:     map[string]string{
-				"name": name, 
-				"type": "cocoon_code"
+			Image: lang.GetImage(),
+			Labels: map[string]string{
+				"name": name,
+				"type": "cocoon_code",
 			},
 			WorkingDir: lang.GetSourceRootDir(),
 			Tty:        true,
