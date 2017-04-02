@@ -11,6 +11,6 @@ cd cocoon
 git checkout $branch
 
 # start the orderer
-glide --debug update
+glide --debug install
 go build -o cocoon core/main.go
 ./cocoon api start
