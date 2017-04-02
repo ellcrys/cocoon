@@ -108,11 +108,13 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	go cn.monitor.Monitor()
 
-	if err = cn.run(newContainer, lang); err != nil {
-		log.Error(err.Error())
-		cn.Stop(true)
-		return
-	}
+	go func() {
+		if err = cn.run(newContainer, lang); err != nil {
+			log.Error(err.Error())
+			cn.Stop(true)
+			return
+		}
+	}()
 }
 
 // cocoonUnresponsive is called when the cocoon code failed health check
