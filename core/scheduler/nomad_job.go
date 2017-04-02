@@ -171,7 +171,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 							Driver: "raw_exec",
 							Config: Config{
 								Command: "bash",
-								Args:    []string{"pwd"},
+								Args:    []string{"-c", "pwd"},
 							},
 							Env: map[string]string{
 								"CONNECTOR_VERSION":   connectorVersion,
