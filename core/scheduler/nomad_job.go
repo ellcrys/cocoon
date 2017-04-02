@@ -134,13 +134,8 @@ type Check struct {
 
 // Config defines a driver/task configuration
 type Config struct {
-	Image       string   `json:"image"`
-	ForcePull   bool     `json:"force_pull"`
-	Command     string   `json:"command"`
-	NetworkMode string   `json:"network_mode"`
-	Args        []string `json:"args"`
-	Privileged  bool     `json:"privileged"`
-	PortMap     []string `json:"port_map"`
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
 }
 
 // NomadJob represents a nomad job
