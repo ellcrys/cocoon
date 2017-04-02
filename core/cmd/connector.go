@@ -45,7 +45,7 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
-	memory := scheduler.Getenv("COCOON_ALLOC_MEMORY", "4")
+	memory := util.Env("COCOON_ALLOC_MEMORY", "4")
 	memoryMB, _ := strconv.Atoi(memory)
 
 	if ccID == "" {
