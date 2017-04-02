@@ -5,7 +5,7 @@ mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
-branch="connector-redesign"
+branch="master"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon 
 git checkout $branch

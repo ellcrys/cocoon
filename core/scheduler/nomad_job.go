@@ -149,7 +149,7 @@ type NomadJob struct {
 }
 
 // NewJob creates a new job with some default values.
-func NewJob(id string, count int) *NomadJob {
+func NewJob(connectorVersion, id string, count int) *NomadJob {
 	return &NomadJob{
 		Job: &Job{
 			Region:      "",
@@ -173,22 +173,24 @@ func NewJob(id string, count int) *NomadJob {
 					Tasks: []Task{
 						Task{
 							Name:   fmt.Sprintf("task-%s", id),
-							Driver: "docker",
+							Driver: "raw_exec",
 							Config: Config{
-								Image:       "ncodes/cocoon-launcher:latest",
-								ForcePull:   true,
-								Command:     "bash",
-								NetworkMode: "host",
-								Args:        []string{"${NOMAD_META_SCRIPTS_DIR}/${NOMAD_META_DEPLOY_SCRIPT_NAME}"},
-								Privileged:  true,
+								Command: "bash",
+								Args:    []string{"local/runner.sh"},
 							},
 							Env: map[string]string{
+								"CONNECTOR_VERSION":   connectorVersion,
 								"COCOON_ID":           id,
+								"CONTAINER_ID":        id,
 								"COCOON_CODE_URL":     "",
 								"COCOON_CODE_TAG":     "",
 								"COCOON_CODE_LANG":    "",
 								"COCOON_BUILD_PARAMS": "",
 								"COCOON_DISK_LIMIT":   "",
+								// The name of the connector runner script and a link to the script.
+								// The runner script will fetch and run whatever is found in this environment vars.
+								"RUN_SCRIPT_NAME": "run-connector.sh",
+								"RUN_SCRIPT_URL":  "https://rawgit.com/ncodes/cocoon/drop-dind/scripts/run-connector.sh",
 							},
 							Services: []NomadService{
 								NomadService{
@@ -197,10 +199,7 @@ func NewJob(id string, count int) *NomadJob {
 									PortLabel: "CONNECTOR_RPC",
 								},
 							},
-							Meta: map[string]string{
-								"DEPLOY_SCRIPT_NAME": "run-connector.sh",
-								"SCRIPTS_DIR":        "/local/scripts",
-							},
+							Meta: map[string]string{},
 							LogConfig: LogConfig{
 								MaxFiles:      10,
 								MaxFileSizeMB: 10,
@@ -208,8 +207,7 @@ func NewJob(id string, count int) *NomadJob {
 							Templates: []Template{},
 							Artifacts: []Artifact{
 								Artifact{
-									GetterSource: "https://raw.githubusercontent.com/ncodes/cocoon/connector-redesign/scripts/${NOMAD_META_DEPLOY_SCRIPT_NAME}",
-									RelativeDest: "/local/scripts",
+									GetterSource: "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh",
 								},
 							},
 							Resources: Resources{

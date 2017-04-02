@@ -119,7 +119,7 @@ var connectorCmd = &cobra.Command{
 			rpcServer.Stop(0)
 		}
 
-		log.Info("connector stopped")
+		log.Info("Connector stopped")
 	},
 }
 

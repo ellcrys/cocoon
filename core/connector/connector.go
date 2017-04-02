@@ -108,11 +108,13 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	go cn.monitor.Monitor()
 
-	if err = cn.run(newContainer, lang); err != nil {
-		log.Error(err.Error())
-		cn.Stop(true)
-		return
-	}
+	go func() {
+		if err = cn.run(newContainer, lang); err != nil {
+			log.Error(err.Error())
+			cn.Stop(true)
+			return
+		}
+	}()
 }
 
 // cocoonUnresponsive is called when the cocoon code failed health check
@@ -142,13 +144,15 @@ func (cn *Connector) GetCocoonCodeRPCAddr() string {
 // and configures default firewall.
 func (cn *Connector) prepareContainer(req *Request, lang Language) (*docker.Container, error) {
 
+	var containerID = util.Env("CONTAINER_ID", req.ID)
+
 	_, err := cn.fetchSource(req, lang)
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure cocoon code isn't already launched on a container
-	c, err := cn.getContainer(req.ID)
+	c, err := cn.getContainer(containerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
 	} else if c != nil {
