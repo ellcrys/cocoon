@@ -16,6 +16,7 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	docker "github.com/ncodes/go-dockerclient"
@@ -399,7 +400,6 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
-	log.Infof("%d %x", cn.req.Memory, cn.req.Memory == 0)
 	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
@@ -416,10 +416,10 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 			},
 			Cmd:    []string{"bash"},
 			Env:    env,
-			Memory: int64(cn.req.Memory),
+			Memory: common.MBToByte(int64(cn.req.Memory)),
 		},
 		HostConfig: &docker.HostConfig{
-			Memory: int64(cn.req.Memory),
+			Memory: common.MBToByte(int64(cn.req.Memory)),
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
 					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
