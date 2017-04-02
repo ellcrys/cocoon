@@ -114,6 +114,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = link
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_ALLOC_MEMORY"] = strconv.Itoa(SupportedMemory[memory])
 
 	jobSpec, _ := util.ToJSON(job)
 	resp, status, err := sc.deployJob(string(jobSpec))

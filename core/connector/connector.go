@@ -159,10 +159,7 @@ func (cn *Connector) prepareContainer(req *Request, lang Language) (*docker.Cont
 		return nil, fmt.Errorf("cocoon code already exists on a container")
 	}
 
-	newContainer, err := cn.createContainer(
-		req.ID,
-		lang,
-		nil)
+	newContainer, err := cn.createContainer(req.ID, lang, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
 	}
@@ -402,6 +399,7 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
+
 	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
@@ -413,10 +411,12 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 			ExposedPorts: map[docker.Port]struct{}{
 				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
 			},
-			Cmd: []string{"bash"},
-			Env: env,
+			Cmd:    []string{"bash"},
+			Env:    env,
+			Memory: int64(cn.req.Memory),
 		},
 		HostConfig: &docker.HostConfig{
+			Memory: int64(cn.req.Memory),
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
 					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"net"
@@ -44,6 +45,8 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
+	memory := scheduler.Getenv("COCOON_ALLOC_MEMORY", "4")
+	memoryMB, _ := strconv.Atoi(memory)
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -61,6 +64,7 @@ func getRequest() (*connector.Request, error) {
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 		Link:        ccLink,
+		Memory:      memoryMB,
 	}, nil
 }
 
