@@ -105,13 +105,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 		buildParams = crypto.ToBase64([]byte(buildParams))
 	}
 
-	var img string
-	switch lang {
-	case "go":
-		img = "ncodes/cocoon-launcher:latest"
-	}
-
-	job := NewJob(jobID, 1)
+	job := NewJob("master", jobID, 1)
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
@@ -120,7 +114,6 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = link
-	job.GetSpec().TaskGroups[0].Tasks[0].Config.Image = img
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.CPU = SupportedCPUShare[cpuShare]
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = SupportedMemory[memory]
 	job.GetSpec().TaskGroups[0].Resources.CPU = SupportedCPUShare[cpuShare]
