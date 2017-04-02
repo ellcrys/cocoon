@@ -190,7 +190,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 								// The name of the connector runner script and a link to the script.
 								// The runner script will fetch and run whatever is found in this environment vars.
 								"RUN_SCRIPT_NAME": "run-connector.sh",
-								"RUN_SCRIPT_URL":  "https://rawgit.com/ncodes/cocoon/drop-dind/scripts/run-connector.sh",
+								"RUN_SCRIPT_URL":  "https://rawgit.com/ncodes/cocoon/master/scripts/run-connector.sh",
 							},
 							Services: []NomadService{
 								NomadService{
