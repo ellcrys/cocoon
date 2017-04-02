@@ -2,7 +2,7 @@
 # Expects the following variables to be use to configure the orderer. This should
 # typically be set by a scheduler.
 # STORE_CON_STR=host=localhost user=ned dbname=cocoon sslmode=disable password=
-
+pwd
 repoParent="/go/src/github.com/ncodes"
 mkdir -p $repoParent
 cd $repoParent
@@ -15,5 +15,5 @@ git checkout $branch
 
 # start the orderer
 glide --debug update
-go build -o cocoon
+go build -o cocoon core/main.go
 ./cocoon orderer

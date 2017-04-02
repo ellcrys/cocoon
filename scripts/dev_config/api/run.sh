@@ -12,5 +12,5 @@ git checkout $branch
 
 # start the orderer
 glide --debug update
-go build -o cocoon
+go build -o cocoon core/main.go
 ./cocoon api start
