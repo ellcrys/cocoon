@@ -31,4 +31,4 @@ docker pull ncodes/launch-go:latest
 
 # start connector 
 printf "Running Cocoon Connector"
-exec cocoon connector 
+cocoon connector 
