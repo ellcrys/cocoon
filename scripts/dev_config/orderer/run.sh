@@ -14,7 +14,6 @@ cd cocoon
 git checkout $branch
 
 # start the orderer
-cd core
 glide --debug update
 go build -o cocoon
 ./cocoon orderer
