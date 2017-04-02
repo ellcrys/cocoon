@@ -206,8 +206,8 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 								},
 							},
 							Resources: Resources{
-								CPU:      0,
-								MemoryMB: 0,
+								CPU:      20,
+								MemoryMB: 10,
 								IOPS:     0,
 								Networks: []Network{
 									Network{
@@ -223,8 +223,8 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 						},
 					},
 					Resources: Resources{
-						CPU:      0,
-						MemoryMB: 0,
+						CPU:      20,
+						MemoryMB: 10,
 						IOPS:     0,
 						Networks: []Network{},
 					},
