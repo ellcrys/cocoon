@@ -96,6 +96,8 @@ var connectorCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
+		util.Printify(req)
+		fmt.Println(req.Memory)
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
