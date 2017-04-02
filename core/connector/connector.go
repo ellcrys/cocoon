@@ -399,7 +399,7 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // createContainer creates a brand new container,
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
-	log.Info(cn.req.Memory, cn.req.Memory == 0)
+	log.Infof("%d %x", cn.req.Memory, cn.req.Memory == 0)
 	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
