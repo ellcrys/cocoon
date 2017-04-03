@@ -38,7 +38,7 @@ job "api" {
       }
 
       artifact {
-        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/dev_config/api/run.sh"
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/cfg/api/run.sh"
         destination = "/local/scripts"
       }
 

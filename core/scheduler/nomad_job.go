@@ -182,6 +182,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 								"COCOON_CODE_LANG":    "",
 								"COCOON_BUILD_PARAMS": "",
 								"COCOON_DISK_LIMIT":   "",
+								"COCOON_ALLOC_MEMORY": "",
 								// The name of the connector runner script and a link to the script.
 								// The runner script will fetch and run whatever is found in this environment vars.
 								"RUN_SCRIPT_NAME": "run-connector.sh",

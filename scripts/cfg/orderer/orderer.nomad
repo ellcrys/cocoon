@@ -38,7 +38,7 @@ job "orderer" {
       }
 
       artifact {
-        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/dev_config/orderer/run.sh"
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/cfg/orderer/run.sh"
         destination = "/local/scripts"
       }
 
