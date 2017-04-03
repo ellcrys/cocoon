@@ -309,23 +309,12 @@ func (cn *Connector) fetchSource(req *Request, lang Language) (string, error) {
 	return cn.fetchFromGit(req, lang)
 }
 
-// findLaunch looks for a previous stored launch/Redeployment by id
-// TODO: needs implementation
-func (cn *Connector) findLaunch(id string) interface{} {
-	return nil
-}
-
 // fetchFromGit fetchs cocoon code from git repo.
 // and returns the download directory.
 func (cn *Connector) fetchFromGit(req *Request, lang Language) (string, error) {
 
 	var repoTarURL, downloadDst string
 	var err error
-
-	// checks if job was previously deployed. find a job by the job name.
-	if cn.findLaunch(req.ID) != nil {
-		return "", fmt.Errorf("cocoon code was previously launched") // TODO: fetch last launch tag and use it
-	}
 
 	repoTarURL, err = cutil.GetGithubRepoRelease(req.URL, req.Tag)
 	if err != nil {
