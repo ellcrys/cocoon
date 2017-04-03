@@ -37,8 +37,6 @@ func (api *API) authenticateToken(tokenStr string) (jwt.MapClaims, error) {
 		return nil, err
 	}
 
-	// TODO: verify identity existence
-
 	return claims, nil
 }
 
