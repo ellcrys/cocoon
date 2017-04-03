@@ -7,7 +7,7 @@ type Cocoon struct {
 	Identity       string   `structs:"identity" mapstructure:"identity"`
 	ID             string   `structs:"ID" mapstructure:"ID"`
 	URL            string   `structs:"URL" mapstructure:"URL"`
-	ReleaseTag     string   `structs:"releaseTag "mapstructure:"releaseTag"`
+	ReleaseTag     string   `structs:"releaseTag" mapstructure:"releaseTag"`
 	Language       string   `structs:"language" mapstructure:"language"`
 	BuildParam     string   `structs:"buildParam" mapstructure:"buildParam"`
 	Memory         string   `structs:"memory" mapstructure:"memory"`
