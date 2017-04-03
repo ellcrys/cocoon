@@ -35,7 +35,7 @@ var createCmd = &cobra.Command{
 			ReleaseTag:     releaseTag,
 			BuildParam:     buildParams,
 			Memory:         memory,
-			CPUShare:       cpuShare,
+			CPUShares:       cpuShare,
 			Link:           link,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,

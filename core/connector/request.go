@@ -10,5 +10,5 @@ type Request struct {
 	BuildParams string
 	Link        string
 	Memory      int
-	CPU         int
+	CPUShares    int
 }

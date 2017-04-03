@@ -96,7 +96,7 @@ type CreateCocoonRequest struct {
 	ReleaseTag     string   `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
 	BuildParam     string   `protobuf:"bytes,5,opt,name=buildParam" json:"buildParam,omitempty"`
 	Memory         string   `protobuf:"bytes,6,opt,name=memory" json:"memory,omitempty"`
-	CPUShare       string   `protobuf:"bytes,7,opt,name=CPUShare" json:"CPUShare,omitempty"`
+	CPUShares       string   `protobuf:"bytes,7,opt,name=CPUShares" json:"CPUShares,omitempty"`
 	Releases       []string `protobuf:"bytes,8,rep,name=releases" json:"releases,omitempty"`
 	Link           string   `protobuf:"bytes,9,opt,name=link" json:"link,omitempty"`
 	NumSignatories int32    `protobuf:"varint,10,opt,name=numSignatories" json:"numSignatories,omitempty"`
@@ -151,9 +151,9 @@ func (m *CreateCocoonRequest) GetMemory() string {
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetCPUShare() string {
+func (m *CreateCocoonRequest) GetCPUShares() string {
 	if m != nil {
-		return m.CPUShare
+		return m.CPUShares
 	}
 	return ""
 }
@@ -320,7 +320,7 @@ type DeployRequest struct {
 	ReleaseTag string `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
 	BuildParam []byte `protobuf:"bytes,5,opt,name=buildParam,proto3" json:"buildParam,omitempty"`
 	Memory     string `protobuf:"bytes,6,opt,name=memory" json:"memory,omitempty"`
-	CPUShare   string `protobuf:"bytes,7,opt,name=CPUShare" json:"CPUShare,omitempty"`
+	CPUShares   string `protobuf:"bytes,7,opt,name=CPUShares" json:"CPUShares,omitempty"`
 	Link       string `protobuf:"bytes,8,opt,name=link" json:"link,omitempty"`
 }
 
@@ -371,9 +371,9 @@ func (m *DeployRequest) GetMemory() string {
 	return ""
 }
 
-func (m *DeployRequest) GetCPUShare() string {
+func (m *DeployRequest) GetCPUShares() string {
 	if m != nil {
-		return m.CPUShare
+		return m.CPUShares
 	}
 	return ""
 }

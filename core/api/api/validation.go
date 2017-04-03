@@ -16,8 +16,8 @@ var (
 	// supportedMemory list the memory values supported
 	supportedMemory = []string{"512m", "1g", "2g"}
 
-	// supportedCPUShare list the cpu share values supported
-	supportedCPUShare = []string{"1x", "2x"}
+	// supportedCPUShares list the cpu share values supported
+	supportedCPUShares = []string{"1x", "2x"}
 )
 
 // ValidateCocoon validates a cocoon to be created
@@ -44,10 +44,10 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("memory is required")
 	} else if !util.InStringSlice(supportedMemory, c.Memory) {
 		return fmt.Errorf("Memory value is not supported. Expects one of these values %s", supportedMemory)
-	} else if len(c.CPUShare) == 0 {
+	} else if len(c.CPUShares) == 0 {
 		return fmt.Errorf("CPU share is required")
-	} else if !util.InStringSlice(supportedCPUShare, c.CPUShare) {
-		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShare)
+	} else if !util.InStringSlice(supportedCPUShares, c.CPUShares) {
+		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShares)
 	}
 
 	return nil

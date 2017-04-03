@@ -11,7 +11,7 @@ type Cocoon struct {
 	Language       string   `structs:"language" mapstructure:"language"`
 	BuildParam     string   `structs:"buildParam" mapstructure:"buildParam"`
 	Memory         string   `structs:"memory" mapstructure:"memory"`
-	CPUShare       string   `structs:"CPUShare" mapstructure:"CPUShare"`
+	CPUShares       string   `structs:"CPUShares" mapstructure:"CPUShares"`
 	NumSignatories int32    `structs:"numSignatories" mapstructure:"numSignatories"`
 	SigThreshold   int32    `structs:"sigThreshold" mapstructure:"sigThreshold"`
 	Link           string   `structs:"link" mapstructure:"link"`

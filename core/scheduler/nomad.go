@@ -23,8 +23,8 @@ var SupportedMemory = map[string]int{
 	"2g":   2048,
 }
 
-// SupportedCPUShare represents the allowed cocoon cpu share choices
-var SupportedCPUShare = map[string]int{
+// SupportedCPUShares represents the allowed cocoon cpu share choices
+var SupportedCPUShares = map[string]int{
 	"1x": 100,
 	"2x": 200,
 }
@@ -115,6 +115,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = link
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_MEMORY"] = strconv.Itoa(SupportedMemory[memory])
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_CPU_SHARE"] = strconv.Itoa(SupportedCPUShares[cpuShare])
 
 	jobSpec, _ := util.ToJSON(job)
 	resp, status, err := sc.deployJob(string(jobSpec))

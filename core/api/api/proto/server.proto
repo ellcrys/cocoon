@@ -29,7 +29,7 @@ message CreateCocoonRequest {
     string releaseTag = 4;
     string buildParam = 5;
     string memory = 6;
-    string CPUShare = 7;
+    string CPUShares = 7;
     repeated string releases = 8;
     string link = 9;
     int32 numSignatories = 10;
@@ -65,7 +65,7 @@ message DeployRequest {
     string releaseTag = 4;
     bytes buildParam = 5;
     string memory = 6;
-    string CPUShare = 7;
+    string CPUShares = 7;
     string link = 8;
 }
 

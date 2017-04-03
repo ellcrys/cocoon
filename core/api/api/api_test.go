@@ -85,7 +85,7 @@ func TestOrderer(t *testing.T) {
 							URL:      "https://github.com/ncodes/cocoon-example-01",
 							Language: "go",
 							Memory:   "512m",
-							CPUShare: "1x",
+							CPUShares: "1x",
 						})
 						So(err, ShouldBeNil)
 						So(r.Status, ShouldEqual, 200)
@@ -97,7 +97,7 @@ func TestOrderer(t *testing.T) {
 								URL:      "https://github.com/ncodes/cocoon-example-01",
 								Language: "go",
 								Memory:   "512m",
-								CPUShare: "1x",
+								CPUShares: "1x",
 							})
 							So(r, ShouldBeNil)
 							So(err, ShouldNotBeNil)

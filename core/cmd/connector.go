@@ -45,8 +45,8 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
-	memory := util.Env("ALLOC_MEMORY", "4")
-	memoryMB, _ := strconv.Atoi(memory)
+	memoryMB, _ := strconv.Atoi(util.Env("ALLOC_MEMORY", "4"))
+	cpuShare, _ := strconv.Atoi(util.Env("ALLOC_CPU_SHARE", "100"))
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -65,6 +65,7 @@ func getRequest() (*connector.Request, error) {
 		BuildParams: buildParam,
 		Link:        ccLink,
 		Memory:      memoryMB,
+		CPUShares:    cpuShare,
 	}, nil
 }
 

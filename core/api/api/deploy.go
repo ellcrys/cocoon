@@ -39,7 +39,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		string(req.GetBuildParam()),
 		req.GetLink(),
 		req.GetMemory(),
-		req.GetCPUShare(),
+		req.GetCPUShares(),
 	)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {

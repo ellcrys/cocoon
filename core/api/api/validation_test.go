@@ -82,7 +82,7 @@ func TestValidation(t *testing.T) {
 					URL:      "https://github.com/ncodes/cocoon-example-01",
 					Language: "go",
 					Memory:   "512m",
-					CPUShare: "abc",
+					CPUShares: "abc",
 				})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "CPU share value is not supported. Expects one of these values [1x 2x]")

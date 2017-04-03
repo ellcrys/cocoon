@@ -75,7 +75,7 @@ func Create(cocoon *types.Cocoon) error {
 		BuildParam:     cocoon.BuildParam,
 		Memory:         cocoon.Memory,
 		Link:           cocoon.Link,
-		CPUShare:       cocoon.CPUShare,
+		CPUShares:       cocoon.CPUShares,
 		Releases:       cocoon.Releases,
 		NumSignatories: cocoon.NumSignatories,
 		SigThreshold:   cocoon.SigThreshold,
@@ -135,7 +135,7 @@ func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 		ReleaseTag: cocoon.ReleaseTag,
 		BuildParam: []byte(cocoon.BuildParam),
 		Memory:     cocoon.Memory,
-		CPUShare:   cocoon.CPUShare,
+		CPUShares:   cocoon.CPUShares,
 		Link:       cocoon.Link,
 	})
 	if err != nil {
