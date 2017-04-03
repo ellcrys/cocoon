@@ -443,6 +443,13 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 
 	log.Info("Copied cocoon code source to cocoon")
 
+	// remove download directory at this point
+	if err = os.RemoveAll(lang.GetDownloadDestination()); err != nil {
+		return nil, fmt.Errorf("failed to remove download directory. %s", err)
+	}
+
+	log.Info("Removed download directory")
+
 	return container, nil
 }
 
