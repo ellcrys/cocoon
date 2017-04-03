@@ -447,6 +447,8 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 		return nil, fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
 	}
 
+	time.Sleep(10 * time.Minute)
+
 	log.Info("Copied cocoon code source to cocoon")
 
 	return container, nil
