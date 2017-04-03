@@ -177,6 +177,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 								"CONNECTOR_VERSION":   connectorVersion,
 								"COCOON_ID":           id,
 								"CONTAINER_ID":        id,
+								"COCOON_LINK":         "",
 								"COCOON_CODE_URL":     "",
 								"COCOON_CODE_TAG":     "",
 								"COCOON_CODE_LANG":    "",
@@ -191,7 +192,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 							},
 							Services: []NomadService{
 								NomadService{
-									Name:      fmt.Sprintf("cocoons-%s", id),
+									Name:      fmt.Sprintf("cocoons", id),
 									Tags:      []string{id},
 									PortLabel: "CONNECTOR_RPC",
 								},

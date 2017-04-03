@@ -87,7 +87,7 @@ func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
 }
 
 // Deploy a cocoon code to the scheduler
-func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuShare string) (*DeploymentInfo, error) {
+func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuShare string) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -113,9 +113,16 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuSha
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = link
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_MEMORY"] = strconv.Itoa(SupportedMemory[memory])
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_CPU_SHARE"] = strconv.Itoa(SupportedCPUShares[cpuShare])
+
+	// if cocoon linkID is provided, set env variable and also add id to
+	// the service tag. This will allow us use discover the link via consul service discovery.
+	if len(linkID) > 0 {
+		job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = linkID
+		curTags := job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags
+		job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags = append(curTags, linkID)
+	}
 
 	jobSpec, _ := util.ToJSON(job)
 	resp, status, err := sc.deployJob(string(jobSpec))
