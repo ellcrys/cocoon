@@ -434,6 +434,12 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 		return nil, err
 	}
 
+	// no matter what happens, remove download directory
+	defer func() {
+		os.RemoveAll(lang.GetDownloadDestination())
+		log.Info("Removed download directory")
+	}()
+
 	// copy source directory to the container's source directory
 	cmd := "docker"
 	args := []string{"cp", lang.GetDownloadDestination(), fmt.Sprintf("%s:%s", container.ID, lang.GetCopyDestination())}
@@ -442,13 +448,6 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 	}
 
 	log.Info("Copied cocoon code source to cocoon")
-
-	// remove download directory at this point
-	if err = os.RemoveAll(lang.GetDownloadDestination()); err != nil {
-		return nil, fmt.Errorf("failed to remove download directory. %s", err)
-	}
-
-	log.Info("Removed download directory")
 
 	return container, nil
 }
