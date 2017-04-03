@@ -64,8 +64,8 @@ func getRequest() (*connector.Request, error) {
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 		Link:        ccLink,
-		Memory:      memoryMB,
-		CPUShares:    cpuShare,
+		Memory:      int64(memoryMB),
+		CPUShares:   int64(cpuShare),
 	}, nil
 }
 

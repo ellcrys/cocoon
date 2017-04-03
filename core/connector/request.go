@@ -9,6 +9,6 @@ type Request struct {
 	DiskLimit   int64
 	BuildParams string
 	Link        string
-	Memory      int
-	CPUShares    int
+	Memory      int64
+	CPUShares   int64
 }

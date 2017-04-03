@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"strconv"
 
 	"path"
 
@@ -402,7 +401,6 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 // and copies the cocoon source code to it.
 func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
 	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
-	cpuShares, _ := strconv.Itoa(cn.req.CPUShares)
 
 	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
 		Name: name,
@@ -420,11 +418,11 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 			Cmd:       []string{"bash"},
 			Env:       env,
 			Memory:    common.MBToByte(int64(cn.req.Memory)),
-			CPUShares: cpuShares,
+			CPUShares: cn.req.CPUShares,
 		},
 		HostConfig: &docker.HostConfig{
 			Memory:    common.MBToByte(int64(cn.req.Memory)),
-			CPUShares: cpuShares,
+			CPUShares: cn.req.CPUShares,
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
 					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
