@@ -69,9 +69,7 @@ func (g *Go) SetRunEnv(env map[string]string) {
 // GetDownloadDestination returns the location to save
 // the downloaded go cocoon code to.
 func (g *Go) GetDownloadDestination() string {
-	u, _ := urlx.Parse(g.req.URL)
-	repoID := strings.Trim(u.Path, "/")
-	return path.Join(g.userHome, "/ccode/source", repoID)
+	return path.Join(g.userHome, "/ccode/sources", g.req.ID)
 }
 
 // GetCopyDestination returns the location in
