@@ -86,6 +86,12 @@ func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
 	return respStr, res.StatusCode, nil
 }
 
+// makeLinkToServiceTag creates a tag representing a link to a cocoon id.
+// To be used as a service tag
+func makeLinkToServiceTag(linkID string) string {
+	return fmt.Sprintf("link_to:%s", linkID)
+}
+
 // Deploy a cocoon code to the scheduler
 func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuShare string) (*DeploymentInfo, error) {
 
@@ -118,10 +124,11 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 
 	// if cocoon linkID is provided, set env variable and also add id to
 	// the service tag. This will allow us use discover the link via consul service discovery.
+	// Tag format is `link_to:the_id`
 	if len(linkID) > 0 {
 		job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = linkID
 		curTags := job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags
-		job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags = append(curTags, linkID)
+		job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags = append(curTags, makeLinkToServiceTag(linkID))
 	}
 
 	jobSpec, _ := util.ToJSON(job)
