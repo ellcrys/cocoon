@@ -659,9 +659,5 @@ func (cn *Connector) Stop(failed bool) error {
 		return fmt.Errorf("failed to remove container. %s", err)
 	}
 
-	if err = cn.deleteBridge(bridgeName); err != nil {
-		return fmt.Errorf("failed to delete bridge")
-	}
-
 	return nil
 }
