@@ -44,7 +44,7 @@ var (
 	// ErrUninitializedStream represents a stream with nil value
 	ErrUninitializedStream = fmt.Errorf("stream appears to be uninitialized")
 
-	// ErrTransportClosing represents a grpc connection closing	
+	// ErrTransportClosing represents a grpc connection closing
 	ErrTransportClosing = fmt.Errorf("transport is closing")
 )
 

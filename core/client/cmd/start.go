@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/client/cocoon"
+	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
@@ -19,16 +19,16 @@ var startCmd = &cobra.Command{
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Cocoon ID is required")
+			log.Fatal("Err: Cocoon ID is required")
 		}
 
-		if err := cocoon.Start(args[0]); err != nil {
+		if err := client.Start(args[0]); err != nil {
 			desc := common.GetRPCErrDesc(err)
 			switch desc {
 			case "unknown service proto.API":
 				desc = "unable to connect to the cluster"
 			}
-			log.Fatalf("%s", common.CapitalizeString(desc))
+			log.Fatalf("Err: %s", common.CapitalizeString(desc))
 		}
 	},
 }

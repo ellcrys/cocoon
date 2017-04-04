@@ -35,9 +35,8 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-
 	// check if release with matching ID already exists
+	odc := orderer_proto.NewOrdererClient(ordererConn)
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	_, err = odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
@@ -51,7 +50,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 		return nil, fmt.Errorf("a release with matching id already exists")
 	}
 
-	value, _ := util.ToJSON(req)
+	value, _ := util.ToJSON(release)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID:   "",
 		LedgerName: types.GetGlobalLedgerName(),
@@ -69,8 +68,33 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	}
 
 	return &proto.Response{
-		ID:     release.ID,
 		Status: 200,
 		Body:   value,
+	}, nil
+}
+
+// GetRelease returns a release
+func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*proto.Response, error) {
+
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonID: "",
+		Key:      api.makeReleaseKey(req.ReleaseID),
+		Ledger:   types.GetGlobalLedgerName(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Body:   []byte(tx.GetValue()),
+		Status: 200,
 	}, nil
 }

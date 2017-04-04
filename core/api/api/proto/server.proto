@@ -5,6 +5,7 @@ service API {
     rpc Login(LoginRequest) returns (Response);
     rpc CreateCocoon(CreateCocoonRequest) returns (Response);
     rpc CreateRelease(CreateReleaseRequest) returns (Response);
+    rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
     rpc GetCocoon(GetCocoonRequest) returns (Response);
@@ -35,15 +36,19 @@ message CreateCocoonRequest {
     int32 numSignatories = 10;
     int32 sigThreshold = 11;
     repeated string signatories = 12;
+    
+    // options for implementer
+    bool optionAllowDuplicate = 13;
 }
 
 message GetCocoonRequest {
     string ID = 1;
-    string Identity = 2;
+    string identityID = 2;
 }
 
 message GetIdentityRequest {
     string email = 1;
+    string ID = 2;
 }
 
 message CreateReleaseRequest {
@@ -58,8 +63,12 @@ message CreateReleaseRequest {
     int32 sigDenied = 9;
 }
 
+message GetReleaseRequest {
+    string releaseID = 1;
+}
+
 message DeployRequest {
-    string ID = 1;
+    string cocoonID = 1;
     string URL = 2;
     string language = 3;
     string releaseTag = 4;
@@ -75,7 +84,6 @@ message CreateIdentityRequest {
 }
 
 message Response {
-    string ID = 1;
-    int32 status = 2;
-    bytes body = 3;
+    int32 status = 1;
+    bytes body = 2;
 }

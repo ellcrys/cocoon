@@ -1,9 +1,8 @@
-package db
+package client
 
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"path"
 
 	"github.com/boltdb/bolt"

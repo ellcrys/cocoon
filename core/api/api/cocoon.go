@@ -31,30 +31,39 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 
 	var cocoon types.Cocoon
 	cstructs.Copy(req, &cocoon)
+	allowDup := req.OptionAllowDuplicate
 	req = nil
 
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
 
-	cocoon.Identity = claims["identity"].(string)
+	// set cocoon identity field and add identity as one of the signatories
+	cocoon.IdentityID = claims["identity"].(string)
 
-	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID:       cocoon.ID,
-		Identity: cocoon.Identity,
-	})
+	// add cocoon owner identity if not included
+	if !util.InStringSlice(cocoon.Signatories, cocoon.IdentityID) {
+		cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
+	}
 
-	if err != nil && err != types.ErrCocoonNotFound {
-		return nil, err
-	} else if err != types.ErrCocoonNotFound {
-		return nil, fmt.Errorf("cocoon with matching ID already exists")
+	if !allowDup {
+		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID:         cocoon.ID,
+			IdentityID: cocoon.IdentityID,
+		})
+
+		if err != nil && err != types.ErrCocoonNotFound {
+			return nil, err
+		} else if err != types.ErrCocoonNotFound {
+			return nil, fmt.Errorf("cocoon with matching ID already exists")
+		}
 	}
 
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	if len(cocoon.Link) > 0 {
 		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID:       cocoon.Link,
-			Identity: cocoon.Identity,
+			ID:         cocoon.Link,
+			IdentityID: cocoon.IdentityID,
 		})
 		if err != nil && err != types.ErrCocoonNotFound {
 			return nil, err
@@ -77,7 +86,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
-				Key:       api.makeCocoonKey(cocoon.Identity, cocoon.ID),
+				Key:       api.makeCocoonKey(cocoon.IdentityID, cocoon.ID),
 				Value:     string(value),
 				CreatedAt: time.Now().Unix(),
 			},
@@ -88,7 +97,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	}
 
 	return &proto.Response{
-		ID:     cocoon.ID,
 		Status: 200,
 		Body:   value,
 	}, nil
@@ -106,7 +114,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeCocoonKey(req.Identity, req.GetID()),
+		Key:      api.makeCocoonKey(req.IdentityID, req.GetID()),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 
@@ -117,7 +125,6 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	}
 
 	return &proto.Response{
-		ID:     req.GetID(),
 		Status: 200,
 		Body:   []byte(tx.GetValue()),
 	}, nil

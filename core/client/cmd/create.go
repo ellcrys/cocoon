@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/client/cocoon"
+	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
@@ -29,19 +29,19 @@ var createCmd = &cobra.Command{
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
-		err := cocoon.Create(&types.Cocoon{
+		err := client.CreateCocoon(&types.Cocoon{
 			URL:            url,
 			Language:       lang,
 			ReleaseTag:     releaseTag,
 			BuildParam:     buildParams,
 			Memory:         memory,
-			CPUShares:       cpuShare,
+			CPUShares:      cpuShare,
 			Link:           link,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,
 		})
 		if err != nil {
-			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

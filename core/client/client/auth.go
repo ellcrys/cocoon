@@ -1,4 +1,4 @@
-package auth
+package client
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
-	"github.com/ncodes/cocoon/core/client/db"
-	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -15,13 +13,6 @@ import (
 )
 
 var log = logging.MustGetLogger("api.client")
-
-// APIAddress is the remote address to the cluster server
-var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8004")
-
-func init() {
-	log.SetBackend(config.MessageOnlyBackend)
-}
 
 // Login authenticates the client user. It sends the credentials
 // to the platform and returns a JWT token for future requests.
@@ -53,7 +44,7 @@ func Login(email, password string) error {
 		Token: string(resp.Body),
 	}
 
-	err = db.GetDefaultDB().Update(func(tx *bolt.Tx) error {
+	err = GetDefaultDB().Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("auth"))
 		if err != nil {
 			return err

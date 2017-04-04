@@ -15,8 +15,8 @@ import (
 )
 
 // makeIdentityKey constructs an identity key
-func (api *API) makeIdentityKey(email string) string {
-	return fmt.Sprintf("identity.%s", email)
+func (api *API) makeIdentityKey(hashedEmail string) string {
+	return fmt.Sprintf("identity.%s", hashedEmail)
 }
 
 // CreateIdentity creates a new identity
@@ -38,7 +38,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 
 	// check if identity already exists
 	_, err = api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: identity.GetHashedEmail(),
+		Email: identity.Email,
 	})
 
 	if err != nil && err != types.ErrIdentityNotFound {
@@ -71,13 +71,14 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	}
 
 	return &proto.Response{
-		ID:     txID,
 		Status: 200,
 		Body:   value,
 	}, nil
 }
 
-// GetIdentity fetches an identity by its email
+// GetIdentity fetches an identity by email or id. If Email field is set in the request,
+// it will find the identity by the email (converts the email to an identity key format) or if
+// ID field is set, it finds the identity by the id directly.
 func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) (*proto.Response, error) {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
@@ -86,10 +87,18 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	}
 	defer ordererConn.Close()
 
+	var key string
+	if len(req.Email) > 0 {
+		identity := types.Identity{Email: req.Email}
+		key = api.makeIdentityKey(identity.GetHashedEmail())
+	} else {
+		key = api.makeIdentityKey(req.ID)
+	}
+
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeIdentityKey(req.GetEmail()),
+		Key:      key,
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 
@@ -100,7 +109,6 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	}
 
 	return &proto.Response{
-		ID:     util.UUID4(),
 		Status: 200,
 		Body:   []byte(resp.GetValue()),
 	}, nil
@@ -129,6 +137,8 @@ func (api *API) AddCocoonToIdentity(ctx context.Context, req *proto.AddCocoonToI
 	}
 
 	identity.Cocoons = append(identity.Cocoons, req.GetCocoonId())
+
+	// TODO: update identity
 
 	return nil, nil
 }

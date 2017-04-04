@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/client/identity"
+	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
@@ -19,11 +19,11 @@ var identityCreateCmd = &cobra.Command{
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Email is required")
+			log.Fatal("Err: Email is required")
 		}
 
-		if err := identity.Create(args[0]); err != nil {
-			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+		if err := client.CreateIdentity(args[0]); err != nil {
+			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

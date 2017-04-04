@@ -4,14 +4,14 @@ import "github.com/ellcrys/util"
 
 // Cocoon represents a smart contract application
 type Cocoon struct {
-	Identity       string   `structs:"identity" mapstructure:"identity"`
+	IdentityID     string   `structs:"identity_id" mapstructure:"identity_id"`
 	ID             string   `structs:"ID" mapstructure:"ID"`
 	URL            string   `structs:"URL" mapstructure:"URL"`
 	ReleaseTag     string   `structs:"releaseTag" mapstructure:"releaseTag"`
 	Language       string   `structs:"language" mapstructure:"language"`
 	BuildParam     string   `structs:"buildParam" mapstructure:"buildParam"`
 	Memory         string   `structs:"memory" mapstructure:"memory"`
-	CPUShares       string   `structs:"CPUShares" mapstructure:"CPUShares"`
+	CPUShares      string   `structs:"CPUShares" mapstructure:"CPUShares"`
 	NumSignatories int32    `structs:"numSignatories" mapstructure:"numSignatories"`
 	SigThreshold   int32    `structs:"sigThreshold" mapstructure:"sigThreshold"`
 	Link           string   `structs:"link" mapstructure:"link"`

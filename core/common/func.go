@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"strings"
+
+	"github.com/asaskevich/govalidator"
 )
 
 // GetRPCErrDesc takes a grpc generated error and returns the description.
@@ -74,4 +76,20 @@ func CapitalizeString(str string) string {
 	return re.ReplaceAllStringFunc(str, func(c string) string {
 		return strings.ToUpper(c)
 	})
+}
+
+// JSONCoerceErr returns an error about an error converting json data to an object
+func JSONCoerceErr(objName string, err error) error {
+	return fmt.Errorf("failed to coerce response data to %s object. %s", objName, err)
+}
+
+// GetShortID gets the short version of an id.
+func GetShortID(id string) string {
+	if govalidator.IsUUIDv4(id) {
+		return strings.Split(id, "-")[0]
+	}
+	if len(id) <= 12 {
+		return id
+	}
+	return id[0:11]
 }

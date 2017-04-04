@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/client/auth"
+	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
@@ -20,17 +20,17 @@ var loginCmd = &cobra.Command{
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Email address is required")
+			log.Fatal("Err: Email address is required")
 		}
 
 		log.Info("Please enter your password:")
 		password, err := terminal.ReadPassword(0)
 		if err != nil {
-			log.Fatal("failed to get password")
+			log.Fatal("Err: Failed to get password")
 		}
 
-		if err = auth.Login(args[0], string(password)); err != nil {
-			log.Fatalf("%s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+		if err = client.Login(args[0], string(password)); err != nil {
+			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }

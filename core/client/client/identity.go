@@ -1,4 +1,4 @@
-package identity
+package client
 
 import (
 	"fmt"
@@ -13,21 +13,15 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
-	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
-
-var log = logging.MustGetLogger("api.client")
-
-// APIAddress is the remote address to the cluster server
-var APIAddress = util.Env("API_ADDRESS", "127.0.0.1:8004")
 
 func init() {
 	log.SetBackend(config.MessageOnlyBackend)
 }
 
-// Create a new identity
-func Create(email string) error {
+// CreateIdentity creates a new identity
+func CreateIdentity(email string) error {
 
 	var err error
 
@@ -79,7 +73,8 @@ func Create(email string) error {
 
 	stopSpinner()
 	log.Info("==> Successfully created a new identity")
-	log.Info("==> ID:", email)
+	log.Info("==> Email:", email)
+	log.Info("==> ID:", (&types.Identity{Email: email}).GetHashedEmail())
 
 	return nil
 }

@@ -50,6 +50,17 @@ func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) 
 	return api.authenticateToken(accessTokens[0])
 }
 
+// makeAuthToken creates a session token
+func makeAuthToken(id, identity, _type string, exp int64, secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.MapClaims{
+		"id":       id,
+		"identity": identity,
+		"type":     _type,
+		"exp":      exp,
+	})
+	return token.SignedString([]byte(secret))
+}
+
 // Login authenticates a user and returns a JWT token
 func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
 
@@ -60,7 +71,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	defer ordererConn.Close()
 
 	resp, err := api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: types.NewIdentity(req.GetEmail(), "").GetHashedEmail(),
+		Email: req.GetEmail(),
 	})
 
 	if err != nil && err != types.ErrIdentityNotFound {
@@ -81,21 +92,14 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 
 	sessionID := util.Sha256(util.UUID4())
 	identity.ClientSessions = append(identity.ClientSessions, sessionID)
-
 	key := util.Env("API_SIGN_KEY", "secret")
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.MapClaims{
-		"id":       sessionID,
-		"identity": identity.GetHashedEmail(),
-		"type":     "token.cli",
-		"exp":      time.Now().AddDate(0, 1, 0).Unix(),
-	})
-	ss, err := token.SignedString([]byte(key))
+	ss, err := makeAuthToken(sessionID, identity.GetHashedEmail(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 	if err != nil {
 		apiLog.Error(err.Error())
 		return nil, fmt.Errorf("failed to create session token")
 	}
 
-	// overwrite identity
+	// overwrite identity to store the newly created client session.
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID:   "",
@@ -114,7 +118,6 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	}
 
 	return &proto.Response{
-		ID:     util.UUID4(),
 		Status: 200,
 		Body:   []byte(ss),
 	}, nil
