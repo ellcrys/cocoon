@@ -15,8 +15,8 @@ import (
 )
 
 // makeCocoonKey constructs a cocoon key
-func (api *API) makeCocoonKey(identity, id string) string {
-	return fmt.Sprintf("cocoon.%s.%s", identity, id)
+func (api *API) makeCocoonKey(id string) string {
+	return fmt.Sprintf("cocoon.%s", id)
 }
 
 // CreateCocoon creates a cocoon
@@ -48,8 +48,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 
 	if !allowDup {
 		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID:         cocoon.ID,
-			IdentityID: cocoon.IdentityID,
+			ID: cocoon.ID,
 		})
 
 		if err != nil && err != types.ErrCocoonNotFound {
@@ -62,8 +61,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	if len(cocoon.Link) > 0 {
 		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID:         cocoon.Link,
-			IdentityID: cocoon.IdentityID,
+			ID: cocoon.Link,
 		})
 		if err != nil && err != types.ErrCocoonNotFound {
 			return nil, err
@@ -86,7 +84,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
-				Key:       api.makeCocoonKey(cocoon.IdentityID, cocoon.ID),
+				Key:       api.makeCocoonKey(cocoon.ID),
 				Value:     string(value),
 				CreatedAt: time.Now().Unix(),
 			},
@@ -114,7 +112,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeCocoonKey(req.IdentityID, req.GetID()),
+		Key:      api.makeCocoonKey(req.GetID()),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 

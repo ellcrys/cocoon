@@ -10,16 +10,16 @@ import (
 
 // identityCreateCmd represents the identity-create command
 var identityCreateCmd = &cobra.Command{
-	Use:   "identity-create",
-	Short: "Create an identity",
-	Long:  `Create an identity to use for platform operations`,
+	Use:   "new-id [OPTIONS] EMAIL",
+	Short: "Create an Ellcrys platform identity",
+	Long:  `Create an Ellcrys platform identity`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Err: Email is required")
+			UsageError(log, cmd, `"ellcrys new-id" requires at least 1 argument(s)`, `ellcrys new-id --help`)
 		}
 
 		if err := client.CreateIdentity(args[0]); err != nil {

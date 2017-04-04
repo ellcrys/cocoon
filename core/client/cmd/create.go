@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -30,6 +31,7 @@ var createCmd = &cobra.Command{
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
 		err := client.CreateCocoon(&types.Cocoon{
+			ID:             util.UUID4(),
 			URL:            url,
 			Language:       lang,
 			ReleaseTag:     releaseTag,

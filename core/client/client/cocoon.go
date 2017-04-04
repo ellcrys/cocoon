@@ -71,9 +71,9 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		Language:   cocoon.Language,
 		BuildParam: cocoon.BuildParam,
 		Link:       cocoon.Link,
+		VotersID:   []string{},
 	}
 
-	cocoon.ID = util.UUID4()
 	cocoon.Releases = []string{release.ID}
 
 	stopSpinner := util.Spinner("Please wait")
@@ -115,8 +115,8 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 
 	stopSpinner()
 	log.Info(`==> New cocoon created`)
-	log.Infof(`Cocoon ID:  %s`, cocoon.ID)
-	log.Infof(`Release ID: %s`, release.ID)
+	log.Infof(`==> Cocoon ID:  %s`, cocoon.ID)
+	log.Infof(`==> Release ID: %s`, release.ID)
 
 	return nil
 }
@@ -171,14 +171,15 @@ func Start(id string) error {
 	stopSpinner := util.Spinner("Please wait")
 	cl := proto.NewAPIClient(conn)
 	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID:         id,
-		IdentityID: types.NewIdentity(userSession.Email, "").GetHashedEmail(),
+		ID: id,
 	})
 
 	if err != nil {
 		stopSpinner()
 		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
 			return types.ErrClientNoActiveSession
+		} else if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+			return fmt.Errorf("the cocoon (%s) was not found", common.GetShortID(id))
 		}
 		return err
 	} else if resp.Status != 200 {
@@ -215,7 +216,6 @@ func AddSignatories(cocoonID string, ids []string) error {
 	md := metadata.Pairs("access_token", userSession.Token)
 	ctx := context.Background()
 	ctx = metadata.NewContext(ctx, md)
-	curUserIdentityID := types.NewIdentity(userSession.Email, "").GetHashedEmail()
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -226,13 +226,14 @@ func AddSignatories(cocoonID string, ids []string) error {
 	stopSpinner := util.Spinner("Please wait")
 	cl := proto.NewAPIClient(conn)
 	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID:         cocoonID,
-		IdentityID: curUserIdentityID,
+		ID: cocoonID,
 	})
 	if err != nil {
 		stopSpinner()
 		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
 			return types.ErrClientNoActiveSession
+		} else if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+			return fmt.Errorf("the cocoon (%s) was not found", common.GetShortID(cocoonID))
 		}
 		return err
 	}
@@ -251,7 +252,7 @@ func AddSignatories(cocoonID string, ids []string) error {
 		if govalidator.IsEmail(id) {
 			req.Email = id
 			req.ID = ""
-			id = (&types.Identity{Email: id}).GetHashedEmail()
+			id = (&types.Identity{Email: id}).GetID()
 			shortID = common.GetShortID(id)
 		}
 
@@ -294,9 +295,9 @@ func AddSignatories(cocoonID string, ids []string) error {
 	if len(validIDs) == 0 {
 		log.Info("No new signatory was added")
 	} else if len(validIDs) == 1 {
-		log.Info(`==> Successfully added a signatory`)
+		log.Info(`==> Successfully added a signatory:`)
 	} else {
-		log.Info(`==> Successfully added the following signatories`)
+		log.Info(`==> Successfully added the following signatories:`)
 	}
 
 	for i, id := range validIDs {

@@ -10,16 +10,16 @@ import (
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
-	Use:   "start id",
-	Short: "Starts a new or stopped cocoon",
-	Long:  `Starts a new or stopped cocoon`,
+	Use:   "start [OPTIONS] COCOON",
+	Short: "Start a new or stopped cocoon",
+	Long:  `Start a new or stopped cocoon`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Err: Cocoon ID is required")
+			UsageError(log, cmd, `"ellcrys start" requires at least 1 argument(s)`, `ellcrys start --help`)
 		}
 
 		if err := client.Start(args[0]); err != nil {

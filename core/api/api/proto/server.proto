@@ -43,7 +43,6 @@ message CreateCocoonRequest {
 
 message GetCocoonRequest {
     string ID = 1;
-    string identityID = 2;
 }
 
 message GetIdentityRequest {
@@ -61,6 +60,10 @@ message CreateReleaseRequest {
     string link = 7;
     int32 sigApproved = 8;
     int32 sigDenied = 9;
+    repeated string votersID = 10;
+    
+    // options for implementer
+    bool optionAllowDuplicate = 11;
 }
 
 message GetReleaseRequest {

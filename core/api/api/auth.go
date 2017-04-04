@@ -93,7 +93,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	sessionID := util.Sha256(util.UUID4())
 	identity.ClientSessions = append(identity.ClientSessions, sessionID)
 	key := util.Env("API_SIGN_KEY", "secret")
-	ss, err := makeAuthToken(sessionID, identity.GetHashedEmail(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
+	ss, err := makeAuthToken(sessionID, identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 	if err != nil {
 		apiLog.Error(err.Error())
 		return nil, fmt.Errorf("failed to create session token")

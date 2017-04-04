@@ -11,16 +11,16 @@ import (
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
-	Use:   "login [email]",
-	Short: "Login to authorize terminal operations",
-	Long:  ``,
+	Use:   "login [OPTIONS] EMAIL",
+	Short: "Login with your Ellcrys identity to create and manage your resources.",
+	Long:  `Login with your Ellcrys identity to create and manage cocoons, vote releases and more.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if len(args) == 0 {
-			log.Fatal("Err: Email address is required")
+			UsageError(log, cmd, `"ellcrys login" requires at least 1 argument(s)`, `ellcrys login --help`)
 		}
 
 		log.Info("Please enter your password:")

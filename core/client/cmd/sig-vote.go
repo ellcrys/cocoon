@@ -22,26 +22,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// sigAddCmd represents the sig-add command
-var sigAddCmd = &cobra.Command{
-	Use:   "sig-add [OPTIONS] COCOON IDENTITY [IDENTITY...]",
-	Short: "Add one or more signatories to a cocoon",
-	Long:  "Add one or more signatories to a cocoon",
+// sigVoteCmd represents the sig-vote command
+var sigVoteCmd = &cobra.Command{
+	Use:   "sig-vote [OPTIONS] RELEASE VOTE",
+	Short: "Vote to approve or deny a cocoon release",
+	Long:  `Vote to approve or deny a cocoon release`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		isCid, _ := cmd.Flags().GetBool("cid")
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
-		if len(args) == 0 {
-			UsageError(log, cmd, `"ellcrys sig-add" requires at least 2 argument(s)`, `ellcrys sig-add --help`)
+		if len(args) <= 1 {
+			UsageError(log, cmd, `"ellcrys sig-vote" requires at least 2 argument(s)`, `ellcrys sig-vote --help`)
+		} else if args[1] != "0" && args[1] != "1" {
+			log.Fatal("Err: Vote value must be either 1 (Approve) or 0 (Deny)")
 		}
 
-		if err := client.AddSignatories(args[0], args[1:]); err != nil {
+		if err := client.AddVote(args[0], args[1], isCid); err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(sigAddCmd)
+	RootCmd.AddCommand(sigVoteCmd)
+	sigVoteCmd.PersistentFlags().BoolP("cid", "", false, "Force release ID to be interpreted as a cocoon ID (Default: false)")
 }

@@ -60,7 +60,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        txID,
-				Key:       api.makeIdentityKey(identity.GetHashedEmail()),
+				Key:       api.makeIdentityKey(identity.GetID()),
 				Value:     string(value),
 				CreatedAt: time.Now().Unix(),
 			},
@@ -90,7 +90,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 	var key string
 	if len(req.Email) > 0 {
 		identity := types.Identity{Email: req.Email}
-		key = api.makeIdentityKey(identity.GetHashedEmail())
+		key = api.makeIdentityKey(identity.GetID())
 	} else {
 		key = api.makeIdentityKey(req.ID)
 	}

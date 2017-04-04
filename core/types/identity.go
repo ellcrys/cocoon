@@ -19,8 +19,8 @@ func NewIdentity(email, password string) *Identity {
 	}
 }
 
-// GetHashedEmail returuns the hashed version of the email
-func (i *Identity) GetHashedEmail() string {
+// GetID returuns the hashed version of the email
+func (i *Identity) GetID() string {
 	return util.Sha256(strings.ToLower(strings.TrimSpace(i.Email)))
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
@@ -16,18 +15,13 @@ import (
 func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
 
 	var err error
-	var claims jwt.MapClaims
-	var identity string
 
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+	if _, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	identity = claims["identity"].(string)
-
 	resp, err := api.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID:         req.GetCocoonID(),
-		IdentityID: identity,
+		ID: req.GetCocoonID(),
 	})
 	if err != nil {
 		return nil, err

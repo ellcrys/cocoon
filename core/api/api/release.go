@@ -23,6 +23,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 
 	var release types.Release
 	cstructs.Copy(req, &release)
+	allowDup := req.OptionAllowDuplicate
 	req = nil
 
 	if err := ValidateRelease(&release); err != nil {
@@ -37,17 +38,19 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 
 	// check if release with matching ID already exists
 	odc := orderer_proto.NewOrdererClient(ordererConn)
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	_, err = odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      api.makeReleaseKey(release.ID),
-		Ledger:   types.GetGlobalLedgerName(),
-	})
 
-	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
-		return nil, err
-	} else if err == nil {
-		return nil, fmt.Errorf("a release with matching id already exists")
+	if !allowDup {
+		_, err = odc.Get(ctx, &orderer_proto.GetParams{
+			CocoonID: "",
+			Key:      api.makeReleaseKey(release.ID),
+			Ledger:   types.GetGlobalLedgerName(),
+		})
+
+		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+			return nil, err
+		} else if err == nil {
+			return nil, fmt.Errorf("a release with matching id already exists")
+		}
 	}
 
 	value, _ := util.ToJSON(release)

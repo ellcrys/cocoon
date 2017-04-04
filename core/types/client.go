@@ -28,15 +28,16 @@ func (c *Cocoon) ToJSON() []byte {
 // Release represents a new update to a cocoon's
 // configuration
 type Release struct {
-	ID          string `structs:"ID" mapstructure:"ID"`
-	CocoonID    string `structs:"cocoonID" mapstructure:"cocoonID"`
-	URL         string `structs:"URL" mapstructure:"URL"`
-	ReleaseTag  string `structs:"releaseTag" mapstructure:"releaseTag"`
-	Language    string `structs:"language" mapstructure:"language"`
-	BuildParam  string `structs:"buildParam" mapstructure:"buildParam"`
-	Link        string `structs:"link" mapstructure:"link"`
-	SigApproved int32  `structs:"sigApproved" mapstructure:"sigApproved"`
-	SigDenied   int32  `structs:"sigDenied" mapstructure:"sigDenied"`
+	ID          string   `structs:"ID" mapstructure:"ID"`
+	CocoonID    string   `structs:"cocoonID" mapstructure:"cocoonID"`
+	URL         string   `structs:"URL" mapstructure:"URL"`
+	ReleaseTag  string   `structs:"releaseTag" mapstructure:"releaseTag"`
+	Language    string   `structs:"language" mapstructure:"language"`
+	BuildParam  string   `structs:"buildParam" mapstructure:"buildParam"`
+	Link        string   `structs:"link" mapstructure:"link"`
+	SigApproved int32    `structs:"sigApproved" mapstructure:"sigApproved"`
+	SigDenied   int32    `structs:"sigDenied" mapstructure:"sigDenied"`
+	VotersID    []string `structs:"votersID" mapstructure:"votersID"`
 }
 
 // ToJSON returns the json equivalent of this object

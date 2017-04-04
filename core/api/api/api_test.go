@@ -108,7 +108,7 @@ func TestOrderer(t *testing.T) {
 
 						Convey(".CreateCocoon", func() {
 
-							ss, err := makeAuthToken(util.UUID4(), identity.GetHashedEmail(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
+							ss, err := makeAuthToken(util.UUID4(), identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 							So(err, ShouldBeNil)
 							md := metadata.Pairs("access_token", ss)
 							ctx := context.Background()
@@ -144,8 +144,7 @@ func TestOrderer(t *testing.T) {
 								Convey(".GetCocoon", func() {
 									Convey("Should successfully get an existing cocoon by id", func() {
 										c, err := api.GetCocoon(context.Background(), &proto.GetCocoonRequest{
-											ID:         id,
-											IdentityID: identity.GetHashedEmail(),
+											ID: id,
 										})
 										So(err, ShouldBeNil)
 										So(c.Status, ShouldEqual, 200)
@@ -153,8 +152,7 @@ func TestOrderer(t *testing.T) {
 
 									Convey("Should return error if cocoon does not exists", func() {
 										_, err = api.GetCocoon(context.Background(), &proto.GetCocoonRequest{
-											ID:         "unknown",
-											IdentityID: identity.GetHashedEmail(),
+											ID: "unknown",
 										})
 										So(err, ShouldNotBeNil)
 										So(err.Error(), ShouldEqual, "cocoon not found")
@@ -234,7 +232,7 @@ func TestOrderer(t *testing.T) {
 
 					Convey("Should successfully get an existing identity by ID", func() {
 						i, err := api.GetIdentity(context.Background(), &proto.GetIdentityRequest{
-							ID: identity.GetHashedEmail(),
+							ID: identity.GetID(),
 						})
 						So(err, ShouldBeNil)
 						So(i.Status, ShouldEqual, 200)
