@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/ncodes/cocoon/core/client/client"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -21,8 +21,10 @@ var getCmd = &cobra.Command{
 		if len(args) == 0 {
 			UsageError(log, cmd, `"ellcrys get" requires at least 1 argument(s)`, `ellcrys get --help`)
 		}
-		// TODO: Work your own magic here
-		fmt.Println("get called")
+
+		if err := client.GetCocoons(args); err != nil {
+			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+		}
 	},
 }
 

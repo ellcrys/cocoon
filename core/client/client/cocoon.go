@@ -1,7 +1,9 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
 	context "golang.org/x/net/context"
 
@@ -117,6 +119,54 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	log.Info(`==> New cocoon created`)
 	log.Infof(`==> Cocoon ID:  %s`, cocoon.ID)
 	log.Infof(`==> Release ID: %s`, release.ID)
+
+	return nil
+}
+
+// GetCocoons fetches a cocoon and logs its basic information
+func GetCocoons(ids []string) error {
+
+	var cocoons = []types.Cocoon{}
+	var err error
+	var resp *proto.Response
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	for _, id := range ids {
+		stopSpinner := util.Spinner("Please wait")
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		cl := proto.NewAPIClient(conn)
+		resp, err = cl.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID: id,
+		})
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				stopSpinner()
+				err = fmt.Errorf("No such object: %s", id)
+				break
+			}
+			stopSpinner()
+			break
+		}
+
+		var cocoon types.Cocoon
+		if err = util.FromJSON(resp.Body, &cocoon); err != nil {
+			return common.JSONCoerceErr("cocoon", err)
+		}
+
+		cocoons = append(cocoons, cocoon)
+		stopSpinner()
+	}
+
+	bs, _ := json.MarshalIndent(cocoons, "", "   ")
+	log.Info("%s", bs)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
