@@ -546,24 +546,6 @@ func (cn *Connector) execInContainer(container *docker.Container, name string, c
 	return nil
 }
 
-// deleteBridge deletes the bridge the connector's docker daemon is attached to
-func (cn *Connector) deleteBridge(bridgeName string) error {
-	if bridgeName == "" {
-		return nil
-	}
-
-	args := []string{"-c", `
-		ip link set dev ` + bridgeName + ` down &&
-		brctl delbr ` + bridgeName + `
-	`}
-
-	_, err := exec.Command("bash", args...).Output()
-	if err != nil {
-		return fmt.Errorf("failed to delete bridge. %s", err)
-	}
-	return nil
-}
-
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the languaged.
 func (cn *Connector) build(container *docker.Container, lang Language) error {
