@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto"
@@ -244,11 +245,21 @@ func AddSignatories(cocoonID string, ids []string) error {
 
 	// find identity and included in cccoon signatories field
 	for _, id := range ids {
-		_, err := cl.GetIdentity(ctx, &proto.GetIdentityRequest{ID: id})
+
+		var req = proto.GetIdentityRequest{ID: id}
+		shortID := common.GetShortID(id)
+		if govalidator.IsEmail(id) {
+			req.Email = id
+			req.ID = ""
+			id = (&types.Identity{Email: id}).GetHashedEmail()
+			shortID = common.GetShortID(id)
+		}
+
+		_, err := cl.GetIdentity(ctx, &req)
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
-				log.Infof("Warning: Identity (%s) is unknown. Skipped.", common.GetShortID(id))
+				log.Infof("Warning: Identity (%s) is unknown. Skipped.", shortID)
 				continue
 			} else {
 				return fmt.Errorf("failed to get identity: %s", err)
@@ -256,7 +267,7 @@ func AddSignatories(cocoonID string, ids []string) error {
 		}
 		if util.InStringSlice(cocoon.Signatories, id) {
 			stopSpinner()
-			log.Infof("Warning: Identity (%s) is already a signatory. Skipped.", common.GetShortID(id))
+			log.Infof("Warning: Identity (%s) is already a signatory. Skipped.", shortID)
 			continue
 		}
 
