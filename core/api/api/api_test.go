@@ -190,7 +190,7 @@ func TestOrderer(t *testing.T) {
 								Convey(".GetRelease", func() {
 									Convey("Should successfully get an existing release", func() {
 										r, err := api.GetRelease(context.Background(), &proto.GetReleaseRequest{
-											ReleaseID: id,
+											ID: id,
 										})
 										So(err, ShouldBeNil)
 										So(r.Status, ShouldEqual, 200)
@@ -199,7 +199,7 @@ func TestOrderer(t *testing.T) {
 
 									Convey("Should return error if release is not found", func() {
 										r, err := api.GetRelease(context.Background(), &proto.GetReleaseRequest{
-											ReleaseID: id,
+											ID: id,
 										})
 										So(err, ShouldBeNil)
 										So(r.Status, ShouldEqual, 200)

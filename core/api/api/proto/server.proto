@@ -36,9 +36,10 @@ message CreateCocoonRequest {
     int32 numSignatories = 10;
     int32 sigThreshold = 11;
     repeated string signatories = 12;
+    string createdAt = 13;
     
     // options for implementer
-    bool optionAllowDuplicate = 13;
+    bool optionAllowDuplicate = 14;
 }
 
 message GetCocoonRequest {
@@ -60,14 +61,15 @@ message CreateReleaseRequest {
     string link = 7;
     int32 sigApproved = 8;
     int32 sigDenied = 9;
-    repeated string votersID = 10;
+    string createdAt = 10;
+    repeated string votersID = 11;
     
     // options for implementer
-    bool optionAllowDuplicate = 11;
+    bool optionAllowDuplicate = 12;
 }
 
 message GetReleaseRequest {
-    string releaseID = 1;
+    string ID = 1;
 }
 
 message DeployRequest {

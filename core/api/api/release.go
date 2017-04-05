@@ -89,7 +89,7 @@ func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*
 	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeReleaseKey(req.ReleaseID),
+		Key:      api.makeReleaseKey(req.ID),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 	if err != nil {

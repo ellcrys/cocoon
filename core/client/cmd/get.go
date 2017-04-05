@@ -11,8 +11,8 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [OPTIONS] COCOON [COCOON...]",
-	Short: "Get a cocoon by its unique ID",
-	Long:  `Get a cocoon by its unique ID`,
+	Short: "Get one or more cocoons by their unique ID",
+	Long:  `Get one or more cocoons by their unique ID`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")

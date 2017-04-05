@@ -38,7 +38,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 
 		// get the latest release
 		resp, err := api.GetRelease(ctx, &proto.GetReleaseRequest{
-			ReleaseID: cocoon.Releases[len(cocoon.Releases)-1],
+			ID: cocoon.Releases[len(cocoon.Releases)-1],
 		})
 		if err != nil && err != types.ErrTxNotFound {
 			return nil, fmt.Errorf("failed to get release. %s", err)

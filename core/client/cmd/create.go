@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -41,6 +43,7 @@ var createCmd = &cobra.Command{
 			Link:           link,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,
+			CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
 		})
 		if err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))

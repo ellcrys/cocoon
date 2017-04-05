@@ -17,6 +17,7 @@ type Cocoon struct {
 	Link           string   `structs:"link" mapstructure:"link"`
 	Releases       []string `structs:"releases" mapstructure:"releases"`
 	Signatories    []string `structs:"signatories" mapstructure:"signatories"`
+	CreatedAt      string   `structs:"createdAt" mapstructure:"createdAt"`
 }
 
 // ToJSON returns the json equivalent of this object
@@ -38,6 +39,7 @@ type Release struct {
 	SigApproved int32    `structs:"sigApproved" mapstructure:"sigApproved"`
 	SigDenied   int32    `structs:"sigDenied" mapstructure:"sigDenied"`
 	VotersID    []string `structs:"votersID" mapstructure:"votersID"`
+	CreatedAt   string   `structs:"createdAt" mapstructure:"createdAt"`
 }
 
 // ToJSON returns the json equivalent of this object

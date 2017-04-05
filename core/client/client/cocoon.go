@@ -37,6 +37,7 @@ func createCocoon(ctx context.Context, conn *grpc.ClientConn, cocoon *types.Coco
 		NumSignatories:       cocoon.NumSignatories,
 		SigThreshold:         cocoon.SigThreshold,
 		Signatories:          cocoon.Signatories,
+		CreatedAt:            cocoon.CreatedAt,
 		OptionAllowDuplicate: allowDup,
 	})
 
@@ -74,6 +75,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		BuildParam: cocoon.BuildParam,
 		Link:       cocoon.Link,
 		VotersID:   []string{},
+		CreatedAt:  cocoon.CreatedAt,
 	}
 
 	cocoon.Releases = []string{release.ID}
@@ -95,7 +97,6 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		stopSpinner()
 		return err
 	}
-
 	client := proto.NewAPIClient(conn)
 	resp, err := client.CreateRelease(ctx, &proto.CreateReleaseRequest{
 		ID:         release.ID,
@@ -105,6 +106,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		Language:   cocoon.Language,
 		ReleaseTag: cocoon.ReleaseTag,
 		BuildParam: cocoon.BuildParam,
+		CreatedAt:  cocoon.CreatedAt,
 	})
 
 	if err != nil {
@@ -123,7 +125,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	return nil
 }
 
-// GetCocoons fetches a cocoon and logs its basic information
+// GetCocoons fetches one or more cocoons and logs them
 func GetCocoons(ids []string) error {
 
 	var cocoons = []types.Cocoon{}

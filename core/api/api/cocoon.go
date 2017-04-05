@@ -32,6 +32,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	var cocoon types.Cocoon
 	cstructs.Copy(req, &cocoon)
 	allowDup := req.OptionAllowDuplicate
+	timeCreated, _ := time.Parse(time.RFC3339Nano, req.CreatedAt)
 	req = nil
 
 	if err := ValidateCocoon(&cocoon); err != nil {
@@ -86,7 +87,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 				Id:        util.UUID4(),
 				Key:       api.makeCocoonKey(cocoon.ID),
 				Value:     string(value),
-				CreatedAt: time.Now().Unix(),
+				CreatedAt: timeCreated.Unix(),
 			},
 		},
 	})

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -62,7 +63,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 		}
 
 		// get the latest release
-		resp, err = client.GetRelease(ctx, &proto.GetReleaseRequest{ReleaseID: cocoon.Releases[len(cocoon.Releases)-1]})
+		resp, err = client.GetRelease(ctx, &proto.GetReleaseRequest{ID: cocoon.Releases[len(cocoon.Releases)-1]})
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrTxNotFound) == 0 {
@@ -78,7 +79,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 
 	// fetch release if not already fetched
 	if release.ID == "" {
-		resp, err := client.GetRelease(ctx, &proto.GetReleaseRequest{ReleaseID: id})
+		resp, err := client.GetRelease(ctx, &proto.GetReleaseRequest{ID: id})
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrTxNotFound) == 0 {
@@ -158,6 +159,54 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	stopSpinner()
 	log.Info("==> You have successfully voted")
 	log.Infof("==> Your vote: %s (%s)", vote, voteTxt)
+
+	return nil
+}
+
+// GetReleases fetches one or more releases and logs them
+func GetReleases(ids []string) error {
+
+	var releases = []types.Release{}
+	var err error
+	var resp *proto.Response
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	for _, id := range ids {
+		stopSpinner := util.Spinner("Please wait")
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		cl := proto.NewAPIClient(conn)
+		resp, err = cl.GetRelease(ctx, &proto.GetReleaseRequest{
+			ID: id,
+		})
+		if err != nil {
+			if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+				stopSpinner()
+				err = fmt.Errorf("No such object: %s", id)
+				break
+			}
+			stopSpinner()
+			break
+		}
+
+		var release types.Release
+		if err = util.FromJSON(resp.Body, &release); err != nil {
+			return common.JSONCoerceErr("cocoon", err)
+		}
+
+		releases = append(releases, release)
+		stopSpinner()
+	}
+
+	bs, _ := json.MarshalIndent(releases, "", "   ")
+	log.Info("%s", bs)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
