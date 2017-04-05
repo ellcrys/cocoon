@@ -18,7 +18,10 @@ var (
 	// CocoonStatusStarting indicates a starting service
 	CocoonStatusStarting = "starting"
 
-	// CocoonStatusRunning indicates a running service
+	// CocoonStatusStarted indicates a started cocoon service
+	CocoonStatusStarted = "started"
+
+	// CocoonStatusRunning indicates a running cocoon code
 	CocoonStatusRunning = "running"
 
 	// CocoonStatusStopped indicates a stopped service
@@ -51,7 +54,9 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	}
 
 	cocoon.IdentityID = claims["identity"].(string)
-	cocoon.Status = CocoonStatusStarting
+	if len(cocoon.Status) == 0 {
+		cocoon.Status = CocoonStatusStarting
+	}
 
 	// add cocoon owner identity if not included
 	if !util.InStringSlice(cocoon.Signatories, cocoon.IdentityID) {

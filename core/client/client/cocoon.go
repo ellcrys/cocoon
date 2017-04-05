@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	context "golang.org/x/net/context"
@@ -17,6 +18,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
+	"github.com/olekukonko/tablewriter"
 	"github.com/xeonx/timeago"
 )
 
@@ -292,16 +294,27 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 		return nil
 	}
 
-	log.Info("COCOON ID\t\t\t\tRELEASE ID\t\tCREATED\t\t\tSTATUS")
+	tableData := [][]string{}
 	for _, cocoon := range cocoons {
+		if !showAll && !util.InStringSlice([]string{api.CocoonStatusStarting, api.CocoonStatusStarted, api.CocoonStatusRunning}, cocoon.Status) {
+			continue
+		}
 		created, _ := time.Parse(time.RFC3339, cocoon.CreatedAt)
-		log.Infof("%s\t%s\t\t%s\t\t%s",
+		tableData = append(tableData, []string{
 			cocoon.ID,
-			common.GetShortID(cocoon.Releases[len(cocoon.Releases)-1]),
+			cocoon.Releases[len(cocoon.Releases)-1],
 			common.CapitalizeString(timeago.English.Format(created)),
 			common.CapitalizeString(cocoon.Status),
-		)
+		})
 	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"COCOON ID", "RELEASE ID (LATEST)", "CREATED", "STATUS"})
+	table.SetBorder(false)
+	table.SetHeaderLine(false)
+	table.AppendBulk(tableData)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.Render()
 
 	return nil
 }

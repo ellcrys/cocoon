@@ -1,5 +1,5 @@
-hash: c63b67254e34d7eb8b163251f960f95e8e3cb321495eaeb5545c1ca759631768
-updated: 2017-03-29T22:12:37.206393018+01:00
+hash: 80ac05fe9bc6d01004ca1b81ad0c0070f9301a1657cfe63701b5527c8990181e
+updated: 2017-04-05T16:44:20.402766974+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -14,7 +14,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: d2532c636f03ea12744c4aec62562d78e5cde8ae
+  version: 2f35d73b7dc7a9e234ea06f6145a26c37472c775
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -103,6 +103,8 @@ imports:
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
+- name: github.com/mattn/go-runewidth
+  version: 14207d285c6c197daabb5c9793d63e7af9ab2d50
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/go-homedir
@@ -123,6 +125,8 @@ imports:
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/olebedev/emitter
   version: 9110dbae3d07cb26c2993dbf3bdbd0aad98329f9
+- name: github.com/olekukonko/tablewriter
+  version: febf2d34b54a69ce7530036c7503b1c9fbfdf0bb
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/opencontainers/runc
@@ -163,6 +167,8 @@ imports:
   subpackages:
   - cipher
   - json
+- name: github.com/xeonx/timeago
+  version: 1f38c69d07a911962b9fe71c744a957dfa671a1e
 - name: golang.org/x/crypto
   version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
   subpackages:
