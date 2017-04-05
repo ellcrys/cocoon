@@ -299,7 +299,7 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 			cocoon.ID,
 			common.GetShortID(cocoon.Releases[len(cocoon.Releases)-1]),
 			common.CapitalizeString(timeago.English.Format(created)),
-			"Up 10 minutes",
+			common.CapitalizeString(cocoon.Status),
 		)
 	}
 

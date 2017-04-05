@@ -16,13 +16,13 @@ import (
 
 var (
 	// CocoonStatusStarting indicates a starting service
-	CocoonStatusStarting = "cocoon.starting"
+	CocoonStatusStarting = "starting"
 
 	// CocoonStatusRunning indicates a running service
-	CocoonStatusRunning = "cocoon.running"
+	CocoonStatusRunning = "running"
 
 	// CocoonStatusStopped indicates a stopped service
-	CocoonStatusStopped = "cocoon.stopped"
+	CocoonStatusStopped = "stopped"
 )
 
 // makeCocoonKey constructs a cocoon key
