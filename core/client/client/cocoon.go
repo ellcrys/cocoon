@@ -228,7 +228,66 @@ func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 // ListCocoons fetches and displays running cocoons belonging to
 // the logged in user. Set showAll to true to list both running
 // and stopped cocoons.
-func ListCocoons(showAll bool) error {
+func ListCocoons(showAll, jsonFormatted bool) error {
+
+	var cocoons []types.Cocoon
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	client := proto.NewAPIClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	resp, err := client.GetIdentity(ctx, &proto.GetIdentityRequest{
+		Email: userSession.Email,
+	})
+	if err != nil {
+		return err
+	}
+
+	var identity types.Identity
+	if err = util.FromJSON(resp.Body, &identity); err != nil {
+		return common.JSONCoerceErr("identity", err)
+	}
+
+	for _, cid := range identity.Cocoons {
+
+		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
+		resp, err = client.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID: cid,
+		})
+		if err != nil {
+			return err
+		}
+
+		var cocoon types.Cocoon
+		if err = util.FromJSON(resp.Body, &cocoon); err != nil {
+			return common.JSONCoerceErr("cocoon", err)
+		}
+
+		cocoons = append(cocoons, cocoon)
+	}
+
+	if jsonFormatted {
+		bs, _ := json.MarshalIndent(cocoons, "", "   ")
+		log.Info("%s", bs)
+		return nil
+	}
+
+	for _, cocoon := range cocoons {
+		log.Info(`COCOON ID\t\tRELEASE ID\t\tCREATED\t\tSTATUS`)
+		log.Info(`%s\t\t%s\t\t%s`, cocoon.ID, cocoon.Releases[len(cocoon.Releases)-1])
+	}
+
 	return nil
 }
 

@@ -15,7 +15,8 @@ var psCmd = &cobra.Command{
 	Long:  `List cocoons`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showAll, _ := cmd.Flags().GetBool("all")
-		if err := client.ListCocoons(showAll); err != nil {
+		jsonFormatted, _ := cmd.Flags().GetBool("json")
+		if err := client.ListCocoons(showAll, jsonFormatted); err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
@@ -24,4 +25,5 @@ var psCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(psCmd)
 	psCmd.PersistentFlags().BoolP("all", "a", false, "Show all cocoons (default shows just running)")
+	psCmd.PersistentFlags().BoolP("json", "", false, "Return result as JSON formatted output")
 }
