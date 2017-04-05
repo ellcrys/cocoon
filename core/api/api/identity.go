@@ -24,6 +24,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 
 	var identity types.Identity
 	cstructs.Copy(req, &identity)
+	allowDup := req.OptionAllowDuplicate
 	req = nil
 
 	if err := ValidateIdentity(&identity); err != nil {
@@ -36,15 +37,17 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	}
 	defer ordererConn.Close()
 
-	// check if identity already exists
-	_, err = api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: identity.Email,
-	})
+	if !allowDup {
+		// check if identity already exists
+		_, err = api.GetIdentity(ctx, &proto.GetIdentityRequest{
+			Email: identity.Email,
+		})
 
-	if err != nil && err != types.ErrIdentityNotFound {
-		return nil, err
-	} else if err == nil {
-		return nil, types.ErrIdentityAlreadyExists
+		if err != nil && err != types.ErrIdentityNotFound {
+			return nil, err
+		} else if err == nil {
+			return nil, types.ErrIdentityAlreadyExists
+		}
 	}
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)

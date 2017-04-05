@@ -37,9 +37,7 @@ message CreateCocoonRequest {
     int32 sigThreshold = 11;
     repeated string signatories = 12;
     string createdAt = 13;
-    
-    // options for implementer
-    bool optionAllowDuplicate = 14;
+    bool optionAllowDuplicate = 14;  // option to indicate whether duplicate object is allowed
 }
 
 message GetCocoonRequest {
@@ -63,9 +61,7 @@ message CreateReleaseRequest {
     int32 sigDenied = 9;
     string createdAt = 10;
     repeated string votersID = 11;
-    
-    // options for implementer
-    bool optionAllowDuplicate = 12;
+    bool optionAllowDuplicate = 12;  // option to indicate whether duplicate object is allowed
 }
 
 message GetReleaseRequest {
@@ -86,6 +82,9 @@ message DeployRequest {
 message CreateIdentityRequest {
     string email = 1;
     string password = 2;
+    repeated string cocoons = 3;
+    repeated string clientSessions = 4;
+    bool optionAllowDuplicate = 5;  // option to indicate whether duplicate object is allowed
 }
 
 message Response {

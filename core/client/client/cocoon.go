@@ -16,11 +16,12 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/ncodes/cstructs"
 )
 
 // createCocoon creates a cocoon. Expects a contex and a connection object.
 // If allowDup is set to true, duplicate/existing cocoon key check is ignored and the record
-// is overloaded.
+// is overridden
 func createCocoon(ctx context.Context, conn *grpc.ClientConn, cocoon *types.Cocoon, allowDup bool) error {
 
 	client := proto.NewAPIClient(conn)
@@ -117,6 +118,28 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		return fmt.Errorf("%s", resp.Body)
 	}
 
+	resp, err = client.GetIdentity(ctx, &proto.GetIdentityRequest{
+		Email: userSession.Email,
+	})
+	if err != nil {
+		return err
+	}
+
+	var identity types.Identity
+	if err = util.FromJSON(resp.Body, &identity); err != nil {
+		return common.JSONCoerceErr("identity", err)
+	}
+
+	// add cocoon id to the identity and override the identity key
+	identity.Cocoons = append(identity.Cocoons, cocoon.ID)
+	var protoCreateIdentityReq proto.CreateIdentityRequest
+	cstructs.Copy(identity, &protoCreateIdentityReq)
+	protoCreateIdentityReq.OptionAllowDuplicate = true
+	_, err = client.CreateIdentity(ctx, &protoCreateIdentityReq)
+	if err != nil {
+		return err
+	}
+
 	stopSpinner()
 	log.Info(`==> New cocoon created`)
 	log.Infof(`==> Cocoon ID:  %s`, cocoon.ID)
@@ -199,6 +222,13 @@ func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 		return fmt.Errorf("%s", resp.Body)
 	}
 
+	return nil
+}
+
+// ListCocoons fetches and displays running cocoons belonging to
+// the logged in user. Set showAll to true to list both running
+// and stopped cocoons.
+func ListCocoons(showAll bool) error {
 	return nil
 }
 
