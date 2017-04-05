@@ -14,6 +14,17 @@ import (
 	context "golang.org/x/net/context"
 )
 
+var (
+	// CocoonStatusStarting indicates a starting service
+	CocoonStatusStarting = "cocoon.starting"
+
+	// CocoonStatusRunning indicates a running service
+	CocoonStatusRunning = "cocoon.running"
+
+	// CocoonStatusStopped indicates a stopped service
+	CocoonStatusStopped = "cocoon.stopped"
+)
+
 // makeCocoonKey constructs a cocoon key
 func (api *API) makeCocoonKey(id string) string {
 	return fmt.Sprintf("cocoon.%s", id)
@@ -39,8 +50,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		return nil, err
 	}
 
-	// set cocoon identity field and add identity as one of the signatories
 	cocoon.IdentityID = claims["identity"].(string)
+	cocoon.Status = CocoonStatusStarting
 
 	// add cocoon owner identity if not included
 	if !util.InStringSlice(cocoon.Signatories, cocoon.IdentityID) {
@@ -127,4 +138,23 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 		Status: 200,
 		Body:   []byte(tx.GetValue()),
 	}, nil
+}
+
+// GetCocoonStatus fetches the cocoon status.It queries the scheduler
+// to find out the current service status for the cocoon.
+func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
+
+	s, err := api.scheduler.GetServiceDiscoverer().GetByID("cocoon", map[string]string{
+		"tag": cocoonID,
+	})
+	if err != nil {
+		apiLog.Errorf("failed to query cocoon service status: %s", err.Error())
+		return "", fmt.Errorf("failed to query cocoon service status")
+	}
+
+	if len(s) == 0 {
+		return CocoonStatusStopped, nil
+	}
+
+	return CocoonStatusRunning, nil
 }

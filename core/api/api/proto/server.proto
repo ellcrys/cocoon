@@ -36,8 +36,9 @@ message CreateCocoonRequest {
     int32 numSignatories = 10;
     int32 sigThreshold = 11;
     repeated string signatories = 12;
-    string createdAt = 13;
-    bool optionAllowDuplicate = 14;  // option to indicate whether duplicate object is allowed
+    string status = 13;
+    string createdAt = 14;
+    bool optionAllowDuplicate = 15;  // option to indicate whether duplicate object is allowed
 }
 
 message GetCocoonRequest {

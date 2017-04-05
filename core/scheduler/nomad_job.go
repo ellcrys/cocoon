@@ -197,7 +197,9 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 									PortLabel: "CONNECTOR_RPC",
 								},
 							},
-							Meta: map[string]string{},
+							Meta: map[string]string{
+								"something": "something",
+							},
 							LogConfig: LogConfig{
 								MaxFiles:      10,
 								MaxFileSizeMB: 10,

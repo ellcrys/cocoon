@@ -353,7 +353,7 @@ func Start(id string) error {
 
 	stopSpinner()
 	log.Info("==> Successfully created a deployment request")
-	log.Info("==> ID:", cocoon.ID)
+	log.Infof("==> ID: %s", cocoon.ID)
 
 	return nil
 }

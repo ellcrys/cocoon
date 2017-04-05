@@ -156,7 +156,7 @@ func Getenv(env, defaultVal string) string {
 	return util.Env("NOMAD_"+env, defaultVal)
 }
 
-// GetServices fetches all the instances of a service
-func (sc *Nomad) GetServices(serviceID string) []Service {
-	return nil
+// GetServiceDiscoverer returns the schedulers service discoverer
+func (sc *Nomad) GetServiceDiscoverer() ServiceDiscovery {
+	return sc.ServiceDiscovery
 }
