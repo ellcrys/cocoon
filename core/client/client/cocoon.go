@@ -17,6 +17,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
+	"github.com/xeonx/timeago"
 )
 
 // createCocoon creates a cocoon. Expects a contex and a connection object.
@@ -242,6 +243,8 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 	}
 	defer conn.Close()
 
+	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
 	client := proto.NewAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -250,11 +253,13 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 		Email: userSession.Email,
 	})
 	if err != nil {
+		stopSpinner()
 		return err
 	}
 
 	var identity types.Identity
 	if err = util.FromJSON(resp.Body, &identity); err != nil {
+		stopSpinner()
 		return common.JSONCoerceErr("identity", err)
 	}
 
@@ -266,16 +271,20 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 			ID: cid,
 		})
 		if err != nil {
+			stopSpinner()
 			return err
 		}
 
 		var cocoon types.Cocoon
 		if err = util.FromJSON(resp.Body, &cocoon); err != nil {
+			stopSpinner()
 			return common.JSONCoerceErr("cocoon", err)
 		}
 
 		cocoons = append(cocoons, cocoon)
 	}
+
+	stopSpinner()
 
 	if jsonFormatted {
 		bs, _ := json.MarshalIndent(cocoons, "", "   ")
@@ -283,9 +292,15 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 		return nil
 	}
 
+	log.Info("COCOON ID\t\t\t\tRELEASE ID\t\tCREATED\t\t\tSTATUS")
 	for _, cocoon := range cocoons {
-		log.Info(`COCOON ID\t\tRELEASE ID\t\tCREATED\t\tSTATUS`)
-		log.Info(`%s\t\t%s\t\t%s`, cocoon.ID, cocoon.Releases[len(cocoon.Releases)-1])
+		created, _ := time.Parse(time.RFC3339, cocoon.CreatedAt)
+		log.Infof("%s\t%s\t\t%s\t\t%s",
+			cocoon.ID,
+			common.GetShortID(cocoon.Releases[len(cocoon.Releases)-1]),
+			common.CapitalizeString(timeago.English.Format(created)),
+			"Up 10 minutes",
+		)
 	}
 
 	return nil
