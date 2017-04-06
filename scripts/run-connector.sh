@@ -25,7 +25,7 @@ printf "> Building cocoon"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
-/go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
+# /go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
 
 # pull launch-go image
 # docker pull ncodes/launch-go:latest 
