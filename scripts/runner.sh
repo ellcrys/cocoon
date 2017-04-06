@@ -3,6 +3,7 @@
 # the connector. 
 set -e
 
+echo "Runner.sh started"
 trap 'echo Receive itttt' SIGTERM SIGINT
 
 # Fetch the script and run it.
