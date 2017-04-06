@@ -195,7 +195,58 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 	return CocoonStatusRunning, nil
 }
 
-// StopCocoon stops a running cocoon
+// StopCocoon stops a running cocoon and sets its status to `stopped`
 func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*proto.Response, error) {
-	return nil, fmt.Errorf("not implemented")
+
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonID: "",
+		Key:      api.makeCocoonKey(req.GetID()),
+		Ledger:   types.GetGlobalLedgerName(),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var cocoon types.Cocoon
+	if err = util.FromJSON([]byte(tx.GetValue()), &cocoon); err != nil {
+		return nil, common.JSONCoerceErr("cocoon", err)
+	}
+
+	// ensure session identity matches cocoon identity
+	if claims["identity"].(string) != cocoon.IdentityID {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	err = api.scheduler.Stop(req.GetID())
+	if err != nil {
+		apiLog.Error(err.Error())
+		return nil, fmt.Errorf("failed to stop cocoon")
+	}
+
+	cocoon.Status = CocoonStatusStopped
+
+	if err = api.updateCocoon(ctx, &cocoon); err != nil {
+		apiLog.Error(err.Error())
+		return nil, fmt.Errorf("failed to update cocoon status")
+	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   []byte("done"),
+	}, nil
 }

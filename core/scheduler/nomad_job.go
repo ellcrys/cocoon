@@ -31,7 +31,7 @@ type Update struct {
 	MaxParallel int
 }
 
-// TaskGroups defines the task_group stanza
+// TaskGroup defines the task_group stanza
 type TaskGroup struct {
 	Name          string
 	Count         int
@@ -51,6 +51,7 @@ type Task struct {
 	Services        []NomadService
 	Meta            map[string]string
 	LogConfig       LogConfig
+	KillTimeout     int64
 	Templates       []Template
 	Artifacts       []Artifact
 	Resources       Resources
@@ -210,6 +211,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 									GetterSource: "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh",
 								},
 							},
+							KillTimeout: 10000000000,
 							Resources: Resources{
 								CPU:      20,
 								MemoryMB: 10,

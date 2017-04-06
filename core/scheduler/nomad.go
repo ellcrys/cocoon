@@ -76,12 +76,10 @@ func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
 		Uri:    sc.API + "/v1/jobs",
 		Body:   jobSpec,
 	}.Do()
-
 	if err != nil {
 		return "", 0, err
 	}
 	defer res.Body.Close()
-
 	respStr, _ := res.Body.ToString()
 	return respStr, res.StatusCode, nil
 }
@@ -148,6 +146,23 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 		ID:     jobID,
 		EvalID: jobInfo["EvalID"].(string),
 	}, nil
+}
+
+// Stop stops a running cocoon job
+func (sc *Nomad) Stop(jobID string) error {
+	res, err := goreq.Request{
+		Method: "DELETE",
+		Uri:    sc.API + "/v1/job/" + jobID,
+	}.Do()
+	if err != nil {
+		return err
+	} else if res.StatusCode != 200 {
+		respStr, _ := res.Body.ToString()
+		res.Body.Close()
+		return fmt.Errorf(respStr)
+	}
+	res.Body.Close()
+	return nil
 }
 
 // Getenv returns an environment variable value based on the schedulers

@@ -165,7 +165,7 @@ func GetCocoons(ids []string) error {
 
 	for _, id := range ids {
 		stopSpinner := util.Spinner("Please wait")
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
 		cl := proto.NewAPIClient(conn)
 		resp, err = cl.GetCocoon(ctx, &proto.GetCocoonRequest{
@@ -248,7 +248,7 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 	client := proto.NewAPIClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
 	resp, err := client.GetIdentity(ctx, &proto.GetIdentityRequest{
@@ -323,6 +323,13 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 func StopCocoon(ids []string) error {
 
 	var errs []error
+	var stopped []string
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
@@ -337,7 +344,7 @@ func StopCocoon(ids []string) error {
 		// find cocoon
 		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
-		_, err = cl.GetCocoon(ctx, &proto.GetCocoonRequest{ID: id})
+		resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{ID: id})
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				errs = append(errs, fmt.Errorf("No such cocoon: %s", common.GetShortID(id)))
@@ -347,18 +354,31 @@ func StopCocoon(ids []string) error {
 			return err
 		}
 
+		var cocoon types.Cocoon
+		util.FromJSON(resp.GetBody(), &cocoon)
+		if cocoon.Status == api.CocoonStatusStopped {
+			errs = append(errs, fmt.Errorf("%s is not running", common.GetShortID(id)))
+			continue
+		}
+
 		ctx, cc = context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
+		md := metadata.Pairs("access_token", userSession.Token)
+		ctx = metadata.NewContext(ctx, md)
 		_, err = cl.StopCocoon(ctx, &proto.StopCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
 			return err
 		}
-		log.Info(id)
+
+		stopped = append(stopped, id)
 	}
 
 	stopSpinner()
 
+	for _, id := range stopped {
+		log.Info(id)
+	}
 	for _, err := range errs {
 		log.Infof("Err: %s", err.Error())
 	}
@@ -416,7 +436,7 @@ func Start(id string) error {
 	return nil
 }
 
-// AddSignatories adds one or more valid identites to a cocoon's signatory list.
+// AddSignatories adds one or more valid identities to a cocoon's signatory list.
 // All valid identities are included and invalid ones will process an error log..
 func AddSignatories(cocoonID string, ids []string) error {
 
