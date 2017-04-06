@@ -2,7 +2,7 @@
 # Run the connector 
 set -e
 
-trap 'echo Receive itttt' SIGTERM SIGINT
+trap 'kill -TERM $CPID' SIGTERM SIGINT
 
 # Set up go environment
 export GOROOT=/go
@@ -30,10 +30,10 @@ go build -v -o $GOPATH/bin/cocoon core/main.go
 # pull launch-go image
 docker pull ncodes/launch-go:latest 
 
-while true; do
-	: # Do nothing
-done
-
-# # start connector 
-# printf "Running Cocoon Connector"
-# cocoon connector 
+# start connector, store its process id and wait for it.
+printf "Running Cocoon Connector"
+cocoon connector & 
+CPID=$!
+wait $CPID
+wait $CPID
+EXIT_STATUS=$?
