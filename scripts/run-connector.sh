@@ -3,25 +3,26 @@
 set -e
 
 trap 'echo Receive itttt' SIGTERM SIGINT
+
+# Set up go environment
+export GOROOT=/go
+export GOPATH=/gocode
+PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+mkdir -p $GOPATH/bin
+
+# Pull cocoon source
+branch=$CONNECTOR_VERSION
+repoOwner=github.com/ncodes
+repoOwnerDir=$GOPATH/src/$repoOwner
+mkdir -p $repoOwnerDir
+cd $repoOwnerDir
+printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
+rm -rf cocoon
+git clone --depth=1 -b $branch https://$repoOwner/cocoon
+
 while true; do
 	: # Do nothing
 done
-
-# # Set up go environment
-# export GOROOT=/go
-# export GOPATH=/gocode
-# PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-# mkdir -p $GOPATH/bin
-
-# # Pull cocoon source
-# branch=$CONNECTOR_VERSION
-# repoOwner=github.com/ncodes
-# repoOwnerDir=$GOPATH/src/$repoOwner
-# mkdir -p $repoOwnerDir
-# cd $repoOwnerDir
-# printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
-# rm -rf cocoon
-# git clone --depth=1 -b $branch https://$repoOwner/cocoon
 
 # # build the binary
 # printf "> Building cocoon"
