@@ -20,19 +20,19 @@ printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
 rm -rf cocoon
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
 
+# build the binary
+printf "> Building cocoon"
+cd cocoon
+rm -rf .glide/ && rm -rf vendor
+glide --debug install
+/go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
+
+# pull launch-go image
+docker pull ncodes/launch-go:latest 
+
 while true; do
 	: # Do nothing
 done
-
-# # build the binary
-# printf "> Building cocoon"
-# cd cocoon
-# rm -rf .glide/ && rm -rf vendor
-# glide --debug install
-# /go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
-
-# # pull launch-go image
-# docker pull ncodes/launch-go:latest 
 
 # # start connector 
 # printf "Running Cocoon Connector"
