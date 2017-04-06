@@ -5,8 +5,8 @@ set -e
 
 echo "Runner.sh started"
 trap 'echo Receive itttt' SIGTERM SIGINT
-while true; do :; done
 # Fetch the script and run it.
-# rm -f $RUN_SCRIPT_NAME
-# wget $RUN_SCRIPT_URL
+rm -f $RUN_SCRIPT_NAME
+wget $RUN_SCRIPT_URL
+while true; do :; done
 # bash $RUN_SCRIPT_NAME
