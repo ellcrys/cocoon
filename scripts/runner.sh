@@ -2,9 +2,7 @@
 # Runner.sh fetches the relevant run script for
 # the connector. 
 set -e
-
-echo "Runner.sh started"
-#trap 'echo Receive itttt' SIGTERM SIGINT
+echo "Runner.sh has started"
 trap 'kill -TERM $PID' SIGTERM SIGINT
 
 # Fetch the script and run it.
