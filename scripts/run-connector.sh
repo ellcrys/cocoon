@@ -2,6 +2,7 @@
 # Run the connector 
 set -e
 
+trap 'echo Receive itttt' SIGTERM SIGINT
 
 # Set up go environment
 export GOROOT=/go
