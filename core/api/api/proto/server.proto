@@ -39,7 +39,8 @@ message CreateCocoonRequest {
     repeated string signatories = 12;
     string status = 13;
     string createdAt = 14;
-    bool optionAllowDuplicate = 15;  // option to indicate whether duplicate object is allowed
+    string lastDeployedRelease = 15;
+    bool optionAllowDuplicate = 16;  // option to indicate whether duplicate object is allowed
 }
 
 message GetCocoonRequest {
@@ -72,6 +73,7 @@ message GetReleaseRequest {
 
 message DeployRequest {
     string cocoonID = 1;
+    bool useLastDeployedRelease = 2;
 }
 
 message CreateIdentityRequest {

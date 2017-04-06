@@ -15,6 +15,7 @@ var startCmd = &cobra.Command{
 	Long:  `Start a new or stopped cocoon`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		useLastDeployedRelease, _ := cmd.Flags().GetBool("last")
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
@@ -22,7 +23,7 @@ var startCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys start" requires at least 1 argument(s)`, `ellcrys start --help`)
 		}
 
-		if err := client.Start(args[0]); err != nil {
+		if err := client.Start(args[0], useLastDeployedRelease); err != nil {
 			desc := common.GetRPCErrDesc(err)
 			switch desc {
 			case "unknown service proto.API":
@@ -35,4 +36,5 @@ var startCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(startCmd)
+	startCmd.PersistentFlags().BoolP("last", "", false, "Forces the execution of the last deployed release")
 }

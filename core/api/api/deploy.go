@@ -16,6 +16,8 @@ import (
 // are available, the cocoon is updated with the release value and also executed.
 func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
 
+	apiLog.Infof("New deploy request for cocoon = [%s]", req.CocoonID)
+
 	var err error
 	var claims jwt.MapClaims
 
@@ -50,10 +52,19 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, fmt.Errorf("No release to run")
 	}
 
-	// get the latest release
-	resp, err = api.GetRelease(ctx, &proto.GetReleaseRequest{
+	protoReleaseReq := &proto.GetReleaseRequest{
 		ID: cocoon.Releases[len(cocoon.Releases)-1],
-	})
+	}
+
+	if req.UseLastDeployedRelease && len(cocoon.LastDeployedRelease) != 0 {
+		apiLog.Infof("Using last deployed release for cocoon = [%s]", cocoon.ID)
+		protoReleaseReq.ID = cocoon.LastDeployedRelease
+	} else if req.UseLastDeployedRelease {
+		return nil, fmt.Errorf("this cocoon does not have a recently approved and deployed release yet")
+	}
+
+	// get the latest release
+	resp, err = api.GetRelease(ctx, protoReleaseReq)
 	if err != nil && err != types.ErrTxNotFound {
 		return nil, fmt.Errorf("failed to get release. %s", err)
 	} else if err == types.ErrTxNotFound {
@@ -81,6 +92,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	cocoon.ReleaseTag = release.ReleaseTag
 	cocoon.BuildParam = string(release.BuildParam)
 	cocoon.Link = release.Link
+	cocoon.LastDeployedRelease = release.ID
 
 	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.ReleaseTag, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
 	if err != nil {
