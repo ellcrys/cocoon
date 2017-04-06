@@ -4,7 +4,9 @@
 set -e
 
 echo "Runner.sh started"
-trap 'echo Receive itttt' SIGTERM SIGINT
+#trap 'echo Receive itttt' SIGTERM SIGINT
+trap 'kill -TERM $PID'
+
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
 wget $RUN_SCRIPT_URL
