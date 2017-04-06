@@ -33,6 +33,37 @@ func (api *API) makeCocoonKey(id string) string {
 	return fmt.Sprintf("cocoon.%s", id)
 }
 
+// updateCocoon creates a new cocoon by overriding an existing one (if any).
+func (api *API) updateCocoon(ctx context.Context, cocoon *types.Cocoon) error {
+	var protoCreateCocoonReq proto.CreateCocoonRequest
+	if err := cstructs.Copy(cocoon, &protoCreateCocoonReq); err != nil {
+		return err
+	}
+	protoCreateCocoonReq.OptionAllowDuplicate = true
+	_, err := api.CreateCocoon(ctx, &protoCreateCocoonReq)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// updateCocoonStatusOnStarted checks on interval the cocoon status and update the
+// status field when the cocoon status is `started`. It returns immediately
+// an error is encountered. The function will block till success or failure.
+func (api *API) updateCocoonStatusOnStarted(ctx context.Context, cocoon *types.Cocoon) error {
+	for {
+		status, err := api.GetCocoonStatus(cocoon.ID)
+		if err != nil {
+			return err
+		}
+		if status == CocoonStatusRunning {
+			cocoon.Status = CocoonStatusStarted
+			return api.updateCocoon(ctx, cocoon)
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
 // CreateCocoon creates a cocoon
 func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest) (*proto.Response, error) {
 
