@@ -38,10 +38,11 @@ func CreateIdentity(email string) error {
 		Email: email,
 	})
 
-	if err != nil && common.ToRPCError(2, types.ErrIdentityNotFound).Error() != err.Error() {
+	if err != nil && common.CompareErr(err, types.ErrIdentityNotFound) != 0 {
 		stopSpinner()
 		return err
-	} else if resp != nil {
+	}
+	if resp != nil {
 		stopSpinner()
 		return types.ErrIdentityAlreadyExists
 	}

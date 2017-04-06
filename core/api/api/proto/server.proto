@@ -72,13 +72,6 @@ message GetReleaseRequest {
 
 message DeployRequest {
     string cocoonID = 1;
-    string URL = 2;
-    string language = 3;
-    string releaseTag = 4;
-    bytes buildParam = 5;
-    string memory = 6;
-    string CPUShares = 7;
-    string link = 8;
 }
 
 message CreateIdentityRequest {

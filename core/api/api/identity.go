@@ -48,10 +48,11 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 		} else if err == nil {
 			return nil, types.ErrIdentityAlreadyExists
 		}
+
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)
+		identity.Password = string(hashedPassword)
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)
-	identity.Password = string(hashedPassword)
 	value, _ := util.ToJSON(identity)
 
 	txID := util.UUID4()

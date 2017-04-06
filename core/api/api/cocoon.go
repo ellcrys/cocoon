@@ -84,7 +84,18 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		return nil, err
 	}
 
-	cocoon.IdentityID = claims["identity"].(string)
+	userSessionIdentity := claims["identity"].(string)
+
+	// if cocoon has a identity set, ensure the identity matches that of the logged in user
+	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != userSessionIdentity {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	// set identity id of cocoon to the identity of the logged in user
+	if len(cocoon.IdentityID) == 0 {
+		cocoon.IdentityID = userSessionIdentity
+	}
+
 	if len(cocoon.Status) == 0 {
 		cocoon.Status = CocoonStatusCreated
 	}

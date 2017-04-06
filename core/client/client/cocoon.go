@@ -138,6 +138,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	var protoCreateIdentityReq proto.CreateIdentityRequest
 	cstructs.Copy(identity, &protoCreateIdentityReq)
 	protoCreateIdentityReq.OptionAllowDuplicate = true
+	util.Printify(protoCreateIdentityReq)
 	_, err = client.CreateIdentity(ctx, &protoCreateIdentityReq)
 	if err != nil {
 		return err
@@ -209,16 +210,7 @@ func deploy(ctx context.Context, cocoon *types.Cocoon) error {
 	defer conn.Close()
 
 	client := proto.NewAPIClient(conn)
-	resp, err := client.Deploy(ctx, &proto.DeployRequest{
-		CocoonID:   cocoon.ID,
-		URL:        cocoon.URL,
-		Language:   cocoon.Language,
-		ReleaseTag: cocoon.ReleaseTag,
-		BuildParam: []byte(cocoon.BuildParam),
-		Memory:     cocoon.Memory,
-		CPUShares:  cocoon.CPUShares,
-		Link:       cocoon.Link,
-	})
+	resp, err := client.Deploy(ctx, &proto.DeployRequest{CocoonID: cocoon.ID})
 	if err != nil {
 		return err
 	} else if resp.Status != 200 {
