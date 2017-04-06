@@ -32,6 +32,13 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, common.JSONCoerceErr("cocoon", err)
 	}
 
+	if cocoon.Status == CocoonStatusStarted || cocoon.Status == CocoonStatusRunning {
+		if cocoon.Status == CocoonStatusStarted {
+			return nil, fmt.Errorf("cocoon has already been started")
+		}
+		return nil, fmt.Errorf("cocoon is already running")
+	}
+
 	// Since the number of signatories is greater than one, we need to check if the
 	// release has been approved by a minimum of the required threshold.
 	if cocoon.NumSignatories > 1 {
