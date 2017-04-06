@@ -9,4 +9,5 @@ trap 'echo Receive itttt' SIGTERM SIGINT
 rm -f $RUN_SCRIPT_NAME
 wget $RUN_SCRIPT_URL
 while true; do :; done
-# bash $RUN_SCRIPT_NAME
+chmod +x $RUN_SCRIPT_NAME
+./$RUN_SCRIPT_NAME
