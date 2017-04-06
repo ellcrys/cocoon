@@ -11,6 +11,7 @@ service API {
     rpc GetCocoon(GetCocoonRequest) returns (Response);
     rpc GetIdentity(GetIdentityRequest) returns (Response);
     rpc AddCocoonToIdentity(AddCocoonToIdentityRequest) returns (Response);
+    rpc StopCocoon(StopCocoonRequest) returns (Response);
 }
 
 message LoginRequest {
@@ -86,6 +87,10 @@ message CreateIdentityRequest {
     repeated string cocoons = 3;
     repeated string clientSessions = 4;
     bool optionAllowDuplicate = 5;  // option to indicate whether duplicate object is allowed
+}
+
+message StopCocoonRequest {
+    string ID = 1;
 }
 
 message Response {

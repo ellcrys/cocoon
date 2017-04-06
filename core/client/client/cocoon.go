@@ -296,7 +296,7 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 
 	tableData := [][]string{}
 	for _, cocoon := range cocoons {
-		if !showAll && !util.InStringSlice([]string{api.CocoonStatusStarting, api.CocoonStatusStarted, api.CocoonStatusRunning}, cocoon.Status) {
+		if !showAll && !util.InStringSlice([]string{api.CocoonStatusStarted, api.CocoonStatusRunning}, cocoon.Status) {
 			continue
 		}
 		created, _ := time.Parse(time.RFC3339, cocoon.CreatedAt)
@@ -315,6 +315,53 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 	table.AppendBulk(tableData)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.Render()
+
+	return nil
+}
+
+// StopCocoon one or more running cocoon codes
+func StopCocoon(ids []string) error {
+
+	var errs []error
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	cl := proto.NewAPIClient(conn)
+	stopSpinner := util.Spinner("Please wait")
+
+	for _, id := range ids {
+
+		// find cocoon
+		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cc()
+		_, err = cl.GetCocoon(ctx, &proto.GetCocoonRequest{ID: id})
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				errs = append(errs, fmt.Errorf("No such cocoon: %s", common.GetShortID(id)))
+				continue
+			}
+			stopSpinner()
+			return err
+		}
+
+		ctx, cc = context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cc()
+		_, err = cl.StopCocoon(ctx, &proto.StopCocoonRequest{ID: id})
+		if err != nil {
+			stopSpinner()
+			return err
+		}
+		log.Info(id)
+	}
+
+	stopSpinner()
+
+	for _, err := range errs {
+		log.Infof("Err: %s", err.Error())
+	}
 
 	return nil
 }
@@ -345,9 +392,7 @@ func Start(id string) error {
 
 	if err != nil {
 		stopSpinner()
-		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
-			return types.ErrClientNoActiveSession
-		} else if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 			return fmt.Errorf("the cocoon (%s) was not found", common.GetShortID(id))
 		}
 		return err

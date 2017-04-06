@@ -15,16 +15,16 @@ import (
 )
 
 var (
-	// CocoonStatusStarting indicates a starting service
-	CocoonStatusStarting = "starting"
+	// CocoonStatusCreated indicates a created cocoon
+	CocoonStatusCreated = "created"
 
-	// CocoonStatusStarted indicates a started cocoon service
+	// CocoonStatusStarted indicates a started cocoon cocoon
 	CocoonStatusStarted = "started"
 
 	// CocoonStatusRunning indicates a running cocoon code
 	CocoonStatusRunning = "running"
 
-	// CocoonStatusStopped indicates a stopped service
+	// CocoonStatusStopped indicates a stopped cocoon
 	CocoonStatusStopped = "stopped"
 )
 
@@ -86,7 +86,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 
 	cocoon.IdentityID = claims["identity"].(string)
 	if len(cocoon.Status) == 0 {
-		cocoon.Status = CocoonStatusStarting
+		cocoon.Status = CocoonStatusCreated
 	}
 
 	// add cocoon owner identity if not included
@@ -193,4 +193,9 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 	}
 
 	return CocoonStatusRunning, nil
+}
+
+// StopCocoon stops a running cocoon
+func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*proto.Response, error) {
+	return nil, fmt.Errorf("not implemented")
 }

@@ -3,13 +3,11 @@ package api
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cstructs"
 	context "golang.org/x/net/context"
 )
 
