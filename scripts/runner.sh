@@ -5,7 +5,7 @@ set -e
 
 echo "Runner.sh started"
 #trap 'echo Receive itttt' SIGTERM SIGINT
-trap 'kill -TERM $PID'
+trap 'kill -TERM $PID' SIGTERM SIGINT
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
