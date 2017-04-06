@@ -28,7 +28,7 @@ glide --debug install
 /go/bin/go build -v -o $GOPATH/bin/cocoon core/main.go
 
 # pull launch-go image
-docker pull ncodes/launch-go:latest 
+# docker pull ncodes/launch-go:latest 
 
 while true; do
 	: # Do nothing
