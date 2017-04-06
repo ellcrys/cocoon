@@ -3,7 +3,7 @@
 # the connector. 
 set -e
 
-trap 'Receive itttt' SIGTERM
+trap 'echo Receive itttt' SIGTERM
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
