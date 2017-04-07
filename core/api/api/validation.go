@@ -50,6 +50,11 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShares)
 	}
 
+	// ensure signatories list is not greater than the set limit in NumSignatories
+	if c.NumSignatories < int32(len(c.Signatories)) {
+		return fmt.Errorf("max signatories already added. You can't add more")
+	}
+
 	return nil
 }
 

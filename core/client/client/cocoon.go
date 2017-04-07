@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"sync"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api"
@@ -381,11 +383,21 @@ func StopCocoon(ids []string) error {
 	return nil
 }
 
-// Start starts a new or stopped cocoon code.
+// Start starts one or more new or stopped cocoon code.
 // If useLastDeployedRelease is set to true, the scheduler will use the
 // most recently approved and deployed release, otherwise it will
 // try to deploy the latest release.
-func Start(id string, useLastDeployedRelease bool) error {
+func Start(ids []string, useLastDeployedRelease bool) error {
+
+	if len(ids) > 10 {
+		return fmt.Errorf("Too many cocoons to start")
+	}
+
+	var errs []error
+	var started []string
+	var muErr = sync.Mutex{}
+	var muStarted = sync.Mutex{}
+	var wg = sync.WaitGroup{}
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -404,32 +416,62 @@ func Start(id string, useLastDeployedRelease bool) error {
 
 	stopSpinner := util.Spinner("Please wait")
 	cl := proto.NewAPIClient(conn)
-	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID: id,
-	})
 
-	if err != nil {
-		stopSpinner()
-		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-			return fmt.Errorf("the cocoon (%s) was not found", common.GetShortID(id))
+	for _, id := range ids {
+		wg.Add(1)
+		id := id
+		ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
+		defer cc()
+		resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID: id,
+		})
+
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				muErr.Lock()
+				errs = append(errs, fmt.Errorf("%s: cocoon does not exists", common.GetShortID(id)))
+				muErr.Unlock()
+				continue
+			}
+			errs = append(errs, err)
+			continue
+		} else if resp.Status != 200 {
+			muErr.Lock()
+			errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), resp.Body))
+			muErr.Unlock()
+			continue
 		}
-		return err
-	} else if resp.Status != 200 {
-		stopSpinner()
-		return fmt.Errorf("%s", resp.Body)
+
+		go func() {
+			var cocoon types.Cocoon
+			err = util.FromJSON(resp.Body, &cocoon)
+			ctx, cc = context.WithTimeout(ctx, 1*time.Minute)
+			defer cc()
+			if err = deploy(ctx, &cocoon, useLastDeployedRelease); err != nil {
+				muErr.Lock()
+				errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), common.GetRPCErrDesc(err)))
+				muErr.Unlock()
+			}
+			muStarted.Lock()
+			started = append(started, id)
+			muStarted.Unlock()
+			wg.Done()
+		}()
 	}
 
-	var cocoon types.Cocoon
-	err = util.FromJSON(resp.Body, &cocoon)
-
-	if err = deploy(ctx, &cocoon, useLastDeployedRelease); err != nil {
-		stopSpinner()
-		return err
-	}
-
+	wg.Wait()
 	stopSpinner()
-	log.Info("==> Successfully created a deployment request")
-	log.Infof("==> ID: %s", cocoon.ID)
+
+	if len(started) > 0 {
+		log.Info("==> Successfully deployed the following:")
+		for i, id := range started {
+			log.Infof("==> %d. %s", i+1, id)
+		}
+	}
+
+	for _, err := range errs {
+		log.Infof(common.GetRPCErrDesc(err))
+	}
 
 	return nil
 }
@@ -476,7 +518,21 @@ func AddSignatories(cocoonID string, ids []string) error {
 		return common.JSONCoerceErr("cocoon", err)
 	}
 
-	// find identity and included in cccoon signatories field
+	// ensure the number of signatories to add will not exceed the total number of required signatories
+	availableSignatorySlots := cocoon.NumSignatories - int32(len(cocoon.Signatories))
+	if availableSignatorySlots < int32(len(ids)) {
+		stopSpinner()
+		if availableSignatorySlots == 0 {
+			return fmt.Errorf("max signatories already added. You can't add more")
+		}
+		strPl := "signatures"
+		if availableSignatorySlots == 1 {
+			strPl = "signatory"
+		}
+		return fmt.Errorf("maximum required signatories cannot be exceeded. You can only add %d more %s", availableSignatorySlots, strPl)
+	}
+
+	// find identity and included in cocoon signatories field
 	for _, id := range ids {
 
 		var req = proto.GetIdentityRequest{ID: id}
@@ -492,7 +548,7 @@ func AddSignatories(cocoonID string, ids []string) error {
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
-				log.Infof("Warning: Identity (%s) is unknown. Skipped.", shortID)
+				log.Infof("Err: Identity (%s) is unknown. Skipped.", shortID)
 				continue
 			} else {
 				return fmt.Errorf("failed to get identity: %s", err)

@@ -78,14 +78,26 @@ func TestValidation(t *testing.T) {
 				So(err.Error(), ShouldEqual, "CPU share is required")
 
 				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-					Memory:   "512m",
+					ID:        util.UUID4(),
+					URL:       "https://github.com/ncodes/cocoon-example-01",
+					Language:  "go",
+					Memory:    "512m",
 					CPUShares: "abc",
 				})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "CPU share value is not supported. Expects one of these values [1x 2x]")
+
+				err = ValidateCocoon(&types.Cocoon{
+					ID:             util.UUID4(),
+					URL:            "https://github.com/ncodes/cocoon-example-01",
+					Language:       "go",
+					Memory:         "512m",
+					CPUShares:      "1x",
+					NumSignatories: 1,
+					Signatories:    []string{"id1", "id2"},
+				})
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "max signatories already added. You can't add more")
 			})
 		})
 

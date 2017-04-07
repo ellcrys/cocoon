@@ -10,9 +10,9 @@ import (
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
-	Use:   "start [OPTIONS] COCOON",
-	Short: "Start a new or stopped cocoon",
-	Long:  `Start a new or stopped cocoon`,
+	Use:   "start [OPTIONS] COCOON [COCOON...]",
+	Short: "Start one or more new or stopped cocoons",
+	Long:  `Start one or more new or stopped cocoons`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		useLastDeployedRelease, _ := cmd.Flags().GetBool("last")
@@ -23,7 +23,7 @@ var startCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys start" requires at least 1 argument(s)`, `ellcrys start --help`)
 		}
 
-		if err := client.Start(args[0], useLastDeployedRelease); err != nil {
+		if err := client.Start(args, useLastDeployedRelease); err != nil {
 			desc := common.GetRPCErrDesc(err)
 			switch desc {
 			case "unknown service proto.API":

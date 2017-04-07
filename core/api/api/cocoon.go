@@ -60,7 +60,7 @@ func (api *API) updateCocoonStatusOnStarted(ctx context.Context, cocoon *types.C
 			cocoon.Status = CocoonStatusStarted
 			return api.updateCocoon(ctx, cocoon)
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
