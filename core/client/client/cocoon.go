@@ -23,6 +23,8 @@ import (
 	"github.com/xeonx/timeago"
 )
 
+var MaxBulkObjCount = 25
+
 // CreateCocoon a new cocoon
 func CreateCocoon(cocoon *types.Cocoon) error {
 
@@ -126,6 +128,10 @@ func UpdateCocoon(id string, upd *proto.CocoonPayloadRequest) error {
 
 // GetCocoons fetches one or more cocoons and logs them
 func GetCocoons(ids []string) error {
+
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
+	}
 
 	var cocoons = []types.Cocoon{}
 	var err error
@@ -289,6 +295,10 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 // StopCocoon one or more running cocoon codes
 func StopCocoon(ids []string) error {
 
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
+	}
+
 	var errs []error
 	var stopped []string
 
@@ -358,8 +368,8 @@ func StopCocoon(ids []string) error {
 // try to deploy the latest release.
 func Start(ids []string, useLastDeployedRelease bool) error {
 
-	if len(ids) > 10 {
-		return fmt.Errorf("Too many cocoons to start")
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
 
 	var errs []error
@@ -449,6 +459,10 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 // All valid identities are included and invalid ones will produce an error log..
 func AddSignatories(cocoonID string, ids []string) error {
 
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
+	}
+
 	userSession, err := GetUserSessionToken()
 	if err != nil {
 		return err
@@ -501,6 +515,10 @@ func AddSignatories(cocoonID string, ids []string) error {
 
 // RemoveSignatories removes one or more signatories of a cocoon.
 func RemoveSignatories(cocoonID string, ids []string) error {
+
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
+	}
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {

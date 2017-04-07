@@ -114,6 +114,10 @@ func AddVote(id, vote string, isCocoonID bool) error {
 // GetReleases fetches one or more releases and logs them
 func GetReleases(ids []string) error {
 
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
+	}
+
 	var releases = []types.Release{}
 	var err error
 	var resp *proto.Response
