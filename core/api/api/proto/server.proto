@@ -14,7 +14,7 @@ service API {
     rpc StopCocoon(StopCocoonRequest) returns (Response);
     rpc AddSignatories(AddSignatoriesRequest) returns (Response);
     rpc AddVote(AddVoteRequest) returns (Response);
-    // rpc Remove
+    rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
 }
 
 message LoginRequest {
@@ -23,6 +23,11 @@ message LoginRequest {
 }
 
 message AddSignatoriesRequest {
+    string cocoonID = 1;
+    repeated string IDs = 2;
+}
+
+message RemoveSignatoriesRequest {
     string cocoonID = 1;
     repeated string IDs = 2;
 }

@@ -498,3 +498,38 @@ func AddSignatories(cocoonID string, ids []string) error {
 
 	return nil
 }
+
+// RemoveSignatories removes one or more signatories of a cocoon.
+func RemoveSignatories(cocoonID string, ids []string) error {
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
+
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	cl := proto.NewAPIClient(conn)
+	_, err = cl.RemoveSignatories(ctx, &proto.RemoveSignatoriesRequest{
+		CocoonID: cocoonID,
+		IDs:      ids,
+	})
+
+	stopSpinner()
+
+	if err != nil {
+		return err
+	}
+
+	log.Info("Done.")
+	return nil
+}

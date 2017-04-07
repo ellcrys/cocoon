@@ -536,3 +536,51 @@ func (api *API) AddVote(ctx context.Context, req *proto.AddVoteRequest) (*proto.
 		Body:   release.ToJSON(),
 	}, nil
 }
+
+// RemoveSignatories removes one or more signatories
+func (api *API) RemoveSignatories(ctx context.Context, req *proto.RemoveSignatoriesRequest) (*proto.Response, error) {
+
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	if err != nil {
+		return nil, err
+	}
+
+	loggedInUserIdentity := claims["identity"].(string)
+
+	// ensure logged user is owner
+	if loggedInUserIdentity != cocoon.IdentityID {
+		return nil, fmt.Errorf("Permission Denied: You are not a signatory to this cocoon")
+	}
+
+	// convert emails to identity ids
+	for i, id := range req.IDs {
+		if govalidator.IsEmail(id) {
+			req.IDs[i] = (&types.Identity{Email: id}).GetID()
+		}
+	}
+
+	var newSignatories []string
+	for _, id := range cocoon.Signatories {
+		if !util.InStringSlice(req.IDs, id) {
+			newSignatories = append(newSignatories, id)
+		}
+	}
+
+	cocoon.Signatories = newSignatories
+	err = api.putCocoon(ctx, cocoon)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   cocoon.ToJSON(),
+	}, nil
+}
