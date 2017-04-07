@@ -81,7 +81,7 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
-func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayload) (*proto.Response, error) {
+func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
@@ -166,7 +166,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayload) (*pr
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release fields are
 // set/defined. No release is created if no change was made to previous release.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayload) (*proto.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
@@ -475,5 +475,64 @@ func (api *API) AddSignatories(ctx context.Context, req *proto.AddSignatoriesReq
 	return &proto.Response{
 		Status: 200,
 		Body:   r,
+	}, nil
+}
+
+// AddVote adds a vote to a release where the logged in user is a signatory
+func (api *API) AddVote(ctx context.Context, req *proto.AddVoteRequest) (*proto.Response, error) {
+
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	release, err := api.getRelease(ctx, req.ReleaseID)
+	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, fmt.Errorf("release not found")
+		}
+		return nil, err
+	}
+
+	cocoon, err := api.getCocoon(ctx, release.CocoonID)
+	if err != nil {
+		return nil, err
+	}
+
+	loggedInUserIdentity := claims["identity"].(string)
+
+	// ensure logged in user is a signatory of this cocoon
+	if !util.InStringSlice(cocoon.Signatories, loggedInUserIdentity) {
+		return nil, fmt.Errorf("Permission Denied: You are not a signatory to this cocoon")
+	}
+
+	// ensure logged in user has not voted before
+	if release.VotersID != nil && util.InStringSlice(release.VotersID, loggedInUserIdentity) {
+		return nil, fmt.Errorf("You have already cast a vote for this release")
+	}
+
+	if req.Vote == "1" {
+		release.SigApproved++
+	}
+	if req.Vote == "0" {
+		release.SigDenied++
+	}
+
+	if release.VotersID == nil {
+		release.VotersID = []string{loggedInUserIdentity}
+	} else {
+		release.VotersID = append(release.VotersID, loggedInUserIdentity)
+	}
+
+	err = api.putRelease(ctx, release)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   release.ToJSON(),
 	}, nil
 }

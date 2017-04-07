@@ -47,7 +47,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	defer conn.Close()
 
 	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-	var protoCreateCocoonReq proto.CocoonPayload
+	var protoCreateCocoonReq proto.CocoonPayloadRequest
 	cstructs.Copy(cocoon, &protoCreateCocoonReq)
 	cocoonJSON, err := proto.NewAPIClient(conn).CreateCocoon(ctx, &protoCreateCocoonReq)
 	if err != nil {
@@ -69,7 +69,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 // release. A new release is created when Release fields are
 // set/defined. No release is created if updated release fields match
 // existing fields.
-func UpdateCocoon(id string, upd *proto.CocoonPayload) error {
+func UpdateCocoon(id string, upd *proto.CocoonPayloadRequest) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {

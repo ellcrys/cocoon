@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -57,6 +58,16 @@ func CreateIdentity(email string) error {
 	if len(password) < 8 {
 		stopSpinner()
 		return fmt.Errorf("Password is too short. Minimum of 8 characters required")
+	}
+
+	log.Info("Please enter your password again")
+	password2, err := terminal.ReadPassword(0)
+	if err != nil {
+		return fmt.Errorf("failed to get password")
+	}
+
+	if bytes.Compare(password, password2) != 0 {
+		return fmt.Errorf("passwords did not match")
 	}
 
 	stopSpinner = util.Spinner("Please wait")

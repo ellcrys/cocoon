@@ -3,8 +3,8 @@ package proto;
 
 service API {
     rpc Login(LoginRequest) returns (Response);
-    rpc CreateCocoon(CocoonPayload) returns (Response);
-    rpc UpdateCocoon(CocoonPayload) returns (Response);
+    rpc CreateCocoon(CocoonPayloadRequest) returns (Response);
+    rpc UpdateCocoon(CocoonPayloadRequest) returns (Response);
     rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
@@ -13,6 +13,8 @@ service API {
     rpc GetIdentity(GetIdentityRequest) returns (Response);
     rpc StopCocoon(StopCocoonRequest) returns (Response);
     rpc AddSignatories(AddSignatoriesRequest) returns (Response);
+    rpc AddVote(AddVoteRequest) returns (Response);
+    // rpc Remove
 }
 
 message LoginRequest {
@@ -25,7 +27,12 @@ message AddSignatoriesRequest {
     repeated string IDs = 2;
 }
 
-message CocoonPayload {
+message AddVoteRequest {
+    string releaseID = 1;
+    string vote = 2;    
+}
+
+message CocoonPayloadRequest {
     string ID = 1;
     string URL = 2;
     string language = 3;
