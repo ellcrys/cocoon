@@ -1,10 +1,14 @@
 package client
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
+
+	"strings"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
@@ -59,6 +63,25 @@ func AddVote(id, vote string, isCocoonID bool) error {
 		// set id to latest release
 		releaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
+
+	stopSpinner()
+	time.Sleep(100 * time.Millisecond)
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		log.Infof("Are you sure you? Y/n:")
+		text, _ := reader.ReadString('\n')
+		v := strings.TrimSpace(strings.ToLower(text))
+		if v == "n" {
+			log.Info("Aborted")
+			return nil
+		}
+		if v == "y" {
+			break
+		}
+	}
+
+	stopSpinner = util.Spinner("Please wait")
 
 	_, err = client.AddVote(ctx, &proto.AddVoteRequest{
 		ReleaseID: releaseID,
