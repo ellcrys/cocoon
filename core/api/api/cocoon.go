@@ -84,16 +84,16 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 		return nil, err
 	}
 
-	userSessionIdentity := claims["identity"].(string)
+	loggedInIdentity := claims["identity"].(string)
 
 	// if cocoon has a identity set, ensure the identity matches that of the logged in user
-	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != userSessionIdentity {
+	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != loggedInIdentity {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
 	// set identity id of cocoon to the identity of the logged in user
 	if len(cocoon.IdentityID) == 0 {
-		cocoon.IdentityID = userSessionIdentity
+		cocoon.IdentityID = loggedInIdentity
 	}
 
 	if len(cocoon.Status) == 0 {
@@ -152,6 +152,146 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 	if err != nil {
 		return nil, err
 	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   value,
+	}, nil
+}
+
+// UpdateCocoon updates a cocoon and optionally creates a new
+// release. A new release is created when Release fields are
+// set/defined. No release is created if no change was made to previous release.
+func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest) (*proto.Response, error) {
+
+	var claims jwt.MapClaims
+
+	resp, err := api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: req.ID})
+	if err != nil && err != types.ErrCocoonNotFound {
+		return nil, err
+	}
+
+	var cocoon types.Cocoon
+	util.FromJSON(resp.Body, &cocoon)
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	loggedInIdentity := claims["identity"].(string)
+
+	// if cocoon has a identity set, ensure the identity matches that of the logged in user
+	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != loggedInIdentity {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	// update new non-release fields that are different
+	// from their existing value
+	cocoonUpdated := false
+	if len(req.Memory) > 0 && req.Memory != cocoon.Memory {
+		cocoon.Memory = req.Memory
+		cocoonUpdated = true
+	}
+	if len(req.CPUShares) > 0 && req.CPUShares != cocoon.CPUShares {
+		cocoon.CPUShares = req.CPUShares
+		cocoonUpdated = true
+	}
+	if req.NumSignatories > 0 && req.NumSignatories != cocoon.NumSignatories {
+		cocoon.NumSignatories = req.NumSignatories
+		cocoonUpdated = true
+	}
+	if req.SigThreshold > 0 && req.SigThreshold != cocoon.SigThreshold {
+		cocoon.SigThreshold = req.SigThreshold
+		cocoonUpdated = true
+	}
+
+	// validate updated cocoon
+	if err = ValidateCocoon(&cocoon); err != nil {
+		return nil, err
+	}
+
+	// get the last deployed release. if no recently deployed release,
+	// get the initial release
+	var recentReleaseID = cocoon.LastDeployedRelease
+	if recentReleaseID == "" {
+		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
+	}
+
+	resp, err = api.GetRelease(ctx, &proto.GetReleaseRequest{ID: recentReleaseID})
+	if err != nil {
+		return nil, err
+	}
+
+	var release types.Release
+	util.FromJSON(resp.Body, &release)
+
+	// Create new release and set values if any of the release field changed
+	var releaseUpdated = false
+	if len(req.URL) > 0 && req.URL != release.URL {
+		release.URL = req.URL
+		releaseUpdated = true
+	}
+	if len(req.ReleaseTag) > 0 && req.ReleaseTag != release.ReleaseTag {
+		release.ReleaseTag = req.ReleaseTag
+		releaseUpdated = true
+	}
+	if len(req.Language) > 0 && req.Language != release.Language {
+		release.Language = req.Language
+		releaseUpdated = true
+	}
+	if len(req.BuildParam) > 0 && req.BuildParam != release.BuildParam {
+		release.BuildParam = req.BuildParam
+		releaseUpdated = true
+	}
+	if len(req.Link) > 0 && req.Link != release.Link {
+		release.Link = req.Link
+		releaseUpdated = true
+	}
+
+	var finalResp = map[string]interface{}{
+		"newReleaseID":  "",
+		"cocoonUpdated": cocoonUpdated,
+	}
+
+	// create new release if a field was changed
+	if releaseUpdated {
+
+		// reset
+		release.ID = util.UUID4()
+		release.VotersID = []string{}
+		release.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+
+		// add id to cocoon's releases
+		cocoon.Releases = append(cocoon.Releases, release.ID)
+
+		// validate release
+		if err = ValidateRelease(&release); err != nil {
+			return nil, err
+		}
+
+		// persist release
+		var protoCreateReleaseReq proto.CreateReleaseRequest
+		cstructs.Copy(release, &protoCreateReleaseReq)
+		_, err = api.CreateRelease(ctx, &protoCreateReleaseReq)
+		if err != nil {
+			return nil, err
+		}
+
+		finalResp["newReleaseID"] = release.ID
+	}
+
+	// update cocoon if cocoon was changed or release was updated/created
+	if cocoonUpdated || releaseUpdated {
+		var protoCreateCocoonReq proto.CreateCocoonRequest
+		cstructs.Copy(cocoon, &protoCreateCocoonReq)
+		protoCreateCocoonReq.OptionAllowDuplicate = true
+		_, err = api.CreateCocoon(ctx, &protoCreateCocoonReq)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	value, _ := util.ToJSON(&finalResp)
 
 	return &proto.Response{
 		Status: 200,

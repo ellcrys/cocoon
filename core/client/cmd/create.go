@@ -14,7 +14,7 @@ import (
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create [OPTIONS]",
 	Short: "Create a new cocoon configuration locally",
 	Long:  `Create a cocoon on the blockchain`,
 	Run: func(cmd *cobra.Command, args []string) {

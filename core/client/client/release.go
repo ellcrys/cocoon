@@ -203,7 +203,7 @@ func GetReleases(ids []string) error {
 	}
 
 	bs, _ := json.MarshalIndent(releases, "", "   ")
-	log.Info("%s", bs)
+	log.Infof("%s", bs)
 	if err != nil {
 		return err
 	}

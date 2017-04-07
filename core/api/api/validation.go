@@ -25,32 +25,46 @@ func ValidateCocoon(c *types.Cocoon) error {
 
 	if len(c.ID) == 0 {
 		return fmt.Errorf("id is required")
-	} else if !govalidator.IsUUIDv4(c.ID) {
+	}
+	if !govalidator.IsUUIDv4(c.ID) {
 		return fmt.Errorf("id is not a valid uuid")
-	} else if len(c.URL) == 0 {
+	}
+	if len(c.URL) == 0 {
 		return fmt.Errorf("url is required")
-	} else if !cocoon_util.IsGithubRepoURL(c.URL) {
+	}
+	if !cocoon_util.IsGithubRepoURL(c.URL) {
 		return fmt.Errorf("url is not a valid github repo url")
-	} else if len(c.Language) == 0 {
+	}
+	if len(c.Language) == 0 {
 		return fmt.Errorf("language is required")
-	} else if !util.InStringSlice(supportedLanguages, c.Language) {
+	}
+	if !util.InStringSlice(supportedLanguages, c.Language) {
 		return fmt.Errorf("language is not supported. Expects one of these values %s", supportedLanguages)
-	} else if len(c.BuildParam) > 0 {
+	}
+	if len(c.BuildParam) > 0 {
 		var _c map[string]interface{}
 		if util.FromJSON([]byte(c.BuildParam), &_c) != nil {
 			return fmt.Errorf("build parameter is not valid json")
 		}
-	} else if len(c.Memory) == 0 {
+	}
+	if len(c.Memory) == 0 {
 		return fmt.Errorf("memory is required")
-	} else if !util.InStringSlice(supportedMemory, c.Memory) {
+	}
+	if !util.InStringSlice(supportedMemory, c.Memory) {
 		return fmt.Errorf("Memory value is not supported. Expects one of these values %s", supportedMemory)
-	} else if len(c.CPUShares) == 0 {
+	}
+	if len(c.CPUShares) == 0 {
 		return fmt.Errorf("CPU share is required")
-	} else if !util.InStringSlice(supportedCPUShares, c.CPUShares) {
+	}
+	if !util.InStringSlice(supportedCPUShares, c.CPUShares) {
 		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShares)
 	}
-
-	// ensure signatories list is not greater than the set limit in NumSignatories
+	if c.NumSignatories <= 0 {
+		return fmt.Errorf("number of signatories cannot be less than 1")
+	}
+	if c.SigThreshold <= 0 {
+		return fmt.Errorf("signatory threshold cannot be less than 1")
+	}
 	if c.NumSignatories < int32(len(c.Signatories)) {
 		return fmt.Errorf("max signatories already added. You can't add more")
 	}
@@ -61,22 +75,28 @@ func ValidateCocoon(c *types.Cocoon) error {
 // ValidateRelease checks whether a release field values
 // are valid.
 func ValidateRelease(r *types.Release) error {
-
 	if len(r.ID) == 0 {
 		return fmt.Errorf("id is required")
-	} else if !govalidator.IsUUIDv4(r.ID) {
+	}
+	if !govalidator.IsUUIDv4(r.ID) {
 		return fmt.Errorf("id is not a valid uuid")
-	} else if len(r.CocoonID) == 0 {
+	}
+	if len(r.CocoonID) == 0 {
 		return fmt.Errorf("cocoon id is required")
-	} else if len(r.URL) == 0 {
+	}
+	if len(r.URL) == 0 {
 		return fmt.Errorf("url is required")
-	} else if !cocoon_util.IsGithubRepoURL(r.URL) {
+	}
+	if !cocoon_util.IsGithubRepoURL(r.URL) {
 		return fmt.Errorf("url is not a valid github repo url")
-	} else if len(r.Language) == 0 {
+	}
+	if len(r.Language) == 0 {
 		return fmt.Errorf("language is required")
-	} else if !util.InStringSlice(supportedLanguages, r.Language) {
+	}
+	if !util.InStringSlice(supportedLanguages, r.Language) {
 		return fmt.Errorf("language is not supported. Expects one of these values %s", supportedLanguages)
-	} else if len(r.BuildParam) > 0 {
+	}
+	if len(r.BuildParam) > 0 {
 		var _r map[string]interface{}
 		if util.FromJSON([]byte(r.BuildParam), &_r) != nil {
 			return fmt.Errorf("build parameter is not valid json")

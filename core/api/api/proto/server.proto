@@ -4,6 +4,7 @@ package proto;
 service API {
     rpc Login(LoginRequest) returns (Response);
     rpc CreateCocoon(CreateCocoonRequest) returns (Response);
+    rpc UpdateCocoon(UpdateCocoonRequest) returns (Response);
     rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
@@ -41,6 +42,20 @@ message CreateCocoonRequest {
     string createdAt = 14;
     string lastDeployedRelease = 15;
     bool optionAllowDuplicate = 16;  // option to indicate whether duplicate object is allowed
+}
+
+message UpdateCocoonRequest {
+    string ID = 1;
+    string URL = 2;
+    string language = 3;
+    string releaseTag = 4;
+    string buildParam = 5;
+    string memory = 6;
+    string CPUShares = 7;
+    repeated string releases = 8;
+    string link = 9;
+    int32 numSignatories = 10;
+    int32 sigThreshold = 11;
 }
 
 message GetCocoonRequest {

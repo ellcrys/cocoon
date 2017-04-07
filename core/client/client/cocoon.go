@@ -154,6 +154,67 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	return nil
 }
 
+// UpdateCocoon updates a cocoon and optionally creates a new
+// release. A new release is created when Release fields are
+// set/defined. No release is created if updated release fields match
+// existing fields.
+func UpdateCocoon(id string, upd *proto.UpdateCocoonRequest) error {
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	stopSpinner := util.Spinner("Please wait")
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	md := metadata.Pairs("access_token", userSession.Token)
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, md)
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	cl := proto.NewAPIClient(conn)
+	resp, err := cl.UpdateCocoon(ctx, upd)
+	if err != nil {
+		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+			stopSpinner()
+			return fmt.Errorf("Cocoon not found: %s", id)
+		}
+		stopSpinner()
+		return err
+	}
+
+	stopSpinner()
+
+	var body map[string]interface{}
+	if err = util.FromJSON(resp.Body, &body); err != nil {
+		return fmt.Errorf("failed to coerce to map")
+	}
+
+	// no new updates was detected or performed.
+	if !body["cocoonUpdated"].(bool) && len(body["newReleaseID"].(string)) == 0 {
+		log.Info("No new change detected. Nothing to do")
+		return nil
+	}
+
+	log.Info(`==> Update successfully applied`)
+
+	if body["cocoonUpdated"].(bool) {
+		log.Infof(`==> Cocoon has been updated`)
+	}
+
+	if len(body["newReleaseID"].(string)) != 0 {
+		log.Infof(`==> New Release ID: %s`, body["newReleaseID"].(string))
+	}
+
+	return nil
+}
+
 // GetCocoons fetches one or more cocoons and logs them
 func GetCocoons(ids []string) error {
 
@@ -177,7 +238,7 @@ func GetCocoons(ids []string) error {
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				stopSpinner()
-				err = fmt.Errorf("No such object: %s", id)
+				err = fmt.Errorf("Cocoon not found: %s", id)
 				break
 			}
 			stopSpinner()

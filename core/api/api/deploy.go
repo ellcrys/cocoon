@@ -86,7 +86,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		)
 	}
 
-	// update the cocoon values to match the release being run
+	// update the cocoon values to match the release we are about to start
 	cocoon.Language = release.Language
 	cocoon.URL = release.URL
 	cocoon.ReleaseTag = release.ReleaseTag
