@@ -146,7 +146,6 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	// client := proto.NewAPIClient(conn)
 	var protoCreateReleaseReq proto.CreateReleaseRequest
 	cstructs.Copy(release, &protoCreateReleaseReq)
-	protoCreateReleaseReq.OptionAllowDuplicate = true
 	resp, err = client.CreateRelease(ctx, &protoCreateReleaseReq)
 	if err != nil {
 		stopSpinner()

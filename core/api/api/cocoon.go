@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
@@ -33,20 +34,6 @@ func (api *API) makeCocoonKey(id string) string {
 	return fmt.Sprintf("cocoon.%s", id)
 }
 
-// updateCocoon creates a new cocoon by overriding an existing one (if any).
-func (api *API) updateCocoon(ctx context.Context, cocoon *types.Cocoon) error {
-	var protoCreateCocoonReq proto.CreateCocoonRequest
-	if err := cstructs.Copy(cocoon, &protoCreateCocoonReq); err != nil {
-		return err
-	}
-	protoCreateCocoonReq.OptionAllowDuplicate = true
-	_, err := api.CreateCocoon(ctx, &protoCreateCocoonReq)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // updateCocoonStatusOnStarted checks on interval the cocoon status and update the
 // status field when the cocoon status is `started`. It returns immediately
 // an error is encountered. The function will block till success or failure.
@@ -58,84 +45,23 @@ func (api *API) updateCocoonStatusOnStarted(ctx context.Context, cocoon *types.C
 		}
 		if status == CocoonStatusRunning {
 			cocoon.Status = CocoonStatusStarted
-			return api.updateCocoon(ctx, cocoon)
+			return api.putCocoon(ctx, cocoon)
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-// CreateCocoon creates a cocoon
-func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest) (*proto.Response, error) {
-
-	var err error
-	var claims jwt.MapClaims
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
-
-	var cocoon types.Cocoon
-	cstructs.Copy(req, &cocoon)
-	allowDup := req.OptionAllowDuplicate
-	timeCreated, _ := time.Parse(time.RFC3339Nano, req.CreatedAt)
-	req = nil
-
-	if err := ValidateCocoon(&cocoon); err != nil {
-		return nil, err
-	}
-
-	loggedInIdentity := claims["identity"].(string)
-
-	// if cocoon has a identity set, ensure the identity matches that of the logged in user
-	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != loggedInIdentity {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
-	}
-
-	// set identity id of cocoon to the identity of the logged in user
-	if len(cocoon.IdentityID) == 0 {
-		cocoon.IdentityID = loggedInIdentity
-	}
-
-	if len(cocoon.Status) == 0 {
-		cocoon.Status = CocoonStatusCreated
-	}
-
-	// add cocoon owner identity if not included
-	if !util.InStringSlice(cocoon.Signatories, cocoon.IdentityID) {
-		cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
-	}
-
-	if !allowDup {
-		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID: cocoon.ID,
-		})
-
-		if err != nil && err != types.ErrCocoonNotFound {
-			return nil, err
-		} else if err != types.ErrCocoonNotFound {
-			return nil, fmt.Errorf("cocoon with matching ID already exists")
-		}
-	}
-
-	// if a link cocoon id is provided, check if the linked cocoon exists
-	if len(cocoon.Link) > 0 {
-		_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID: cocoon.Link,
-		})
-		if err != nil && err != types.ErrCocoonNotFound {
-			return nil, err
-		} else if err == types.ErrCocoonNotFound {
-			return nil, fmt.Errorf("cannot link to a non-existing cocoon")
-		}
-	}
+// putCocoon adds a new cocoon. If another cocoon with a matching key
+// exists, it is effectively shadowed
+func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer ordererConn.Close()
 
-	value := cocoon.ToJSON()
+	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID:   "",
@@ -144,38 +70,114 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CreateCocoonRequest
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
 				Key:       api.makeCocoonKey(cocoon.ID),
-				Value:     string(value),
-				CreatedAt: timeCreated.Unix(),
+				Value:     string(cocoon.ToJSON()),
+				CreatedAt: createdAt.Unix(),
 			},
 		},
 	})
+
+	return err
+}
+
+// CreateCocoon creates a new cocoon and initial release. The new
+// cocoon is also added to the identity's list of cocoons
+func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayload) (*proto.Response, error) {
+
+	var err error
+	var claims jwt.MapClaims
+	var releaseID = util.UUID4()
+	var now = time.Now()
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	var cocoon types.Cocoon
+	cstructs.Copy(req, &cocoon)
+	cocoon.Status = CocoonStatusCreated
+	cocoon.Releases = []string{releaseID}
+	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
+	req = nil
+
+	cocoon.IdentityID = claims["identity"].(string)
+	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
+
+	if err := ValidateCocoon(&cocoon); err != nil {
+		return nil, err
+	}
+
+	// ensure a similar cocoon does not exist
+	if _, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
+		ID: cocoon.ID,
+	}); err != nil {
+		if err != types.ErrCocoonNotFound {
+			return nil, err
+		} else if err != types.ErrCocoonNotFound {
+			return nil, fmt.Errorf("cocoon with matching ID already exists")
+		}
+	}
+
+	// if a link cocoon id is provided, check if the linked cocoon exists
+	// TODO: Provide a permission (ACL) mechanism
+	if len(cocoon.Link) > 0 {
+		if _, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
+			ID: cocoon.Link,
+		}); err != nil {
+			if err != types.ErrCocoonNotFound {
+				return nil, err
+			} else if err == types.ErrCocoonNotFound {
+				return nil, fmt.Errorf("cannot link to a non-existing cocoon")
+			}
+		}
+	}
+
+	err = api.putCocoon(ctx, &cocoon)
+	if err != nil {
+		return nil, err
+	}
+
+	// create new release
+	var protoCreateReleaseReq proto.CreateReleaseRequest
+	cstructs.Copy(cocoon, &protoCreateReleaseReq)
+	protoCreateReleaseReq.ID = releaseID
+	protoCreateReleaseReq.CocoonID = cocoon.ID
+	_, err = api.CreateRelease(ctx, &protoCreateReleaseReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// include new cocoon id in identity cocoons list
+	identity, err := api.getIdentity(ctx, cocoon.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+	identity.Cocoons = append(identity.Cocoons, cocoon.ID)
+	err = api.putIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proto.Response{
 		Status: 200,
-		Body:   value,
+		Body:   cocoon.ToJSON(),
 	}, nil
 }
 
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release fields are
 // set/defined. No release is created if no change was made to previous release.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest) (*proto.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayload) (*proto.Response, error) {
 
+	var err error
 	var claims jwt.MapClaims
-
-	resp, err := api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: req.ID})
-	if err != nil && err != types.ErrCocoonNotFound {
-		return nil, err
-	}
-
-	var cocoon types.Cocoon
-	util.FromJSON(resp.Body, &cocoon)
 
 	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	cocoon, err := api.getCocoon(ctx, req.ID)
+	if err != nil {
+		return nil, err
 	}
 
 	loggedInIdentity := claims["identity"].(string)
@@ -206,7 +208,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest
 	}
 
 	// validate updated cocoon
-	if err = ValidateCocoon(&cocoon); err != nil {
+	if err = ValidateCocoon(cocoon); err != nil {
 		return nil, err
 	}
 
@@ -217,7 +219,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest
 		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
-	resp, err = api.GetRelease(ctx, &proto.GetReleaseRequest{ID: recentReleaseID})
+	resp, err := api.GetRelease(ctx, &proto.GetReleaseRequest{ID: recentReleaseID})
 	if err != nil {
 		return nil, err
 	}
@@ -282,10 +284,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest
 
 	// update cocoon if cocoon was changed or release was updated/created
 	if cocoonUpdated || releaseUpdated {
-		var protoCreateCocoonReq proto.CreateCocoonRequest
-		cstructs.Copy(cocoon, &protoCreateCocoonReq)
-		protoCreateCocoonReq.OptionAllowDuplicate = true
-		_, err = api.CreateCocoon(ctx, &protoCreateCocoonReq)
+		err = api.putCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
 		}
@@ -299,8 +298,8 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.UpdateCocoonRequest
 	}, nil
 }
 
-// GetCocoon fetches a cocoon
-func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
+// getCocoon gets a cocoon with a matching id.
+func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error) {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -311,19 +310,33 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeCocoonKey(req.GetID()),
+		Key:      api.makeCocoonKey(id),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
-
-	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, types.ErrCocoonNotFound
+		}
 		return nil, err
-	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
-		return nil, types.ErrCocoonNotFound
+	}
+
+	var cocoon types.Cocoon
+	util.FromJSON([]byte(tx.Value), &cocoon)
+
+	return &cocoon, nil
+}
+
+// GetCocoon fetches a cocoon
+func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
+
+	cocoon, err := api.getCocoon(ctx, req.GetID())
+	if err != nil {
+		return nil, err
 	}
 
 	return &proto.Response{
 		Status: 200,
-		Body:   []byte(tx.GetValue()),
+		Body:   cocoon.ToJSON(),
 	}, nil
 }
 
@@ -356,26 +369,9 @@ func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	cocoon, err := api.getCocoon(ctx, req.GetID())
 	if err != nil {
 		return nil, err
-	}
-	defer ordererConn.Close()
-
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      api.makeCocoonKey(req.GetID()),
-		Ledger:   types.GetGlobalLedgerName(),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var cocoon types.Cocoon
-	if err = util.FromJSON([]byte(tx.GetValue()), &cocoon); err != nil {
-		return nil, common.JSONCoerceErr("cocoon", err)
 	}
 
 	// ensure session identity matches cocoon identity
@@ -391,7 +387,7 @@ func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*
 
 	cocoon.Status = CocoonStatusStopped
 
-	if err = api.updateCocoon(ctx, &cocoon); err != nil {
+	if err = api.putCocoon(ctx, cocoon); err != nil {
 		apiLog.Error(err.Error())
 		return nil, fmt.Errorf("failed to update cocoon status")
 	}
@@ -399,5 +395,85 @@ func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*
 	return &proto.Response{
 		Status: 200,
 		Body:   []byte("done"),
+	}, nil
+}
+
+// AddSignatories adds one ore more signatories to a cocoon
+func (api *API) AddSignatories(ctx context.Context, req *proto.AddSignatoriesRequest) (*proto.Response, error) {
+
+	var added = []string{}
+	var errs = []string{}
+	var _id = []string{}
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure session identity matches cocoon identity
+	if claims["identity"].(string) != cocoon.IdentityID {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	// convert email to ID
+	for i, id := range req.IDs {
+		_id = append(_id, id)
+		if govalidator.IsEmail(id) {
+			req.IDs[i] = (&types.Identity{Email: id}).GetID()
+		}
+	}
+
+	// ensure the number of signatories to add will not exceed the total number of required signatories
+	availableSignatorySlots := cocoon.NumSignatories - int32(len(cocoon.Signatories))
+	if availableSignatorySlots < int32(len(req.IDs)) {
+		if availableSignatorySlots == 0 {
+			return nil, fmt.Errorf("max signatories already added. You can't add more")
+		}
+		strPl := "signatures"
+		if availableSignatorySlots == 1 {
+			strPl = "signatory"
+		}
+		return nil, fmt.Errorf("maximum required signatories cannot be exceeded. You can only add %d more %s", availableSignatorySlots, strPl)
+	}
+
+	for i, id := range req.IDs {
+
+		identity, err := api.getIdentity(ctx, id)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("%s: identity not found", common.GetShortID(_id[i])))
+			continue
+		}
+
+		// check if identity is already a signatory
+		if util.InStringSlice(cocoon.Signatories, id) {
+			errs = append(errs, fmt.Sprintf("%s: identity is already a signatory", common.GetShortID(_id[i])))
+			continue
+		}
+
+		cocoon.Signatories = append(cocoon.Signatories, identity.GetID())
+		added = append(added, identity.GetID())
+	}
+
+	if len(added) > 0 {
+		err := api.putCocoon(ctx, cocoon)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r, _ := util.ToJSON(map[string][]string{
+		"added": added,
+		"errs":  errs,
+	})
+
+	return &proto.Response{
+		Status: 200,
+		Body:   r,
 	}, nil
 }

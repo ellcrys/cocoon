@@ -15,16 +15,45 @@ import (
 )
 
 // makeIdentityKey constructs an identity key
-func (api *API) makeIdentityKey(hashedEmail string) string {
-	return fmt.Sprintf("identity.%s", hashedEmail)
+func (api *API) makeIdentityKey(id string) string {
+	return fmt.Sprintf("identity.%s", id)
 }
 
-// CreateIdentity creates a new identity
+// putIdentity adds a new identity. If another identity with a matching key
+// exists, it is effectively shadowed
+func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error {
+
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	if err != nil {
+		return err
+	}
+	defer ordererConn.Close()
+
+	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+		CocoonID:   "",
+		LedgerName: types.GetGlobalLedgerName(),
+		Transactions: []*orderer_proto.Transaction{
+			&orderer_proto.Transaction{
+				Id:        util.UUID4(),
+				Key:       api.makeIdentityKey(identity.GetID()),
+				Value:     string(identity.ToJSON()),
+				CreatedAt: createdAt.Unix(),
+			},
+		},
+	})
+
+	return err
+}
+
+// CreateIdentity creates a new identity. It returns error if identity
+// already exists.
 func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityRequest) (*proto.Response, error) {
 
 	var identity types.Identity
+	identity.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	cstructs.Copy(req, &identity)
-	allowDup := req.OptionAllowDuplicate
 	req = nil
 
 	if err := ValidateIdentity(&identity); err != nil {
@@ -37,47 +66,55 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	}
 	defer ordererConn.Close()
 
-	if !allowDup {
-		// check if identity already exists
-		_, err = api.GetIdentity(ctx, &proto.GetIdentityRequest{
-			Email: identity.Email,
-		})
-
-		if err != nil && err != types.ErrIdentityNotFound {
-			return nil, err
-		} else if err == nil {
-			return nil, types.ErrIdentityAlreadyExists
-		}
-
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)
-		identity.Password = string(hashedPassword)
+	// check if identity already exists
+	_, err = api.getIdentity(ctx, identity.GetID())
+	if err != nil && err != types.ErrIdentityNotFound {
+		return nil, err
+	} else if err == nil {
+		return nil, types.ErrIdentityAlreadyExists
 	}
 
-	value, _ := util.ToJSON(identity)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)
+	identity.Password = string(hashedPassword)
 
-	txID := util.UUID4()
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID:   "",
-		LedgerName: types.GetGlobalLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
-				Id:        txID,
-				Key:       api.makeIdentityKey(identity.GetID()),
-				Value:     string(value),
-				CreatedAt: time.Now().Unix(),
-			},
-		},
-	})
+	err = api.putIdentity(ctx, &identity)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proto.Response{
 		Status: 200,
-		Body:   value,
+		Body:   identity.ToJSON(),
 	}, nil
+}
+
+// getIdentity gets an existing identity and returns an identity object
+func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, error) {
+
+	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	if err != nil {
+		return nil, err
+	}
+	defer ordererConn.Close()
+
+	odc := orderer_proto.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonID: "",
+		Key:      api.makeIdentityKey(id),
+		Ledger:   types.GetGlobalLedgerName(),
+	})
+
+	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, types.ErrIdentityNotFound
+		}
+		return nil, err
+	}
+
+	var identity types.Identity
+	util.FromJSON([]byte(tx.GetValue()), &identity)
+
+	return &identity, nil
 }
 
 // GetIdentity fetches an identity by email or id. If Email field is set in the request,
@@ -85,64 +122,18 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 // ID field is set, it finds the identity by the id directly.
 func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) (*proto.Response, error) {
 
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	var key = req.ID
+	if len(req.Email) > 0 {
+		key = (&types.Identity{Email: req.Email}).GetID()
+	}
+
+	identity, err := api.getIdentity(ctx, key)
 	if err != nil {
 		return nil, err
-	}
-	defer ordererConn.Close()
-
-	var key string
-	if len(req.Email) > 0 {
-		identity := types.Identity{Email: req.Email}
-		key = api.makeIdentityKey(identity.GetID())
-	} else {
-		key = api.makeIdentityKey(req.ID)
-	}
-
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	resp, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      key,
-		Ledger:   types.GetGlobalLedgerName(),
-	})
-
-	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
-		return nil, err
-	} else if err != nil && common.CompareErr(err, types.ErrTxNotFound) == 0 {
-		return nil, types.ErrIdentityNotFound
 	}
 
 	return &proto.Response{
 		Status: 200,
-		Body:   []byte(resp.GetValue()),
+		Body:   identity.ToJSON(),
 	}, nil
-}
-
-// AddCocoonToIdentity adds a cocoon id to the collection of cocoon's owned by an identity
-func (api *API) AddCocoonToIdentity(ctx context.Context, req *proto.AddCocoonToIdentityRequest) (*proto.Response, error) {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return nil, err
-	}
-	defer ordererConn.Close()
-
-	resp, err := api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: req.GetEmail(),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var identity types.Identity
-	if err = util.FromJSON(resp.Body, &identity); err != nil {
-		return nil, fmt.Errorf("failed to parse identity")
-	}
-
-	identity.Cocoons = append(identity.Cocoons, req.GetCocoonId())
-
-	// TODO: update identity
-
-	return nil, nil
 }

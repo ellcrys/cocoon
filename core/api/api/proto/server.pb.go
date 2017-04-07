@@ -10,9 +10,8 @@ It is generated from these files:
 
 It has these top-level messages:
 	LoginRequest
-	AddCocoonToIdentityRequest
-	CreateCocoonRequest
-	UpdateCocoonRequest
+	AddSignatoriesRequest
+	CocoonPayload
 	GetCocoonRequest
 	GetIdentityRequest
 	CreateReleaseRequest
@@ -68,256 +67,112 @@ func (m *LoginRequest) GetPassword() string {
 	return ""
 }
 
-type AddCocoonToIdentityRequest struct {
-	Email    string `protobuf:"bytes,1,opt,name=email" json:"email,omitempty"`
-	CocoonId string `protobuf:"bytes,2,opt,name=cocoonId" json:"cocoonId,omitempty"`
+type AddSignatoriesRequest struct {
+	CocoonID string   `protobuf:"bytes,1,opt,name=cocoonID" json:"cocoonID,omitempty"`
+	IDs      []string `protobuf:"bytes,2,rep,name=IDs" json:"IDs,omitempty"`
 }
 
-func (m *AddCocoonToIdentityRequest) Reset()                    { *m = AddCocoonToIdentityRequest{} }
-func (m *AddCocoonToIdentityRequest) String() string            { return proto1.CompactTextString(m) }
-func (*AddCocoonToIdentityRequest) ProtoMessage()               {}
-func (*AddCocoonToIdentityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *AddSignatoriesRequest) Reset()                    { *m = AddSignatoriesRequest{} }
+func (m *AddSignatoriesRequest) String() string            { return proto1.CompactTextString(m) }
+func (*AddSignatoriesRequest) ProtoMessage()               {}
+func (*AddSignatoriesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *AddCocoonToIdentityRequest) GetEmail() string {
+func (m *AddSignatoriesRequest) GetCocoonID() string {
 	if m != nil {
-		return m.Email
+		return m.CocoonID
 	}
 	return ""
 }
 
-func (m *AddCocoonToIdentityRequest) GetCocoonId() string {
+func (m *AddSignatoriesRequest) GetIDs() []string {
 	if m != nil {
-		return m.CocoonId
+		return m.IDs
 	}
-	return ""
+	return nil
 }
 
-type CreateCocoonRequest struct {
-	ID                   string   `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
-	URL                  string   `protobuf:"bytes,2,opt,name=URL" json:"URL,omitempty"`
-	Language             string   `protobuf:"bytes,3,opt,name=language" json:"language,omitempty"`
-	ReleaseTag           string   `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
-	BuildParam           string   `protobuf:"bytes,5,opt,name=buildParam" json:"buildParam,omitempty"`
-	Memory               string   `protobuf:"bytes,6,opt,name=memory" json:"memory,omitempty"`
-	CPUShares            string   `protobuf:"bytes,7,opt,name=CPUShares" json:"CPUShares,omitempty"`
-	Releases             []string `protobuf:"bytes,8,rep,name=releases" json:"releases,omitempty"`
-	Link                 string   `protobuf:"bytes,9,opt,name=link" json:"link,omitempty"`
-	NumSignatories       int32    `protobuf:"varint,10,opt,name=numSignatories" json:"numSignatories,omitempty"`
-	SigThreshold         int32    `protobuf:"varint,11,opt,name=sigThreshold" json:"sigThreshold,omitempty"`
-	Signatories          []string `protobuf:"bytes,12,rep,name=signatories" json:"signatories,omitempty"`
-	Status               string   `protobuf:"bytes,13,opt,name=status" json:"status,omitempty"`
-	CreatedAt            string   `protobuf:"bytes,14,opt,name=createdAt" json:"createdAt,omitempty"`
-	LastDeployedRelease  string   `protobuf:"bytes,15,opt,name=lastDeployedRelease" json:"lastDeployedRelease,omitempty"`
-	OptionAllowDuplicate bool     `protobuf:"varint,16,opt,name=optionAllowDuplicate" json:"optionAllowDuplicate,omitempty"`
+type CocoonPayload struct {
+	ID             string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+	URL            string `protobuf:"bytes,2,opt,name=URL" json:"URL,omitempty"`
+	Language       string `protobuf:"bytes,3,opt,name=language" json:"language,omitempty"`
+	ReleaseTag     string `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
+	BuildParam     string `protobuf:"bytes,5,opt,name=buildParam" json:"buildParam,omitempty"`
+	Memory         string `protobuf:"bytes,6,opt,name=memory" json:"memory,omitempty"`
+	CPUShares      string `protobuf:"bytes,7,opt,name=CPUShares" json:"CPUShares,omitempty"`
+	Link           string `protobuf:"bytes,8,opt,name=link" json:"link,omitempty"`
+	NumSignatories int32  `protobuf:"varint,9,opt,name=numSignatories" json:"numSignatories,omitempty"`
+	SigThreshold   int32  `protobuf:"varint,10,opt,name=sigThreshold" json:"sigThreshold,omitempty"`
 }
 
-func (m *CreateCocoonRequest) Reset()                    { *m = CreateCocoonRequest{} }
-func (m *CreateCocoonRequest) String() string            { return proto1.CompactTextString(m) }
-func (*CreateCocoonRequest) ProtoMessage()               {}
-func (*CreateCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (m *CocoonPayload) Reset()                    { *m = CocoonPayload{} }
+func (m *CocoonPayload) String() string            { return proto1.CompactTextString(m) }
+func (*CocoonPayload) ProtoMessage()               {}
+func (*CocoonPayload) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *CreateCocoonRequest) GetID() string {
+func (m *CocoonPayload) GetID() string {
 	if m != nil {
 		return m.ID
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetURL() string {
+func (m *CocoonPayload) GetURL() string {
 	if m != nil {
 		return m.URL
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetLanguage() string {
+func (m *CocoonPayload) GetLanguage() string {
 	if m != nil {
 		return m.Language
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetReleaseTag() string {
+func (m *CocoonPayload) GetReleaseTag() string {
 	if m != nil {
 		return m.ReleaseTag
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetBuildParam() string {
+func (m *CocoonPayload) GetBuildParam() string {
 	if m != nil {
 		return m.BuildParam
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetMemory() string {
+func (m *CocoonPayload) GetMemory() string {
 	if m != nil {
 		return m.Memory
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetCPUShares() string {
+func (m *CocoonPayload) GetCPUShares() string {
 	if m != nil {
 		return m.CPUShares
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetReleases() []string {
-	if m != nil {
-		return m.Releases
-	}
-	return nil
-}
-
-func (m *CreateCocoonRequest) GetLink() string {
+func (m *CocoonPayload) GetLink() string {
 	if m != nil {
 		return m.Link
 	}
 	return ""
 }
 
-func (m *CreateCocoonRequest) GetNumSignatories() int32 {
+func (m *CocoonPayload) GetNumSignatories() int32 {
 	if m != nil {
 		return m.NumSignatories
 	}
 	return 0
 }
 
-func (m *CreateCocoonRequest) GetSigThreshold() int32 {
-	if m != nil {
-		return m.SigThreshold
-	}
-	return 0
-}
-
-func (m *CreateCocoonRequest) GetSignatories() []string {
-	if m != nil {
-		return m.Signatories
-	}
-	return nil
-}
-
-func (m *CreateCocoonRequest) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *CreateCocoonRequest) GetCreatedAt() string {
-	if m != nil {
-		return m.CreatedAt
-	}
-	return ""
-}
-
-func (m *CreateCocoonRequest) GetLastDeployedRelease() string {
-	if m != nil {
-		return m.LastDeployedRelease
-	}
-	return ""
-}
-
-func (m *CreateCocoonRequest) GetOptionAllowDuplicate() bool {
-	if m != nil {
-		return m.OptionAllowDuplicate
-	}
-	return false
-}
-
-type UpdateCocoonRequest struct {
-	ID             string   `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
-	URL            string   `protobuf:"bytes,2,opt,name=URL" json:"URL,omitempty"`
-	Language       string   `protobuf:"bytes,3,opt,name=language" json:"language,omitempty"`
-	ReleaseTag     string   `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
-	BuildParam     string   `protobuf:"bytes,5,opt,name=buildParam" json:"buildParam,omitempty"`
-	Memory         string   `protobuf:"bytes,6,opt,name=memory" json:"memory,omitempty"`
-	CPUShares      string   `protobuf:"bytes,7,opt,name=CPUShares" json:"CPUShares,omitempty"`
-	Releases       []string `protobuf:"bytes,8,rep,name=releases" json:"releases,omitempty"`
-	Link           string   `protobuf:"bytes,9,opt,name=link" json:"link,omitempty"`
-	NumSignatories int32    `protobuf:"varint,10,opt,name=numSignatories" json:"numSignatories,omitempty"`
-	SigThreshold   int32    `protobuf:"varint,11,opt,name=sigThreshold" json:"sigThreshold,omitempty"`
-}
-
-func (m *UpdateCocoonRequest) Reset()                    { *m = UpdateCocoonRequest{} }
-func (m *UpdateCocoonRequest) String() string            { return proto1.CompactTextString(m) }
-func (*UpdateCocoonRequest) ProtoMessage()               {}
-func (*UpdateCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *UpdateCocoonRequest) GetID() string {
-	if m != nil {
-		return m.ID
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetURL() string {
-	if m != nil {
-		return m.URL
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetLanguage() string {
-	if m != nil {
-		return m.Language
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetReleaseTag() string {
-	if m != nil {
-		return m.ReleaseTag
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetBuildParam() string {
-	if m != nil {
-		return m.BuildParam
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetMemory() string {
-	if m != nil {
-		return m.Memory
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetCPUShares() string {
-	if m != nil {
-		return m.CPUShares
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetReleases() []string {
-	if m != nil {
-		return m.Releases
-	}
-	return nil
-}
-
-func (m *UpdateCocoonRequest) GetLink() string {
-	if m != nil {
-		return m.Link
-	}
-	return ""
-}
-
-func (m *UpdateCocoonRequest) GetNumSignatories() int32 {
-	if m != nil {
-		return m.NumSignatories
-	}
-	return 0
-}
-
-func (m *UpdateCocoonRequest) GetSigThreshold() int32 {
+func (m *CocoonPayload) GetSigThreshold() int32 {
 	if m != nil {
 		return m.SigThreshold
 	}
@@ -331,7 +186,7 @@ type GetCocoonRequest struct {
 func (m *GetCocoonRequest) Reset()                    { *m = GetCocoonRequest{} }
 func (m *GetCocoonRequest) String() string            { return proto1.CompactTextString(m) }
 func (*GetCocoonRequest) ProtoMessage()               {}
-func (*GetCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*GetCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *GetCocoonRequest) GetID() string {
 	if m != nil {
@@ -348,7 +203,7 @@ type GetIdentityRequest struct {
 func (m *GetIdentityRequest) Reset()                    { *m = GetIdentityRequest{} }
 func (m *GetIdentityRequest) String() string            { return proto1.CompactTextString(m) }
 func (*GetIdentityRequest) ProtoMessage()               {}
-func (*GetIdentityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*GetIdentityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *GetIdentityRequest) GetEmail() string {
 	if m != nil {
@@ -365,24 +220,19 @@ func (m *GetIdentityRequest) GetID() string {
 }
 
 type CreateReleaseRequest struct {
-	ID                   string   `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
-	CocoonID             string   `protobuf:"bytes,2,opt,name=cocoonID" json:"cocoonID,omitempty"`
-	URL                  string   `protobuf:"bytes,3,opt,name=URL" json:"URL,omitempty"`
-	Language             string   `protobuf:"bytes,4,opt,name=language" json:"language,omitempty"`
-	ReleaseTag           string   `protobuf:"bytes,5,opt,name=releaseTag" json:"releaseTag,omitempty"`
-	BuildParam           string   `protobuf:"bytes,6,opt,name=buildParam" json:"buildParam,omitempty"`
-	Link                 string   `protobuf:"bytes,7,opt,name=link" json:"link,omitempty"`
-	SigApproved          int32    `protobuf:"varint,8,opt,name=sigApproved" json:"sigApproved,omitempty"`
-	SigDenied            int32    `protobuf:"varint,9,opt,name=sigDenied" json:"sigDenied,omitempty"`
-	CreatedAt            string   `protobuf:"bytes,10,opt,name=createdAt" json:"createdAt,omitempty"`
-	VotersID             []string `protobuf:"bytes,11,rep,name=votersID" json:"votersID,omitempty"`
-	OptionAllowDuplicate bool     `protobuf:"varint,12,opt,name=optionAllowDuplicate" json:"optionAllowDuplicate,omitempty"`
+	ID         string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+	CocoonID   string `protobuf:"bytes,2,opt,name=cocoonID" json:"cocoonID,omitempty"`
+	URL        string `protobuf:"bytes,3,opt,name=URL" json:"URL,omitempty"`
+	Language   string `protobuf:"bytes,4,opt,name=language" json:"language,omitempty"`
+	ReleaseTag string `protobuf:"bytes,5,opt,name=releaseTag" json:"releaseTag,omitempty"`
+	BuildParam string `protobuf:"bytes,6,opt,name=buildParam" json:"buildParam,omitempty"`
+	Link       string `protobuf:"bytes,7,opt,name=link" json:"link,omitempty"`
 }
 
 func (m *CreateReleaseRequest) Reset()                    { *m = CreateReleaseRequest{} }
 func (m *CreateReleaseRequest) String() string            { return proto1.CompactTextString(m) }
 func (*CreateReleaseRequest) ProtoMessage()               {}
-func (*CreateReleaseRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*CreateReleaseRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *CreateReleaseRequest) GetID() string {
 	if m != nil {
@@ -433,41 +283,6 @@ func (m *CreateReleaseRequest) GetLink() string {
 	return ""
 }
 
-func (m *CreateReleaseRequest) GetSigApproved() int32 {
-	if m != nil {
-		return m.SigApproved
-	}
-	return 0
-}
-
-func (m *CreateReleaseRequest) GetSigDenied() int32 {
-	if m != nil {
-		return m.SigDenied
-	}
-	return 0
-}
-
-func (m *CreateReleaseRequest) GetCreatedAt() string {
-	if m != nil {
-		return m.CreatedAt
-	}
-	return ""
-}
-
-func (m *CreateReleaseRequest) GetVotersID() []string {
-	if m != nil {
-		return m.VotersID
-	}
-	return nil
-}
-
-func (m *CreateReleaseRequest) GetOptionAllowDuplicate() bool {
-	if m != nil {
-		return m.OptionAllowDuplicate
-	}
-	return false
-}
-
 type GetReleaseRequest struct {
 	ID string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
 }
@@ -475,7 +290,7 @@ type GetReleaseRequest struct {
 func (m *GetReleaseRequest) Reset()                    { *m = GetReleaseRequest{} }
 func (m *GetReleaseRequest) String() string            { return proto1.CompactTextString(m) }
 func (*GetReleaseRequest) ProtoMessage()               {}
-func (*GetReleaseRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*GetReleaseRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *GetReleaseRequest) GetID() string {
 	if m != nil {
@@ -492,7 +307,7 @@ type DeployRequest struct {
 func (m *DeployRequest) Reset()                    { *m = DeployRequest{} }
 func (m *DeployRequest) String() string            { return proto1.CompactTextString(m) }
 func (*DeployRequest) ProtoMessage()               {}
-func (*DeployRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*DeployRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *DeployRequest) GetCocoonID() string {
 	if m != nil {
@@ -509,17 +324,14 @@ func (m *DeployRequest) GetUseLastDeployedRelease() bool {
 }
 
 type CreateIdentityRequest struct {
-	Email                string   `protobuf:"bytes,1,opt,name=email" json:"email,omitempty"`
-	Password             string   `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
-	Cocoons              []string `protobuf:"bytes,3,rep,name=cocoons" json:"cocoons,omitempty"`
-	ClientSessions       []string `protobuf:"bytes,4,rep,name=clientSessions" json:"clientSessions,omitempty"`
-	OptionAllowDuplicate bool     `protobuf:"varint,5,opt,name=optionAllowDuplicate" json:"optionAllowDuplicate,omitempty"`
+	Email    string `protobuf:"bytes,1,opt,name=email" json:"email,omitempty"`
+	Password string `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
 }
 
 func (m *CreateIdentityRequest) Reset()                    { *m = CreateIdentityRequest{} }
 func (m *CreateIdentityRequest) String() string            { return proto1.CompactTextString(m) }
 func (*CreateIdentityRequest) ProtoMessage()               {}
-func (*CreateIdentityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (*CreateIdentityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
 func (m *CreateIdentityRequest) GetEmail() string {
 	if m != nil {
@@ -535,27 +347,6 @@ func (m *CreateIdentityRequest) GetPassword() string {
 	return ""
 }
 
-func (m *CreateIdentityRequest) GetCocoons() []string {
-	if m != nil {
-		return m.Cocoons
-	}
-	return nil
-}
-
-func (m *CreateIdentityRequest) GetClientSessions() []string {
-	if m != nil {
-		return m.ClientSessions
-	}
-	return nil
-}
-
-func (m *CreateIdentityRequest) GetOptionAllowDuplicate() bool {
-	if m != nil {
-		return m.OptionAllowDuplicate
-	}
-	return false
-}
-
 type StopCocoonRequest struct {
 	ID string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
 }
@@ -563,7 +354,7 @@ type StopCocoonRequest struct {
 func (m *StopCocoonRequest) Reset()                    { *m = StopCocoonRequest{} }
 func (m *StopCocoonRequest) String() string            { return proto1.CompactTextString(m) }
 func (*StopCocoonRequest) ProtoMessage()               {}
-func (*StopCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+func (*StopCocoonRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *StopCocoonRequest) GetID() string {
 	if m != nil {
@@ -580,7 +371,7 @@ type Response struct {
 func (m *Response) Reset()                    { *m = Response{} }
 func (m *Response) String() string            { return proto1.CompactTextString(m) }
 func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *Response) GetStatus() int32 {
 	if m != nil {
@@ -598,9 +389,8 @@ func (m *Response) GetBody() []byte {
 
 func init() {
 	proto1.RegisterType((*LoginRequest)(nil), "proto.LoginRequest")
-	proto1.RegisterType((*AddCocoonToIdentityRequest)(nil), "proto.AddCocoonToIdentityRequest")
-	proto1.RegisterType((*CreateCocoonRequest)(nil), "proto.CreateCocoonRequest")
-	proto1.RegisterType((*UpdateCocoonRequest)(nil), "proto.UpdateCocoonRequest")
+	proto1.RegisterType((*AddSignatoriesRequest)(nil), "proto.AddSignatoriesRequest")
+	proto1.RegisterType((*CocoonPayload)(nil), "proto.CocoonPayload")
 	proto1.RegisterType((*GetCocoonRequest)(nil), "proto.GetCocoonRequest")
 	proto1.RegisterType((*GetIdentityRequest)(nil), "proto.GetIdentityRequest")
 	proto1.RegisterType((*CreateReleaseRequest)(nil), "proto.CreateReleaseRequest")
@@ -623,16 +413,16 @@ const _ = grpc.SupportPackageIsVersion4
 
 type APIClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Response, error)
-	CreateCocoon(ctx context.Context, in *CreateCocoonRequest, opts ...grpc.CallOption) (*Response, error)
-	UpdateCocoon(ctx context.Context, in *UpdateCocoonRequest, opts ...grpc.CallOption) (*Response, error)
+	CreateCocoon(ctx context.Context, in *CocoonPayload, opts ...grpc.CallOption) (*Response, error)
+	UpdateCocoon(ctx context.Context, in *CocoonPayload, opts ...grpc.CallOption) (*Response, error)
 	CreateRelease(ctx context.Context, in *CreateReleaseRequest, opts ...grpc.CallOption) (*Response, error)
 	GetRelease(ctx context.Context, in *GetReleaseRequest, opts ...grpc.CallOption) (*Response, error)
 	CreateIdentity(ctx context.Context, in *CreateIdentityRequest, opts ...grpc.CallOption) (*Response, error)
 	Deploy(ctx context.Context, in *DeployRequest, opts ...grpc.CallOption) (*Response, error)
 	GetCocoon(ctx context.Context, in *GetCocoonRequest, opts ...grpc.CallOption) (*Response, error)
 	GetIdentity(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*Response, error)
-	AddCocoonToIdentity(ctx context.Context, in *AddCocoonToIdentityRequest, opts ...grpc.CallOption) (*Response, error)
 	StopCocoon(ctx context.Context, in *StopCocoonRequest, opts ...grpc.CallOption) (*Response, error)
+	AddSignatories(ctx context.Context, in *AddSignatoriesRequest, opts ...grpc.CallOption) (*Response, error)
 }
 
 type aPIClient struct {
@@ -652,7 +442,7 @@ func (c *aPIClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *aPIClient) CreateCocoon(ctx context.Context, in *CreateCocoonRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) CreateCocoon(ctx context.Context, in *CocoonPayload, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := grpc.Invoke(ctx, "/proto.API/CreateCocoon", in, out, c.cc, opts...)
 	if err != nil {
@@ -661,7 +451,7 @@ func (c *aPIClient) CreateCocoon(ctx context.Context, in *CreateCocoonRequest, o
 	return out, nil
 }
 
-func (c *aPIClient) UpdateCocoon(ctx context.Context, in *UpdateCocoonRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) UpdateCocoon(ctx context.Context, in *CocoonPayload, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := grpc.Invoke(ctx, "/proto.API/UpdateCocoon", in, out, c.cc, opts...)
 	if err != nil {
@@ -724,18 +514,18 @@ func (c *aPIClient) GetIdentity(ctx context.Context, in *GetIdentityRequest, opt
 	return out, nil
 }
 
-func (c *aPIClient) AddCocoonToIdentity(ctx context.Context, in *AddCocoonToIdentityRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) StopCocoon(ctx context.Context, in *StopCocoonRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := grpc.Invoke(ctx, "/proto.API/AddCocoonToIdentity", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/proto.API/StopCocoon", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aPIClient) StopCocoon(ctx context.Context, in *StopCocoonRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) AddSignatories(ctx context.Context, in *AddSignatoriesRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := grpc.Invoke(ctx, "/proto.API/StopCocoon", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/proto.API/AddSignatories", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -746,16 +536,16 @@ func (c *aPIClient) StopCocoon(ctx context.Context, in *StopCocoonRequest, opts 
 
 type APIServer interface {
 	Login(context.Context, *LoginRequest) (*Response, error)
-	CreateCocoon(context.Context, *CreateCocoonRequest) (*Response, error)
-	UpdateCocoon(context.Context, *UpdateCocoonRequest) (*Response, error)
+	CreateCocoon(context.Context, *CocoonPayload) (*Response, error)
+	UpdateCocoon(context.Context, *CocoonPayload) (*Response, error)
 	CreateRelease(context.Context, *CreateReleaseRequest) (*Response, error)
 	GetRelease(context.Context, *GetReleaseRequest) (*Response, error)
 	CreateIdentity(context.Context, *CreateIdentityRequest) (*Response, error)
 	Deploy(context.Context, *DeployRequest) (*Response, error)
 	GetCocoon(context.Context, *GetCocoonRequest) (*Response, error)
 	GetIdentity(context.Context, *GetIdentityRequest) (*Response, error)
-	AddCocoonToIdentity(context.Context, *AddCocoonToIdentityRequest) (*Response, error)
 	StopCocoon(context.Context, *StopCocoonRequest) (*Response, error)
+	AddSignatories(context.Context, *AddSignatoriesRequest) (*Response, error)
 }
 
 func RegisterAPIServer(s *grpc.Server, srv APIServer) {
@@ -781,7 +571,7 @@ func _API_Login_Handler(srv interface{}, ctx context.Context, dec func(interface
 }
 
 func _API_CreateCocoon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateCocoonRequest)
+	in := new(CocoonPayload)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -793,13 +583,13 @@ func _API_CreateCocoon_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.API/CreateCocoon",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).CreateCocoon(ctx, req.(*CreateCocoonRequest))
+		return srv.(APIServer).CreateCocoon(ctx, req.(*CocoonPayload))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _API_UpdateCocoon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateCocoonRequest)
+	in := new(CocoonPayload)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -811,7 +601,7 @@ func _API_UpdateCocoon_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.API/UpdateCocoon",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).UpdateCocoon(ctx, req.(*UpdateCocoonRequest))
+		return srv.(APIServer).UpdateCocoon(ctx, req.(*CocoonPayload))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -924,24 +714,6 @@ func _API_GetIdentity_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _API_AddCocoonToIdentity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddCocoonToIdentityRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).AddCocoonToIdentity(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.API/AddCocoonToIdentity",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).AddCocoonToIdentity(ctx, req.(*AddCocoonToIdentityRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _API_StopCocoon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StopCocoonRequest)
 	if err := dec(in); err != nil {
@@ -956,6 +728,24 @@ func _API_StopCocoon_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).StopCocoon(ctx, req.(*StopCocoonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_AddSignatories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSignatoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).AddSignatories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.API/AddSignatories",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).AddSignatories(ctx, req.(*AddSignatoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1001,12 +791,12 @@ var _API_serviceDesc = grpc.ServiceDesc{
 			Handler:    _API_GetIdentity_Handler,
 		},
 		{
-			MethodName: "AddCocoonToIdentity",
-			Handler:    _API_AddCocoonToIdentity_Handler,
-		},
-		{
 			MethodName: "StopCocoon",
 			Handler:    _API_StopCocoon_Handler,
+		},
+		{
+			MethodName: "AddSignatories",
+			Handler:    _API_AddSignatories_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1016,55 +806,43 @@ var _API_serviceDesc = grpc.ServiceDesc{
 func init() { proto1.RegisterFile("server.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 787 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xdd, 0x6e, 0xd3, 0x4a,
-	0x10, 0x56, 0x7e, 0x9c, 0x26, 0x93, 0x34, 0xed, 0xd9, 0xe4, 0xf4, 0xec, 0x09, 0x15, 0x0a, 0x46,
-	0x42, 0xbd, 0xa1, 0xa0, 0x22, 0x8a, 0x00, 0x21, 0x88, 0x1a, 0xa9, 0x8a, 0x54, 0xa1, 0xca, 0x69,
-	0x1f, 0xc0, 0x8d, 0x47, 0xa9, 0x85, 0xe3, 0x35, 0xde, 0x75, 0xab, 0x5c, 0x73, 0xcf, 0x2b, 0x71,
-	0xc5, 0x0b, 0xf1, 0x04, 0xc8, 0xbb, 0xfe, 0x8d, 0x9d, 0xa4, 0x12, 0xb7, 0x5c, 0xc5, 0x33, 0xb3,
-	0x33, 0xbb, 0x3b, 0xdf, 0xf7, 0xcd, 0x06, 0x3a, 0x1c, 0xfd, 0x3b, 0xf4, 0x8f, 0x3d, 0x9f, 0x09,
-	0x46, 0x34, 0xf9, 0xa3, 0x7f, 0x82, 0xce, 0x05, 0x9b, 0xdb, 0xae, 0x81, 0x5f, 0x03, 0xe4, 0x82,
-	0xf4, 0x41, 0xc3, 0x85, 0x69, 0x3b, 0xb4, 0x32, 0xac, 0x1c, 0xb5, 0x0c, 0x65, 0x90, 0x01, 0x34,
-	0x3d, 0x93, 0xf3, 0x7b, 0xe6, 0x5b, 0xb4, 0x2a, 0x03, 0x89, 0xad, 0x7f, 0x86, 0xc1, 0xc8, 0xb2,
-	0xce, 0xd8, 0x8c, 0x31, 0xf7, 0x8a, 0x4d, 0x2c, 0x74, 0x85, 0x2d, 0x96, 0x5b, 0xeb, 0xcd, 0x64,
-	0xc2, 0x24, 0xa9, 0x17, 0xdb, 0xfa, 0xb7, 0x3a, 0xf4, 0xce, 0x7c, 0x34, 0x05, 0xaa, 0x9a, 0x71,
-	0xa5, 0x2e, 0x54, 0x27, 0xe3, 0xa8, 0x4c, 0x75, 0x32, 0x26, 0xfb, 0x50, 0xbb, 0x36, 0x2e, 0xa2,
-	0xf4, 0xf0, 0x33, 0xac, 0xea, 0x98, 0xee, 0x3c, 0x30, 0xe7, 0x48, 0x6b, 0xaa, 0x6a, 0x6c, 0x93,
-	0xc7, 0x00, 0x3e, 0x3a, 0x68, 0x72, 0xbc, 0x32, 0xe7, 0xb4, 0x2e, 0xa3, 0x19, 0x4f, 0x18, 0xbf,
-	0x09, 0x6c, 0xc7, 0xba, 0x34, 0x7d, 0x73, 0x41, 0x35, 0x15, 0x4f, 0x3d, 0xe4, 0x00, 0x1a, 0x0b,
-	0x5c, 0x30, 0x7f, 0x49, 0x1b, 0x32, 0x16, 0x59, 0xe4, 0x10, 0x5a, 0x67, 0x97, 0xd7, 0xd3, 0x5b,
-	0xd3, 0x47, 0x4e, 0x77, 0x64, 0x28, 0x75, 0x84, 0x27, 0x8a, 0xf6, 0xe0, 0xb4, 0x39, 0xac, 0x85,
-	0x27, 0x8a, 0x6d, 0x42, 0xa0, 0xee, 0xd8, 0xee, 0x17, 0xda, 0x92, 0x49, 0xf2, 0x9b, 0x3c, 0x83,
-	0xae, 0x1b, 0x2c, 0xa6, 0xf6, 0xdc, 0x35, 0x05, 0xf3, 0x6d, 0xe4, 0x14, 0x86, 0x95, 0x23, 0xcd,
-	0x58, 0xf1, 0x12, 0x1d, 0x3a, 0xdc, 0x9e, 0x5f, 0xdd, 0xfa, 0xc8, 0x6f, 0x99, 0x63, 0xd1, 0xb6,
-	0x5c, 0x95, 0xf3, 0x91, 0x21, 0xb4, 0x79, 0xa6, 0x50, 0x47, 0x6e, 0x9f, 0x75, 0x85, 0x77, 0xe2,
-	0xc2, 0x14, 0x01, 0xa7, 0xbb, 0xea, 0x4e, 0xca, 0x0a, 0xef, 0x34, 0x93, 0x00, 0x58, 0x23, 0x41,
-	0xbb, 0xea, 0x4e, 0x89, 0x83, 0xbc, 0x84, 0x9e, 0x63, 0x72, 0x31, 0x46, 0xcf, 0x61, 0x4b, 0xb4,
-	0x0c, 0x75, 0x1f, 0xba, 0x27, 0xd7, 0x95, 0x85, 0xc8, 0x09, 0xf4, 0x99, 0x27, 0x6c, 0xe6, 0x8e,
-	0x1c, 0x87, 0xdd, 0x8f, 0x03, 0xcf, 0xb1, 0x67, 0xa6, 0x40, 0xba, 0x3f, 0xac, 0x1c, 0x35, 0x8d,
-	0xd2, 0x98, 0xfe, 0xb3, 0x0a, 0xbd, 0x6b, 0xcf, 0xfa, 0xcb, 0x82, 0x3f, 0x63, 0x81, 0xae, 0xc3,
-	0xfe, 0x39, 0x8a, 0x8d, 0x3d, 0xd4, 0xdf, 0x01, 0x39, 0x47, 0xf1, 0x30, 0xe5, 0xaa, 0xdc, 0x6a,
-	0x92, 0xfb, 0xab, 0x0a, 0x7d, 0xa5, 0xd6, 0x08, 0xed, 0x75, 0x40, 0xa5, 0x92, 0x1f, 0xaf, 0x48,
-	0x3e, 0x01, 0xb1, 0x56, 0x0e, 0x62, 0x7d, 0x23, 0x88, 0xda, 0x16, 0x10, 0x1b, 0x05, 0x10, 0xe3,
-	0x96, 0xef, 0x64, 0x5a, 0xae, 0xc4, 0x32, 0xf2, 0x3c, 0x9f, 0xdd, 0xa1, 0x45, 0x9b, 0xb2, 0x93,
-	0x59, 0x57, 0x08, 0x31, 0xb7, 0xe7, 0x63, 0x74, 0x6d, 0xb4, 0x24, 0x5a, 0x9a, 0x91, 0x3a, 0xf2,
-	0x92, 0x81, 0x55, 0xc9, 0x0c, 0xa0, 0x79, 0xc7, 0x04, 0xfa, 0x7c, 0x32, 0xa6, 0x6d, 0x45, 0x80,
-	0xd8, 0x5e, 0x2b, 0x8e, 0xce, 0x06, 0x71, 0x3c, 0x85, 0x7f, 0xce, 0x51, 0x6c, 0x6e, 0xb8, 0x3e,
-	0x83, 0x5d, 0x25, 0xc4, 0x78, 0x41, 0x16, 0x81, 0xca, 0x0a, 0x02, 0xa7, 0x70, 0x10, 0x70, 0xbc,
-	0x28, 0xd1, 0x75, 0x55, 0x9e, 0x63, 0x4d, 0x54, 0xff, 0x51, 0x81, 0x7f, 0x15, 0xfc, 0x0f, 0x1e,
-	0xfc, 0xeb, 0x1e, 0x12, 0x42, 0x61, 0x47, 0x9d, 0x87, 0xd3, 0x9a, 0x6c, 0x52, 0x6c, 0x86, 0x82,
-	0x98, 0x39, 0x36, 0xba, 0x62, 0x8a, 0x9c, 0xdb, 0xe1, 0x82, 0xba, 0x5c, 0xb0, 0xe2, 0x5d, 0xdb,
-	0x4b, 0x6d, 0x73, 0x2f, 0xa7, 0x82, 0x79, 0x9b, 0x15, 0x72, 0x0a, 0x4d, 0x03, 0xb9, 0xc7, 0x5c,
-	0x8e, 0x99, 0xa9, 0x59, 0x91, 0x2c, 0x88, 0xa7, 0x26, 0x81, 0xfa, 0x0d, 0xb3, 0x96, 0xf2, 0x5a,
-	0x1d, 0x43, 0x7e, 0x9f, 0x7c, 0xd7, 0xa0, 0x36, 0xba, 0x9c, 0x90, 0xe7, 0xa0, 0xc9, 0x57, 0x96,
-	0xf4, 0xd4, 0xeb, 0x7b, 0x9c, 0x7d, 0x73, 0x07, 0x7b, 0x91, 0x33, 0xd9, 0xe2, 0x3d, 0x74, 0xb2,
-	0x2f, 0x20, 0x19, 0x44, 0x0b, 0x4a, 0x9e, 0xc5, 0xd2, 0xe4, 0xec, 0xe0, 0x4c, 0x92, 0x4b, 0xa6,
-	0x69, 0x31, 0xf9, 0x03, 0xec, 0xe6, 0xd4, 0x4c, 0x1e, 0xe5, 0xb6, 0xce, 0x53, 0xae, 0x98, 0xfe,
-	0x06, 0x20, 0x25, 0x26, 0xa1, 0x51, 0xb8, 0xc0, 0xd5, 0x62, 0xe2, 0x47, 0xe8, 0xe6, 0x69, 0x44,
-	0x0e, 0x73, 0x1b, 0xaf, 0xb0, 0xab, 0x58, 0xe0, 0x05, 0x34, 0x14, 0x37, 0x49, 0x3f, 0x0a, 0xe5,
-	0xc8, 0x5f, 0x4c, 0x78, 0x0d, 0xad, 0x64, 0x30, 0x92, 0xff, 0xd2, 0x93, 0x6e, 0x69, 0xd0, 0x5b,
-	0x68, 0x67, 0x66, 0x25, 0xf9, 0x3f, 0x4d, 0xdc, 0x7a, 0xc4, 0x09, 0xf4, 0x4a, 0xfe, 0x28, 0x91,
-	0x27, 0xd1, 0xba, 0xf5, 0x7f, 0xa2, 0x4a, 0xfb, 0x9c, 0x92, 0x36, 0xe9, 0x73, 0x81, 0xc7, 0x85,
-	0xc4, 0x9b, 0x86, 0xb4, 0x5f, 0xfd, 0x0e, 0x00, 0x00, 0xff, 0xff, 0xfc, 0x42, 0x7b, 0x64, 0x0c,
-	0x0a, 0x00, 0x00,
+	// 606 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0xd1, 0x6e, 0xd3, 0x30,
+	0x14, 0x55, 0xd3, 0xa6, 0x6b, 0x2f, 0xdd, 0xd8, 0xcc, 0x36, 0xcc, 0x98, 0xd0, 0x94, 0x49, 0xa8,
+	0x2f, 0x0c, 0x09, 0xc4, 0x26, 0x90, 0x10, 0x4c, 0x2d, 0xaa, 0x2a, 0xf5, 0xa1, 0x4a, 0xd7, 0x0f,
+	0x70, 0x9b, 0xab, 0x34, 0x22, 0x8d, 0x43, 0xec, 0x80, 0xfa, 0x3d, 0xfc, 0x0a, 0x1f, 0xc5, 0x23,
+	0x8a, 0x9d, 0x26, 0x4d, 0x93, 0x75, 0xe3, 0xa9, 0xbe, 0xf7, 0xe4, 0xdc, 0x6b, 0x9f, 0x73, 0xed,
+	0x42, 0x47, 0x60, 0xf4, 0x13, 0xa3, 0xab, 0x30, 0xe2, 0x92, 0x13, 0x53, 0xfd, 0x58, 0x5f, 0xa1,
+	0x33, 0xe2, 0xae, 0x17, 0xd8, 0xf8, 0x23, 0x46, 0x21, 0xc9, 0x31, 0x98, 0xb8, 0x64, 0x9e, 0x4f,
+	0x6b, 0x17, 0xb5, 0x6e, 0xdb, 0xd6, 0x01, 0x39, 0x83, 0x56, 0xc8, 0x84, 0xf8, 0xc5, 0x23, 0x87,
+	0x1a, 0x0a, 0xc8, 0x62, 0xeb, 0x1b, 0x9c, 0xdc, 0x3a, 0xce, 0xc4, 0x73, 0x03, 0x26, 0x79, 0xe4,
+	0xa1, 0x58, 0x97, 0x3a, 0x83, 0xd6, 0x9c, 0xcf, 0x39, 0x0f, 0x86, 0xfd, 0xb4, 0x5a, 0x16, 0x93,
+	0x43, 0xa8, 0x0f, 0xfb, 0x82, 0x1a, 0x17, 0xf5, 0x6e, 0xdb, 0x4e, 0x96, 0xd6, 0x6f, 0x03, 0xf6,
+	0x7b, 0x0a, 0x1e, 0xb3, 0x95, 0xcf, 0x99, 0x43, 0x0e, 0xc0, 0xc8, 0x98, 0x86, 0xe6, 0x4c, 0xed,
+	0x51, 0xda, 0x3f, 0x59, 0x26, 0x1d, 0x7c, 0x16, 0xb8, 0x31, 0x73, 0x91, 0xd6, 0x75, 0x87, 0x75,
+	0x4c, 0x5e, 0x01, 0x44, 0xe8, 0x23, 0x13, 0x78, 0xc7, 0x5c, 0xda, 0x50, 0xe8, 0x46, 0x26, 0xc1,
+	0x67, 0xb1, 0xe7, 0x3b, 0x63, 0x16, 0xb1, 0x25, 0x35, 0x35, 0x9e, 0x67, 0xc8, 0x29, 0x34, 0x97,
+	0xb8, 0xe4, 0xd1, 0x8a, 0x36, 0x15, 0x96, 0x46, 0xe4, 0x1c, 0xda, 0xbd, 0xf1, 0x74, 0xb2, 0x60,
+	0x11, 0x0a, 0xba, 0xa7, 0xa0, 0x3c, 0x41, 0x08, 0x34, 0x7c, 0x2f, 0xf8, 0x4e, 0x5b, 0x0a, 0x50,
+	0x6b, 0xf2, 0x1a, 0x0e, 0x82, 0x78, 0xb9, 0x21, 0x10, 0x6d, 0x5f, 0xd4, 0xba, 0xa6, 0xbd, 0x95,
+	0x25, 0x16, 0x74, 0x84, 0xe7, 0xde, 0x2d, 0x22, 0x14, 0x0b, 0xee, 0x3b, 0x14, 0xd4, 0x57, 0x85,
+	0x9c, 0x65, 0xc1, 0xe1, 0x00, 0xa5, 0xd6, 0x69, 0xad, 0xf3, 0x96, 0x4e, 0xd6, 0x27, 0x20, 0x03,
+	0x94, 0x43, 0x07, 0x03, 0xe9, 0xc9, 0xd5, 0x6e, 0x63, 0x35, 0xd7, 0xc8, 0xb8, 0x7f, 0x6a, 0x70,
+	0xdc, 0x8b, 0x90, 0x49, 0xb4, 0xb5, 0x54, 0xf7, 0x34, 0x29, 0x98, 0x6b, 0x94, 0xcd, 0x4d, 0x8c,
+	0xaa, 0x57, 0x1b, 0xd5, 0xd8, 0x69, 0x94, 0xf9, 0x80, 0x51, 0xcd, 0x92, 0x51, 0x6b, 0xc9, 0xf7,
+	0x72, 0xc9, 0xad, 0x4b, 0x38, 0x1a, 0xa0, 0xdc, 0x7d, 0x04, 0x6b, 0x0e, 0xfb, 0x7d, 0x0c, 0x7d,
+	0xbe, 0x7a, 0xcc, 0xc0, 0x5e, 0xc3, 0x69, 0x2c, 0x70, 0xc4, 0x84, 0xd4, 0x1c, 0x74, 0xd2, 0xea,
+	0xea, 0xf4, 0x2d, 0xfb, 0x1e, 0xd4, 0x1a, 0xc2, 0x89, 0xd6, 0xf3, 0x71, 0x7e, 0xec, 0xba, 0x68,
+	0x97, 0x70, 0x34, 0x91, 0x3c, 0xdc, 0x6d, 0xfe, 0x35, 0xb4, 0x6c, 0x14, 0x21, 0x0f, 0x04, 0x26,
+	0x23, 0x2c, 0x24, 0x93, 0xb1, 0x50, 0xb8, 0x69, 0xa7, 0x51, 0xa2, 0xd8, 0x8c, 0x3b, 0x2b, 0xd5,
+	0xa0, 0x63, 0xab, 0xf5, 0xbb, 0xbf, 0x0d, 0xa8, 0xdf, 0x8e, 0x87, 0xe4, 0x0d, 0x98, 0xea, 0x3d,
+	0x20, 0xcf, 0xf4, 0x3b, 0x71, 0xb5, 0xf9, 0x3a, 0x9c, 0x3d, 0x4d, 0x93, 0x59, 0x8b, 0x0f, 0xd0,
+	0xd1, 0xc7, 0xd3, 0xbb, 0x22, 0xc7, 0xe9, 0x07, 0x85, 0x9b, 0x5c, 0x49, 0x9b, 0x86, 0xce, 0x7f,
+	0xd3, 0x3e, 0xc3, 0x7e, 0x61, 0x38, 0xc9, 0xcb, 0x35, 0xaf, 0x62, 0x64, 0xcb, 0xf4, 0x1b, 0x80,
+	0x7c, 0x2a, 0x08, 0x4d, 0xe1, 0xd2, 0xa0, 0x94, 0x89, 0x5f, 0xe0, 0xa0, 0x68, 0x22, 0x39, 0x2f,
+	0x34, 0xde, 0xf2, 0xb6, 0x5c, 0xe0, 0x2d, 0x34, 0xf5, 0x60, 0x64, 0x27, 0x2d, 0x4c, 0x5e, 0x95,
+	0x40, 0xed, 0xec, 0x9e, 0x93, 0xe7, 0xf9, 0x4e, 0x0b, 0xe6, 0x97, 0x69, 0x1f, 0xe1, 0xc9, 0xc6,
+	0xd5, 0x27, 0x2f, 0x72, 0xe2, 0x83, 0x5b, 0xbc, 0x01, 0xc8, 0xa7, 0x2b, 0x13, 0xa7, 0x34, 0x70,
+	0x95, 0xe2, 0x14, 0xdf, 0xff, 0x4c, 0x9c, 0xca, 0xbf, 0x85, 0x52, 0x81, 0x59, 0x53, 0xc5, 0xef,
+	0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x0b, 0x92, 0x5a, 0xe8, 0xa0, 0x06, 0x00, 0x00,
 }

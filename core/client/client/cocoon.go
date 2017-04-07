@@ -13,7 +13,6 @@ import (
 
 	"sync"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto"
@@ -23,41 +22,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeonx/timeago"
 )
-
-// createCocoon creates a cocoon. Expects a contex and a connection object.
-// If allowDup is set to true, duplicate/existing cocoon key check is ignored and the record
-// is overridden
-func createCocoon(ctx context.Context, conn *grpc.ClientConn, cocoon *types.Cocoon, allowDup bool) error {
-
-	client := proto.NewAPIClient(conn)
-	resp, err := client.CreateCocoon(ctx, &proto.CreateCocoonRequest{
-		ID:                   cocoon.ID,
-		URL:                  cocoon.URL,
-		Language:             cocoon.Language,
-		ReleaseTag:           cocoon.ReleaseTag,
-		BuildParam:           cocoon.BuildParam,
-		Memory:               cocoon.Memory,
-		Link:                 cocoon.Link,
-		CPUShares:            cocoon.CPUShares,
-		Releases:             cocoon.Releases,
-		NumSignatories:       cocoon.NumSignatories,
-		SigThreshold:         cocoon.SigThreshold,
-		Signatories:          cocoon.Signatories,
-		CreatedAt:            cocoon.CreatedAt,
-		OptionAllowDuplicate: allowDup,
-	})
-
-	if err != nil {
-		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
-			return types.ErrClientNoActiveSession
-		}
-		return err
-	} else if resp.Status != 200 {
-		return fmt.Errorf("%s", resp.Body)
-	}
-
-	return nil
-}
 
 // CreateCocoon a new cocoon
 func CreateCocoon(cocoon *types.Cocoon) error {
@@ -72,20 +36,6 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		return err
 	}
 
-	release := types.Release{
-		ID:         util.UUID4(),
-		CocoonID:   cocoon.ID,
-		URL:        cocoon.URL,
-		ReleaseTag: cocoon.ReleaseTag,
-		Language:   cocoon.Language,
-		BuildParam: cocoon.BuildParam,
-		Link:       cocoon.Link,
-		VotersID:   []string{},
-		CreatedAt:  cocoon.CreatedAt,
-	}
-
-	cocoon.Releases = []string{release.ID}
-
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 
@@ -96,60 +46,21 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	}
 	defer conn.Close()
 
-	md := metadata.Pairs("access_token", userSession.Token)
-	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, md)
-	if err = createCocoon(ctx, conn, cocoon, false); err != nil {
-		stopSpinner()
-		return err
-	}
-	client := proto.NewAPIClient(conn)
-	resp, err := client.CreateRelease(ctx, &proto.CreateReleaseRequest{
-		ID:         release.ID,
-		CocoonID:   cocoon.ID,
-		URL:        cocoon.URL,
-		Link:       cocoon.Link,
-		Language:   cocoon.Language,
-		ReleaseTag: cocoon.ReleaseTag,
-		BuildParam: cocoon.BuildParam,
-		CreatedAt:  cocoon.CreatedAt,
-	})
-
+	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
+	var protoCreateCocoonReq proto.CocoonPayload
+	cstructs.Copy(cocoon, &protoCreateCocoonReq)
+	cocoonJSON, err := proto.NewAPIClient(conn).CreateCocoon(ctx, &protoCreateCocoonReq)
 	if err != nil {
 		stopSpinner()
 		return err
-	} else if resp.Status != 200 {
-		stopSpinner()
-		return fmt.Errorf("%s", resp.Body)
 	}
 
-	resp, err = client.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: userSession.Email,
-	})
-	if err != nil {
-		return err
-	}
-
-	var identity types.Identity
-	if err = util.FromJSON(resp.Body, &identity); err != nil {
-		return common.JSONCoerceErr("identity", err)
-	}
-
-	// add cocoon id to the identity and override the identity key
-	identity.Cocoons = append(identity.Cocoons, cocoon.ID)
-	var protoCreateIdentityReq proto.CreateIdentityRequest
-	cstructs.Copy(identity, &protoCreateIdentityReq)
-	protoCreateIdentityReq.OptionAllowDuplicate = true
-	util.Printify(protoCreateIdentityReq)
-	_, err = client.CreateIdentity(ctx, &protoCreateIdentityReq)
-	if err != nil {
-		return err
-	}
+	util.FromJSON(cocoonJSON.Body, cocoon)
 
 	stopSpinner()
 	log.Info(`==> New cocoon created`)
 	log.Infof(`==> Cocoon ID:  %s`, cocoon.ID)
-	log.Infof(`==> Release ID: %s`, release.ID)
+	log.Infof(`==> Release ID: %s`, cocoon.Releases[0])
 
 	return nil
 }
@@ -158,7 +69,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 // release. A new release is created when Release fields are
 // set/defined. No release is created if updated release fields match
 // existing fields.
-func UpdateCocoon(id string, upd *proto.UpdateCocoonRequest) error {
+func UpdateCocoon(id string, upd *proto.CocoonPayload) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -166,16 +77,14 @@ func UpdateCocoon(id string, upd *proto.UpdateCocoonRequest) error {
 	}
 
 	stopSpinner := util.Spinner("Please wait")
+
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
 	defer conn.Close()
 
-	md := metadata.Pairs("access_token", userSession.Token)
-	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, md)
-
+	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	cl := proto.NewAPIClient(conn)
@@ -421,8 +330,7 @@ func StopCocoon(ids []string) error {
 
 		ctx, cc = context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
-		md := metadata.Pairs("access_token", userSession.Token)
-		ctx = metadata.NewContext(ctx, md)
+		ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
 		_, err = cl.StopCocoon(ctx, &proto.StopCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
@@ -479,7 +387,6 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 	cl := proto.NewAPIClient(conn)
 
 	for _, id := range ids {
-		wg.Add(1)
 		id := id
 		ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
 		defer cc()
@@ -503,6 +410,7 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 			continue
 		}
 
+		wg.Add(1)
 		go func() {
 			var cocoon types.Cocoon
 			err = util.FromJSON(resp.Body, &cocoon)
@@ -538,19 +446,13 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 }
 
 // AddSignatories adds one or more valid identities to a cocoon's signatory list.
-// All valid identities are included and invalid ones will process an error log..
+// All valid identities are included and invalid ones will produce an error log..
 func AddSignatories(cocoonID string, ids []string) error {
-
-	var validIDs []string
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
 		return err
 	}
-
-	md := metadata.Pairs("access_token", userSession.Token)
-	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, md)
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -559,98 +461,39 @@ func AddSignatories(cocoonID string, ids []string) error {
 	defer conn.Close()
 
 	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
+
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
 	cl := proto.NewAPIClient(conn)
-	resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID: cocoonID,
+	resp, err := cl.AddSignatories(ctx, &proto.AddSignatoriesRequest{
+		CocoonID: cocoonID,
+		IDs:      ids,
 	})
-	if err != nil {
-		stopSpinner()
-		if common.CompareErr(err, types.ErrInvalidOrExpiredToken) == 0 {
-			return types.ErrClientNoActiveSession
-		} else if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-			return fmt.Errorf("the cocoon (%s) was not found", common.GetShortID(cocoonID))
-		}
-		return err
-	}
-
-	var cocoon types.Cocoon
-	if err = util.FromJSON(resp.Body, &cocoon); err != nil {
-		stopSpinner()
-		return common.JSONCoerceErr("cocoon", err)
-	}
-
-	// ensure the number of signatories to add will not exceed the total number of required signatories
-	availableSignatorySlots := cocoon.NumSignatories - int32(len(cocoon.Signatories))
-	if availableSignatorySlots < int32(len(ids)) {
-		stopSpinner()
-		if availableSignatorySlots == 0 {
-			return fmt.Errorf("max signatories already added. You can't add more")
-		}
-		strPl := "signatures"
-		if availableSignatorySlots == 1 {
-			strPl = "signatory"
-		}
-		return fmt.Errorf("maximum required signatories cannot be exceeded. You can only add %d more %s", availableSignatorySlots, strPl)
-	}
-
-	// find identity and included in cocoon signatories field
-	for _, id := range ids {
-
-		var req = proto.GetIdentityRequest{ID: id}
-		shortID := common.GetShortID(id)
-		if govalidator.IsEmail(id) {
-			req.Email = id
-			req.ID = ""
-			id = (&types.Identity{Email: id}).GetID()
-			shortID = common.GetShortID(id)
-		}
-
-		_, err := cl.GetIdentity(ctx, &req)
-		if err != nil {
-			stopSpinner()
-			if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
-				log.Infof("Err: Identity (%s) is unknown. Skipped.", shortID)
-				continue
-			} else {
-				return fmt.Errorf("failed to get identity: %s", err)
-			}
-		}
-		if util.InStringSlice(cocoon.Signatories, id) {
-			stopSpinner()
-			log.Infof("Warning: Identity (%s) is already a signatory. Skipped.", shortID)
-			continue
-		}
-
-		validIDs = append(validIDs, id)
-	}
-
-	// append valid ides to the cocoon's existing signatories
-	cocoon.Signatories = append(cocoon.Signatories, validIDs...)
-
-	conn, err = grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		stopSpinner()
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-	defer conn.Close()
-
-	if err = createCocoon(ctx, conn, &cocoon, true); err != nil {
-		stopSpinner()
-		return err
-	}
 
 	stopSpinner()
 
-	if len(validIDs) == 0 {
+	if err != nil {
+		return err
+	}
+
+	var r map[string][]string
+	util.FromJSON(resp.Body, &r)
+
+	if len(r["added"]) == 0 {
 		log.Info("No new signatory was added")
-	} else if len(validIDs) == 1 {
+	} else if len(r["added"]) == 1 {
 		log.Info(`==> Successfully added a signatory:`)
 	} else {
 		log.Info(`==> Successfully added the following signatories:`)
 	}
 
-	for i, id := range validIDs {
+	for i, id := range r["added"] {
 		log.Infof(`==> %d. %s`, i+1, id)
+	}
+
+	for _, e := range r["errs"] {
+		log.Info("Err:", e)
 	}
 
 	return nil

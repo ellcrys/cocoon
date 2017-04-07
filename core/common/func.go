@@ -91,5 +91,8 @@ func GetShortID(id string) string {
 	if len(id) <= 12 {
 		return id
 	}
+	if govalidator.IsEmail(id) {
+		return id
+	}
 	return id[0:11]
 }

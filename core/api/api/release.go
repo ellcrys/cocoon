@@ -18,42 +18,18 @@ func (api *API) makeReleaseKey(id string) string {
 	return fmt.Sprintf("release.%s", id)
 }
 
-// CreateRelease creates a release
-func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseRequest) (*proto.Response, error) {
-
-	var release types.Release
-	cstructs.Copy(req, &release)
-	allowDup := req.OptionAllowDuplicate
-	req = nil
-
-	if err := ValidateRelease(&release); err != nil {
-		return nil, err
-	}
+// putRelease adds a new release. If another release with a matching key
+// exists, it is effectively shadowed
+func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer ordererConn.Close()
 
-	// check if release with matching ID already exists
+	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
-
-	if !allowDup {
-		_, err = odc.Get(ctx, &orderer_proto.GetParams{
-			CocoonID: "",
-			Key:      api.makeReleaseKey(release.ID),
-			Ledger:   types.GetGlobalLedgerName(),
-		})
-
-		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
-			return nil, err
-		} else if err == nil {
-			return nil, fmt.Errorf("a release with matching id already exists")
-		}
-	}
-
-	value, _ := util.ToJSON(release)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID:   "",
 		LedgerName: types.GetGlobalLedgerName(),
@@ -61,23 +37,47 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
 				Key:       api.makeReleaseKey(release.ID),
-				Value:     string(value),
-				CreatedAt: time.Now().Unix(),
+				Value:     string(release.ToJSON()),
+				CreatedAt: createdAt.Unix(),
 			},
 		},
 	})
+
+	return err
+}
+
+// CreateRelease creates a release
+func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseRequest) (*proto.Response, error) {
+
+	var release types.Release
+	cstructs.Copy(req, &release)
+	release.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	req = nil
+
+	if err := ValidateRelease(&release); err != nil {
+		return nil, err
+	}
+
+	_, err := api.getRelease(ctx, release.ID)
+	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+		return nil, err
+	} else if err == nil {
+		return nil, fmt.Errorf("a release with matching id already exists")
+	}
+
+	err = api.putRelease(ctx, &release)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proto.Response{
 		Status: 200,
-		Body:   value,
+		Body:   release.ToJSON(),
 	}, nil
 }
 
-// GetRelease returns a release
-func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*proto.Response, error) {
+// getRelease gets an existing release and returns a release object
+func (api *API) getRelease(ctx context.Context, id string) (*types.Release, error) {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -86,18 +86,31 @@ func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*
 	defer ordererConn.Close()
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
-	ctx, _ = context.WithTimeout(ctx, 2*time.Minute)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: "",
-		Key:      api.makeReleaseKey(req.ID),
+		Key:      api.makeReleaseKey(id),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	var release types.Release
+	util.FromJSON([]byte(tx.GetValue()), &release)
+
+	return &release, nil
+}
+
+// GetRelease returns a release
+func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*proto.Response, error) {
+
+	release, err := api.getRelease(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &proto.Response{
-		Body:   []byte(tx.GetValue()),
+		Body:   []byte(release.ToJSON()),
 		Status: 200,
 	}, nil
 }

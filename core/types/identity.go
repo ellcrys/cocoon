@@ -9,6 +9,7 @@ type Identity struct {
 	Password       string
 	Cocoons        []string
 	ClientSessions []string
+	CreatedAt      string
 }
 
 // NewIdentity creates a new Identity

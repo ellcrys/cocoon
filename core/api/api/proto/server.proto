@@ -3,16 +3,16 @@ package proto;
 
 service API {
     rpc Login(LoginRequest) returns (Response);
-    rpc CreateCocoon(CreateCocoonRequest) returns (Response);
-    rpc UpdateCocoon(UpdateCocoonRequest) returns (Response);
+    rpc CreateCocoon(CocoonPayload) returns (Response);
+    rpc UpdateCocoon(CocoonPayload) returns (Response);
     rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
     rpc GetCocoon(GetCocoonRequest) returns (Response);
     rpc GetIdentity(GetIdentityRequest) returns (Response);
-    rpc AddCocoonToIdentity(AddCocoonToIdentityRequest) returns (Response);
     rpc StopCocoon(StopCocoonRequest) returns (Response);
+    rpc AddSignatories(AddSignatoriesRequest) returns (Response);
 }
 
 message LoginRequest {
@@ -20,12 +20,12 @@ message LoginRequest {
     string password = 2;
 }
 
-message AddCocoonToIdentityRequest {
-    string email = 1;
-    string cocoonId = 2;
+message AddSignatoriesRequest {
+    string cocoonID = 1;
+    repeated string IDs = 2;
 }
 
-message CreateCocoonRequest {
+message CocoonPayload {
     string ID = 1;
     string URL = 2;
     string language = 3;
@@ -33,29 +33,9 @@ message CreateCocoonRequest {
     string buildParam = 5;
     string memory = 6;
     string CPUShares = 7;
-    repeated string releases = 8;
-    string link = 9;
-    int32 numSignatories = 10;
-    int32 sigThreshold = 11;
-    repeated string signatories = 12;
-    string status = 13;
-    string createdAt = 14;
-    string lastDeployedRelease = 15;
-    bool optionAllowDuplicate = 16;  // option to indicate whether duplicate object is allowed
-}
-
-message UpdateCocoonRequest {
-    string ID = 1;
-    string URL = 2;
-    string language = 3;
-    string releaseTag = 4;
-    string buildParam = 5;
-    string memory = 6;
-    string CPUShares = 7;
-    repeated string releases = 8;
-    string link = 9;
-    int32 numSignatories = 10;
-    int32 sigThreshold = 11;
+    string link = 8;
+    int32 numSignatories = 9;
+    int32 sigThreshold = 10;
 }
 
 message GetCocoonRequest {
@@ -75,11 +55,6 @@ message CreateReleaseRequest {
     string releaseTag = 5;
     string buildParam = 6;
     string link = 7;
-    int32 sigApproved = 8;
-    int32 sigDenied = 9;
-    string createdAt = 10;
-    repeated string votersID = 11;
-    bool optionAllowDuplicate = 12;  // option to indicate whether duplicate object is allowed
 }
 
 message GetReleaseRequest {
@@ -94,9 +69,6 @@ message DeployRequest {
 message CreateIdentityRequest {
     string email = 1;
     string password = 2;
-    repeated string cocoons = 3;
-    repeated string clientSessions = 4;
-    bool optionAllowDuplicate = 5;  // option to indicate whether duplicate object is allowed
 }
 
 message StopCocoonRequest {

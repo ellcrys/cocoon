@@ -33,7 +33,7 @@ var updateCmd = &cobra.Command{
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 
-		upd := &proto.UpdateCocoonRequest{
+		upd := &proto.CocoonPayload{
 			ID:             args[0],
 			URL:            url,
 			Language:       lang,
