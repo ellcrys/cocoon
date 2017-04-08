@@ -1,7 +1,11 @@
 package types
 
-import "github.com/ellcrys/util"
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/ellcrys/util"
+)
 
 // Identity defines a user
 type Identity struct {
@@ -29,4 +33,9 @@ func (i *Identity) GetID() string {
 func (i *Identity) ToJSON() []byte {
 	json, _ := util.ToJSON(i)
 	return json
+}
+
+// MakeIdentityKey constructs an identity key
+func MakeIdentityKey(id string) string {
+	return fmt.Sprintf("identity.%s", id)
 }

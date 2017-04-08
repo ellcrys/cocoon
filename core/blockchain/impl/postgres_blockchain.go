@@ -17,17 +17,17 @@ var ChainTableName = "chains"
 // BlockTableName is the name of the transaction block table
 var BlockTableName = "blocks"
 
-// PostgresBlockchain implements the Blockchain inyerface
+// PostgresBlockchain implements the Blockchain interface
 type PostgresBlockchain struct {
 	db *gorm.DB
 }
 
-// GetImplmentationName returns th
-func (b *PostgresBlockchain) GetImplmentationName() string {
+// GetImplementationName returns th
+func (b *PostgresBlockchain) GetImplementationName() string {
 	return "postgres.blockchain"
 }
 
-// Connect connects to a postgress server and returns a client
+// Connect connects to a postgres server and returns a client
 // or error if connection failed.
 func (b *PostgresBlockchain) Connect(dbAddr string) (interface{}, error) {
 
@@ -60,7 +60,7 @@ func (b *PostgresBlockchain) Init(globalChainName string) error {
 		}
 	}
 
-	// Create global vhain if it does not exists
+	// Create global chain if it does not exists
 	var c int
 	if err := b.db.Model(&types.Chain{}).Count(&c).Error; err != nil {
 		return fmt.Errorf("failed to check whether global blockchain exists in the chain list. %s", err)
@@ -120,9 +120,6 @@ func (b *PostgresBlockchain) GetChain(name string) (*types.Chain, error) {
 
 // MakeChainName returns a new chain name prefixed with a namespace
 func (b *PostgresBlockchain) MakeChainName(namespace, name string) string {
-	if name == types.GetGlobalChainName() {
-		namespace = ""
-	}
 	return fmt.Sprintf("%s.%s", namespace, name)
 }
 
@@ -136,8 +133,8 @@ func MakeTxsHash(txs []*types.Transaction) string {
 	return util.Sha256(strings.Join(txHashes, "."))
 }
 
-// VerifyTxs checks whether the hashs of a trnsactions are valid hashs
-/// based on the hash algorithm defined by Transaction.MakeHash.
+// VerifyTxs checks whether the hash of a transactions are valid hashes
+// based on the hash algorithm defined by Transaction.MakeHash.
 func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 	for _, tx := range txs {
 		if tx.Hash != tx.MakeHash() {
@@ -148,7 +145,7 @@ func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 }
 
 // MakeGenesisBlockHash creates the standard hash for the first block of a chain
-// whic is a sha256 hash of a concantenated chain name and 64 chars of `0`.
+// which is a sha256 hash of a concatenated chain name and 64 chars of `0`.
 func MakeGenesisBlockHash(chainName string) string {
 	return util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64)))
 }

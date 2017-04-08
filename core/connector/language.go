@@ -1,7 +1,7 @@
 package connector
 
 // Language defines a cocoon code language
-// and its unique deployment procudures.
+// and its unique deployment procedure.
 type Language interface {
 	GetName() string
 	GetImage() string

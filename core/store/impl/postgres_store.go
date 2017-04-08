@@ -3,7 +3,6 @@ package impl
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"os"
@@ -32,12 +31,12 @@ type PostgresStore struct {
 	db *gorm.DB
 }
 
-// GetImplmentationName returns the name of this store implementation
-func (s *PostgresStore) GetImplmentationName() string {
+// GetImplementationName returns the name of this store implementation
+func (s *PostgresStore) GetImplementationName() string {
 	return "postgres.store"
 }
 
-// Connect connects to a postgress server and returns a client
+// Connect connects to a postgres server and returns a client
 // or error if connection failed.
 func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 
@@ -54,7 +53,7 @@ func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 
 // MakeLegderHash takes a ledger and computes a hash
 func (s *PostgresStore) MakeLegderHash(ledger *types.Ledger) string {
-	return util.Sha256(fmt.Sprintf("%s|%t|%d", ledger.Name, ledger.Public, ledger.CreatedAt))
+	return util.Sha256(fmt.Sprintf("%s.%t.%d", ledger.Name, ledger.Public, ledger.CreatedAt))
 }
 
 // Init initializes the types. Creates the necessary tables such as the
@@ -108,7 +107,7 @@ func Destroy(dbAddr string) error {
 	return db.DropTable(types.Ledger{}, types.Transaction{}).Error
 }
 
-// Clear truncatest the database tables.
+// Clear the database tables.
 // Will only work in a test environment (Test Only!!!)
 func Clear(dbAddr string) error {
 
@@ -307,27 +306,6 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 	}
 
 	return txs, nil
-}
-
-// MakeLedgerName creates a ledger name for use for creating or querying a ledger.
-// Accepts a namespace value and the ledger name.
-// If name provided is same as the GlobalLedgerName, then no namespace is required.
-func (s *PostgresStore) MakeLedgerName(namespace, name string) string {
-	if name == types.GetGlobalLedgerName() {
-		namespace = ""
-	}
-	return fmt.Sprintf("%s.%s", namespace, name)
-}
-
-// MakeTxKey creates a transaction key name for use for creating or querying a transaction.
-// Accepts a namespace value and the key name.
-func (s *PostgresStore) MakeTxKey(namespace, name string) string {
-	return fmt.Sprintf("%s.%s", namespace, name)
-}
-
-// GetActualKeyFromTxKey returns the real key name from a transaction key
-func (s *PostgresStore) GetActualKeyFromTxKey(key string) string {
-	return strings.Split(key, ".")[1]
 }
 
 // Close releases any resource held

@@ -29,11 +29,6 @@ var (
 	CocoonStatusStopped = "stopped"
 )
 
-// makeCocoonKey constructs a cocoon key
-func (api *API) makeCocoonKey(id string) string {
-	return fmt.Sprintf("cocoon.%s", id)
-}
-
 // updateCocoonStatusOnStarted checks on interval the cocoon status and update the
 // status field when the cocoon status is `started`. It returns immediately
 // an error is encountered. The function will block till success or failure.
@@ -64,12 +59,12 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID:   "",
+		CocoonID: types.SystemCocoonID,
 		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
-				Key:       api.makeCocoonKey(cocoon.ID),
+				Key:       types.MakeCocoonKey(cocoon.ID),
 				Value:     string(cocoon.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
@@ -309,8 +304,8 @@ func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error)
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      api.makeCocoonKey(id),
+		CocoonID: types.SystemCocoonID,
+		Key:      types.MakeCocoonKey(id),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 	if err != nil {

@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
@@ -40,4 +41,15 @@ func (t *Transaction) MakeHash() string {
 func (t *Transaction) ToJSON() []byte {
 	json, _ := util.ToJSON(t)
 	return json
+}
+
+// MakeTxKey creates a transaction key name for storing and querying a transaction.
+// Accepts a namespace value and the key name.
+func MakeTxKey(namespace, name string) string {
+	return fmt.Sprintf("%s.%s", namespace, name)
+}
+
+// GetActualKeyFromTxKey returns the real key name from a transaction key
+func GetActualKeyFromTxKey(key string) string {
+	return strings.Split(key, ".")[1]
 }

@@ -13,11 +13,6 @@ import (
 	context "golang.org/x/net/context"
 )
 
-// makeIdentityKey constructs an identity key
-func (api *API) makeReleaseKey(id string) string {
-	return fmt.Sprintf("release.%s", id)
-}
-
 // putRelease adds a new release. If another release with a matching key
 // exists, it is effectively shadowed
 func (api *API) putRelease(ctx context.Context, release *types.Release) error {
@@ -31,12 +26,12 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID:   "",
+		CocoonID: types.SystemCocoonID,
 		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
-				Key:       api.makeReleaseKey(release.ID),
+				Key:       types.MakeReleaseKey(release.ID),
 				Value:     string(release.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
@@ -87,8 +82,8 @@ func (api *API) getRelease(ctx context.Context, id string) (*types.Release, erro
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      api.makeReleaseKey(id),
+		CocoonID: types.SystemCocoonID,
+		Key:      types.MakeReleaseKey(id),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 	if err != nil {

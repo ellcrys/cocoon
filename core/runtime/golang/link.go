@@ -7,7 +7,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
-	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -19,16 +18,14 @@ type Link struct {
 	native        bool
 }
 
-// NewLink creates a new instance that represents
-// a link to a cocoon
+// NewLink creates a new link to a cocoon
 func NewLink(cocoonID string) *Link {
 	return &Link{
 		cocoonID: cocoonID,
 	}
 }
 
-// NewNativeLink create a new instance of the running cocoon or
-// a natively linked cocoon.
+// NewNativeLink create a new native link to a cocoon
 func NewNativeLink(cocoonID string) *Link {
 	return &Link{
 		cocoonID: cocoonID,
@@ -72,7 +69,7 @@ func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bo
 // invoke transaction (TxCreateLedger) to the connector.
 // If chained is set to true, a blockchain is created and subsequent
 // PUT operations to the ledger will be included in the types. Otherwise,
-// PUT operations will only be incuded in the types.
+// PUT operations will only be included in the types.
 func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
 	if util.Sha256(name) == GetGlobalLedger() {
@@ -94,7 +91,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 
 	var ledger types.Ledger
 	if err = util.FromJSON(result, &ledger); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
+		return nil, fmt.Errorf("failed to unmarshal response data")
 	}
 
 	return &ledger, nil
@@ -116,7 +113,7 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 
 	var ledger types.Ledger
 	if err = util.FromJSON(result, &ledger); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
+		return nil, fmt.Errorf("failed to unmarshal response data")
 	}
 
 	return &ledger, nil
@@ -132,14 +129,12 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 		return nil, err
 	}
 
-	store := impl.PostgresStore{}
-
 	tx := &types.Transaction{
 		ID:             util.UUID4(),
 		Ledger:         ledger.Name,
-		LedgerInternal: store.MakeLedgerName(link.GetCocoonID(), ledger.Name),
+		LedgerInternal: types.MakeLedgerName(link.GetCocoonID(), ledger.Name),
 		Key:            key,
-		KeyInternal:    store.MakeTxKey(link.GetCocoonID(), key),
+		KeyInternal:    types.MakeTxKey(link.GetCocoonID(), key),
 		Value:          string(value),
 		CreatedAt:      time.Now().Unix(),
 	}
@@ -151,6 +146,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 		blockMaker.Add(&Entry{
 			Tx:       tx,
 			RespChan: respChan,
+			LinkTo:   link.GetCocoonID(),
 		})
 		result := <-respChan
 
@@ -168,7 +164,6 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	}
 
 	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
-
 	_, err = sendLedgerOp(&connector_proto.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
@@ -207,7 +202,7 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 	var tx types.Transaction
 	if err = util.FromJSON(result, &tx); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
+		return nil, fmt.Errorf("failed to unmarshal response data")
 	}
 
 	if tx.Block.ID == "" {
@@ -238,7 +233,7 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 
 	var tx types.Transaction
 	if err = util.FromJSON(result, &tx); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
+		return nil, fmt.Errorf("failed to unmarshal response data")
 	}
 
 	if tx.Block.ID == "" {
@@ -269,7 +264,7 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
 	var blk types.Block
 	if err = util.FromJSON(result, &blk); err != nil {
-		return nil, fmt.Errorf("failed to unmarshall response data")
+		return nil, fmt.Errorf("failed to unmarshal response data")
 	}
 
 	return &blk, nil

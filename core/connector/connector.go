@@ -19,6 +19,7 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
+	"github.com/ncodes/cocoon/core/orderer"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 )
@@ -47,14 +48,16 @@ type Connector struct {
 	containerRunning  bool
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
+	ordererDiscovery  *orderer.Discovery
 }
 
 // NewConnector creates a new connector
 func NewConnector(req *Request, waitCh chan bool) *Connector {
 	return &Connector{
-		req:     req,
-		waitCh:  waitCh,
-		monitor: monitor.NewMonitor(),
+		req:              req,
+		waitCh:           waitCh,
+		monitor:          monitor.NewMonitor(),
+		ordererDiscovery: orderer.NewDiscovery(),
 	}
 }
 
@@ -171,29 +174,27 @@ func (cn *Connector) prepareContainer(req *Request, lang Language) (*docker.Cont
 
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
-		if len(req.BuildParams) > 0 {
 
+		if len(req.BuildParams) == 0 {
+			log.Info("No build parameters provided. Skipping build step")
+		} else {
+			log.Info("Parsing build parameters")
 			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
 			}
-
 			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
 				return nil, fmt.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 			}
-		}
+			if err = lang.SetBuildParams(buildParams); err != nil {
+				return nil, fmt.Errorf("failed to set and validate build parameter. %s", err)
+			}
 
-		if err = lang.SetBuildParams(buildParams); err != nil {
-			return nil, fmt.Errorf("failed to set and validate build parameter. %s", err)
+			err = cn.build(newContainer, lang)
+			if err != nil {
+				return nil, fmt.Errorf(err.Error())
+			}
 		}
-
-		err = cn.build(newContainer, lang)
-		if err != nil {
-			return nil, fmt.Errorf(err.Error())
-		}
-
-	} else {
-		log.Info("Cocoon code does not require a build processing. Skipped.")
 	}
 
 	if err = cn.configFirewall(newContainer, req); err != nil {
@@ -455,7 +456,7 @@ func (cn *Connector) stopContainer(id string) error {
 // to execute a command in a running container. If container is not running, it starts it.
 // It accepts the container, a unique name for the execution
 // and a callback function that is passed a lifecycle status and a value.
-// If priviledged is set to true, command will attain root powers.
+// If privileged is set to true, command will attain root powers.
 // Supported statuses are before (before command is executed), after (after command is executed)
 // and end (when command exits).
 func (cn *Connector) execInContainer(container *docker.Container, name string, command []string, priviledged bool, logger *logging.Logger, cb func(string, interface{}) error) error {

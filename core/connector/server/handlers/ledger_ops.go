@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
@@ -26,8 +27,19 @@ func NewLedgerOperationHandler(cocoonID string, ordererDiscovery *orderer.Discov
 	}
 }
 
+// checkACL checks the operation against the access level permission
+// for non native cocoon accessing resources of a different cocoon.
+func (l *LedgerOperations) checkACL(op *connector_proto.LedgerOperation) error {
+	return acl.CheckACL(l.CocoonID, op.GetLinkTo(), op.GetName())
+}
+
 // Handle handles all types of ledger operations
 func (l *LedgerOperations) Handle(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+
+	if err := l.checkACL(op); err != nil {
+		return nil, err
+	}
+
 	switch op.GetName() {
 	case types.TxCreateLedger:
 		return l.createLedger(ctx, op)
@@ -98,15 +110,9 @@ func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.Le
 	}
 	defer ordererConn.Close()
 
-	// if name is the global ledger, then a cocoon code id is not required.
-	name := op.GetParams()[0]
-	if name == types.GetGlobalLedgerName() {
-		cocoonID = ""
-	}
-
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	result, err := odc.GetLedger(ctx, &orderer_proto.GetLedgerParams{
-		Name:     name,
+		Name:     op.GetParams()[0],
 		CocoonID: cocoonID,
 	})
 
@@ -131,6 +137,10 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 		cocoonID = op.GetLinkTo()
 	}
 
+	if _, err := l.getLedger(ctx, op); err != nil {
+		return nil, err
+	}
+
 	ordererConn, err := l.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
@@ -138,7 +148,6 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 	defer ordererConn.Close()
 
 	var txs []*orderer_proto.Transaction
-
 	err = util.FromJSON(op.GetBody(), &txs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coerce transaction from bytes to order_proto.Transaction")

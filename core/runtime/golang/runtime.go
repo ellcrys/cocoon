@@ -40,6 +40,9 @@ var (
 	// stop channel to stop the server/cocoon code
 	serverDone chan bool
 
+	// System link
+	System = NewLink(types.SystemCocoonID)
+
 	// Default runtime link
 	defaultLink = NewNativeLink(GetID())
 
@@ -97,6 +100,11 @@ func GetCocoonID() string {
 	return os.Getenv("COCOON_ID")
 }
 
+// GetSystemLink returns a readonly the system link
+func GetSystemLink() *Link {
+	return System
+}
+
 // Run starts the stub server, takes a cocoon code and attempts to initialize it..
 func Run(cc CocoonCode) {
 
@@ -122,7 +130,7 @@ func Run(cc CocoonCode) {
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
 
-	defaultLink.SetDefaultLedger(types.GetGlobalLedgerName())
+	System.SetDefaultLedger(types.GetGlobalLedgerName())
 
 	ccode = cc
 
@@ -168,7 +176,6 @@ func blockCommitter(entries []*Entry) interface{} {
 
 	ledgerName := entries[0].Tx.Ledger
 	txsJSON, _ := util.ToJSON(txs)
-
 	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
@@ -182,7 +189,7 @@ func blockCommitter(entries []*Entry) interface{} {
 	}
 
 	if err = util.FromJSON(result, &block); err != nil {
-		return fmt.Errorf("failed to unmarshall response data")
+		return fmt.Errorf("failed to unmarshal response data")
 	}
 
 	return &block

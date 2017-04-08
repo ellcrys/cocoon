@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ellcrys/util"
@@ -13,11 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	context "golang.org/x/net/context"
 )
-
-// makeIdentityKey constructs an identity key
-func (api *API) makeIdentityKey(id string) string {
-	return fmt.Sprintf("identity.%s", id)
-}
 
 // putIdentity adds a new identity. If another identity with a matching key
 // exists, it is effectively shadowed
@@ -32,12 +26,12 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID:   "",
+		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetGlobalLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
-				Key:       api.makeIdentityKey(identity.GetID()),
+				Key:       types.MakeIdentityKey(identity.GetID()),
 				Value:     string(identity.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
@@ -99,8 +93,8 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
-		CocoonID: "",
-		Key:      api.makeIdentityKey(id),
+		CocoonID: types.SystemCocoonID,
+		Key:      types.MakeIdentityKey(id),
 		Ledger:   types.GetGlobalLedgerName(),
 	})
 

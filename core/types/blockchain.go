@@ -4,7 +4,7 @@ package types
 type Blockchain interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(name string) error
-	GetImplmentationName() string
+	GetImplementationName() string
 	MakeChainName(namespace, name string) string
 	CreateChain(name string, public bool) (*Chain, error)
 	GetChain(name string) (*Chain, error)

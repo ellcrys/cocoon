@@ -1,6 +1,10 @@
 package types
 
-import "github.com/ellcrys/util"
+import (
+	"fmt"
+
+	"github.com/ellcrys/util"
+)
 
 // Cocoon represents a smart contract application
 type Cocoon struct {
@@ -28,6 +32,11 @@ func (c *Cocoon) ToJSON() []byte {
 	return json
 }
 
+// MakeCocoonKey constructs a cocoon key
+func MakeCocoonKey(id string) string {
+	return fmt.Sprintf("cocoon.%s", id)
+}
+
 // Release represents a new update to a cocoon's
 // configuration
 type Release struct {
@@ -48,4 +57,9 @@ type Release struct {
 func (r *Release) ToJSON() []byte {
 	json, _ := util.ToJSON(r)
 	return json
+}
+
+// MakeReleaseKey constructs an release key
+func MakeReleaseKey(id string) string {
+	return fmt.Sprintf("release.%s", id)
 }

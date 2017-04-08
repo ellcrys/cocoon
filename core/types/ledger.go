@@ -1,9 +1,13 @@
 package types
 
-import "github.com/ellcrys/util"
+import (
+	"fmt"
+
+	"github.com/ellcrys/util"
+)
 
 // GlobalLedgerName represents the name of the global ledger
-var globalLedgerName = util.Sha256("global")
+var globalLedgerName = "global"
 
 // GetGlobalLedgerName returns the global ledger name
 func GetGlobalLedgerName() string {
@@ -25,4 +29,10 @@ type Ledger struct {
 func (l *Ledger) ToJSON() []byte {
 	json, _ := util.ToJSON(l)
 	return json
+}
+
+// MakeLedgerName creates a ledger name for use for creating or querying a ledger.
+// Accepts a namespace value and the ledger name.
+func MakeLedgerName(namespace, name string) string {
+	return fmt.Sprintf("%s.%s", namespace, name)
 }

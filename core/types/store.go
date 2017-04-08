@@ -5,7 +5,7 @@ package types
 type Store interface {
 	Connect(dbAddr string) (interface{}, error)
 	Init(globalLedgerName string) error
-	GetImplmentationName() string
+	GetImplementationName() string
 	CreateLedger(name string, chained, public bool) (*Ledger, error)
 	CreateLedgerThen(name string, chained, public bool, then func() error) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
@@ -14,8 +14,5 @@ type Store interface {
 	Get(ledger, key string) (*Transaction, error)
 	GetByID(ledger, txID string) (*Transaction, error)
 	GetRange(ledger, startKey, endKey string, inclusive bool, limit, lastNum int) ([]*Transaction, error)
-	MakeLedgerName(namespace, name string) string
-	MakeTxKey(namespace, name string) string
-	GetActualKeyFromTxKey(key string) string
 	Close() error
 }

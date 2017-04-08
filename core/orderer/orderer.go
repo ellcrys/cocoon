@@ -68,7 +68,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
-		err = od.store.Init(od.store.MakeLedgerName("", types.GetGlobalLedgerName()))
+		err = od.store.Init(types.MakeLedgerName(types.SystemCocoonID, types.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err.Error())
 			od.Stop(1)
@@ -92,14 +92,14 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		}
 
 		// initialize the blockchain
-		err = od.blockchain.Init(od.blockchain.MakeChainName("", types.GetGlobalChainName()))
+		err = od.blockchain.Init(od.blockchain.MakeChainName(types.SystemCocoonID, types.GetGlobalLedgerName()))
 		if err != nil {
 			log.Info(err.Error())
 			od.Stop(1)
 			return
 		}
 
-		log.Info("Backend successfully connnected")
+		log.Info("Backend successfully connected")
 	})
 
 	od.server = grpc.NewServer()
@@ -117,20 +117,20 @@ func (od *Orderer) Stop(exitCode int) int {
 
 // SetStore sets the store implementation to use.
 func (od *Orderer) SetStore(ch types.Store) {
-	log.Infof("Setting store implementation named %s", ch.GetImplmentationName())
+	log.Infof("Setting store implementation named %s", ch.GetImplementationName())
 	od.store = ch
 }
 
 // SetBlockchain sets the blockchain implementation
 func (od *Orderer) SetBlockchain(b types.Blockchain) {
-	log.Infof("Setting blockchain implementation named %s", b.GetImplmentationName())
+	log.Infof("Setting blockchain implementation named %s", b.GetImplementationName())
 	od.blockchain = b
 }
 
 // CreateLedger creates a new ledger
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
-	internalName := od.store.MakeLedgerName(params.GetCocoonID(), params.GetName())
+	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
 
 	var createChainFunc func() error
 	if params.Chained {
@@ -157,7 +157,7 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 // GetLedger returns a ledger
 func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
 
-	internalName := od.store.MakeLedgerName(params.GetCocoonID(), params.GetName())
+	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
 	ledger, err := od.store.GetLedger(internalName)
 	if err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 	start := time.Now()
 
 	// check if ledger exists
-	internalLedgerName := od.store.MakeLedgerName(params.GetCocoonID(), params.GetLedgerName())
+	internalLedgerName := types.MakeLedgerName(params.GetCocoonID(), params.GetLedgerName())
 	ledger, err := od.store.GetLedger(internalLedgerName)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 	for i, protoTx := range params.GetTransactions() {
 		var tx = types.Transaction{}
 		cstructs.Copy(protoTx, &tx)
-		tx.Key = od.store.MakeTxKey(params.GetCocoonID(), tx.Key)
+		tx.Key = types.MakeTxKey(params.GetCocoonID(), tx.Key)
 		transactions[i] = &tx
 		if ledger.Chained {
 			tx.BlockID = blockID
@@ -262,7 +262,7 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		return nil, err
 	}
 
-	key := od.store.MakeTxKey(params.GetCocoonID(), params.GetKey())
+	key := types.MakeTxKey(params.GetCocoonID(), params.GetKey())
 	tx, err := od.store.Get(ledger.NameInternal, key)
 	if err != nil {
 		return nil, err
@@ -314,7 +314,7 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 	}
 
 	tx.KeyInternal = tx.Key
-	tx.Key = od.store.GetActualKeyFromTxKey(tx.Key)
+	tx.Key = types.GetActualKeyFromTxKey(tx.Key)
 	tx.Ledger = params.GetLedger()
 	tx.LedgerInternal = ledger.NameInternal
 
@@ -372,14 +372,14 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 	}
 
 	if len(params.GetStartKey()) > 0 {
-		params.StartKey = od.store.MakeTxKey(params.GetCocoonID(), params.GetStartKey())
+		params.StartKey = types.MakeTxKey(params.GetCocoonID(), params.GetStartKey())
 	}
 
 	if len(params.GetEndKey()) > 0 {
 		if len(params.GetStartKey()) > 0 {
-			params.EndKey = od.store.MakeTxKey(params.GetCocoonID(), params.GetEndKey())
+			params.EndKey = types.MakeTxKey(params.GetCocoonID(), params.GetEndKey())
 		} else {
-			params.EndKey = od.store.MakeTxKey(params.GetCocoonID(), "%"+params.GetEndKey())
+			params.EndKey = types.MakeTxKey(params.GetCocoonID(), "%"+params.GetEndKey())
 		}
 	}
 
@@ -405,7 +405,7 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 		}
 
 		tx.KeyInternal = tx.Key
-		tx.Key = od.store.GetActualKeyFromTxKey(tx.Key)
+		tx.Key = types.GetActualKeyFromTxKey(tx.Key)
 		tx.LedgerInternal = tx.Ledger
 		tx.Ledger = params.GetLedger()
 		var protoTx = proto.Transaction{}
