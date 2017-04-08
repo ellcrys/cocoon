@@ -49,23 +49,25 @@ func CreateIdentity(email string) error {
 	}
 
 	stopSpinner()
-	log.Info("Enter your password (minimum: 8 characters)")
+	fmt.Printf("Enter your password (minimum: 8 characters): ")
 	password, err := terminal.ReadPassword(0)
 	if err != nil {
 		return fmt.Errorf("failed to get password")
 	}
 
+	fmt.Println("")
 	if len(password) < 8 {
 		stopSpinner()
 		return fmt.Errorf("Password is too short. Minimum of 8 characters required")
 	}
 
-	log.Info("Please enter your password again")
+	fmt.Printf("Please enter your password again: ")
 	password2, err := terminal.ReadPassword(0)
 	if err != nil {
 		return fmt.Errorf("failed to get password")
 	}
 
+	fmt.Println("")
 	if bytes.Compare(password, password2) != 0 {
 		return fmt.Errorf("passwords did not match")
 	}

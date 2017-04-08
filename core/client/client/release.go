@@ -69,7 +69,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		log.Infof("Are you sure you? Y/n:")
+		fmt.Printf("Are you sure you? Y/n: ")
 		text, _ := reader.ReadString('\n')
 		v := strings.TrimSpace(strings.ToLower(text))
 		if v == "n" {
