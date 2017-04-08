@@ -18,7 +18,6 @@ import (
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
-	cmap "github.com/orcaman/concurrent-map"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -45,16 +44,6 @@ var (
 
 	// Default runtime link
 	defaultLink = NewNativeLink(GetID())
-
-	// txChannels holds the channels to send transaction responses to
-	txRespChannels = cmap.New()
-
-	// ErrAlreadyExist represents an error about an already existing resource
-	ErrAlreadyExist = fmt.Errorf("already exists")
-
-	// ErrNotConnected represents an error about the cocoon code not
-	// having an active connection with the connector.
-	ErrNotConnected = fmt.Errorf("not connected to the connector")
 
 	// Flag to help tell whether cocoon code is running
 	running = false
@@ -228,23 +217,14 @@ func Stop(exitCode int) {
 	if blockMaker != nil {
 		blockMaker.Stop()
 	}
-	// if defaultServer.streamKeepAliveTicker != nil {
-	// 	defaultServer.streamKeepAliveTicker.Stop()
-	// }
-	// defaultServer.stream = nil
+
 	serverDone <- true
 	running = false
 	log.Info("Cocoon code exiting with exit code %d", exitCode)
 	os.Exit(exitCode)
 }
 
-// isConnected checks if connection with the connector
-// is active.
-// func isConnected() bool {
-// 	return defaultServer.stream != nil
-// }
-
-// GetGlobalLedger returns the name of the system ledger.
-func GetGlobalLedger() string {
+// GetSystemPublicLedgerName returns the name of the system ledger.
+func GetSystemPublicLedgerName() string {
 	return types.GetSystemPublicLedgerName()
 }
