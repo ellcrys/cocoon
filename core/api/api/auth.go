@@ -9,7 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
-	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"golang.org/x/crypto/bcrypt"
 	context "golang.org/x/net/context"
@@ -64,26 +64,12 @@ func makeAuthToken(id, identity, _type string, exp int64, secret string) (string
 // Login authenticates a user and returns a JWT token
 func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
 
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
+	identity, err := api.getIdentity(ctx, types.NewIdentity(req.GetEmail(), "").GetID())
 	if err != nil {
+		if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
+			return nil, fmt.Errorf("email or password are invalid")
+		}
 		return nil, err
-	}
-	defer ordererConn.Close()
-
-	resp, err := api.GetIdentity(ctx, &proto.GetIdentityRequest{
-		Email: req.GetEmail(),
-	})
-
-	if err != nil && err != types.ErrIdentityNotFound {
-		return nil, err
-	} else if err == types.ErrIdentityNotFound {
-		return nil, fmt.Errorf("email or password are invalid")
-	}
-
-	var identity types.Identity
-	err = util.FromJSON(resp.GetBody(), &identity)
-	if err != nil {
-		return nil, fmt.Errorf("malformed identity")
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(identity.Password), []byte(req.GetPassword())); err != nil {
@@ -96,23 +82,10 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 	ss, err := makeAuthToken(sessionID, identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 	if err != nil {
 		apiLog.Error(err.Error())
-		return nil, fmt.Errorf("failed to create session token")
+		return nil, fmt.Errorf("failed to create session")
 	}
 
-	// overwrite identity to store the newly created client session.
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID:   "",
-		LedgerName: types.GetGlobalLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
-				Id:        util.UUID4(),
-				Key:       api.makeIdentityKey(identity.Email),
-				Value:     string(identity.ToJSON()),
-				CreatedAt: time.Now().Unix(),
-			},
-		},
-	})
+	err = api.putIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
