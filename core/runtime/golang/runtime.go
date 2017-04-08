@@ -130,7 +130,7 @@ func Run(cc CocoonCode) {
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
 
-	System.SetDefaultLedger(types.GetGlobalLedgerName())
+	System.SetDefaultLedger(types.GetSystemPublicLedgerName())
 
 	ccode = cc
 
@@ -244,7 +244,7 @@ func Stop(exitCode int) {
 // 	return defaultServer.stream != nil
 // }
 
-// GetGlobalLedger returns the name of the global ledger.
+// GetGlobalLedger returns the name of the system ledger.
 func GetGlobalLedger() string {
-	return types.GetGlobalLedgerName()
+	return types.GetSystemPublicLedgerName()
 }

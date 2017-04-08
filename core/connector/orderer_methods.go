@@ -25,7 +25,7 @@ func (cn *Connector) getCocoon(ctx context.Context) (*types.Cocoon, error) {
 	tx, err := odc.Get(ctx, &proto.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeCocoonKey(cn.req.ID),
-		Ledger:   types.GetGlobalLedgerName(),
+		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
@@ -53,7 +53,7 @@ func (cn *Connector) putCocoon(ctx context.Context, cocoon *types.Cocoon) error 
 	odc := proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &proto.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetGlobalLedgerName(),
+		LedgerName: types.GetSystemPublicLedgerName(),
 		Transactions: []*proto.Transaction{
 			&proto.Transaction{
 				Id:        util.UUID4(),

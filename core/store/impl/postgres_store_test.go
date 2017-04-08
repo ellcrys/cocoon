@@ -40,12 +40,12 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("when ledger table does not exists", func() {
 
-				Convey("should create ledger and transactions table and create a global ledger entry", func() {
+				Convey("should create ledger and transactions table and create a system ledger entry", func() {
 
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
 					So(ledgerEntryExists, ShouldEqual, false)
 
-					err := pgStore.Init(types.GetGlobalLedgerName())
+					err := pgStore.Init(types.GetSystemPublicLedgerName())
 					So(err, ShouldBeNil)
 
 					ledgerEntryExists = db.(*gorm.DB).HasTable(LedgerTableName)
@@ -54,12 +54,12 @@ func TestPosgresStore(t *testing.T) {
 					ledgerEntryExists = db.(*gorm.DB).HasTable(TransactionTableName)
 					So(ledgerEntryExists, ShouldEqual, true)
 
-					Convey("ledger table must include a global ledger entry", func() {
+					Convey("ledger table must include a system ledger entry", func() {
 						var entries []types.Ledger
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
 						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, types.GetGlobalLedgerName())
+						So(entries[0].Name, ShouldEqual, types.GetSystemPublicLedgerName())
 					})
 
 					Reset(func() {
@@ -70,7 +70,7 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("when ledger table exists", func() {
 				Convey("should return nil with no effect", func() {
-					err := pgStore.Init(types.GetGlobalLedgerName())
+					err := pgStore.Init(types.GetSystemPublicLedgerName())
 					So(err, ShouldBeNil)
 
 					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
@@ -80,7 +80,7 @@ func TestPosgresStore(t *testing.T) {
 					err = db.(*gorm.DB).Find(&entries).Error
 					So(err, ShouldBeNil)
 					So(len(entries), ShouldEqual, 1)
-					So(entries[0].Name, ShouldEqual, types.GetGlobalLedgerName())
+					So(entries[0].Name, ShouldEqual, types.GetSystemPublicLedgerName())
 				})
 
 				Reset(func() {
@@ -93,7 +93,7 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("should return expected ledger hash", func() {
 				hash := pgStore.MakeLegderHash(&types.Ledger{
-					Name:      types.GetGlobalLedgerName(),
+					Name:      types.GetSystemPublicLedgerName(),
 					Public:    true,
 					CreatedAt: 1488196279,
 				})
@@ -120,7 +120,7 @@ func TestPosgresStore(t *testing.T) {
 		Convey(".CreateLedger", func() {
 
 			var ledgerName = util.RandString(10)
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should successfully create a ledger entry", func() {
@@ -150,7 +150,7 @@ func TestPosgresStore(t *testing.T) {
 		Convey(".CreateLedgerThen", func() {
 
 			var ledgerName = util.RandString(10)
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should fail to create a ledger if thenFunction returns an error", func() {
@@ -180,7 +180,7 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".GetLedger", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when ledger does not exist", func() {
@@ -208,7 +208,7 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".Put", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("expects new transaction to be the first and only transaction", func() {
@@ -242,7 +242,7 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".PutThen", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			ledger := util.Sha256("ledger_name")
@@ -278,11 +278,11 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".GetByID", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgStore.GetByID(types.GetGlobalLedgerName(), "unknown_id")
+				tx, err := pgStore.GetByID(types.GetSystemPublicLedgerName(), "unknown_id")
 				So(tx, ShouldBeNil)
 				So(err, ShouldBeNil)
 			})
@@ -313,11 +313,11 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".Get", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgStore.Get(types.GetGlobalLedgerName(), "wrong_key")
+				tx, err := pgStore.Get(types.GetSystemPublicLedgerName(), "wrong_key")
 				So(tx, ShouldBeNil)
 				So(err, ShouldBeNil)
 			})
@@ -347,7 +347,7 @@ func TestPosgresStore(t *testing.T) {
 
 		Convey(".GetRange", func() {
 
-			err := pgStore.Init(types.GetGlobalLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("Should successfully return expected transactions and exclude end key when `includeEndKey` is false", func() {

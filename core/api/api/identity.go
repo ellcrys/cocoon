@@ -27,7 +27,7 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetGlobalLedgerName(),
+		LedgerName: types.GetSystemPublicLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
@@ -95,7 +95,7 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeIdentityKey(id),
-		Ledger:   types.GetGlobalLedgerName(),
+		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 
 	if err != nil {

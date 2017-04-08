@@ -80,8 +80,8 @@ package golang
 // 		Convey("GoStub", t, func() {
 
 // 			Convey(".GetGlobalLedger", func() {
-// 				Convey("Should return the expected value set in types.GetGlobalLedgerName()", func() {
-// 					So(GetGlobalLedger(), ShouldEqual, types.GetGlobalLedgerName())
+// 				Convey("Should return the expected value set in types.GetSystemPublicLedgerName()", func() {
+// 					So(GetGlobalLedger(), ShouldEqual, types.GetSystemPublicLedgerName())
 // 				})
 // 			})
 

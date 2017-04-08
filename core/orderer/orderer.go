@@ -53,28 +53,6 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
-		// establish connection to store backend
-		_, err := od.store.Connect(storeConStr)
-		if err != nil {
-			log.Info(err.Error())
-			od.Stop(1)
-			return
-		}
-
-		// initialize store
-		if od.store == nil {
-			log.Error("Store implementation not set")
-			od.Stop(1)
-			return
-		}
-
-		err = od.store.Init(types.MakeLedgerName(types.SystemCocoonID, types.GetGlobalLedgerName()))
-		if err != nil {
-			log.Info(err.Error())
-			od.Stop(1)
-			return
-		}
-
 		if od.blockchain == nil {
 			log.Error("Blockchain implementation not set")
 			od.Stop(1)
@@ -92,7 +70,32 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		}
 
 		// initialize the blockchain
-		err = od.blockchain.Init(od.blockchain.MakeChainName(types.SystemCocoonID, types.GetGlobalLedgerName()))
+		err = od.blockchain.Init()
+		if err != nil {
+			log.Info(err.Error())
+			od.Stop(1)
+			return
+		}
+
+		// establish connection to store backend
+		_, err := od.store.Connect(storeConStr)
+		if err != nil {
+			log.Info(err.Error())
+			od.Stop(1)
+			return
+		}
+
+		// initialize store
+		if od.store == nil {
+			log.Error("Store implementation not set")
+			od.Stop(1)
+			return
+		}
+
+		sysPubLedger := types.MakeLedgerName(types.SystemCocoonID, types.GetSystemPublicLedgerName())
+		sysPrivLedger := types.MakeLedgerName(types.SystemCocoonID, types.GetSystemPrivateLedgerName())
+		od.store.SetBlockchainImplementation(od.blockchain)
+		err = od.store.Init(sysPubLedger, sysPrivLedger)
 		if err != nil {
 			log.Info(err.Error())
 			od.Stop(1)
@@ -131,16 +134,7 @@ func (od *Orderer) SetBlockchain(b types.Blockchain) {
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
 
 	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
-
-	var createChainFunc func() error
-	if params.Chained {
-		createChainFunc = func() error {
-			_, err := od.blockchain.CreateChain(internalName, params.Public)
-			return err
-		}
-	}
-
-	ledger, err := od.store.CreateLedgerThen(internalName, params.GetChained(), params.GetPublic(), createChainFunc)
+	ledger, err := od.store.CreateLedger(internalName, params.GetChained(), params.GetPublic())
 	if err != nil {
 		return nil, err
 	}

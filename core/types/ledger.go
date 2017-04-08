@@ -6,12 +6,22 @@ import (
 	"github.com/ellcrys/util"
 )
 
-// GlobalLedgerName represents the name of the global ledger
-var globalLedgerName = "global"
+var (
+	// systemPublicLedgerName represents the name of the public system ledger ledger
+	systemPublicLedgerName = "public"
 
-// GetGlobalLedgerName returns the global ledger name
-func GetGlobalLedgerName() string {
-	return globalLedgerName
+	// systemPrivateLedgerName represents the name of the private system ledger
+	systemPrivateLedgerName = "private"
+)
+
+// GetSystemPublicLedgerName returns the systems public ledger name
+func GetSystemPublicLedgerName() string {
+	return systemPublicLedgerName
+}
+
+// GetSystemPrivateLedgerName returns the system's private ledger name
+func GetSystemPrivateLedgerName() string {
+	return systemPrivateLedgerName
 }
 
 // Ledger represents a group of transactions

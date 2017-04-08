@@ -42,8 +42,8 @@ func (b *PostgresBlockchain) Connect(dbAddr string) (interface{}, error) {
 	return b.db, nil
 }
 
-// Init initializes the types. Creates the necessary tables.
-func (b *PostgresBlockchain) Init(globalChainName string) error {
+// Init creates the chain and block tables
+func (b *PostgresBlockchain) Init() error {
 
 	// create ledger table if not existing
 	if !b.db.HasTable(ChainTableName) {
@@ -57,19 +57,6 @@ func (b *PostgresBlockchain) Init(globalChainName string) error {
 		if err := b.db.CreateTable(&types.Block{}).
 			AddIndex("idx_name_chain_name_id", "chain_name", "id").Error; err != nil {
 			return fmt.Errorf("failed to create `%s` table. %s", BlockTableName, err)
-		}
-	}
-
-	// Create global chain if it does not exists
-	var c int
-	if err := b.db.Model(&types.Chain{}).Count(&c).Error; err != nil {
-		return fmt.Errorf("failed to check whether global blockchain exists in the chain list. %s", err)
-	}
-
-	if c == 0 {
-		_, err := b.CreateChain(globalChainName, true)
-		if err != nil {
-			return err
 		}
 	}
 

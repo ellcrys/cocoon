@@ -3,7 +3,7 @@ package types
 // Blockchain defines an interface for a blockchain
 type Blockchain interface {
 	Connect(dbAddr string) (interface{}, error)
-	Init(name string) error
+	Init() error
 	GetImplementationName() string
 	MakeChainName(namespace, name string) string
 	CreateChain(name string, public bool) (*Chain, error)

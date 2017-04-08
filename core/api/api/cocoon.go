@@ -60,7 +60,7 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
 		CocoonID: types.SystemCocoonID,
-		LedgerName: types.GetGlobalLedgerName(),
+		LedgerName: types.GetSystemPublicLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
 				Id:        util.UUID4(),
@@ -306,7 +306,7 @@ func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error)
 	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeCocoonKey(id),
-		Ledger:   types.GetGlobalLedgerName(),
+		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {

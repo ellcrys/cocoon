@@ -28,7 +28,13 @@ const TransactionTableName = "transactions"
 // PostgresStore defines a store implementation
 // on the postgres database. It implements the Store interface
 type PostgresStore struct {
-	db *gorm.DB
+	db         *gorm.DB
+	blockchain types.Blockchain
+}
+
+// SetBlockchainImplementation sets sets a reference of the blockchain implementation
+func (s *PostgresStore) SetBlockchainImplementation(b types.Blockchain) {
+	s.blockchain = b
 }
 
 // GetImplementationName returns the name of this store implementation
@@ -57,8 +63,8 @@ func (s *PostgresStore) MakeLegderHash(ledger *types.Ledger) string {
 }
 
 // Init initializes the types. Creates the necessary tables such as the
-// the table holding records of all ledgers and global ledger entry
-func (s *PostgresStore) Init(globalLedgerName string) error {
+// the tables and public and private system ledgers
+func (s *PostgresStore) Init(systemPublicLedgerName, systemPrivateLedgerName string) error {
 
 	// create ledger table if not existing
 	if !s.db.HasTable(LedgerTableName) {
@@ -75,16 +81,21 @@ func (s *PostgresStore) Init(globalLedgerName string) error {
 		}
 	}
 
-	// Create global ledger if it does not exists
-	var c int
-	if err := s.db.Model(&types.Ledger{}).Count(&c).Error; err != nil {
-		return fmt.Errorf("failed to check whether global ledger exists in the ledger list table. %s", err)
+	// create system ledgers
+	var systemLedgers = [][]interface{}{
+		[]interface{}{systemPublicLedgerName, true},   // public
+		[]interface{}{systemPrivateLedgerName, false}, // private
 	}
-
-	if c == 0 {
-		_, err := s.CreateLedger(globalLedgerName, true, true)
-		if err != nil {
-			return err
+	for _, ledger := range systemLedgers {
+		var c int
+		if err := s.db.Model(&types.Ledger{}).Where("name = ?", ledger[0].(string)).Count(&c).Error; err != nil {
+			return fmt.Errorf("failed to check existence of ledger named %s: %s", ledger[0].(string), err)
+		}
+		if c == 0 {
+			_, err := s.CreateLedger(ledger[0].(string), true, ledger[1].(bool))
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -163,6 +174,15 @@ func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, then
 			return nil, fmt.Errorf("hash is being used by another ledger")
 		}
 		return nil, err
+	}
+
+	// create chain
+	if chained {
+		_, err := s.blockchain.CreateChain(name, public)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
 	}
 
 	// run the companion functions and Rollback

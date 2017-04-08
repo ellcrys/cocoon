@@ -4,7 +4,8 @@ package types
 // of a data structure for creating and reading ledgers and transactions.
 type Store interface {
 	Connect(dbAddr string) (interface{}, error)
-	Init(globalLedgerName string) error
+	Init(systemPublicLedgerName, systemPrivateLedgerName string) error
+	SetBlockchainImplementation(b Blockchain)
 	GetImplementationName() string
 	CreateLedger(name string, chained, public bool) (*Ledger, error)
 	CreateLedgerThen(name string, chained, public bool, then func() error) (*Ledger, error)

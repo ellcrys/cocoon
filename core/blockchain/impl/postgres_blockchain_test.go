@@ -40,7 +40,7 @@ func TestPosgresBlockchain(t *testing.T) {
 
 			Convey("when chain table does not exists", func() {
 
-				Convey("should create chain and block table and create a global chain", func() {
+				Convey("should create chain and block table and create a system chain", func() {
 
 					chainTableExists := db.(*gorm.DB).HasTable(ChainTableName)
 					So(chainTableExists, ShouldEqual, false)
@@ -54,7 +54,7 @@ func TestPosgresBlockchain(t *testing.T) {
 					chainTableExists = db.(*gorm.DB).HasTable(ChainTableName)
 					So(chainTableExists, ShouldEqual, true)
 
-					Convey("chain table must include a global chain", func() {
+					Convey("chain table must include a system chain", func() {
 						var entries []types.Chain
 						err := db.(*gorm.DB).Find(&entries).Error
 						So(err, ShouldBeNil)
