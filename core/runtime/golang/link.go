@@ -26,7 +26,7 @@ func NewLink(cocoonID string) *Link {
 }
 
 // NewNativeLink create a new native link to a cocoon
-func NewNativeLink(cocoonID string) *Link {
+func newNativeLink(cocoonID string) *Link {
 	return &Link{
 		cocoonID: cocoonID,
 		native:   true,
@@ -72,9 +72,7 @@ func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bo
 // PUT operations will only be included in the types.
 func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
-	if util.Sha256(name) == GetGlobalLedger() {
-		return nil, fmt.Errorf("cannot use a reserved name")
-	} else if !common.IsValidResName(name) {
+	if !common.IsValidResName(name) {
 		return nil, fmt.Errorf("invalid ledger name")
 	}
 

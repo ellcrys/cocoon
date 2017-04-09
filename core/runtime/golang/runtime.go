@@ -43,7 +43,7 @@ var (
 	System = NewLink(types.SystemCocoonID)
 
 	// Default runtime link
-	defaultLink = NewNativeLink(GetID())
+	defaultLink = newNativeLink(GetID())
 
 	// Flag to help tell whether cocoon code is running
 	running = false
@@ -92,6 +92,11 @@ func GetCocoonID() string {
 // GetSystemLink returns a readonly the system link
 func GetSystemLink() *Link {
 	return System
+}
+
+// GetSystemCocoonID returns the system cocoon id
+func GetSystemCocoonID() string {
+	return types.SystemCocoonID
 }
 
 // Run starts the stub server, takes a cocoon code and attempts to initialize it..
