@@ -3,6 +3,8 @@ package api
 import (
 	"time"
 
+	"fmt"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
@@ -14,8 +16,11 @@ import (
 )
 
 // putIdentity adds a new identity. If another identity with a matching key
-// exists, it is effectively shadowed
+// exists, it is effectively shadowed. The identity password is not saved to the
+// systems public ledger but on the system private ledger.
 func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error {
+
+	var password = identity.Password
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -23,6 +28,7 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 	}
 	defer ordererConn.Close()
 
+	identity.Password = ""
 	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
@@ -33,6 +39,20 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 				Id:        util.UUID4(),
 				Key:       types.MakeIdentityKey(identity.GetID()),
 				Value:     string(identity.ToJSON()),
+				CreatedAt: createdAt.Unix(),
+			},
+		},
+	})
+
+	// save identity password alone in the system private ledger
+	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+		CocoonID:   types.SystemCocoonID,
+		LedgerName: types.GetSystemPrivateLedgerName(),
+		Transactions: []*orderer_proto.Transaction{
+			&orderer_proto.Transaction{
+				Id:        util.UUID4(),
+				Key:       types.MakeIdentityKey(identity.GetID()),
+				Value:     password,
 				CreatedAt: createdAt.Unix(),
 			},
 		},
@@ -82,7 +102,10 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 	}, nil
 }
 
-// getIdentity gets an existing identity and returns an identity object
+// getIdentity gets an existing identity and returns an identity object.
+// Since an identity password is never saved along side the rest of the other identity
+// field on the system public ledger, it is retrieved from the private system ledger where
+// it is stored separately.
 func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, error) {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
@@ -105,8 +128,21 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 		return nil, err
 	}
 
+	passwordTx, err := odc.Get(ctx, &orderer_proto.GetParams{
+		CocoonID: types.SystemCocoonID,
+		Key:      types.MakeIdentityKey(id),
+		Ledger:   types.GetSystemPrivateLedgerName(),
+	})
+	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, fmt.Errorf("identity password transaction not found")
+		}
+		return nil, err
+	}
+
 	var identity types.Identity
 	util.FromJSON([]byte(tx.GetValue()), &identity)
+	identity.Password = passwordTx.GetValue()
 
 	return &identity, nil
 }
