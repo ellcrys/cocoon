@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -23,11 +25,13 @@ var loginCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys login" requires at least 1 argument(s)`, `ellcrys login --help`)
 		}
 
-		log.Info("Please enter your password:")
+		fmt.Printf("Please enter your password: ")
 		password, err := terminal.ReadPassword(0)
 		if err != nil {
 			log.Fatal("Err: Failed to get password")
 		}
+
+		fmt.Println("")
 
 		if err = client.Login(args[0], string(password)); err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
