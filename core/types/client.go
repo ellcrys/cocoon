@@ -23,6 +23,7 @@ type Cocoon struct {
 	Signatories         []string `structs:"signatories" mapstructure:"signatories"`
 	Status              string   `structs:"status" mapstructure:"status"`
 	LastDeployedRelease string   `structs:"lastDeployedRelease" mapstructure:"lastDeployedRelease"`
+	ACL                 ACLMap   `structs:"acl" mapstructure:"acl"`
 	CreatedAt           string   `structs:"createdAt" mapstructure:"createdAt"`
 }
 

@@ -96,3 +96,13 @@ func GetShortID(id string) string {
 	}
 	return id[0:11]
 }
+
+// IsValidACLTarget checks whether an ACL target format is valid
+func IsValidACLTarget(target string) error {
+	if target == "*" {
+		return nil
+	} else if len(target) > 0 && len(strings.Split(target, ".")) < 3 {
+		return nil
+	}
+	return fmt.Errorf("format is invalid")
+}

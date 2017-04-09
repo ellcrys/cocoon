@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	context "golang.org/x/net/context"
@@ -17,6 +18,7 @@ import (
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	"github.com/olekukonko/tablewriter"
@@ -549,5 +551,53 @@ func RemoveSignatories(cocoonID string, ids []string) error {
 	}
 
 	log.Info("Done.")
+	return nil
+}
+
+// AddACLRule adds an acl rule to a cocoon
+func AddACLRule(cocoonID, target, privileges string) error {
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	if err = common.IsValidACLTarget(target); err != nil {
+		return fmt.Errorf("target format is invalid. Valid formats are: * = target any ledger a, ledgerName.[Cocoon|@Identity]")
+	}
+
+	_privileges := strings.Split(privileges, ",")
+	for _, p := range _privileges {
+		if !acl.IsValidPrivilege(p) {
+			return fmt.Errorf("invalid privilege '%s' in '%s': ", p, privileges)
+		}
+	}
+
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
+
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	cl := proto.NewAPIClient(conn)
+	_, err = cl.AddACLRule(ctx, &proto.AddACLRuleRequest{
+		CocoonID:   cocoonID,
+		Target:     target,
+		Privileges: privileges,
+	})
+
+	if err != nil {
+		stopSpinner()
+		return err
+	}
+
+	stopSpinner()
+	log.Info("Successfully added")
+
 	return nil
 }

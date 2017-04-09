@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/connector"
 	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -17,20 +18,39 @@ import (
 type LedgerOperations struct {
 	CocoonID         string
 	ordererDiscovery *orderer.Discovery
+	connector        *connector.Connector
 }
 
 // NewLedgerOperationHandler creates a new instance of a ledger operation handler
-func NewLedgerOperationHandler(cocoonID string, ordererDiscovery *orderer.Discovery) *LedgerOperations {
+func NewLedgerOperationHandler(connector *connector.Connector, ordererDiscovery *orderer.Discovery) *LedgerOperations {
 	return &LedgerOperations{
-		CocoonID:         cocoonID,
+		connector:        connector,
+		CocoonID:         connector.GetRequest().ID,
 		ordererDiscovery: ordererDiscovery,
 	}
 }
 
-// checkACL checks the operation against the access level permission
-// for non native cocoon accessing resources of a different cocoon.
+// checkACL checks the operation against the ACL rules of the access cocoon
+// that owns the ledger being accessed.
 func (l *LedgerOperations) checkACL(op *connector_proto.LedgerOperation) error {
-	return acl.CheckACL(l.CocoonID, op.GetLinkTo(), op.GetName())
+
+	ledgerName := op.GetParams()[0]
+
+	// link is not a principal link (principal links access their own resources).
+	// and the cocoon being accessed in the system cocoon, apply system ACL rules.
+	if op.GetLinkTo() != l.CocoonID && op.GetLinkTo() == types.SystemCocoonID {
+		i := acl.NewInterpreter(acl.SystemACL, ledgerName == "public")
+		if errs := i.Validate(); len(errs) != 0 {
+			return fmt.Errorf("system acl is not valid")
+		}
+		if !i.IsAllowed(ledgerName, l.CocoonID, op.Name) {
+			return fmt.Errorf("permission denied: %s operation not allowed", op.Name)
+		}
+	}
+
+	// TODO: Apply ACL rules for links pointing to non-system cocoons
+
+	return nil
 }
 
 // Handle handles all types of ledger operations
@@ -96,13 +116,8 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 	}, nil
 }
 
-// getLedger fetches a ledger
-func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
-
-	var cocoonID = l.CocoonID
-	if len(op.GetLinkTo()) > 0 {
-		cocoonID = op.GetLinkTo()
-	}
+// getLedgerOnly fetches a ledger
+func (l *LedgerOperations) getLedgerOnly(ctx context.Context, cocoonID, ledgerName string) (*orderer_proto.Ledger, error) {
 
 	ordererConn, err := l.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -112,15 +127,30 @@ func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.Le
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	result, err := odc.GetLedger(ctx, &orderer_proto.GetLedgerParams{
-		Name:     op.GetParams()[0],
+		Name:     ledgerName,
 		CocoonID: cocoonID,
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	body, _ := util.ToJSON(result)
+	return result, nil
+}
+
+// getLedger fetches a ledger
+func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+
+	var cocoonID = l.CocoonID
+	if len(op.GetLinkTo()) > 0 {
+		cocoonID = op.GetLinkTo()
+	}
+
+	ledger, err := l.getLedgerOnly(ctx, cocoonID, op.GetParams()[0])
+	if err != nil {
+		return nil, err
+	}
+
+	body, _ := util.ToJSON(ledger)
 
 	return &connector_proto.Response{
 		ID:     op.GetID(),

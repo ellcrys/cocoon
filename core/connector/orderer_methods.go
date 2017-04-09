@@ -12,8 +12,8 @@ import (
 	context "golang.org/x/net/context"
 )
 
-// getCocoon returns the cocoon being run
-func (cn *Connector) getCocoon(ctx context.Context) (*types.Cocoon, error) {
+// GetCocoon returns the cocoon being run
+func (cn *Connector) GetCocoon(ctx context.Context) (*types.Cocoon, error) {
 
 	ordererConn, err := cn.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -39,9 +39,9 @@ func (cn *Connector) getCocoon(ctx context.Context) (*types.Cocoon, error) {
 	return &cocoon, nil
 }
 
-// putCocoon adds a new cocoon. If another cocoon with a matching key
+// PutCocoon adds a new cocoon. If another cocoon with a matching key
 // exists, it is effectively shadowed
-func (cn *Connector) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
+func (cn *Connector) PutCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 
 	ordererConn, err := cn.ordererDiscovery.GetGRPConn()
 	if err != nil {

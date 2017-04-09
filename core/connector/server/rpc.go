@@ -32,7 +32,7 @@ func NewRPCServer(connector *connector.Connector) *RPCServer {
 	server := new(RPCServer)
 	server.connector = connector
 	server.ordererDiscovery = orderer.NewDiscovery()
-	server.ledgerOps = handlers.NewLedgerOperationHandler(connector.GetRequest().ID, server.ordererDiscovery)
+	server.ledgerOps = handlers.NewLedgerOperationHandler(connector, server.ordererDiscovery)
 	server.cocoonCodeOps = handlers.NewCocoonCodeHandler("127.0.0.1" + connector.GetCocoonCodeRPCAddr())
 	return server
 }

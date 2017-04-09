@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -9,6 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -59,7 +61,7 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID: types.SystemCocoonID,
+		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
@@ -571,6 +573,52 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto.RemoveSignator
 	cocoon.Signatories = newSignatories
 	err = api.putCocoon(ctx, cocoon)
 	if err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   cocoon.ToJSON(),
+	}, nil
+}
+
+// AddACLRule adds an ACL rule to a cocoon
+func (api *API) AddACLRule(ctx context.Context, req *proto.AddACLRuleRequest) (*proto.Response, error) {
+
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	if err != nil {
+		return nil, err
+	}
+
+	loggedInUserIdentity := claims["identity"].(string)
+
+	if loggedInUserIdentity != cocoon.IdentityID {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	if err := common.IsValidACLTarget(req.Target); err != nil {
+		return nil, fmt.Errorf("target format is invalid. Valid formats are: * = target any ledger a, ledgerName.[Cocoon|@Identity]")
+	}
+
+	_privileges := strings.Split(req.Privileges, ",")
+	for _, p := range _privileges {
+		if !acl.IsValidPrivilege(p) {
+			return nil, fmt.Errorf("invalid privilege '%s' in '%s': ", p, req.Privileges)
+		}
+	}
+
+	if err = cocoon.ACL.Add(req.Target, req.Privileges); err != nil {
+		return nil, err
+	}
+
+	if err = api.putCocoon(ctx, cocoon); err != nil {
 		return nil, err
 	}
 

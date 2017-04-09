@@ -62,8 +62,8 @@ func (i *Interpreter) isValidLedgerKeyType(v interface{}) bool {
 	}
 }
 
-// isValidPrivilege checks whether a privilege is valid
-func (i *Interpreter) isValidPrivilege(p string) bool {
+// IsValidPrivilege checks whether a privilege is valid
+func IsValidPrivilege(p string) bool {
 	return util.InStringSlice(validPrivileges, strings.TrimSpace(strings.ToLower(p)))
 }
 
@@ -93,7 +93,7 @@ func (i *Interpreter) Validate() []error {
 		if ruleVal, ok := val.(string); ok {
 			privileges := strings.Split(ruleVal, " ")
 			for _, priv := range privileges {
-				if !i.isValidPrivilege(priv) {
+				if !IsValidPrivilege(priv) {
 					errs = append(errs, fmt.Errorf("%s: ledger contains an invalid privilege (%s)", ledgerName, priv))
 				}
 			}
@@ -106,7 +106,7 @@ func (i *Interpreter) Validate() []error {
 				}
 				privileges := strings.Split(_privileges, " ")
 				for _, priv := range privileges {
-					if !i.isValidPrivilege(priv) {
+					if !IsValidPrivilege(priv) {
 						errs = append(errs, fmt.Errorf("%s: ledger actor contains an invalid privilege (%s)", ledgerName, priv))
 					}
 				}
