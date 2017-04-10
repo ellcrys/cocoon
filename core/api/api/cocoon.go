@@ -37,45 +37,23 @@ var (
 	CocoonStatusDead = "dead"
 )
 
-// watchCocoonStatus checks on interval the cocoon status and update the
-// status field when the cocoon status is `started`. It returns immediately
-// an error is encountered. It will also stop the cocoon if deployment fails.
-// The function will block till success or failure.
-func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon) error {
-	for {
-
-		// get cocoon status
+// watchCocoonStatus checks the status of a cocoon on interval and passes it to a callback function.
+// The callback is also passed a `done` function to be called to stop the status check.
+// This function blocks the current goroutine.
+func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, callback func(s string, doneFunc func()) error) error {
+	var done = false
+	var err error
+	for !done {
 		status, err := api.GetCocoonStatus(cocoon.ID)
 		if err != nil {
 			return err
 		}
-
-		// cocoon is running, update status
-		if status == CocoonStatusRunning {
-			cocoon.Status = CocoonStatusStarted
-			return api.putCocoon(ctx, cocoon)
-		}
-
-		// cocoon is dead. We need to stop it so user can retry as nomad (current scheduler)
-		// will not restart a dead cocoon/task.
-		if status == CocoonStatusDead {
-
-			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
-
-			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
-			if err != nil {
-				return fmt.Errorf("failed to stop dead cocoon: %s", err)
-			}
-
-			apiLog.Debugf("Stopped dead cocoon [%s]", cocoon.ID)
-
-			cocoon.Status = CocoonStatusDead
-			api.putCocoon(ctx, cocoon)
-			return fmt.Errorf("cocoon is dead")
-		}
-
+		err = callback(status, func() {
+			done = true
+		})
 		time.Sleep(500 * time.Millisecond)
 	}
+	return err
 }
 
 // putCocoon adds a new cocoon. If another cocoon with a matching key

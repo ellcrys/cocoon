@@ -103,9 +103,37 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, err
 	}
 
-	err = api.watchCocoonStatus(ctx, &cocoon)
+	// watch the cocoon status and react accordingly
+	err = api.watchCocoonStatus(ctx, &cocoon, func(status string, done func()) error {
+
+		// cocoon is running, update status
+		if status == CocoonStatusRunning {
+			done()
+			cocoon.Status = CocoonStatusStarted
+			return api.putCocoon(ctx, &cocoon)
+		}
+
+		// cocoon is dead. We need to set the status to 'dead' and ask the scheduler
+		// to delete (stop it - according to nomad).
+		if status == CocoonStatusDead {
+			done()
+			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
+			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
+			if err != nil {
+				return fmt.Errorf("failed to stop dead cocoon: %s", err)
+			}
+			apiLog.Debugf("Stopped dead cocoon [%s]", cocoon.ID)
+			cocoon.Status = CocoonStatusDead
+			api.putCocoon(ctx, &cocoon)
+			return fmt.Errorf("cocoon is dead")
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to update status")
+		if err.Error() == "cocoon is dead" {
+			return nil, fmt.Errorf("cocoon did not start. Please try again")
+		}
+		return nil, err
 	}
 
 	apiLog.Infof("Successfully deployed cocoon code %s", depInfo.ID)
