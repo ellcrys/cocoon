@@ -181,7 +181,7 @@ func GetCocoons(ids []string) error {
 }
 
 // Deploy creates and sends a deploy request to the server
-func deploy(ctx context.Context, cocoon *types.Cocoon, useLastDeployedRelease bool) error {
+func deploy(ctx context.Context, cocoonID string, useLastDeployedRelease bool) error {
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -191,7 +191,7 @@ func deploy(ctx context.Context, cocoon *types.Cocoon, useLastDeployedRelease bo
 
 	client := proto.NewAPIClient(conn)
 	resp, err := client.Deploy(ctx, &proto.DeployRequest{
-		CocoonID:               cocoon.ID,
+		CocoonID:               cocoonID,
 		UseLastDeployedRelease: useLastDeployedRelease,
 	})
 	if err != nil {
@@ -389,53 +389,23 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 	ctx := context.Background()
 	ctx = metadata.NewContext(ctx, md)
 
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-	defer conn.Close()
-
 	stopSpinner := util.Spinner("Please wait")
-	cl := proto.NewAPIClient(conn)
 
 	for _, id := range ids {
 		id := id
-		ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
-		defer cc()
-		resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID: id,
-		})
-
-		if err != nil {
-			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-				muErr.Lock()
-				errs = append(errs, fmt.Errorf("%s: cocoon does not exists", common.GetShortID(id)))
-				muErr.Unlock()
-				continue
-			}
-			errs = append(errs, err)
-			continue
-		} else if resp.Status != 200 {
-			muErr.Lock()
-			errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), resp.Body))
-			muErr.Unlock()
-			continue
-		}
-
 		wg.Add(1)
 		go func() {
-			var cocoon types.Cocoon
-			err = util.FromJSON(resp.Body, &cocoon)
-			ctx, cc = context.WithTimeout(ctx, 1*time.Minute)
+			ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
 			defer cc()
-			if err = deploy(ctx, &cocoon, useLastDeployedRelease); err != nil {
+			if err = deploy(ctx, id, useLastDeployedRelease); err != nil {
 				muErr.Lock()
 				errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), common.GetRPCErrDesc(err)))
 				muErr.Unlock()
+			} else {
+				muStarted.Lock()
+				started = append(started, id)
+				muStarted.Unlock()
 			}
-			muStarted.Lock()
-			started = append(started, id)
-			muStarted.Unlock()
 			wg.Done()
 		}()
 	}
