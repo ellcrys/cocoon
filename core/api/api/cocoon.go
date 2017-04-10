@@ -60,10 +60,14 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon) err
 		// will not restart a dead cocoon/task.
 		if status == CocoonStatusDead {
 
+			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
+
 			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
 			if err != nil {
 				return fmt.Errorf("failed to stop dead cocoon: %s", err)
 			}
+
+			apiLog.Debugf("Stopped dead cocoon [%s]", cocoon.ID)
 
 			cocoon.Status = CocoonStatusDead
 			api.putCocoon(ctx, cocoon)
