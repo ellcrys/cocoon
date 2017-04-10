@@ -181,6 +181,9 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 // Put adds a new transaction into the default ledger
 func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
+	if link.GetDefaultLedger() == "" {
+		return nil, fmt.Errorf("default ledger not set")
+	}
 	return link.PutIn(link.GetDefaultLedger(), key, value)
 }
 
@@ -212,6 +215,9 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
 // Get returns a transaction that belongs to the default legder by its key.
 func (link *Link) Get(key string) (*types.Transaction, error) {
+	if link.GetDefaultLedger() == "" {
+		return nil, fmt.Errorf("default ledger not set")
+	}
 	return link.GetFrom(link.GetDefaultLedger(), key)
 }
 
@@ -243,6 +249,9 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 
 // GetByID returns a transaction that belongs to the default legder by its id.
 func (link *Link) GetByID(id string) (*types.Transaction, error) {
+	if link.GetDefaultLedger() == "" {
+		return nil, fmt.Errorf("default ledger not set")
+	}
 	return link.GetByIDFrom(link.GetDefaultLedger(), id)
 }
 
@@ -270,5 +279,8 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
 // GetBlock returns a block from the default ledger by its block id
 func (link *Link) GetBlock(id string) (*types.Block, error) {
+	if link.GetDefaultLedger() == "" {
+		return nil, fmt.Errorf("default ledger not set")
+	}
 	return link.GetBlockFrom(link.GetDefaultLedger(), id)
 }
