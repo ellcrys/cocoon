@@ -44,8 +44,9 @@ var (
 func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, callback func(s string, doneFunc func()) error) error {
 	var done = false
 	var err error
+	var status string
 	for !done {
-		status, err := api.GetCocoonStatus(cocoon.ID)
+		status, err = api.GetCocoonStatus(cocoon.ID)
 		if err != nil {
 			return err
 		}
