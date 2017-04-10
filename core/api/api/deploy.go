@@ -108,15 +108,17 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 
 		// cocoon is running, update status
 		if status == CocoonStatusRunning {
-			done()
 			cocoon.Status = CocoonStatusStarted
-			return api.putCocoon(ctx, &cocoon)
+			err := api.putCocoon(ctx, &cocoon)
+			if err != nil {
+				return err
+			}
+			done()
 		}
 
 		// cocoon is dead. We need to set the status to 'dead' and ask the scheduler
 		// to delete (stop it - according to nomad).
 		if status == CocoonStatusDead {
-			done()
 			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
 			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
 			if err != nil {

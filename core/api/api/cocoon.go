@@ -38,7 +38,8 @@ var (
 )
 
 // watchCocoonStatus checks the status of a cocoon on interval and passes it to a callback function.
-// The callback is also passed a `done` function to be called to stop the status check.
+// The callback is also passed a `done` function to be called to stop the status check. Returning
+// error from the callback will also stop the status check.
 // This function blocks the current goroutine.
 func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, callback func(s string, doneFunc func()) error) error {
 	var done = false
@@ -51,6 +52,10 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 		err = callback(status, func() {
 			done = true
 		})
+		if err != nil {
+			done = true
+			continue
+		}
 		time.Sleep(500 * time.Millisecond)
 	}
 	return err
