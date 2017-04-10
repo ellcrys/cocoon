@@ -51,11 +51,16 @@ func NewInterpreter(rules map[string]interface{}, defaultPolicy bool) *Interpret
 	return &Interpreter{rules: rules, defaultPolicy: defaultPolicy}
 }
 
+// NewInterpreterFromACLMap creates a new ACLInterpreter using an ACLMap
+func NewInterpreterFromACLMap(rules types.ACLMap, defaultPolicy bool) *Interpreter {
+	return &Interpreter{rules: rules, defaultPolicy: defaultPolicy}
+}
+
 // isValidLedgerKeyType checks whether the value type of a ledger rule is
-// the expected type of string or map of string
+// the expected type of string, map of string or map of interface{}
 func (i *Interpreter) isValidLedgerKeyType(v interface{}) bool {
 	switch v.(type) {
-	case string, map[string]string:
+	case string, map[string]string, map[string]interface{}:
 		return true
 	default:
 		return false
@@ -179,9 +184,23 @@ func (i *Interpreter) IsAllowed(ledgerName, actorID, operation string) bool {
 			}
 		}
 
-		if actorsPrivileges, ok := ledgerPrivileges.(map[string]string); ok {
+		// check ledger-specific, actor-specific privilege if provided
+		switch actorsPrivileges := ledgerPrivileges.(type) {
+		case map[string]string:
 			if actorPrivileges, ok := actorsPrivileges[actorID]; ok {
 				privileges := strings.Split(actorPrivileges, " ")
+				for _, p := range privileges {
+					switch i.isPermitted(strings.TrimSpace(p), operation) {
+					case 0:
+						allowed = false
+					case 1:
+						allowed = true
+					}
+				}
+			}
+		case map[string]interface{}:
+			if actorPrivileges, ok := actorsPrivileges[actorID]; ok {
+				privileges := strings.Split(actorPrivileges.(string), " ")
 				for _, p := range privileges {
 					switch i.isPermitted(strings.TrimSpace(p), operation) {
 					case 0:

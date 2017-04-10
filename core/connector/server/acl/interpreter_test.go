@@ -22,10 +22,6 @@ func TestInterpreter(t *testing.T) {
 				errs := i.Validate()
 				So(errs, ShouldNotBeEmpty)
 				So(errs[0].Error(), ShouldEqual, "ledger1: invalid ledger value type. Expects string or map of strings")
-				i = NewInterpreter(map[string]interface{}{"ledger1": map[string]interface{}{}}, false)
-				errs = i.Validate()
-				So(errs, ShouldNotBeEmpty)
-				So(errs[0].Error(), ShouldEqual, "ledger1: invalid ledger value type. Expects string or map of strings")
 			})
 
 			Convey("Should return err if wildcard ledger rule value type is not string", func() {
@@ -182,6 +178,15 @@ func TestInterpreter(t *testing.T) {
 							"actor1": "allow",
 						},
 					}, "ledger1", "actor1", types.TxPut, true, true,
+				},
+				[]interface{}{
+					map[string]interface{}{
+						"*": "deny",
+						"ledger1": map[string]interface{}{
+							"actor1":     "allow",
+							"some_actor": "allow",
+						},
+					}, "ledger1", "actor1", types.TxGet, false, true,
 				},
 			}
 
