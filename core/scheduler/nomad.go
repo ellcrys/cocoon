@@ -166,13 +166,13 @@ func (sc *Nomad) GetDeploymentStatus(jobID string) (string, error) {
 		return "", fmt.Errorf(respStr)
 	}
 
+	defer res.Body.Close()
 	var job map[string]interface{}
 	err = res.Body.FromJsonTo(&job)
 	if err != nil {
 		return "", common.JSONCoerceErr("job", err)
 	}
 
-	defer res.Body.Close()
 	if status, ok := job["Status"].(string); ok {
 		return status, nil
 	}
