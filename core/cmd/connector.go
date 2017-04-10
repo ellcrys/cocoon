@@ -112,9 +112,9 @@ var connectorCmd = &cobra.Command{
 
 		// start grpc API server
 		rpcServer := server.NewRPCServer(cn)
-		go rpcServer.Start(connectorRPCAddr, serverStartedCh, make(chan bool, 1))
+		go rpcServer.Start(connectorRPCAddr, serverStartedCh)
 
-		// launch the cocoon code
+		// wait for rpc server to start then launch the cocoon code
 		<-serverStartedCh
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
 

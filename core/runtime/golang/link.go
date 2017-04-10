@@ -198,7 +198,7 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction: %s", err)
+		return nil, err
 	}
 
 	var tx types.Transaction
@@ -232,7 +232,7 @@ func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error)
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction: %s", err)
+		return nil, err
 	}
 
 	var tx types.Transaction

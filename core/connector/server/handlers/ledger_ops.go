@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector"
 	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
@@ -22,17 +23,17 @@ type LedgerOperations struct {
 }
 
 // NewLedgerOperationHandler creates a new instance of a ledger operation handler
-func NewLedgerOperationHandler(connector *connector.Connector, ordererDiscovery *orderer.Discovery) *LedgerOperations {
+func NewLedgerOperationHandler(connector *connector.Connector) *LedgerOperations {
 	return &LedgerOperations{
 		connector:        connector,
 		CocoonID:         connector.GetRequest().ID,
-		ordererDiscovery: ordererDiscovery,
+		ordererDiscovery: connector.GetOrdererDiscoverer(),
 	}
 }
 
 // checkACL checks the operation against the ACL rules of the access cocoon
 // that owns the ledger being accessed.
-func (l *LedgerOperations) checkACL(op *connector_proto.LedgerOperation) error {
+func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.LedgerOperation) error {
 
 	ledgerName := op.GetParams()[0]
 
@@ -41,14 +42,40 @@ func (l *LedgerOperations) checkACL(op *connector_proto.LedgerOperation) error {
 	if op.GetLinkTo() != l.CocoonID && op.GetLinkTo() == types.SystemCocoonID {
 		i := acl.NewInterpreter(acl.SystemACL, ledgerName == "public")
 		if errs := i.Validate(); len(errs) != 0 {
-			return fmt.Errorf("system acl is not valid")
+			return fmt.Errorf("system ACL is not valid")
 		}
 		if !i.IsAllowed(ledgerName, l.CocoonID, op.Name) {
 			return fmt.Errorf("permission denied: %s operation not allowed", op.Name)
 		}
 	}
 
-	// TODO: Apply ACL rules for links pointing to non-system cocoons
+	// link is not a principal link and the cocoon to access is not the system cocoon
+	if op.GetLinkTo() != l.CocoonID {
+
+		linkedCocoon, err := l.connector.GetCocoon(ctx, op.GetLinkTo())
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				return fmt.Errorf("linked cocoon not found")
+			}
+			return err
+		}
+
+		ledger, err := l._getLedger(ctx, op.GetLinkTo(), ledgerName)
+		if err != nil {
+			if common.CompareErr(err, types.ErrLedgerNotFound) == 0 {
+				return fmt.Errorf("linked cocoon ledger not found")
+			}
+			return err
+		}
+
+		i := acl.NewInterpreterFromACLMap(linkedCocoon.ACL, ledger.Public)
+		if errs := i.Validate(); len(errs) != 0 {
+			return fmt.Errorf("linked cocoon ACL is not valid")
+		}
+		if !i.IsAllowed(ledgerName, l.CocoonID, op.Name) {
+			return fmt.Errorf("permission denied: %s operation not allowed", op.Name)
+		}
+	}
 
 	return nil
 }
@@ -56,7 +83,7 @@ func (l *LedgerOperations) checkACL(op *connector_proto.LedgerOperation) error {
 // Handle handles all types of ledger operations
 func (l *LedgerOperations) Handle(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
 
-	if err := l.checkACL(op); err != nil {
+	if err := l.checkACL(ctx, op); err != nil {
 		return nil, err
 	}
 
@@ -116,8 +143,8 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 	}, nil
 }
 
-// getLedgerOnly fetches a ledger
-func (l *LedgerOperations) getLedgerOnly(ctx context.Context, cocoonID, ledgerName string) (*orderer_proto.Ledger, error) {
+// _getLedger fetches a ledger
+func (l *LedgerOperations) _getLedger(ctx context.Context, cocoonID, ledgerName string) (*orderer_proto.Ledger, error) {
 
 	ordererConn, err := l.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -145,7 +172,7 @@ func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.Le
 		cocoonID = op.GetLinkTo()
 	}
 
-	ledger, err := l.getLedgerOnly(ctx, cocoonID, op.GetParams()[0])
+	ledger, err := l._getLedger(ctx, cocoonID, op.GetParams()[0])
 	if err != nil {
 		return nil, err
 	}

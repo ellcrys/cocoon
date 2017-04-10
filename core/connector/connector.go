@@ -75,6 +75,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	dckClient = client
 	cn.monitor.SetDockerClient(dckClient)
 	cn.healthCheck = NewHealthChecker("127.0.0.1"+cn.cocoonCodeRPCAddr, cn.cocoonUnresponsive)
+	go cn.ordererDiscovery.Discover()
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_RPC_ADDR has been specified. This means a dev cocoon code
@@ -119,6 +120,11 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 			return
 		}
 	}()
+}
+
+// GetOrdererDiscoverer returns the orderer discovery instance
+func (cn *Connector) GetOrdererDiscoverer() *orderer.Discovery {
+	return cn.ordererDiscovery
 }
 
 // cocoonUnresponsive is called when the cocoon code failed health check

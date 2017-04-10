@@ -13,7 +13,7 @@ import (
 )
 
 // GetCocoon returns the cocoon being run
-func (cn *Connector) GetCocoon(ctx context.Context) (*types.Cocoon, error) {
+func (cn *Connector) GetCocoon(ctx context.Context, cocoonID string) (*types.Cocoon, error) {
 
 	ordererConn, err := cn.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -24,7 +24,7 @@ func (cn *Connector) GetCocoon(ctx context.Context) (*types.Cocoon, error) {
 	odc := proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &proto.GetParams{
 		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeCocoonKey(cn.req.ID),
+		Key:      types.MakeCocoonKey(cocoonID),
 		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
