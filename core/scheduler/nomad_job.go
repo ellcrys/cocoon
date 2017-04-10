@@ -68,6 +68,7 @@ type Resources struct {
 	CPU      int
 	MemoryMB int
 	IOPS     int
+	DiskMB   int
 	Networks []Network
 }
 
@@ -216,6 +217,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 								CPU:      20,
 								MemoryMB: 10,
 								IOPS:     0,
+								DiskMB:   50,
 								Networks: []Network{
 									Network{
 										MBits: 1,
