@@ -601,3 +601,43 @@ func AddACLRule(cocoonID, target, privileges string) error {
 
 	return nil
 }
+
+// RemoveACLRule adds an acl rule to a cocoon
+func RemoveACLRule(cocoonID, target string) error {
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return err
+	}
+
+	if err = common.IsValidACLTarget(target); err != nil {
+		return fmt.Errorf("target format is invalid. Valid formats are: * = target any ledger a, ledgerName.[Cocoon|@Identity]")
+	}
+
+	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("unable to connect to cluster. please try again")
+	}
+	defer conn.Close()
+
+	stopSpinner := util.Spinner("Please wait")
+	defer stopSpinner()
+
+	ctx := context.Background()
+	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	cl := proto.NewAPIClient(conn)
+	_, err = cl.RemoveACLRule(ctx, &proto.RemoveACLRuleRequest{
+		CocoonID: cocoonID,
+		Target:   target,
+	})
+
+	if err != nil {
+		stopSpinner()
+		return err
+	}
+
+	stopSpinner()
+	log.Info("Successfully removed")
+
+	return nil
+}

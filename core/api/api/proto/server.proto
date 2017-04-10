@@ -16,12 +16,18 @@ service API {
     rpc AddVote(AddVoteRequest) returns (Response);
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
     rpc AddACLRule(AddACLRuleRequest) returns (Response);
+    rpc RemoveACLRule(RemoveACLRuleRequest) returns (Response);
 }
 
 message AddACLRuleRequest {
     string cocoonID = 1;
     string target = 2;
     string privileges = 3;
+}
+
+message RemoveACLRuleRequest {
+    string cocoonID = 1;
+    string target = 2;
 }
 
 message LoginRequest {

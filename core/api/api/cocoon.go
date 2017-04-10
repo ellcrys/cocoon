@@ -627,3 +627,35 @@ func (api *API) AddACLRule(ctx context.Context, req *proto.AddACLRuleRequest) (*
 		Body:   cocoon.ToJSON(),
 	}, nil
 }
+
+// RemoveACLRule removes an ACL rule to a cocoon
+func (api *API) RemoveACLRule(ctx context.Context, req *proto.RemoveACLRuleRequest) (*proto.Response, error) {
+	var claims jwt.MapClaims
+	var err error
+
+	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+		return nil, types.ErrInvalidOrExpiredToken
+	}
+
+	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	if err != nil {
+		return nil, err
+	}
+
+	loggedInUserIdentity := claims["identity"].(string)
+
+	if loggedInUserIdentity != cocoon.IdentityID {
+		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+	}
+
+	cocoon.ACL.Remove(req.Target)
+
+	if err = api.putCocoon(ctx, cocoon); err != nil {
+		return nil, err
+	}
+
+	return &proto.Response{
+		Status: 200,
+		Body:   cocoon.ToJSON(),
+	}, nil
+}
