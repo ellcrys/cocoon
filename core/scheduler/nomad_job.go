@@ -234,6 +234,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 					Resources: Resources{
 						CPU:      20,
 						MemoryMB: 10,
+						DiskMB:   50,
 						IOPS:     0,
 						Networks: []Network{},
 					},
