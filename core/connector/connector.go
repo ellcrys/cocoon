@@ -16,12 +16,14 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
+	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	"github.com/ncodes/cocoon/core/orderer"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
+	context "golang.org/x/net/context"
 )
 
 var log = logging.MustGetLogger("connector")
@@ -222,6 +224,26 @@ func (cn *Connector) HookToMonitor(req *Request) {
 	}()
 }
 
+// setStatus Set the cocoon status
+func (cn *Connector) setStatus(status string) error {
+
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+
+	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	if err != nil {
+		return err
+	}
+
+	cocoon.Status = status
+	err = cn.PutCocoon(ctx, cocoon)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RestartIfDiskAllocExceeded restarts the cocoon code is disk usages
 // has exceeded its set limit.
 func (cn *Connector) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64) bool {
@@ -316,7 +338,7 @@ func (cn *Connector) fetchSource(req *Request, lang Language) (string, error) {
 	return cn.fetchFromGit(req, lang)
 }
 
-// fetchFromGit fetchs cocoon code from git repo.
+// fetchFromGit fetches cocoon code from git repo.
 // and returns the download directory.
 func (cn *Connector) fetchFromGit(req *Request, lang Language) (string, error) {
 
@@ -465,7 +487,7 @@ func (cn *Connector) stopContainer(id string) error {
 // If privileged is set to true, command will attain root powers.
 // Supported statuses are before (before command is executed), after (after command is executed)
 // and end (when command exits).
-func (cn *Connector) execInContainer(container *docker.Container, name string, command []string, priviledged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
+func (cn *Connector) execInContainer(container *docker.Container, name string, command []string, privileged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
 
 	containerStatus, err := dckClient.InspectContainer(container.ID)
 	if err != nil {
@@ -485,7 +507,7 @@ func (cn *Connector) execInContainer(container *docker.Container, name string, c
 		AttachStderr: true,
 		AttachStdout: true,
 		Cmd:          command,
-		Privileged:   priviledged,
+		Privileged:   privileged,
 	})
 
 	if err != nil {
@@ -561,6 +583,7 @@ func (cn *Connector) build(container *docker.Container, lang Language) error {
 		switch state {
 		case "before":
 			log.Info("Building cocoon code...")
+			cn.setStatus(api.CocoonStatusBuilding)
 		case "end":
 			if val.(int) == 0 {
 				log.Info("Build succeeded!")
@@ -581,8 +604,10 @@ func (cn *Connector) run(container *docker.Container, lang Language) error {
 			log.Info("Starting cocoon code")
 		case "after":
 			cn.healthCheck.Start()
+			cn.setStatus(api.CocoonStatusRunning)
 			return nil
 		case "end":
+			cn.setStatus(api.CocoonStatusStopped)
 			if val.(int) == 0 {
 				log.Info("Cocoon code successfully stop")
 				return nil
@@ -640,6 +665,7 @@ func (cn *Connector) configFirewall(container *docker.Container, req *Request) e
 func (cn *Connector) Stop(failed bool) error {
 
 	defer func() {
+		cn.setStatus(api.CocoonStatusStopped)
 		cn.waitCh <- failed
 	}()
 

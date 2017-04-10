@@ -27,6 +27,9 @@ var (
 	// CocoonStatusRunning indicates a running cocoon code
 	CocoonStatusRunning = "running"
 
+	// CocoonStatusBuilding indicates a cocoon in build phase
+	CocoonStatusBuilding = "building"
+
 	// CocoonStatusStopped indicates a stopped cocoon
 	CocoonStatusStopped = "stopped"
 )

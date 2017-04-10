@@ -59,7 +59,7 @@ func (g *Go) setUserHomeDir() error {
 	return nil
 }
 
-// SetRunEnv adds enviroment variables to be added when the run script is constructed.
+// SetRunEnv adds environment variables to be added when the run script is constructed.
 func (g *Go) SetRunEnv(env map[string]string) {
 	for k, v := range env {
 		g.env[k] = v
@@ -91,7 +91,7 @@ func (g *Go) GetSourceRootDir() string {
 }
 
 // RequiresBuild returns true if cocoon codes written in
-// go langugage requires a build process.
+// go language requires a build process.
 // During development, If DEV_RUN_ROOT_BIN env is set, it will return false as
 // the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
@@ -129,7 +129,7 @@ func (g *Go) GetBuildScript() string {
 }
 
 // GetRunScript returns the script required to start the
-// cocoon code accodeording to the build and installation process
+// cocoon code according to the build and installation process
 // of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
 // ccode binary located in the mount destination.
 func (g *Go) GetRunScript() []string {
