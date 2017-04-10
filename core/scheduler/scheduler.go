@@ -12,5 +12,6 @@ type Scheduler interface {
 	Deploy(jobID, lang, url, tag, buildParams, link, memory, cpuShare string) (*DeploymentInfo, error)
 	SetAddr(addr string, https bool)
 	GetServiceDiscoverer() ServiceDiscovery
+	GetDeploymentStatus(jobID string) (string, error)
 	Stop(jobID string) error
 }

@@ -32,21 +32,44 @@ var (
 
 	// CocoonStatusStopped indicates a stopped cocoon
 	CocoonStatusStopped = "stopped"
+
+	// CocoonStatusDead indicates a dead cocoon
+	CocoonStatusDead = "dead"
 )
 
-// updateCocoonStatusOnStarted checks on interval the cocoon status and update the
+// watchCocoonStatus checks on interval the cocoon status and update the
 // status field when the cocoon status is `started`. It returns immediately
-// an error is encountered. The function will block till success or failure.
-func (api *API) updateCocoonStatusOnStarted(ctx context.Context, cocoon *types.Cocoon) error {
+// an error is encountered. It will also stop the cocoon if deployment fails.
+// The function will block till success or failure.
+func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon) error {
 	for {
+
+		// get cocoon status
 		status, err := api.GetCocoonStatus(cocoon.ID)
 		if err != nil {
 			return err
 		}
+
+		// cocoon is running, update status
 		if status == CocoonStatusRunning {
 			cocoon.Status = CocoonStatusStarted
 			return api.putCocoon(ctx, cocoon)
 		}
+
+		// cocoon is dead. We need to stop it so user can retry as nomad (current scheduler)
+		// will not restart a dead cocoon/task.
+		if status == CocoonStatusDead {
+
+			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
+			if err != nil {
+				return fmt.Errorf("failed to stop dead cocoon: %s", err)
+			}
+
+			cocoon.Status = CocoonStatusDead
+			api.putCocoon(ctx, cocoon)
+			return fmt.Errorf("cocoon is dead")
+		}
+
 		time.Sleep(500 * time.Millisecond)
 	}
 }
@@ -341,21 +364,34 @@ func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*pr
 }
 
 // GetCocoonStatus fetches the cocoon status.It queries the scheduler
-// to find out the current service status for the cocoon.
+// discovery service to find out the current service status for the cocoon.
+// If the scheduler discovery service does not say the cocoon is running,
+// we check with the scheduler to know if the cocoon code was deployed successfully.
 func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 
-	s, err := api.scheduler.GetServiceDiscoverer().GetByID("cocoon", map[string]string{
-		"tag": cocoonID,
-	})
+	s, err := api.scheduler.GetServiceDiscoverer().GetByID("cocoon", map[string]string{"tag": cocoonID})
 	if err != nil {
 		apiLog.Errorf("failed to query cocoon service status: %s", err.Error())
 		return "", fmt.Errorf("failed to query cocoon service status")
 	}
 
 	if len(s) == 0 {
-		return CocoonStatusStopped, nil
-	}
 
+		// check with the scheduler to know status of the cocoon deployment
+		dStatus, err := api.scheduler.GetDeploymentStatus(cocoonID)
+		if err != nil {
+			if err.Error() != "not found" {
+				return CocoonStatusStopped, nil
+			}
+			return "", err
+		}
+
+		if dStatus == "dead" {
+			return CocoonStatusDead, nil
+		}
+
+		return dStatus, nil
+	}
 	return CocoonStatusRunning, nil
 }
 

@@ -148,6 +148,38 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 	}, nil
 }
 
+// GetDeploymentStatus gets the status of a job
+func (sc *Nomad) GetDeploymentStatus(jobID string) (string, error) {
+	res, err := goreq.Request{
+		Method: "GET",
+		Uri:    sc.API + "/v1/job/" + jobID,
+	}.Do()
+
+	if err != nil {
+		return "", err
+	} else if res.StatusCode != 200 {
+		respStr, _ := res.Body.ToString()
+		res.Body.Close()
+		if res.StatusCode == 404 {
+			return "", fmt.Errorf("not found")
+		}
+		return "", fmt.Errorf(respStr)
+	}
+
+	var job map[string]interface{}
+	err = res.Body.FromJsonTo(&job)
+	if err != nil {
+		return "", common.JSONCoerceErr("job", err)
+	}
+
+	defer res.Body.Close()
+	if status, ok := job["Status"].(string); ok {
+		return status, nil
+	}
+
+	return "", nil
+}
+
 // Stop stops a running cocoon job
 func (sc *Nomad) Stop(jobID string) error {
 	res, err := goreq.Request{

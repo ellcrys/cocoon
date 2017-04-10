@@ -103,7 +103,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, err
 	}
 
-	err = api.updateCocoonStatusOnStarted(ctx, &cocoon)
+	err = api.watchCocoonStatus(ctx, &cocoon)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update status")
 	}
