@@ -46,7 +46,7 @@ type Connector struct {
 	connectorRPCAddr  string
 	cocoonCodeRPCAddr string
 	languages         []Language
-	container         *docker.Container
+	container         *docker.APIContainers
 	containerRunning  bool
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
@@ -99,9 +99,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		return
 	}
 
-	return
-
-	newContainer, err := cn.prepareContainer(cn.req, lang)
+	cocoonCodeContainer, err := cn.prepareContainer(lang)
 	if err != nil {
 		log.Error(err.Error())
 		cn.Stop(true)
@@ -118,7 +116,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	go cn.monitor.Monitor()
 
 	go func() {
-		if err = cn.run(newContainer, lang); err != nil {
+		if err = cn.run(cocoonCodeContainer, lang); err != nil {
 			log.Error(err.Error())
 			cn.Stop(true)
 			return
@@ -156,62 +154,60 @@ func (cn *Connector) GetCocoonCodeRPCAddr() string {
 // prepareContainer fetches the cocoon code source, creates a container,
 // moves the source in to it, builds the source within the container (if required)
 // and configures default firewall.
-func (cn *Connector) prepareContainer(req *Request, lang Language) (*docker.Container, error) {
+func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, error) {
 
-	var containerID = util.Env("CONTAINER_ID", req.ID)
+	var containerName = util.Env("COCOON_CONTAINER_NAME", "")
+	if len(containerName) == 0 {
+		return nil, fmt.Errorf("container name is unknown")
+	}
 
-	_, err := cn.fetchSource(req, lang)
+	// ensure cocoon code isn't already launched on a container
+	container, err := cn.getContainer(containerName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
+	} else if container != nil {
+		return nil, fmt.Errorf("cocoon code already exists on a container")
+	}
+
+	_, err = cn.fetchSource(lang)
 	if err != nil {
 		return nil, err
 	}
 
-	// ensure cocoon code isn't already launched on a container
-	c, err := cn.getContainer(containerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
-	} else if c != nil {
-		return nil, fmt.Errorf("cocoon code already exists on a container")
-	}
-
-	newContainer, err := cn.createContainer(req.ID, lang, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new container to run cocoon code. %s ", err.Error())
-	}
-
-	cn.container = newContainer
+	cn.container = container
 	cn.monitor.SetContainerID(cn.container.ID)
-	cn.HookToMonitor(req)
+	cn.HookToMonitor(cn.req)
 
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
 
-		if len(req.BuildParams) == 0 {
+		if len(cn.req.BuildParams) == 0 {
 			log.Info("No build parameters provided. Skipping build step")
 		} else {
 			log.Info("Parsing build parameters")
-			req.BuildParams, err = crypto.FromBase64(req.BuildParams)
+			cn.req.BuildParams, err = crypto.FromBase64(cn.req.BuildParams)
 			if err != nil {
 				return nil, fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
 			}
-			if err = util.FromJSON([]byte(req.BuildParams), &buildParams); err != nil {
+			if err = util.FromJSON([]byte(cn.req.BuildParams), &buildParams); err != nil {
 				return nil, fmt.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 			}
 			if err = lang.SetBuildParams(buildParams); err != nil {
 				return nil, fmt.Errorf("failed to set and validate build parameter. %s", err)
 			}
 
-			err = cn.build(newContainer, lang)
+			err = cn.build(container, lang)
 			if err != nil {
 				return nil, fmt.Errorf(err.Error())
 			}
 		}
 	}
 
-	if err = cn.configFirewall(newContainer, req); err != nil {
+	if err = cn.configFirewall(container, cn.req); err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
 
-	return newContainer, nil
+	return container, nil
 }
 
 // HookToMonitor is where all listeners to the monitor
@@ -287,7 +283,7 @@ func (cn *Connector) restart() error {
 		return fmt.Errorf("failed to remove container. %s", err)
 	}
 
-	newContainer, err := cn.prepareContainer(cn.req, cn.GetLanguage(cn.req.Lang))
+	cocoonCodeContainer, err := cn.prepareContainer(cn.GetLanguage(cn.req.Lang))
 	if err != nil {
 		return fmt.Errorf("restart failed: %s", err)
 	}
@@ -295,7 +291,7 @@ func (cn *Connector) restart() error {
 	go cn.monitor.Monitor()
 
 	go func() {
-		if err = cn.run(newContainer, cn.GetLanguage(cn.req.Lang)); err != nil {
+		if err = cn.run(cocoonCodeContainer, cn.GetLanguage(cn.req.Lang)); err != nil {
 			log.Errorf("restart failed: %s", err)
 			cn.Stop(true)
 		}
@@ -331,29 +327,29 @@ func (cn *Connector) GetLanguages() []Language {
 
 // fetchSource fetches the cocoon code source from
 // a remote address
-func (cn *Connector) fetchSource(req *Request, lang Language) (string, error) {
+func (cn *Connector) fetchSource(lang Language) (string, error) {
 
-	if !cutil.IsGithubRepoURL(req.URL) {
+	if !cutil.IsGithubRepoURL(cn.req.URL) {
 		return "", fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
-	return cn.fetchFromGit(req, lang)
+	return cn.fetchFromGit(lang)
 }
 
 // fetchFromGit fetches cocoon code from git repo.
 // and returns the download directory.
-func (cn *Connector) fetchFromGit(req *Request, lang Language) (string, error) {
+func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 
 	var repoTarURL, downloadDst string
 	var err error
 
-	repoTarURL, err = cutil.GetGithubRepoRelease(req.URL, req.Tag)
+	repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Tag)
 	if err != nil {
 		return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 	}
 
 	// set tag to latest if not provided
-	tagStr := req.Tag
+	tagStr := cn.req.Tag
 	if tagStr == "" {
 		tagStr = "latest"
 	}
@@ -376,7 +372,7 @@ func (cn *Connector) fetchFromGit(req *Request, lang Language) (string, error) {
 	}
 
 	log.Infof("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
-	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", req.ID))
+	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
 	err = cutil.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
 	if err != nil {
 		return "", err
@@ -489,7 +485,7 @@ func (cn *Connector) stopContainer(id string) error {
 // If privileged is set to true, command will attain root powers.
 // Supported statuses are before (before command is executed), after (after command is executed)
 // and end (when command exits).
-func (cn *Connector) execInContainer(container *docker.Container, name string, command []string, privileged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
+func (cn *Connector) execInContainer(container *docker.APIContainers, name string, command []string, privileged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
 
 	containerStatus, err := dckClient.InspectContainer(container.ID)
 	if err != nil {
@@ -578,8 +574,8 @@ func (cn *Connector) execInContainer(container *docker.Container, name string, c
 }
 
 // build starts up the container and builds the cocoon code
-// according to the build script provided by the languaged.
-func (cn *Connector) build(container *docker.Container, lang Language) error {
+// according to the build script provided by the language.
+func (cn *Connector) build(container *docker.APIContainers, lang Language) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript()}
 	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
 		switch state {
@@ -599,7 +595,7 @@ func (cn *Connector) build(container *docker.Container, lang Language) error {
 
 // Run the cocoon code. First it gets the IP address of the container and sets
 // the language environment.
-func (cn *Connector) run(container *docker.Container, lang Language) error {
+func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 	return cn.execInContainer(container, "RUN", lang.GetRunScript(), false, runLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
@@ -645,7 +641,7 @@ func (cn *Connector) getDefaultFirewall() string {
 }
 
 // configFirewall configures the container firewall.
-func (cn *Connector) configFirewall(container *docker.Container, req *Request) error {
+func (cn *Connector) configFirewall(container *docker.APIContainers, req *Request) error {
 	cmd := []string{"bash", "-c", cn.getDefaultFirewall()}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, val interface{}) error {
 		switch state {
