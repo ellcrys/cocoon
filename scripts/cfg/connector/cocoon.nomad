@@ -79,7 +79,7 @@ job "cocoon" {
         force_pull = true
         image = "ncodes/launch-go:latest"  
         command = "bash"
-        args = ["-c", "echo 'Hello Human, I am Alive'; tail -f /dev/null"]
+        args = ["-c", "echo 'Hello Human. I am alive'; tail -f /dev/null"]
       }
 
       logs {
