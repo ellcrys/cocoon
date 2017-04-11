@@ -32,7 +32,7 @@ job "cocoon" {
         force_pull = true
         image = "ncodes/cocoon-launcher:latest"  
         command = "bash"
-        args = ["-c", "echo 'Sleeping'; sleep 3600"]
+        args = ["local/runner.sh"]
       }
       
       env {
@@ -42,8 +42,17 @@ job "cocoon" {
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
         COCOON_CONTAINER_NAME = "${NOMAD_TASK_NAME}-${NOMAD_ALLOC_ID}"
+        
+        # The name of the connector runner script and a link to the script.
+        # The runner script will fetch and run whatever is found in this environment vars.
+        RUN_SCRIPT_NAME = "run-connector.sh"
+        RUN_SCRIPT_URL = "https://rawgit.com/ncodes/cocoon/master/scripts/run-connector.sh"
       }
 
+      artifact {
+        source = "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh"
+      }
+      
       logs {
         max_files     = 10
         max_file_size = 10
@@ -51,7 +60,7 @@ job "cocoon" {
 
       resources {
         cpu    = 500
-        memory = 512
+        memory = 1024
         network {
           mbits = 1
           port "RPC" {}
