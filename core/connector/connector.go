@@ -99,6 +99,8 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		return
 	}
 
+	return
+
 	newContainer, err := cn.prepareContainer(cn.req, lang)
 	if err != nil {
 		log.Error(err.Error())

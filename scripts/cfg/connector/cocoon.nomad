@@ -41,6 +41,7 @@ job "cocoon" {
         COCOON_CODE_TAG = ""
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
+        COCOON_CONTAINER_NAME = "${NOMAD_TASK_NAME}-${NOMAD_ALLOC_ID}"
       }
 
       logs {
@@ -53,15 +54,14 @@ job "cocoon" {
         memory = 512
         network {
           mbits = 1
-          port "CONNECTOR_RPC" {}
-          port "COCOON_RPC" {}
+          port "RPC" {}
         }
       }
 
       service {
         name = "connectors"
         tags = []
-        port = "CONNECTOR_RPC"
+        port = "RPC"
         check {
           name     = "alive"
           type     = "tcp"
@@ -69,8 +69,6 @@ job "cocoon" {
           timeout  = "2s"
         }
       }
-    
-    
     }
     
     task "code" {
@@ -81,7 +79,7 @@ job "cocoon" {
         force_pull = true
         image = "ncodes/launch-go:latest"  
         command = "bash"
-        args = ["-c", "echo 'Sleeping'; sleep 3600"]
+        args = ["-c", "echo 'Hello Human, I am Alive'; tail -f /dev/null"]
       }
 
       logs {
@@ -94,6 +92,7 @@ job "cocoon" {
         memory = 512
         network {
           mbits = 1
+          port "RPC" {}
         }
       }
     }
