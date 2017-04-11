@@ -28,6 +28,10 @@ job "api" {
     task "api" {
       driver = "docker"
       
+      meta {
+        VERSION = "dual-docker"
+      }
+      
       config {
         image = "ncodes/cocoon-launcher:latest"
         command = "bash"
@@ -38,7 +42,7 @@ job "api" {
       }
 
       artifact {
-        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/cfg/api/run.sh"
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/${NOMAD_META_VERSION}/scripts/cfg/api/run.sh"
         destination = "/local/scripts"
       }
 
