@@ -185,9 +185,12 @@ func NewJob(version, id string, count int) *NomadJob {
 								NetworkMode: "host",
 								Privileged:  true,
 								ForcePull:   true,
-								Volumes:     []string{"/var/run/docker.sock:/var/run/docker.sock"},
-								Command:     "bash",
-								Args:        []string{"/local/runner.sh"},
+								Volumes: []string{
+									"/var/run/docker.sock:/var/run/docker.sock",
+									"/tmp:/tmp",
+								},
+								Command: "bash",
+								Args:    []string{"/local/runner.sh"},
 							},
 							Env: map[string]string{
 								"VERSION":               "${NOMAD_META_VERSION}",
