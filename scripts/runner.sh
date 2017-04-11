@@ -3,7 +3,7 @@
 # the connector. 
 set -e
 echo "Runner.sh has started"
-trap "echo 'caught the signal'" SIGTERM SIGINT
+trap 'echo caught the signal' SIGTERM SIGINT
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
