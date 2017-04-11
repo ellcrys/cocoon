@@ -36,6 +36,7 @@ job "cocoon" {
       }
       
       env {
+        VERSION = "dual-docker"
         COCOON_ID = "abc"
         COCOON_CODE_URL = "https://github.com/ncodes/cocoon-example-01"
         COCOON_CODE_TAG = ""

@@ -12,7 +12,7 @@ PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 mkdir -p $GOPATH/bin
 
 # Pull cocoon source
-branch=$CONNECTOR_VERSION
+branch=$VERSION
 repoOwner=github.com/ncodes
 repoOwnerDir=$GOPATH/src/$repoOwner
 mkdir -p $repoOwnerDir
