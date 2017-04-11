@@ -169,6 +169,9 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 		return nil, fmt.Errorf("cocoon code container has not been started")
 	}
 
+	// set flag to true to indicate that the container is running
+	cn.containerRunning = true
+
 	_, err = cn.fetchSource(lang)
 	if err != nil {
 		return nil, err
@@ -428,12 +431,9 @@ func (cn *Connector) copySourceToContainer(lang Language, container *docker.APIC
 
 	// create source root directory
 	cmd := []string{"bash", "-c", "mkdir -p " + lang.GetSourceRootDir()}
-	cn.execInContainer(container, "CREATE_SOURCE_DIR", cmd, true, buildLog, func(state string, val interface{}) error {
-		switch state {
-		case "end":
-			if val.(int) != 0 {
-				return fmt.Errorf("failed to create source directory")
-			}
+	cn.execInContainer(container, "CREATE_SOURCE_DIR", cmd, true, buildLog, func(state string, exitCode interface{}) error {
+		if state == "end" && exitCode.(int) != 0 {
+			return fmt.Errorf("failed to create source directory")
 		}
 		return nil
 	})
@@ -559,16 +559,16 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 // according to the build script provided by the language.
 func (cn *Connector) build(container *docker.APIContainers, lang Language) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript()}
-	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
+	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Building cocoon code...")
 			cn.setStatus(api.CocoonStatusBuilding)
 		case "end":
-			if val.(int) == 0 {
+			if exitCode.(int) == 0 {
 				log.Info("Build succeeded!")
 			} else {
-				return fmt.Errorf("Build has failed with exit code=%d", val.(int))
+				return fmt.Errorf("Build has failed with exit code=%d", exitCode.(int))
 			}
 		}
 		return nil
@@ -578,7 +578,7 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 // Run the cocoon code. First it gets the IP address of the container and sets
 // the language environment.
 func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
-	return cn.execInContainer(container, "RUN", lang.GetRunScript(), false, runLog, func(state string, val interface{}) error {
+	return cn.execInContainer(container, "RUN", lang.GetRunScript(), false, runLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Starting cocoon code")
@@ -588,7 +588,7 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 			return nil
 		case "end":
 			cn.setStatus(api.CocoonStatusStopped)
-			if val.(int) == 0 {
+			if exitCode.(int) == 0 {
 				log.Info("Cocoon code successfully stop")
 				return nil
 			}
@@ -625,12 +625,12 @@ func (cn *Connector) getDefaultFirewall() string {
 // configFirewall configures the container firewall.
 func (cn *Connector) configFirewall(container *docker.APIContainers, req *Request) error {
 	cmd := []string{"bash", "-c", cn.getDefaultFirewall()}
-	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, val interface{}) error {
+	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
 			log.Info("Configuring firewall for cocoon")
 		case "end":
-			if val.(int) == 0 {
+			if exitCode.(int) == 0 {
 				log.Info("Firewall configured for cocoon")
 			}
 		}
