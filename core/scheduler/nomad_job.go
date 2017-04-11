@@ -225,7 +225,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 							KillTimeout: 10000000000,
 							Resources: Resources{
 								CPU:      100,
-								MemoryMB: 512,
+								MemoryMB: 1024,
 								DiskMB:   800,
 								IOPS:     0,
 								Networks: []Network{
@@ -260,7 +260,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 							Artifacts: []Artifact{},
 							Resources: Resources{
 								CPU:      100,
-								MemoryMB: 512,
+								MemoryMB: 1024,
 								DiskMB:   800,
 								IOPS:     0,
 								Networks: []Network{
