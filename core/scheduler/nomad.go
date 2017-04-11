@@ -117,8 +117,6 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_MEMORY"] = strconv.Itoa(SupportedMemory[memory])
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["ALLOC_CPU_SHARE"] = strconv.Itoa(SupportedCPUShares[cpuShare])
 
 	// if cocoon linkID is provided, set env variable and also add id to
 	// the service tag. This will allow us use discover the link via consul service discovery.

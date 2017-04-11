@@ -4,8 +4,8 @@ job "cocoon" {
   type = "service"
   
   constraint {
-    // attribute = "${attr.kernel.name}"
-    // value     = "linux"
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
   }
   
   update {
