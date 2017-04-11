@@ -39,7 +39,7 @@ job "cocoon" {
         volumes = [
             "/var/run/docker.sock:/var/run/docker.sock"
         ]
-        image = "ncodes/cocoon-launcher:latest"  
+        image = "${NOMAD_META_REPO_USER}/cocoon-launcher:latest"  
         command = "bash"
         args = ["/local/runner.sh"]
       }
@@ -78,7 +78,7 @@ job "cocoon" {
       }
 
       service {
-        name = "connectors"
+        name = "cocoons"
         tags = []
         port = "RPC"
         check {
