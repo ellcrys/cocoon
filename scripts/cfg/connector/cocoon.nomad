@@ -4,8 +4,8 @@ job "cocoon" {
   type = "service"
   
   constraint {
-    // attribute = "${attr.kernel.name}"
-    // value     = "linux"
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
   }
   
   update {
@@ -27,10 +27,12 @@ job "cocoon" {
       driver = "docker"
       
       config {
+        network_mode = "host"
+        privileged = true
+        force_pull = true
         image = "ncodes/cocoon-launcher:latest"  
         command = "bash"
-        args = ["-c", "pwd"]
-        network_mode = "host"
+        args = ["-c", "echo 'Sleeping'; sleep 3600"]
       }
       
       env {
@@ -65,6 +67,33 @@ job "cocoon" {
           type     = "tcp"
           interval = "10s"
           timeout  = "2s"
+        }
+      }
+    
+    
+    }
+    
+    task "code" {
+      driver = "docker"
+      
+      config {
+        network_mode = "bridge"
+        force_pull = true
+        image = "ncodes/launch-go:latest"  
+        command = "bash"
+        args = ["-c", "echo 'Sleeping'; sleep 3600"]
+      }
+
+      logs {
+        max_files     = 10
+        max_file_size = 10
+      }
+
+      resources {
+        cpu    = 500
+        memory = 512
+        network {
+          mbits = 1
         }
       }
     }
