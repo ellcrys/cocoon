@@ -3,7 +3,7 @@
 set -e
 
 # trap terminate signal and pass to cocoon process
-trap 'kill -TERM $CPID' SIGTERM SIGINT
+trap 'echo received in here!' SIGTERM SIGINT
 
 # Set up go environment
 export GOPATH=/go
