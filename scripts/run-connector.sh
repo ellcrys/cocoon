@@ -6,10 +6,7 @@ set -e
 trap 'kill -TERM $CPID' SIGTERM SIGINT
 
 # Set up go environment
-export GOROOT=/go
-export GOPATH=/gocode
-PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-mkdir -p $GOPATH/bin
+export GOPATH=/go
 
 # Pull cocoon source
 branch=$VERSION
