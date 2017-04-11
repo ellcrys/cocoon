@@ -32,7 +32,7 @@ job "cocoon" {
         force_pull = true
         image = "ncodes/cocoon-launcher:latest"  
         command = "bash"
-        args = ["local/runner.sh"]
+        args = ["-c", "ls /"]
       }
       
       env {
