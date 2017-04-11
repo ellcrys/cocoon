@@ -426,11 +426,22 @@ func (cn *Connector) copySourceToContainer(lang Language, container *docker.APIC
 		log.Info("Removed download directory")
 	}()
 
+	// create source root directory
+	cmd := []string{"bash", "-c", "mkdir -p " + lang.GetSourceRootDir()}
+	cn.execInContainer(container, "CREATE_SOURCE_DIR", cmd, true, buildLog, func(state string, val interface{}) error {
+		switch state {
+		case "end":
+			if val.(int) != 0 {
+				return fmt.Errorf("failed to create source directory")
+			}
+		}
+		return nil
+	})
+
 	// copy source directory to the container's source directory
-	cmd := "docker"
 	log.Debugf("Copying source from %s to container:%s", lang.GetDownloadDestination(), lang.GetCopyDestination())
 	args := []string{"cp", lang.GetDownloadDestination(), fmt.Sprintf("%s:%s", container.ID, lang.GetCopyDestination())}
-	if err := exec.Command(cmd, args...).Run(); err != nil {
+	if err := exec.Command("docker", args...).Run(); err != nil {
 		return fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
 	}
 
