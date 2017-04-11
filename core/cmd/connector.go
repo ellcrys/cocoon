@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"syscall"
 
-	"net"
-
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -100,7 +98,7 @@ var connectorCmd = &cobra.Command{
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAPI)
-		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_code_RPC", "8004"))
+		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", ":8004")
 
 		cn := connector.NewConnector(req, waitCh)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
