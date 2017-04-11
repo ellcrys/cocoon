@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run the connector 
 set -e
-echo 'hello here'
+echo "hello here $!"
 # trap terminate signal and pass to cocoon process
 trap 'echo received in here!' SIGTERM SIGINT
 
