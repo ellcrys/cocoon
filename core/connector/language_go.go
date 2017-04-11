@@ -67,7 +67,7 @@ func (g *Go) SetRunEnv(env map[string]string) {
 }
 
 // GetDownloadDestination returns the location to save
-// the downloaded go cocoon code to.
+// the downloaded go cocoon code source on the connector
 func (g *Go) GetDownloadDestination() string {
 	u, _ := urlx.Parse(g.req.URL)
 	repoID := strings.Trim(u.Path, "/")
@@ -79,7 +79,7 @@ func (g *Go) GetDownloadDestination() string {
 func (g *Go) GetCopyDestination() string {
 	u, _ := urlx.Parse(g.req.URL)
 	repoID := strings.Trim(u.Path, "/")
-	return path.Join(g.imgGoPath, "src/github.com/", strings.Split(repoID, "/")[0])
+	return path.Join(g.imgGoPath, "src/github.com/", repoID)
 }
 
 // GetSourceRootDir returns the root directory of the cocoon source code
