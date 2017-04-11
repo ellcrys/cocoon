@@ -151,7 +151,7 @@ type NomadJob struct {
 }
 
 // NewJob creates a new job with some default values.
-func NewJob(connectorVersion, id string, count int) *NomadJob {
+func NewJob(version, id string, count int) *NomadJob {
 	return &NomadJob{
 		Job: &Job{
 			Region:      "",
@@ -173,7 +173,7 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 					Name:  fmt.Sprintf("cocoon-grp-%s", id),
 					Count: count,
 					Meta: map[string]string{
-						"VERSION":   "dual-docker",
+						"VERSION":   version,
 						"REPO_USER": "ncodes",
 					},
 					Tasks: []Task{
