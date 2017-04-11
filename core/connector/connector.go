@@ -165,8 +165,8 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 	container, err := cn.getContainer(containerName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
-	} else if container != nil {
-		return nil, fmt.Errorf("cocoon code already exists on a container")
+	} else if container == nil {
+		return nil, fmt.Errorf("cocoon code container has not been started")
 	}
 
 	_, err = cn.fetchSource(lang)
