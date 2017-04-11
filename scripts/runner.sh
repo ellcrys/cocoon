@@ -3,7 +3,7 @@
 # the connector. 
 set -e
 echo "Runner.sh has started"
-trap 'echo hi' SIGTERM SIGINT
+trap 'echo hi = $PID' SIGTERM SIGINT
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
