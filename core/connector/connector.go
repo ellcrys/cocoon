@@ -17,7 +17,6 @@ import (
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -151,8 +150,9 @@ func (cn *Connector) GetCocoonCodeRPCAddr() string {
 	return cn.cocoonCodeRPCAddr
 }
 
-// prepareContainer fetches the cocoon code source, creates a container,
-// moves the source in to it, builds the source within the container (if required)
+// prepareContainer fetches the cocoon code source,
+// moves the source in to the running cocoon code container,
+// builds the source within the container (if required)
 // and configures default firewall.
 func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, error) {
 
@@ -171,6 +171,10 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 
 	_, err = cn.fetchSource(lang)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = cn.copySourceToContainer(lang, container); err != nil {
 		return nil, err
 	}
 
@@ -413,42 +417,8 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 	return nil, nil
 }
 
-// createContainer creates a brand new container,
-// and copies the cocoon source code to it.
-func (cn *Connector) createContainer(name string, lang Language, env []string) (*docker.Container, error) {
-	_, cocoonCodePort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
-
-	container, err := dckClient.CreateContainer(docker.CreateContainerOptions{
-		Name: name,
-		Config: &docker.Config{
-			Image: lang.GetImage(),
-			Labels: map[string]string{
-				"name": name,
-				"type": "cocoon_code",
-			},
-			WorkingDir: lang.GetSourceRootDir(),
-			Tty:        true,
-			ExposedPorts: map[docker.Port]struct{}{
-				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): struct{}{},
-			},
-			Cmd:       []string{"bash"},
-			Env:       env,
-			Memory:    common.MBToByte(int64(cn.req.Memory)),
-			CPUShares: cn.req.CPUShares,
-		},
-		HostConfig: &docker.HostConfig{
-			Memory:    common.MBToByte(int64(cn.req.Memory)),
-			CPUShares: cn.req.CPUShares,
-			PortBindings: map[docker.Port][]docker.PortBinding{
-				docker.Port(fmt.Sprintf("%s/tcp", cocoonCodePort)): []docker.PortBinding{
-					docker.PortBinding{HostIP: "127.0.0.1", HostPort: cocoonCodePort},
-				},
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
+// copySourceToContainer copies the downloaded cocoon code source into the cocoon code container
+func (cn *Connector) copySourceToContainer(lang Language, container *docker.APIContainers) error {
 
 	// no matter what happens, remove download directory
 	defer func() {
@@ -458,14 +428,15 @@ func (cn *Connector) createContainer(name string, lang Language, env []string) (
 
 	// copy source directory to the container's source directory
 	cmd := "docker"
+	log.Debugf("Copying source from %s to container:%s", lang.GetDownloadDestination(), lang.GetCopyDestination())
 	args := []string{"cp", lang.GetDownloadDestination(), fmt.Sprintf("%s:%s", container.ID, lang.GetCopyDestination())}
-	if err = exec.Command(cmd, args...).Run(); err != nil {
-		return nil, fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
+	if err := exec.Command(cmd, args...).Run(); err != nil {
+		return fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
 	}
 
 	log.Info("Copied cocoon code source to cocoon")
 
-	return container, nil
+	return nil
 }
 
 // stopContainer stop container. Kill it if it doesn't
