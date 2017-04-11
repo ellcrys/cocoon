@@ -547,7 +547,7 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the language.
 func (cn *Connector) build(container *docker.APIContainers, lang Language) error {
-	cmd := []string{"bash", "-c", "pwd"}
+	cmd := []string{"bash", "-c", lang.GetBuildScript()}
 	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, val interface{}) error {
 		switch state {
 		case "before":
