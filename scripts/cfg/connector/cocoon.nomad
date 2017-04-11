@@ -36,6 +36,9 @@ job "cocoon" {
         network_mode = "host"
         privileged = true
         force_pull = true
+        volumes = [
+            "/var/run/docker.sock:/var/run/docker.sock"
+        ]
         image = "ncodes/cocoon-launcher:latest"  
         command = "bash"
         args = ["/local/runner.sh"]
