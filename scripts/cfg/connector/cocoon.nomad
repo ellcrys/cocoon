@@ -12,10 +12,16 @@ job "cocoon" {
     stagger = "10s"
     max_parallel = 1
   }
+  
 
   group "cocoon-grp" {
     count = 1
 
+    meta {
+        VERSION = "dual-docker"
+        REPO_USER = "ncodes"
+    }
+    
     restart {
       attempts = 5
       interval = "30s"
@@ -36,9 +42,9 @@ job "cocoon" {
       }
       
       env {
-        VERSION = "dual-docker"
+        VERSION = "${NOMAD_META_VERSION}"
         COCOON_ID = "abc"
-        COCOON_CODE_URL = "https://github.com/ncodes/cocoon-example-01"
+        COCOON_CODE_URL = "https://github.com/${NOMAD_META_REPO_USER}/cocoon-example-01"
         COCOON_CODE_TAG = ""
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
@@ -47,11 +53,11 @@ job "cocoon" {
         # The name of the connector runner script and a link to the script.
         # The runner script will fetch and run whatever is found in this environment vars.
         RUN_SCRIPT_NAME = "run-connector.sh"
-        RUN_SCRIPT_URL = "https://rawgit.com/ncodes/cocoon/master/scripts/run-connector.sh"
+        RUN_SCRIPT_URL = "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/run-connector.sh"
       }
 
       artifact {
-        source = "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh"
+        source = "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/runner.sh"
       }
       
       logs {
