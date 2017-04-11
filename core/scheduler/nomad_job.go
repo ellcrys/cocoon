@@ -220,6 +220,7 @@ func NewJob(version, id string, count int) *NomadJob {
 							Artifacts: []Artifact{
 								Artifact{
 									GetterSource: "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/runner.sh",
+									RelativeDest: "/local",
 								},
 							},
 							KillTimeout: 10000000000,
