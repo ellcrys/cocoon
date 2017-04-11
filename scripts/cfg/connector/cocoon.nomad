@@ -48,7 +48,7 @@ job "cocoon" {
         COCOON_CODE_TAG = ""
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="
-        COCOON_CONTAINER_NAME = "${NOMAD_TASK_NAME}-${NOMAD_ALLOC_ID}"
+        COCOON_CONTAINER_NAME = "code-${NOMAD_ALLOC_ID}"
         
         # The name of the connector runner script and a link to the script.
         # The runner script will fetch and run whatever is found in this environment vars.
