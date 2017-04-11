@@ -638,20 +638,14 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 	})
 }
 
-// Stop closes the client, stops the container if it is still running
-// and deletes the container. This will effectively bring the launcher
-// to a halt. Set failed parameter to true to set a positve exit code or
-// false for 0 exit code.
+// Stop stops all sub routines and releases resources.
 func (cn *Connector) Stop(failed bool) error {
 
 	defer func() {
 		cn.setStatus(api.CocoonStatusStopped)
+		cn.containerRunning = false
 		cn.waitCh <- failed
 	}()
-
-	if dckClient == nil || cn.container == nil {
-		return nil
-	}
 
 	if cn.monitor != nil {
 		cn.monitor.Stop()
@@ -659,17 +653,6 @@ func (cn *Connector) Stop(failed bool) error {
 
 	if cn.healthCheck != nil {
 		cn.healthCheck.Stop()
-	}
-
-	cn.containerRunning = false
-
-	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
-		ID:            cn.container.ID,
-		RemoveVolumes: true,
-		Force:         true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to remove container. %s", err)
 	}
 
 	return nil
