@@ -42,6 +42,8 @@ import:
 - package: gopkg.in/oleiade/lane.v1
   version: ^1.0.0
 - package: github.com/olekukonko/tablewriter
+- package: github.com/pkg/profile
+  version: ^1.2.0
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2
