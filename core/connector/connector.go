@@ -75,7 +75,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	dckClient = client
 	cn.monitor.SetDockerClient(dckClient)
-	cn.healthCheck = NewHealthChecker("127.0.0.1"+cn.cocoonCodeRPCAddr, cn.cocoonUnresponsive)
+	cn.healthCheck = NewHealthChecker(cn.cocoonCodeRPCAddr, cn.cocoonUnresponsive)
 	go cn.ordererDiscovery.Discover()
 
 	// No need downloading, building and starting a cocoon code
