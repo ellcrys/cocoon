@@ -583,8 +583,8 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 		case "before":
 			log.Info("Starting cocoon code")
 		case "after":
-			cn.setStatus(api.CocoonStatusRunning)
 			go cn.healthCheck.Start()
+			cn.setStatus(api.CocoonStatusRunning)
 			return nil
 		case "end":
 			cn.setStatus(api.CocoonStatusStopped)
