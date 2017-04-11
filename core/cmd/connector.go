@@ -99,8 +99,8 @@ var connectorCmd = &cobra.Command{
 		}
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
-		connectorRPCAddr := scheduler.Getenv("ADDR_CONNECTOR_RPC", defaultConnectorRPCAPI)
-		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_COCOON_RPC", "8004"))
+		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAPI)
+		cocoonCodeRPCAddr := net.JoinHostPort("", scheduler.Getenv("PORT_code_RPC", "8004"))
 
 		cn := connector.NewConnector(req, waitCh)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
