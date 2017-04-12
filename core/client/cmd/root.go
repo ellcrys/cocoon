@@ -17,7 +17,14 @@ var RootCmd = &cobra.Command{
 	Long:  `A blockchain-inspired, shared ledger and smart contract platform`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		showVersion, _ := cmd.Flags().GetBool("version")
+		if showVersion {
+			fmt.Println("Cocoon version 0.0.5")
+			return
+		}
+		cmd.Usage()
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -30,6 +37,7 @@ func Execute() {
 }
 
 func init() {
+	RootCmd.Flags().BoolP("version", "v", false, "Display the Cocoon version information")
 	cobra.OnInitialize(initConfig)
 }
 
