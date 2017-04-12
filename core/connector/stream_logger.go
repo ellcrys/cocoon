@@ -50,7 +50,6 @@ func (ls *LogStreamer) Start() error {
 	for ls.stopRead == false {
 		bs, err := ioutil.ReadAll(ls.writer.(*bytes.Buffer))
 		if err != nil {
-			ls.mutex.Unlock()
 			return err
 		}
 
