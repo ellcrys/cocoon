@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/cmd"
 	"github.com/ncodes/cocoon/core/config"
@@ -22,16 +24,19 @@ func init() {
 }
 
 func main() {
-	defer profile.Start().Stop()
+	defer profile.Start(profile.MemProfile).Stop()
 
 	go func() {
 		go func() {
 			log.Info(http.ListenAndServe("localhost:6060", nil).Error())
 		}()
 
-		var mem runtime.MemStats
-		runtime.ReadMemStats(&mem)
-		log.Infof("Alloc: %s, Total Alloc: %s, HeapAlloc: %s, HeapSys: %s", mem.Alloc, mem.TotalAlloc, mem.HeapAlloc, mem.HeapSys)
+		for {
+			var mem runtime.MemStats
+			runtime.ReadMemStats(&mem)
+			log.Infof("Alloc: %d, Total Alloc: %d, HeapAlloc: %d, HeapSys: %d", mem.Alloc, mem.TotalAlloc, mem.HeapAlloc, mem.HeapSys)
+			time.Sleep(10 * time.Second)
+		}
 	}()
 
 	if err := cmd.RootCmd.Execute(); err != nil {
