@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/franela/goreq"
@@ -21,6 +23,17 @@ func init() {
 
 func main() {
 	defer profile.Start().Stop()
+
+	go func() {
+		go func() {
+			log.Info(http.ListenAndServe("localhost:6060", nil))
+		}()
+
+		var mem runtime.MemStats
+		runtime.ReadMemStats(&mem)
+		log.Infof("Alloc: %s, Total Alloc: %s, HeapAlloc: %s, HeapSys: %s", mem.Alloc, mem.TotalAlloc, mem.HeapAlloc, mem.HeapSys)
+	}()
+
 	if err := cmd.RootCmd.Execute(); err != nil {
 		log.Error(err.Error())
 		os.Exit(-1)
