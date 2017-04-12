@@ -26,7 +26,7 @@ func main() {
 
 	go func() {
 		go func() {
-			log.Info(http.ListenAndServe("localhost:6060", nil))
+			log.Info(http.ListenAndServe("localhost:6060", nil).Error())
 		}()
 
 		var mem runtime.MemStats
