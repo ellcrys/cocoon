@@ -8,8 +8,6 @@ import (
 
 	"time"
 
-	"sync"
-
 	logging "github.com/op/go-logging"
 )
 
@@ -21,7 +19,6 @@ type LogStreamer struct {
 	writer   io.Writer
 	logger   *logging.Logger
 	stopRead bool
-	mutex    sync.Mutex
 }
 
 // NewLogStreamer reads from a stream and logs to stdout
@@ -29,7 +26,6 @@ func NewLogStreamer() *LogStreamer {
 	return &LogStreamer{
 		writer: bytes.NewBuffer(nil),
 		logger: logStreamLogger,
-		mutex:  sync.Mutex{},
 	}
 }
 
@@ -52,7 +48,6 @@ func (ls *LogStreamer) Stop() {
 // Start starts reading the writer and logging its data
 func (ls *LogStreamer) Start() error {
 	for ls.stopRead == false {
-		ls.mutex.Lock()
 		bs, err := ioutil.ReadAll(ls.writer.(*bytes.Buffer))
 		if err != nil {
 			ls.mutex.Unlock()
@@ -61,7 +56,6 @@ func (ls *LogStreamer) Start() error {
 
 		// reset the writer
 		ls.writer.(*bytes.Buffer).Reset()
-		ls.mutex.Unlock()
 
 		if len(bs) > 0 {
 			ls.logger.Info(string(bs))
