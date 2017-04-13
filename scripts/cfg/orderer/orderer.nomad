@@ -26,7 +26,7 @@ job "orderer" {
     }
     
      meta {
-        VERSION = "dual-docker"
+        VERSION = "master"
     }
 
     task "orderer" {

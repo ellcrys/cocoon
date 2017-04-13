@@ -109,7 +109,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 		buildParams = crypto.ToBase64([]byte(buildParams))
 	}
 
-	job := NewJob("dual-docker", jobID, 1)
+	job := NewJob("master", jobID, 1)
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url

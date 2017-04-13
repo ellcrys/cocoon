@@ -18,7 +18,7 @@ job "cocoon" {
     count = 1
 
     meta {
-        VERSION = "dual-docker"
+        VERSION = "master"
         REPO_USER = "ncodes"
     }
     

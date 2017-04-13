@@ -8,7 +8,7 @@ mkdir -p $repoParent
 cd $repoParent
 
 # pull cocoon source
-branch="dual-docker"
+branch="master"
 git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon 
 git checkout $branch

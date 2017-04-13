@@ -29,7 +29,7 @@ job "api" {
       driver = "docker"
       
       meta {
-        VERSION = "dual-docker"
+        VERSION = "master"
       }
       
       config {
