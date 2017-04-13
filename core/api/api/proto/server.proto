@@ -27,6 +27,12 @@ message FirewallAllowRequest {
     string protocol = 4;    
 }
 
+message FirewallRule {
+    string destination = 1;
+    string destinationPort = 2;
+    string protocol = 3;
+}
+
 message AddACLRuleRequest {
     string cocoonID = 1;
     string target = 2;
@@ -64,11 +70,12 @@ message CocoonPayloadRequest {
     string language = 3;
     string releaseTag = 4;
     string buildParam = 5;
-    string memory = 6;
-    string CPUShares = 7;
-    string link = 8;
-    int32 numSignatories = 9;
-    int32 sigThreshold = 10;
+    repeated FirewallRule firewall = 6;
+    string memory = 7;
+    string CPUShares = 8;
+    string link = 9;
+    int32 numSignatories = 10;
+    int32 sigThreshold = 11;
 }
 
 message GetCocoonRequest {

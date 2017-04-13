@@ -94,6 +94,7 @@ func TestValidation(t *testing.T) {
 					Memory:         "512m",
 					CPUShares:      "1x",
 					NumSignatories: 1,
+					SigThreshold:   1,
 					Signatories:    []string{"id1", "id2"},
 				})
 				So(err, ShouldNotBeNil)
@@ -160,6 +161,47 @@ func TestValidation(t *testing.T) {
 			})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "build parameter is not valid json")
+		})
+
+		Convey(".ValidateFirewall", func() {
+			_, errs := ValidateFirewall("")
+			So(len(errs), ShouldEqual, 1)
+			So(errs[0].Error(), ShouldEqual, "empty string passed")
+
+			_, errs = ValidateFirewall(123)
+			So(len(errs), ShouldEqual, 1)
+			So(errs[0].Error(), ShouldEqual, "invalid type. expects a json string or a slice of map")
+
+			_, errs = ValidateFirewall(`abc`)
+			So(len(errs), ShouldEqual, 1)
+			So(errs[0].Error(), ShouldEqual, "malformed json")
+
+			_, errs = ValidateFirewall(`{}`)
+			So(len(errs), ShouldEqual, 1)
+			So(errs[0].Error(), ShouldEqual, "malformed json")
+
+			_, errs = ValidateFirewall(`[{}]`)
+			So(len(errs), ShouldEqual, 2)
+			So(errs[0].Error(), ShouldEqual, "rule 0: destination is required")
+			So(errs[1].Error(), ShouldEqual, "rule 0: port is required")
+
+			_, errs = ValidateFirewall(`[{ "destination": "0.0.0.0.0" }]`)
+			So(len(errs), ShouldEqual, 2)
+			So(errs[0].Error(), ShouldEqual, "rule 0: destination is not a valid IP or host")
+			So(errs[1].Error(), ShouldEqual, "rule 0: port is required")
+
+			_, errs = ValidateFirewall(`[{ "destination": "http://google.com" }]`)
+			So(len(errs), ShouldEqual, 2)
+			So(errs[0].Error(), ShouldEqual, "rule 0: destination is not a valid IP or host")
+			So(errs[1].Error(), ShouldEqual, "rule 0: port is required")
+
+			_, errs = ValidateFirewall(`[{ "destination": "google.com", "protocol": "icmp" }]`)
+			So(len(errs), ShouldEqual, 2)
+			So(errs[0].Error(), ShouldEqual, "rule 0: port is required")
+			So(errs[1].Error(), ShouldEqual, "rule 0: invalid protocol")
+
+			_, errs = ValidateFirewall(`[{ "destination": "0.0.0.0", "port": "3000" }]`)
+			So(len(errs), ShouldEqual, 0)
 		})
 	})
 }

@@ -68,6 +68,12 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if c.NumSignatories < int32(len(c.Signatories)) {
 		return fmt.Errorf("max signatories already added. You can't add more")
 	}
+	if c.Firewall != nil {
+		_, errs := ValidateFirewall(c.Firewall.ToMap())
+		if len(errs) != 0 {
+			return fmt.Errorf("firewall: %s, ", errs[0])
+		}
+	}
 
 	return nil
 }
@@ -116,4 +122,68 @@ func ValidateIdentity(i *types.Identity) error {
 		return fmt.Errorf("password is too short. Minimum of 8 characters required")
 	}
 	return nil
+}
+
+// ValidateFirewall parses and validates the content of
+// a firewall ruleset. It expects a json string or a slice
+// of map[string]strins. It will return a slice of map[string]string
+// values that represents valid firewall rules. Destination host addresses
+// are not resolved.
+func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
+
+	var errs []error
+	if firewall == nil {
+		errs = append(errs, fmt.Errorf("function value is nil"))
+		return nil, errs
+	}
+
+	var firewallMap []map[string]string
+	switch fwData := firewall.(type) {
+	case string:
+		if len(fwData) == 0 {
+			errs = append(errs, fmt.Errorf("empty string passed"))
+			return nil, errs
+		}
+		err := util.FromJSON([]byte(fwData), &firewallMap)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("malformed json"))
+			return nil, errs
+		}
+	case []map[string]string:
+		firewallMap = fwData
+	default:
+		errs = append(errs, fmt.Errorf("invalid type. expects a json string or a slice of map"))
+		return nil, errs
+	}
+
+	var firewallRules []types.FirewallRule
+
+	for i, rule := range firewallMap {
+		if rule["destination"] == "" {
+			errs = append(errs, fmt.Errorf("rule %d: destination is required", i))
+		} else if !govalidator.IsHost(rule["destination"]) {
+			errs = append(errs, fmt.Errorf("rule %d: destination is not a valid IP or host", i))
+		}
+
+		port := rule["port"]
+		if port == "" {
+			port = rule["destinationPort"]
+		}
+		if port == "" {
+			errs = append(errs, fmt.Errorf("rule %d: port is required", i))
+		}
+		if rule["protocol"] == "" {
+			rule["protocol"] = "tcp"
+		} else if rule["protocol"] != "tcp" && rule["protocol"] != "udp" {
+			errs = append(errs, fmt.Errorf("rule %d: invalid protocol", i))
+		}
+
+		firewallRules = append(firewallRules, types.FirewallRule{
+			Destination:     rule["destination"],
+			DestinationPort: port,
+			Protocol:        rule["protocol"],
+		})
+	}
+
+	return firewallRules, errs
 }

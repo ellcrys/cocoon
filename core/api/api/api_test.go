@@ -118,11 +118,13 @@ func TestOrderer(t *testing.T) {
 
 								id := util.UUID4()
 								r, err := api.CreateCocoon(ctx, &proto.CocoonPayloadRequest{
-									ID:        id,
-									URL:       "https://github.com/ncodes/cocoon-example-01",
-									Language:  "go",
-									Memory:    "512m",
-									CPUShares: "1x",
+									ID:             id,
+									URL:            "https://github.com/ncodes/cocoon-example-01",
+									Language:       "go",
+									Memory:         "512m",
+									NumSignatories: 1,
+									SigThreshold:   1,
+									CPUShares:      "1x",
 								})
 								So(err, ShouldBeNil)
 								So(r.Status, ShouldEqual, 200)
@@ -130,11 +132,13 @@ func TestOrderer(t *testing.T) {
 
 								Convey("Should fail to create cocoon with an already used id", func() {
 									r, err := api.CreateCocoon(ctx, &proto.CocoonPayloadRequest{
-										ID:        id,
-										URL:       "https://github.com/ncodes/cocoon-example-01",
-										Language:  "go",
-										Memory:    "512m",
-										CPUShares: "1x",
+										ID:             id,
+										URL:            "https://github.com/ncodes/cocoon-example-01",
+										Language:       "go",
+										Memory:         "512m",
+										CPUShares:      "1x",
+										NumSignatories: 1,
+										SigThreshold:   1,
 									})
 									So(r, ShouldBeNil)
 									So(err, ShouldNotBeNil)

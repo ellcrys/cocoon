@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -35,11 +36,13 @@ var createCmd = &cobra.Command{
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 		firewall, _ := cmd.Flags().GetString("firewall")
 
-		// validate firewall
+		// parse and validate firewall
+		var validFirewallRules []types.FirewallRule
 		if len(firewall) > 0 {
-			firewallValidationErrs := client.ValidateFirewall(firewall)
-			if firewallValidationErrs != nil && len(firewallValidationErrs) > 0 {
-				for _, err := range firewallValidationErrs {
+			var firewallValErrs []error
+			validFirewallRules, firewallValErrs = api.ValidateFirewall(firewall)
+			if firewallValErrs != nil && len(firewallValErrs) > 0 {
+				for _, err := range firewallValErrs {
 					log.Infof("Err: firewall: %s", err.Error())
 				}
 				os.Exit(1)
@@ -52,6 +55,7 @@ var createCmd = &cobra.Command{
 			Language:       lang,
 			ReleaseTag:     releaseTag,
 			BuildParam:     buildParams,
+			Firewall:       validFirewallRules,
 			Memory:         memory,
 			CPUShares:      cpuShare,
 			Link:           link,

@@ -112,20 +112,19 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 	cocoon.IdentityID = claims["identity"].(string)
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
-
+	
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
 
 	// ensure a similar cocoon does not exist
-	if _, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-		ID: cocoon.ID,
-	}); err != nil {
+	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: cocoon.ID})
+	if err != nil {
 		if err != types.ErrCocoonNotFound {
 			return nil, err
-		} else if err != types.ErrCocoonNotFound {
-			return nil, fmt.Errorf("cocoon with matching ID already exists")
 		}
+	} else {
+		return nil, fmt.Errorf("cocoon with matching ID already exists")
 	}
 
 	// if a link cocoon id is provided, check if the linked cocoon exists

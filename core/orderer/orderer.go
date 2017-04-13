@@ -247,7 +247,6 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
 
 	start := time.Now()
-
 	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
