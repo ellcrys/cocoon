@@ -606,12 +606,12 @@ func (cn *Connector) getDefaultFirewall() string {
 
 	return strings.TrimSpace(`iptables -F && 
 	        iptables -P OUTPUT ACCEPT &&
-			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
 	        iptables -I INPUT 1 -i lo -j ACCEPT && 
+			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT &&
+			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
 			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT &&
 			iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT &&
 			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT &&
-			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT &&
 			iptables -A OUTPUT -p tcp -d google.com --dport 80 -j ACCEPT && 
 			iptables -P INPUT DROP && 
 			iptables -P FORWARD DROP &&
