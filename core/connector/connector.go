@@ -605,14 +605,15 @@ func (cn *Connector) getDefaultFirewall() string {
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
 
 	return strings.TrimSpace(`iptables -F && 
-	        iptables -P INPUT DROP && 
+			iptables -P INPUT DROP && 
 			iptables -P FORWARD DROP &&
-			iptables -P OUTPUT DROP
-			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT &&
+			iptables -P OUTPUT DROP &&
+			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT
+			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT && 
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT &&
-			iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT &&
-			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT`)
+			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
+			`)
 }
 
 // configFirewall configures the container firewall.
