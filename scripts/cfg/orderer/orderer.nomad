@@ -24,6 +24,10 @@ job "orderer" {
     ephemeral_disk {
       size = 1024
     }
+    
+     meta {
+        VERSION = "dual-docker"
+    }
 
     task "orderer" {
       driver = "docker"
@@ -38,7 +42,7 @@ job "orderer" {
       }
 
       artifact {
-        source = "https://raw.githubusercontent.com/ncodes/cocoon/master/scripts/cfg/orderer/run.sh"
+        source = "https://raw.githubusercontent.com/ncodes/cocoon/${NOMAD_META_VERSION}/scripts/cfg/orderer/run.sh"
         destination = "/local/scripts"
       }
 

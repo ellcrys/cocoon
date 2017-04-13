@@ -136,8 +136,13 @@ type Check struct {
 
 // Config defines a driver/task configuration
 type Config struct {
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
+	NetworkMode string   `json:"network_mode"`
+	Privileged  bool     `json:"privileged"`
+	ForcePull   bool     `json:"force_pull"`
+	Volumes     []string `json:"volumes"`
+	Image       string   `json:"image"`
+	Command     string   `json:"command"`
+	Args        []string `json:"args"`
 }
 
 // NomadJob represents a nomad job
@@ -146,7 +151,7 @@ type NomadJob struct {
 }
 
 // NewJob creates a new job with some default values.
-func NewJob(connectorVersion, id string, count int) *NomadJob {
+func NewJob(version, id string, count int) *NomadJob {
 	return &NomadJob{
 		Job: &Job{
 			Region:      "",
@@ -165,43 +170,51 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 			},
 			TaskGroups: []TaskGroup{
 				TaskGroup{
-					Name:  fmt.Sprintf("tskgrp-%s", id),
+					Name:  fmt.Sprintf("cocoon-grp-%s", id),
 					Count: count,
+					Meta: map[string]string{
+						"VERSION":   version,
+						"REPO_USER": "ncodes",
+					},
 					Tasks: []Task{
 						Task{
-							Name:   fmt.Sprintf("task-%s", id),
-							Driver: "raw_exec",
+							Name:   "connector",
+							Driver: "docker",
 							Config: Config{
+								Image:       "${NOMAD_META_REPO_USER}/cocoon-launcher:latest",
+								NetworkMode: "host",
+								Privileged:  true,
+								ForcePull:   true,
+								Volumes: []string{
+									"/var/run/docker.sock:/var/run/docker.sock",
+									"/tmp:/tmp",
+								},
 								Command: "bash",
-								Args:    []string{"runner.sh"},
+								Args:    []string{"/local/runner.sh"},
 							},
 							Env: map[string]string{
-								"CONNECTOR_VERSION":   connectorVersion,
-								"COCOON_ID":           id,
-								"CONTAINER_ID":        id,
-								"COCOON_LINK":         "",
-								"COCOON_CODE_URL":     "",
-								"COCOON_CODE_TAG":     "",
-								"COCOON_CODE_LANG":    "",
-								"COCOON_BUILD_PARAMS": "",
-								"COCOON_DISK_LIMIT":   "",
-								"ALLOC_MEMORY":        "",
-								"ALLOC_CPU_SHARE":     "",
+								"VERSION":               "${NOMAD_META_VERSION}",
+								"COCOON_ID":             id,
+								"COCOON_CODE_URL":       "",
+								"COCOON_CODE_TAG":       "",
+								"COCOON_CODE_LANG":      "",
+								"COCOON_BUILD_PARAMS":   "",
+								"COCOON_LINK":           "",
+								"COCOON_CONTAINER_NAME": "code-${NOMAD_ALLOC_ID}",
+
 								// The name of the connector runner script and a link to the script.
-								// The runner script will fetch and run whatever is found in this environment vars.
+								// The runner script will fetch and run whatever is found in this environment var.
 								"RUN_SCRIPT_NAME": "run-connector.sh",
-								"RUN_SCRIPT_URL":  "https://rawgit.com/ncodes/cocoon/master/scripts/run-connector.sh",
+								"RUN_SCRIPT_URL":  "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/run-connector.sh",
 							},
 							Services: []NomadService{
 								NomadService{
-									Name:      fmt.Sprintf("cocoon"),
+									Name:      fmt.Sprintf("cocoons"),
 									Tags:      []string{id},
-									PortLabel: "CONNECTOR_RPC",
+									PortLabel: "RPC",
 								},
 							},
-							Meta: map[string]string{
-								"something": "something",
-							},
+							Meta: map[string]string{},
 							LogConfig: LogConfig{
 								MaxFiles:      10,
 								MaxFileSizeMB: 10,
@@ -209,20 +222,56 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 							Templates: []Template{},
 							Artifacts: []Artifact{
 								Artifact{
-									GetterSource: "https://rawgit.com/ncodes/cocoon/master/scripts/runner.sh",
+									GetterSource: "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/runner.sh",
+									RelativeDest: "/local",
 								},
 							},
 							KillTimeout: 10000000000,
 							Resources: Resources{
-								CPU:      20,
-								MemoryMB: 20,
+								CPU:      100,
+								MemoryMB: 1024,
+								DiskMB:   800,
 								IOPS:     0,
 								Networks: []Network{
 									Network{
 										MBits: 1,
 										DynamicPorts: []DynamicPort{
-											DynamicPort{Label: "CONNECTOR_RPC"},
-											DynamicPort{Label: "COCOON_RPC"},
+											DynamicPort{Label: "RPC"},
+										},
+									},
+								},
+							},
+							DispatchPayload: DispatchPayload{},
+						},
+						Task{
+							Name:   "code",
+							Driver: "docker",
+							Config: Config{
+								Image:       "${NOMAD_META_REPO_USER}/launch-go:latest",
+								NetworkMode: "bridge",
+								ForcePull:   true,
+								Command:     "bash",
+								Args:        []string{"-c", "echo 'Hello Human. I am alive'; tail -f /dev/null"},
+							},
+							Env:      map[string]string{},
+							Services: []NomadService{},
+							Meta:     map[string]string{},
+							LogConfig: LogConfig{
+								MaxFiles:      10,
+								MaxFileSizeMB: 10,
+							},
+							Templates: []Template{},
+							Artifacts: []Artifact{},
+							Resources: Resources{
+								CPU:      100,
+								MemoryMB: 1024,
+								DiskMB:   800,
+								IOPS:     0,
+								Networks: []Network{
+									Network{
+										MBits: 1,
+										DynamicPorts: []DynamicPort{
+											DynamicPort{Label: "RPC"},
 										},
 									},
 								},
@@ -231,8 +280,9 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 						},
 					},
 					Resources: Resources{
-						CPU:      20,
-						MemoryMB: 20,
+						CPU:      100,
+						MemoryMB: 512,
+						DiskMB:   800,
 						IOPS:     0,
 						Networks: []Network{},
 					},
@@ -242,7 +292,6 @@ func NewJob(connectorVersion, id string, count int) *NomadJob {
 						Delay:    25000000000,
 						Mode:     "delay",
 					},
-					Meta: map[string]string{},
 				},
 			},
 			Update: Update{

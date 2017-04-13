@@ -271,7 +271,7 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 
 	tableData := [][]string{}
 	for _, cocoon := range cocoons {
-		if !showAll && !util.InStringSlice([]string{api.CocoonStatusStarted, api.CocoonStatusRunning}, cocoon.Status) {
+		if !showAll && !util.InStringSlice([]string{api.CocoonStatusStarted, api.CocoonStatusBuilding, api.CocoonStatusRunning}, cocoon.Status) {
 			continue
 		}
 		created, _ := time.Parse(time.RFC3339, cocoon.CreatedAt)

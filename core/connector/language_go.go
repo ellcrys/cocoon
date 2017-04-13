@@ -67,7 +67,7 @@ func (g *Go) SetRunEnv(env map[string]string) {
 }
 
 // GetDownloadDestination returns the location to save
-// the downloaded go cocoon code to.
+// the downloaded go cocoon code source on the connector
 func (g *Go) GetDownloadDestination() string {
 	u, _ := urlx.Parse(g.req.URL)
 	repoID := strings.Trim(u.Path, "/")
@@ -125,7 +125,11 @@ func (g *Go) GetBuildScript() string {
 		}
 	}
 
-	return strings.Join(util.RemoveEmptyInStringSlice([]string{pkgFetchCmd, "go build -v -o /bin/ccode"}), " && ")
+	return strings.Join(util.RemoveEmptyInStringSlice([]string{
+		fmt.Sprintf("cd %s", g.GetSourceRootDir()), // cd into cocoon source root directory
+		pkgFetchCmd,                                // run the package manager build command
+		"go build -v -o /bin/ccode",                // build the cocoon code binary
+	}), " && ")
 }
 
 // GetRunScript returns the script required to start the

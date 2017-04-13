@@ -109,12 +109,13 @@ func Run(cc CocoonCode) {
 
 	serverDone = make(chan bool, 1)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("%s", serverAddr))
+	bindPort := strings.Split(serverAddr, ":")[1]
+	lis, err := net.Listen("tcp", net.JoinHostPort("", bindPort))
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s", strings.Split(serverAddr, ":")[1])
+		log.Fatalf("failed to listen on port=%s", bindPort)
 	}
 
-	log.Infof("Started stub service at port=%s", strings.Split(serverAddr, ":")[1])
+	log.Infof("Started stub service at port=%s", bindPort)
 	server := grpc.NewServer()
 	proto.RegisterStubServer(server, defaultServer)
 	go startServer(server, lis)

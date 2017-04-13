@@ -52,6 +52,10 @@ func (ls *LogStreamer) Start() error {
 		if err != nil {
 			return err
 		}
+
+		// reset the writer
+		ls.writer.(*bytes.Buffer).Reset()
+
 		if len(bs) > 0 {
 			ls.logger.Info(string(bs))
 		}

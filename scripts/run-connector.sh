@@ -2,17 +2,22 @@
 # Run the connector 
 set -e
 
+term_connector() {
+    if [ $cpid -ne 0 ]; then
+        kill -SIGTERM "$cpid"
+        wait "$cpid"
+    fi
+    exit 143;
+}
+
 # trap terminate signal and pass to cocoon process
-trap 'kill -TERM $CPID' SIGTERM SIGINT
+trap 'kill ${!}; term_connector' SIGTERM SIGINT
 
 # Set up go environment
-export GOROOT=/go
-export GOPATH=/gocode
-PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-mkdir -p $GOPATH/bin
+export GOPATH=/go
 
 # Pull cocoon source
-branch=$CONNECTOR_VERSION
+branch=$VERSION
 repoOwner=github.com/ncodes
 repoOwnerDir=$GOPATH/src/$repoOwner
 mkdir -p $repoOwnerDir
@@ -28,13 +33,12 @@ rm -rf .glide/ && rm -rf vendor
 glide --debug install
 go build -v -o $GOPATH/bin/cocoon core/main.go
 
-# pull launch-go image
-docker pull ncodes/launch-go:latest 
-
 # start connector, store its process id and wait for it.
 printf "Running Cocoon Connector"
 cocoon connector & 
-CPID=$!
-wait $CPID
-wait $CPID
-EXIT_STATUS=$?
+cpid=$!
+
+while true
+do
+  tail -f /dev/null & wait ${!}
+done

@@ -8,7 +8,7 @@ client {
     servers = ["127.0.0.1:4647"]
     
     options = {
-        "driver.raw_exec.enable" = "1"
+        "docker.privileged.enabled" = "true"
     }
 }
 
