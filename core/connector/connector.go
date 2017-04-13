@@ -605,21 +605,15 @@ func (cn *Connector) getDefaultFirewall() string {
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
 
 	return strings.TrimSpace(`iptables -F && 
+	        iptables -I INPUT 1 -i lo -j ACCEPT && 
+			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT &&
+			iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT &&
+			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT &&
+			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT &&
 			iptables -P INPUT DROP && 
 			iptables -P FORWARD DROP &&
-			iptables -P OUTPUT DROP &&
-			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT
-			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
-			dnsIPs="$(cat /etc/resolv.conf | grep 'nameserver' | cut -c12-)" &&
-			for ip in $dnsIPs;
-			do 
-				iptables -A OUTPUT -m state --state NEW,ESTABLISHED -d ${ip} -p udp --dport 53 -j ACCEPT;
-				iptables -A OUTPUT -m state --state ESTABLISHED -p udp -s ${ip} --sport 53 -j ACCEPT;
-				iptables -A OUTPUT -m state --state NEW,ESTABLISHED -d ${ip} -p tcp --dport 53 -j ACCEPT;
-				iptables -A OUTPUT -m state --state ESTABLISHED -p tcp -s ${ip} --sport 53 -j ACCEPT;
-			done`)
+			iptables -P OUTPUT DROP`)
 }
 
 // configFirewall configures the container firewall.
