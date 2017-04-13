@@ -8,23 +8,24 @@ import (
 
 // Cocoon represents a smart contract application
 type Cocoon struct {
-	IdentityID          string   `structs:"identity_id" mapstructure:"identity_id"`
-	ID                  string   `structs:"ID" mapstructure:"ID"`
-	URL                 string   `structs:"URL" mapstructure:"URL"`
-	ReleaseTag          string   `structs:"releaseTag" mapstructure:"releaseTag"`
-	Language            string   `structs:"language" mapstructure:"language"`
-	BuildParam          string   `structs:"buildParam" mapstructure:"buildParam"`
-	Memory              string   `structs:"memory" mapstructure:"memory"`
-	CPUShares           string   `structs:"CPUShares" mapstructure:"CPUShares"`
-	NumSignatories      int32    `structs:"numSignatories" mapstructure:"numSignatories"`
-	SigThreshold        int32    `structs:"sigThreshold" mapstructure:"sigThreshold"`
-	Link                string   `structs:"link" mapstructure:"link"`
-	Releases            []string `structs:"releases" mapstructure:"releases"`
-	Signatories         []string `structs:"signatories" mapstructure:"signatories"`
-	Status              string   `structs:"status" mapstructure:"status"`
-	LastDeployedRelease string   `structs:"lastDeployedRelease" mapstructure:"lastDeployedRelease"`
-	ACL                 ACLMap   `structs:"acl" mapstructure:"acl"`
-	CreatedAt           string   `structs:"createdAt" mapstructure:"createdAt"`
+	IdentityID          string         `structs:"identity_id" mapstructure:"identity_id"`
+	ID                  string         `structs:"ID" mapstructure:"ID"`
+	URL                 string         `structs:"URL" mapstructure:"URL"`
+	ReleaseTag          string         `structs:"releaseTag" mapstructure:"releaseTag"`
+	Language            string         `structs:"language" mapstructure:"language"`
+	BuildParam          string         `structs:"buildParam" mapstructure:"buildParam"`
+	Memory              string         `structs:"memory" mapstructure:"memory"`
+	CPUShares           string         `structs:"CPUShares" mapstructure:"CPUShares"`
+	NumSignatories      int32          `structs:"numSignatories" mapstructure:"numSignatories"`
+	SigThreshold        int32          `structs:"sigThreshold" mapstructure:"sigThreshold"`
+	Link                string         `structs:"link" mapstructure:"link"`
+	Releases            []string       `structs:"releases" mapstructure:"releases"`
+	Signatories         []string       `structs:"signatories" mapstructure:"signatories"`
+	Status              string         `structs:"status" mapstructure:"status"`
+	LastDeployedRelease string         `structs:"lastDeployedRelease" mapstructure:"lastDeployedRelease"`
+	ACL                 ACLMap         `structs:"acl" mapstructure:"acl"`
+	Firewall            []FirewallRule `structs:"firewall" mapstructure:"firewall"`
+	CreatedAt           string         `structs:"createdAt" mapstructure:"createdAt"`
 }
 
 // ToJSON returns the json equivalent of this object
@@ -36,6 +37,13 @@ func (c *Cocoon) ToJSON() []byte {
 // MakeCocoonKey constructs a cocoon key
 func MakeCocoonKey(id string) string {
 	return fmt.Sprintf("cocoon.%s", id)
+}
+
+// FirewallRule represents information about a destination to allow connetions to.
+type FirewallRule struct {
+	Destination     string `structs:"destination" mapstructure:"destination"`
+	DestinationPort string `structs:"destinationPort" mapstructure:"destinationPort"`
+	Protocol        string `structs:"protocol" mapstructure:"protocol"`
 }
 
 // Release represents a new update to a cocoon's

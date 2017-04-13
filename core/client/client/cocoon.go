@@ -611,3 +611,8 @@ func RemoveACLRule(cocoonID, target string) error {
 
 	return nil
 }
+
+// FirewallAllow adds a firewall rule to allow connection to an outgoing destination
+func FirewallAllow(dest, port, protocol string) error {
+	return nil
+}

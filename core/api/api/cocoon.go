@@ -176,7 +176,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release fields are
-// set/defined. No release is created if no change was made to previous release.
+// changed. No release is created if no change is made to previous release.
 func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
 
 	var err error
@@ -685,4 +685,9 @@ func (api *API) RemoveACLRule(ctx context.Context, req *proto.RemoveACLRuleReque
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
+}
+
+// FirewallAllow an 'allow' firewall rule to a cocoon
+func (api *API) FirewallAllow(ctx context.Context, req *proto.FirewallAllowRequest) (*proto.Response, error) {
+	return nil, fmt.Errorf("not implemented")
 }

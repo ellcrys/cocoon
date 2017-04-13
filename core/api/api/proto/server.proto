@@ -17,6 +17,14 @@ service API {
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
     rpc AddACLRule(AddACLRuleRequest) returns (Response);
     rpc RemoveACLRule(RemoveACLRuleRequest) returns (Response);
+    rpc FirewallAllow(FirewallAllowRequest) returns (Response);
+}
+
+message FirewallAllowRequest {
+    string cocoonID = 1;
+    string destination = 2;
+    string destinationPort = 3;
+    string protocol = 4;    
 }
 
 message AddACLRuleRequest {

@@ -17,3 +17,10 @@ func UsageError(l *logging.Logger, cmd *cobra.Command, msg, helpCmd string) {
 	l.Info(cmd.Long)
 	os.Exit(1)
 }
+
+// UsageError2 displays simple Usage error
+func UsageError2(l *logging.Logger, cmd *cobra.Command, msg, helpCmd string) {
+	l.Info(msg)
+	l.Infof("See '%s'", helpCmd)
+	os.Exit(1)
+}

@@ -3,6 +3,8 @@ package cmd
 import (
 	"time"
 
+	"os"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -31,6 +33,18 @@ var createCmd = &cobra.Command{
 		link, _ := cmd.Flags().GetString("link")
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
+		firewall, _ := cmd.Flags().GetString("firewall")
+
+		// validate firewall
+		if len(firewall) > 0 {
+			firewallValidationErrs := client.ValidateFirewall(firewall)
+			if firewallValidationErrs != nil && len(firewallValidationErrs) > 0 {
+				for _, err := range firewallValidationErrs {
+					log.Infof("Err: firewall: %s", err.Error())
+				}
+				os.Exit(1)
+			}
+		}
 
 		err := client.CreateCocoon(&types.Cocoon{
 			ID:             util.UUID4(),
@@ -56,6 +70,7 @@ func init() {
 	createCmd.Flags().StringP("url", "u", "", "The github repository url of the cocoon code")
 	createCmd.Flags().StringP("lang", "l", "", "The langauges the cocoon code is written in")
 	createCmd.Flags().StringP("release-tag", "r", "", "The github release tag. Defaults to `latest`")
+	createCmd.Flags().StringP("firewall", "f", "", "The outgoing firewall rules of the cocoon")
 	createCmd.Flags().StringP("build-param", "b", "", "Build parameters to apply during cocoon code build process")
 	createCmd.Flags().StringP("memory", "m", "512m", "The amount of memory to allocate. e.g 512m, 1g or 2g")
 	createCmd.Flags().StringP("link", "", "", "The id of an existing cocoon to natively link to.")
