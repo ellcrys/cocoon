@@ -100,28 +100,26 @@ func (od *Discovery) GetAddrs() []string {
 func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 
 	var selected string
-	log.Info("Here")
-
+	fmt.Println("Here")
+	od.mu.Lock()
 	if len(od.orderersAddr) == 0 {
-		od.mu.Lock()
+		od.mu.Unlock()
 		return nil, fmt.Errorf("no known orderer address")
 	}
-	log.Info("Here 3")
+	fmt.Println("Here 2")
 	if len(od.orderersAddr) == 1 {
 		selected = od.orderersAddr[0]
 	} else {
 		selected = od.orderersAddr[util.RandNum(0, len(od.orderersAddr))]
 	}
-	log.Info("Here 4")
+	od.mu.Unlock()
+	fmt.Println("Here 3")
+
 	client, err := grpc.Dial(selected, grpc.WithInsecure())
 	if err != nil {
-		od.mu.Unlock()
 		return nil, err
 	}
-
-	od.mu.Unlock()
-	log.Info("Here 5")
-
+	fmt.Println("Here 4")
 	return client, nil
 }
 
