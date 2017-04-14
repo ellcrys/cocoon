@@ -39,10 +39,10 @@ var createCmd = &cobra.Command{
 		// parse and validate firewall
 		var validFirewallRules []types.FirewallRule
 		if len(firewall) > 0 {
-			var firewallValErrs []error
-			validFirewallRules, firewallValErrs = api.ValidateFirewall(firewall)
-			if firewallValErrs != nil && len(firewallValErrs) > 0 {
-				for _, err := range firewallValErrs {
+			var errs []error
+			validFirewallRules, errs = api.ValidateFirewall(firewall)
+			if errs != nil && len(errs) > 0 {
+				for _, err := range errs {
 					log.Infof("Err: firewall: %s", err.Error())
 				}
 				os.Exit(1)

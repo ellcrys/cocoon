@@ -17,9 +17,11 @@ import (
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/types"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -50,6 +52,7 @@ type Connector struct {
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
 	ordererDiscovery  *orderer.Discovery
+	cocoon            *types.Cocoon
 }
 
 // NewConnector creates a new connector
@@ -80,12 +83,24 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_COCOON_RPC_ADDR has been specified. This means a dev cocoon code
-	// is running at that address. Just start the connector's client.
+	// is running at that address.
 	if devCocoonCodeRPCAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCocoonCodeRPCAddr) > 0 {
 		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
 		log.Infof("[Dev] Will interact with cocoon code at %s", devCocoonCodeRPCAddr)
 		cn.healthCheck.Start()
 		return
+	}
+
+	// Fetch the cocoon object from the store
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+	cn.cocoon, err = cn.GetCocoon(ctx, cn.req.ID)
+	if err != nil {
+		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+			log.Errorf("Cocoon [%s] was not found", cn.req.ID)
+			cn.Stop(true)
+			return
+		}
 	}
 
 	log.Info("Ready to install cocoon code")
