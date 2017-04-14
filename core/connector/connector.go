@@ -17,7 +17,6 @@ import (
 	"github.com/ellcrys/util"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -90,23 +89,6 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		cn.healthCheck.Start()
 		return
 	}
-
-	// Fetch the cocoon object from the store
-	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cc()
-	cn.cocoon, err = cn.GetCocoon(ctx, cn.req.ID)
-	if err != nil {
-		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-			log.Errorf("Cocoon [%s] was not found", cn.req.ID)
-			cn.Stop(true)
-			return
-		}
-		log.Error(err.Error())
-		cn.Stop(true)
-		return
-	}
-
-	util.Printify(cn.cocoon)
 
 	log.Info("Ready to install cocoon code")
 	log.Debugf("Found ccode url=%s and lang=%s", cn.req.URL, cn.req.Lang)
@@ -619,12 +601,12 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 
 // getDefaultFirewall returns the default firewall rules
 // for a cocoon container.
-func (cn *Connector) getDefaultFirewall() string {
+func (cn *Connector) getDefaultFirewall(cocoonFirewall types.Firewall) string {
 	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
 
 	var cocoonFirewallRules []string
-	for _, rule := range cn.cocoon.Firewall {
+	for _, rule := range cocoonFirewall {
 		cocoonFirewallRules = append(cocoonFirewallRules, fmt.Sprintf("iptables -A OUTPUT -p %s -d %s --dport %s -j ACCEPT", rule.Protocol, rule.Destination, rule.DestinationPort))
 	}
 
@@ -643,7 +625,16 @@ func (cn *Connector) getDefaultFirewall() string {
 
 // configFirewall configures the container firewall.
 func (cn *Connector) configFirewall(container *docker.APIContainers, req *Request) error {
-	cmd := []string{"bash", "-c", cn.getDefaultFirewall()}
+
+	// get cocoon object
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	if err != nil {
+		return err
+	}
+
+	cmd := []string{"bash", "-c", cn.getDefaultFirewall(cocoon.Firewall)}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
