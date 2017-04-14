@@ -37,7 +37,7 @@ var createCmd = &cobra.Command{
 		firewall, _ := cmd.Flags().GetString("firewall")
 
 		// parse and validate firewall
-		var validFirewallRules []types.FirewallRule
+		var validFirewallRules []*types.FirewallRule
 		if len(firewall) > 0 {
 			var errs []error
 			validFirewallRules, errs = api.ValidateFirewall(firewall)

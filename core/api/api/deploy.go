@@ -56,6 +56,8 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		ID: cocoon.Releases[len(cocoon.Releases)-1],
 	}
 
+	// if user wants to use the last deployed release, set the release request id to the last deployed release id
+	// otherwise, if the cocoon does not have a last deployed release, return error
 	if req.UseLastDeployedRelease && len(cocoon.LastDeployedRelease) != 0 {
 		apiLog.Infof("Using last deployed release for cocoon = [%s]", cocoon.ID)
 		protoReleaseReq.ID = cocoon.LastDeployedRelease
@@ -63,12 +65,12 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, fmt.Errorf("this cocoon does not have a recently approved and deployed release yet")
 	}
 
-	// get the latest release
+	// get the release
 	resp, err = api.GetRelease(ctx, protoReleaseReq)
 	if err != nil && err != types.ErrTxNotFound {
 		return nil, fmt.Errorf("failed to get release. %s", err)
 	} else if err == types.ErrTxNotFound {
-		return nil, fmt.Errorf("failed to get release")
+		return nil, fmt.Errorf("release (%s) does not exist", protoReleaseReq.ID)
 	}
 
 	var release types.Release
@@ -93,6 +95,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	cocoon.BuildParam = string(release.BuildParam)
 	cocoon.Link = release.Link
 	cocoon.LastDeployedRelease = release.ID
+	cocoon.Firewall = release.Firewall
 
 	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.ReleaseTag, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
 	if err != nil {

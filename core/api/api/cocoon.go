@@ -108,10 +108,9 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
-	req = nil
-
 	cocoon.IdentityID = claims["identity"].(string)
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
+	req = nil
 
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
@@ -155,11 +154,11 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	}
 
 	// create new release
-	var protoCreateReleaseReq proto.CreateReleaseRequest
-	cstructs.Copy(cocoon, &protoCreateReleaseReq)
-	protoCreateReleaseReq.ID = releaseID
-	protoCreateReleaseReq.CocoonID = cocoon.ID
-	_, err = api.CreateRelease(ctx, &protoCreateReleaseReq)
+	var protoNewRelReq proto.CreateReleaseRequest
+	cstructs.Copy(cocoon, &protoNewRelReq)
+	protoNewRelReq.ID = releaseID
+	protoNewRelReq.CocoonID = cocoon.ID
+	_, err = api.CreateRelease(ctx, &protoNewRelReq)
 	if err != nil {
 		return nil, err
 	}
@@ -205,23 +204,26 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
+	var cocoonUpd types.Cocoon
+	cstructs.Copy(req, &cocoonUpd)
+
 	// update new non-release fields that are different
 	// from their existing value
 	cocoonUpdated := false
-	if len(req.Memory) > 0 && req.Memory != cocoon.Memory {
-		cocoon.Memory = req.Memory
+	if len(cocoonUpd.Memory) > 0 && cocoonUpd.Memory != cocoon.Memory {
+		cocoon.Memory = cocoonUpd.Memory
 		cocoonUpdated = true
 	}
-	if len(req.CPUShares) > 0 && req.CPUShares != cocoon.CPUShares {
-		cocoon.CPUShares = req.CPUShares
+	if len(cocoonUpd.CPUShares) > 0 && cocoonUpd.CPUShares != cocoon.CPUShares {
+		cocoon.CPUShares = cocoonUpd.CPUShares
 		cocoonUpdated = true
 	}
-	if req.NumSignatories > 0 && req.NumSignatories != cocoon.NumSignatories {
-		cocoon.NumSignatories = req.NumSignatories
+	if cocoonUpd.NumSignatories > 0 && cocoonUpd.NumSignatories != cocoon.NumSignatories {
+		cocoon.NumSignatories = cocoonUpd.NumSignatories
 		cocoonUpdated = true
 	}
-	if req.SigThreshold > 0 && req.SigThreshold != cocoon.SigThreshold {
-		cocoon.SigThreshold = req.SigThreshold
+	if cocoonUpd.SigThreshold > 0 && cocoonUpd.SigThreshold != cocoon.SigThreshold {
+		cocoon.SigThreshold = cocoonUpd.SigThreshold
 		cocoonUpdated = true
 	}
 
@@ -231,9 +233,9 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	}
 
 	// get the last deployed release. if no recently deployed release,
-	// get the initial release
+	// get the most recent release
 	var recentReleaseID = cocoon.LastDeployedRelease
-	if recentReleaseID == "" {
+	if len(recentReleaseID) == 0 {
 		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
@@ -247,24 +249,28 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 	// Create new release and set values if any of the release field changed
 	var releaseUpdated = false
-	if len(req.URL) > 0 && req.URL != release.URL {
-		release.URL = req.URL
+	if len(cocoonUpd.URL) > 0 && cocoonUpd.URL != release.URL {
+		release.URL = cocoonUpd.URL
 		releaseUpdated = true
 	}
-	if len(req.ReleaseTag) > 0 && req.ReleaseTag != release.ReleaseTag {
-		release.ReleaseTag = req.ReleaseTag
+	if len(cocoonUpd.ReleaseTag) > 0 && cocoonUpd.ReleaseTag != release.ReleaseTag {
+		release.ReleaseTag = cocoonUpd.ReleaseTag
 		releaseUpdated = true
 	}
-	if len(req.Language) > 0 && req.Language != release.Language {
-		release.Language = req.Language
+	if len(cocoonUpd.Language) > 0 && cocoonUpd.Language != release.Language {
+		release.Language = cocoonUpd.Language
 		releaseUpdated = true
 	}
-	if len(req.BuildParam) > 0 && req.BuildParam != release.BuildParam {
-		release.BuildParam = req.BuildParam
+	if len(cocoonUpd.BuildParam) > 0 && cocoonUpd.BuildParam != release.BuildParam {
+		release.BuildParam = cocoonUpd.BuildParam
 		releaseUpdated = true
 	}
-	if len(req.Link) > 0 && req.Link != release.Link {
-		release.Link = req.Link
+	if len(cocoonUpd.Link) > 0 && cocoonUpd.Link != release.Link {
+		release.Link = cocoonUpd.Link
+		releaseUpdated = true
+	}
+	if len(cocoonUpd.Firewall) > 0 && !cocoonUpd.Firewall.Eql(release.Firewall) {
+		release.Firewall = cocoonUpd.Firewall
 		releaseUpdated = true
 	}
 
@@ -290,9 +296,9 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		}
 
 		// persist release
-		var protoCreateReleaseReq proto.CreateReleaseRequest
-		cstructs.Copy(release, &protoCreateReleaseReq)
-		_, err = api.CreateRelease(ctx, &protoCreateReleaseReq)
+		var protoNewRelReq proto.CreateReleaseRequest
+		cstructs.Copy(release, &protoNewRelReq)
+		_, err = api.CreateRelease(ctx, &protoNewRelReq)
 		if err != nil {
 			return nil, err
 		}

@@ -40,7 +40,7 @@ func MakeCocoonKey(id string) string {
 }
 
 // Firewall defines a collection of firewall rules
-type Firewall []FirewallRule
+type Firewall []*FirewallRule
 
 // ToMap returns a map[string]string version
 func (f Firewall) ToMap() []map[string]string {
@@ -55,7 +55,26 @@ func (f Firewall) ToMap() []map[string]string {
 	return sm
 }
 
-// FirewallRule represents information about a destination to allow connetions to.
+// Eql checks whether another firewall object is equal
+func (f Firewall) Eql(o Firewall) bool {
+	l := len(f)
+	found := 0
+	if l != len(o) {
+		return false
+	}
+	for i := 0; i < l; i++ {
+		cur := f[i]
+		for j := 0; j < l; j++ {
+			oCur := o[j]
+			if cur.Destination == oCur.Destination && cur.DestinationPort == oCur.DestinationPort && cur.Protocol == oCur.Protocol {
+				found++
+			}
+		}
+	}
+	return found == l
+}
+
+// FirewallRule represents information about a destination to allow connections to.
 type FirewallRule struct {
 	Destination     string `structs:"destination" mapstructure:"destination"`
 	DestinationPort string `structs:"destinationPort" mapstructure:"destinationPort"`
@@ -75,6 +94,8 @@ type Release struct {
 	SigApproved int32    `structs:"sigApproved" mapstructure:"sigApproved"`
 	SigDenied   int32    `structs:"sigDenied" mapstructure:"sigDenied"`
 	VotersID    []string `structs:"votersID" mapstructure:"votersID"`
+	Firewall    Firewall `structs:"firewall" mapstructure:"firewall"`
+	ACL         ACLMap   `structs:"acl" mapstructure:"acl"`
 	CreatedAt   string   `structs:"createdAt" mapstructure:"createdAt"`
 }
 

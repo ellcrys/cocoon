@@ -126,7 +126,7 @@ func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 			}
 			for _, ip := range IPs {
 				if govalidator.IsIPv4(ip) {
-					newResolvedFirewall = append(newResolvedFirewall, types.FirewallRule{
+					newResolvedFirewall = append(newResolvedFirewall, &types.FirewallRule{
 						Destination:     ip,
 						DestinationPort: rule.DestinationPort,
 						Protocol:        rule.Protocol,

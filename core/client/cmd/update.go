@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -32,6 +35,27 @@ var updateCmd = &cobra.Command{
 		link, _ := cmd.Flags().GetString("link")
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
+		firewall, _ := cmd.Flags().GetString("firewall")
+
+		// parse and validate firewall
+		var protoValidFirewallRules []*proto.FirewallRule
+		if len(firewall) > 0 {
+			var errs []error
+			validFirewallRules, errs := api.ValidateFirewall(firewall)
+			if errs != nil && len(errs) > 0 {
+				for _, err := range errs {
+					log.Infof("Err: firewall: %s", err.Error())
+				}
+				os.Exit(1)
+			}
+			for _, rule := range validFirewallRules {
+				protoValidFirewallRules = append(protoValidFirewallRules, &proto.FirewallRule{
+					Destination:     rule.Destination,
+					DestinationPort: rule.DestinationPort,
+					Protocol:        rule.Protocol,
+				})
+			}
+		}
 
 		upd := &proto.CocoonPayloadRequest{
 			ID:             args[0],
@@ -42,6 +66,7 @@ var updateCmd = &cobra.Command{
 			Memory:         memory,
 			CPUShares:      cpuShare,
 			Link:           link,
+			Firewall:       protoValidFirewallRules,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,
 		}
@@ -57,6 +82,7 @@ func init() {
 	updateCmd.Flags().StringP("url", "u", "", "The github repository url of the cocoon code")
 	updateCmd.Flags().StringP("lang", "l", "", "The langauges the cocoon code is written in")
 	updateCmd.Flags().StringP("release-tag", "r", "", "The github release tag. Defaults to `latest`")
+	updateCmd.Flags().StringP("firewall", "f", "", "The outgoing firewall rules of the cocoon")
 	updateCmd.Flags().StringP("build-param", "b", "", "Build parameters to apply during cocoon code build process")
 	updateCmd.Flags().StringP("memory", "m", "", "The amount of memory to allocate. e.g 512m, 1g or 2g")
 	updateCmd.Flags().StringP("link", "", "", "The id of an existing cocoon to natively link to.")
