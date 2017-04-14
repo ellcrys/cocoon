@@ -101,7 +101,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 			cn.Stop(true)
 			return
 		}
-		log.Error(err)
+		log.Error(err.Error())
 		cn.Stop(true)
 		return
 	}
