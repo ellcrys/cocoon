@@ -18,7 +18,7 @@ var discoveryLog = logging.MustGetLogger("orderer.discovery")
 // Discovery defines a structure for fetching a list of addresses of orderers
 // accessible in the cluster.
 type Discovery struct {
-	mu           *sync.Mutex
+	sync.Mutex
 	orderersAddr []string
 	ticker       *time.Ticker
 	OnUpdateFunc func(addrs []string)
@@ -26,9 +26,7 @@ type Discovery struct {
 
 // NewDiscovery creates a new discovery object.
 func NewDiscovery() *Discovery {
-	return &Discovery{
-		mu: &sync.Mutex{},
-	}
+	return &Discovery{}
 }
 
 // Discover fetches a list of orderer service addresses
@@ -59,9 +57,9 @@ func (od *Discovery) discover() error {
 		orderers = append(orderers, fmt.Sprintf("%s:%d", orderer.IP, int(orderer.Port)))
 	}
 
-	od.mu.Lock()
+	od.Lock()
 	od.orderersAddr = orderers
-	od.mu.Unlock()
+	od.Unlock()
 	return nil
 }
 
@@ -99,27 +97,27 @@ func (od *Discovery) GetAddrs() []string {
 // grpc connection. If no orderer address has been discovered, nil and are error are returned.
 func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 
+	od.Lock()
+
 	var selected string
-	fmt.Println("Here")
-	od.mu.Lock()
 	if len(od.orderersAddr) == 0 {
-		od.mu.Unlock()
+		od.Unlock()
 		return nil, fmt.Errorf("no known orderer address")
 	}
-	fmt.Println("Here 2")
+
 	if len(od.orderersAddr) == 1 {
 		selected = od.orderersAddr[0]
 	} else {
 		selected = od.orderersAddr[util.RandNum(0, len(od.orderersAddr))]
 	}
-	od.mu.Unlock()
-	fmt.Println("Here 3")
+
+	od.Unlock()
 
 	client, err := grpc.Dial(selected, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Here 4")
+
 	return client, nil
 }
 

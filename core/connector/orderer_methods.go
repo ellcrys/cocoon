@@ -15,14 +15,12 @@ import (
 // GetCocoon returns the cocoon being run
 func (cn *Connector) GetCocoon(ctx context.Context, cocoonID string) (*types.Cocoon, error) {
 
-	log.Info("Get 1")
 	ordererConn, err := cn.ordererDiscovery.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}
 	defer ordererConn.Close()
 
-	log.Info("Get 2")
 	odc := proto.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &proto.GetParams{
 		CocoonID: types.SystemCocoonID,
@@ -30,13 +28,12 @@ func (cn *Connector) GetCocoon(ctx context.Context, cocoonID string) (*types.Coc
 		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
-		log.Info("Get 3")
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
 			return nil, types.ErrCocoonNotFound
 		}
 		return nil, err
 	}
-	log.Info("Get 4")
+
 	var cocoon types.Cocoon
 	util.FromJSON([]byte(tx.Value), &cocoon)
 	return &cocoon, nil
