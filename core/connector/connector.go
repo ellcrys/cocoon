@@ -247,20 +247,22 @@ func (cn *Connector) HookToMonitor(req *Request) {
 // setStatus Set the cocoon status
 func (cn *Connector) setStatus(status string) error {
 
+	log.Info("To Set")
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-
+	log.Info("Before")
 	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
 	if err != nil {
 		return err
 	}
+	log.Info("After")
 
 	cocoon.Status = status
 	err = cn.PutCocoon(ctx, cocoon)
 	if err != nil {
 		return err
 	}
-
+	log.Info("End")
 	return nil
 }
 
