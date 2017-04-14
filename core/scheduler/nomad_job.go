@@ -187,7 +187,6 @@ func NewJob(version, id string, count int) *NomadJob {
 								ForcePull:   true,
 								Volumes: []string{
 									"/var/run/docker.sock:/var/run/docker.sock",
-									"/tmp:/tmp",
 								},
 								Command: "bash",
 								Args:    []string{"/local/runner.sh"},
