@@ -579,6 +579,7 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 		case "before":
 			log.Info("Building cocoon code...")
 			cn.setStatus(api.CocoonStatusBuilding)
+			log.Info("Status set!")
 		case "end":
 			if exitCode.(int) == 0 {
 				log.Info("Build succeeded!")
