@@ -101,7 +101,12 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 			cn.Stop(true)
 			return
 		}
+		log.Error(err)
+		cn.Stop(true)
+		return
 	}
+
+	util.Printify(cn.cocoon)
 
 	log.Info("Ready to install cocoon code")
 	log.Debugf("Found ccode url=%s and lang=%s", cn.req.URL, cn.req.Lang)
