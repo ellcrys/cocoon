@@ -101,10 +101,9 @@ func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 
 	var selected string
 	log.Info("Here")
-	od.mu.Lock()
-	defer od.mu.Unlock()
-	log.Info("Here 2")
+
 	if len(od.orderersAddr) == 0 {
+		od.mu.Lock()
 		return nil, fmt.Errorf("no known orderer address")
 	}
 	log.Info("Here 3")
@@ -116,6 +115,7 @@ func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 	log.Info("Here 4")
 	client, err := grpc.Dial(selected, grpc.WithInsecure())
 	if err != nil {
+		od.mu.Unlock()
 		return nil, err
 	}
 
