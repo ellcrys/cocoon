@@ -7,7 +7,10 @@ import (
 
 	"strings"
 
+	"net"
+
 	"github.com/asaskevich/govalidator"
+	"github.com/ncodes/cocoon/core/types"
 )
 
 // GetRPCErrDesc takes a grpc generated error and returns the description.
@@ -105,4 +108,35 @@ func IsValidACLTarget(target string) error {
 		return nil
 	}
 	return fmt.Errorf("format is invalid")
+}
+
+// ResolveFirewall performs a reverse lookup of non-IP destination
+// of every rule. For each resolved rule, a new cloned rule is added
+// with the looked up IP used as the destination.
+func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
+	var newResolvedFirewall = types.Firewall{}
+	for i, rule := range rules {
+		if !govalidator.IsIP(rule.Destination) {
+			IPs, err := net.LookupHost(rule.Destination)
+			if err != nil {
+				if strings.Contains(err.Error(), "no such host") {
+					return nil, fmt.Errorf("rule %d: %s", i, err)
+				}
+				return nil, err
+			}
+			for _, ip := range IPs {
+				if govalidator.IsIPv4(ip) {
+					newResolvedFirewall = append(newResolvedFirewall, types.FirewallRule{
+						Destination:     ip,
+						DestinationPort: rule.DestinationPort,
+						Protocol:        rule.Protocol,
+					})
+					continue
+				}
+			}
+		} else {
+			newResolvedFirewall = append(newResolvedFirewall, rule)
+		}
+	}
+	return newResolvedFirewall, nil
 }

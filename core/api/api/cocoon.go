@@ -112,10 +112,18 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 	cocoon.IdentityID = claims["identity"].(string)
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
-	
+
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
+
+	// resolve firewall rules destination
+	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall)
+	if err != nil {
+		return nil, err
+	}
+
+	cocoon.Firewall = outputFirewall
 
 	// ensure a similar cocoon does not exist
 	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: cocoon.ID})

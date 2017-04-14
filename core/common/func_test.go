@@ -7,6 +7,7 @@ import (
 
 	"fmt"
 
+	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -92,6 +93,27 @@ func TestFunc(t *testing.T) {
 				for _, c := range cases {
 					So(CapitalizeString(c[0]), ShouldEqual, c[1])
 				}
+			})
+		})
+
+		Convey(".ResolveFirewall", func() {
+			Convey("Should return error if a rule's destination address could not be resolved", func() {
+				_, err := ResolveFirewall([]types.FirewallRule{
+					{Destination: "googleasadsa.com", DestinationPort: "80", Protocol: "udp"},
+				})
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "no such host")
+			})
+
+			Convey("Should successfully resolve rules destination", func() {
+				rules, err := ResolveFirewall([]types.FirewallRule{
+					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
+					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
+				})
+				So(err, ShouldBeNil)
+				So(len(rules), ShouldEqual, 2)
+				So(rules[0].Destination, ShouldNotEqual, "google.com")
+				So(rules[1].Destination, ShouldNotEqual, "facebook.com")
 			})
 		})
 	})
