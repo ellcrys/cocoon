@@ -617,14 +617,21 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 func (cn *Connector) getDefaultFirewall() string {
 	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
+
+	var cocoonFirewallRules []string
+	for _, rule := range cn.cocoon.Firewall {
+		cocoonFirewallRules = append(cocoonFirewallRules, fmt.Sprintf("iptables -A OUTPUT -p %s -d %s --dport %s -j ACCEPT", rule.Protocol, rule.Destination, rule.DestinationPort))
+	}
+
 	return strings.TrimSpace(`iptables -F && 
-			iptables -P INPUT DROP && 
-			iptables -P FORWARD DROP &&
-			iptables -P OUTPUT DROP &&
-			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
-			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT &&
-			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT && 
-			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT &&
+			iptables -P INPUT DROP; 
+			iptables -P FORWARD DROP; 
+			iptables -P OUTPUT DROP;
+			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
+			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT;
+			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT;
+			` + strings.Join(cocoonFirewallRules, ";") + `
+			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
 			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 		`)
 }

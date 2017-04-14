@@ -120,7 +120,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	// resolve firewall rules destination
 	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Firewall: %s", err)
 	}
 
 	cocoon.Firewall = outputFirewall
