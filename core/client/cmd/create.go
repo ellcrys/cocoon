@@ -51,6 +51,22 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 		}
 	}
 
+	// path is a url, download it
+	if govalidator.IsURL(path) {
+		var fileData []byte
+		err := util.DownloadURLToFunc(path, func(b []byte, code int) error {
+			fileData = append(fileData, b...)
+			return nil
+		})
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to download contract file: %s", err))
+		}
+		if err = hcl.Decode(&configFileData, string(fileData)); err != nil {
+			errs = append(errs, fmt.Errorf("failed to parse contract file: %s", err.Error()))
+			return nil, errs
+		}
+	}
+
 	if len(configFileData) > 0 && configFileData["contracts"] != nil {
 		if contracts, ok := configFileData["contracts"].([]map[string]interface{}); ok && len(contracts) > 0 {
 			for i, contract := range contracts {
