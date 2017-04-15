@@ -1,10 +1,8 @@
 # A contract file describes a contract specification
 contracts {
     
-    # Optional. If a cocoon already exists, 
-    # a new release will be created for the existing cocoon. A release
-    # is only created if release related fields are updated, otherwise the cocoon
-    # is only updated. If not provided, one will be assigned.
+    # A unique ID (ex: com.mywebsite.com.myname).
+    # If not provide, a UUID v4 ID is generated. 
     id = "cocoon.1"
     
     # Contract source location and information
