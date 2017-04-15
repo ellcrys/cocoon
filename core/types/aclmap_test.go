@@ -70,6 +70,88 @@ func TestACLMap(t *testing.T) {
 			})
 		})
 
+		Convey(".Eql", func() {
+
+			Convey("Should return false since sizes are different", func() {
+				x := NewACLMap(map[string]interface{}{
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				y := NewACLMap(map[string]interface{}{
+					"*": "allow",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				So(x.Eql(y), ShouldEqual, false)
+			})
+
+			Convey("Should return false since content is different", func() {
+				x := NewACLMap(map[string]interface{}{
+					"*": "deny",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				y := NewACLMap(map[string]interface{}{
+					"*": "allow",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				So(x.Eql(y), ShouldEqual, false)
+				z := NewACLMap(map[string]interface{}{
+					"*": "deny",
+					"ledger2": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				So(x.Eql(z), ShouldEqual, false)
+			})
+
+			Convey("Should return true since contents match", func() {
+				x := NewACLMap(map[string]interface{}{
+					"*": "deny",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				y := NewACLMap(map[string]interface{}{
+					"*": "deny",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				So(x.Eql(y), ShouldEqual, true)
+			})
+
+			Convey("Should return true since contents match even in different order", func() {
+				x := NewACLMap(map[string]interface{}{
+					"ledger1": map[string]string{
+						"cocoon_id":    "allow",
+						"@identity_id": "allow",
+					},
+					"*": "deny",
+				})
+				y := NewACLMap(map[string]interface{}{
+					"*": "deny",
+					"ledger1": map[string]string{
+						"@identity_id": "allow",
+						"cocoon_id":    "allow",
+					},
+				})
+				So(x.Eql(y), ShouldEqual, true)
+			})
+		})
+
 		Convey(".Remove", func() {
 
 			Convey("Should successfully remove an existing, non-actor specific rule", func() {

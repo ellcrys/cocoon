@@ -1,6 +1,6 @@
 syntax = "proto3";
 package proto;
-import "google/protobuf/any.proto";
+//import "google/protobuf/any.proto";
 
 service API {
     rpc Login(LoginRequest) returns (Response);
@@ -72,11 +72,12 @@ message CocoonPayloadRequest {
     string releaseTag = 4;
     string buildParam = 5;
     repeated FirewallRule firewall = 6;
-    string memory = 7;
-    string CPUShares = 8;
-    string link = 9;
-    int32 numSignatories = 10;
-    int32 sigThreshold = 11;
+    bytes ACL = 7;
+    string memory = 8;
+    string CPUShares = 9;
+    string link = 10;
+    int32 numSignatories = 11;
+    int32 sigThreshold = 12;
 }
 
 message GetCocoonRequest {
@@ -97,7 +98,7 @@ message CreateReleaseRequest {
     string buildParam = 6;
     string link = 7;
     repeated FirewallRule firewall = 8;
-    map<string, google.protobuf.Any> acl = 9;
+    bytes ACL = 9;
 }
 
 message GetReleaseRequest {

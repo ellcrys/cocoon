@@ -10,6 +10,7 @@ import (
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
@@ -35,6 +36,24 @@ var createCmd = &cobra.Command{
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 		firewall, _ := cmd.Flags().GetString("firewall")
+		aclJSON, _ := cmd.Flags().GetString("acl")
+
+		// validate ACL
+		var aclMap map[string]interface{}
+		if len(aclJSON) > 0 {
+			err := util.FromJSON([]byte(aclJSON), &aclMap)
+			if err != nil {
+				log.Fatalf("Err: acl: malformed json")
+				return
+			}
+			errs := acl.NewInterpreter(aclMap, false).Validate()
+			if len(errs) > 0 {
+				for _, err = range errs {
+					log.Infof("Err: acl: %s", err)
+				}
+				return
+			}
+		}
 
 		// parse and validate firewall
 		var validFirewallRules []*types.FirewallRule
@@ -56,6 +75,7 @@ var createCmd = &cobra.Command{
 			ReleaseTag:     releaseTag,
 			BuildParam:     buildParams,
 			Firewall:       validFirewallRules,
+			ACL:            aclMap,
 			Memory:         memory,
 			CPUShares:      cpuShare,
 			Link:           link,
@@ -81,4 +101,5 @@ func init() {
 	createCmd.Flags().StringP("cpu-share", "c", "1x", "The share of cpu to allocate. e.g 1x or 2x")
 	createCmd.Flags().Int32P("num-sig", "s", 1, "The number of signatories")
 	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required to confirm a new release")
+	createCmd.Flags().StringP("acl", "a", "", "The access level control rules")
 }

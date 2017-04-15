@@ -118,7 +118,7 @@ func GetReleases(ids []string) error {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
 
-	var releases = []types.Release{}
+	var releases []types.Release
 	var err error
 	var resp *proto.Response
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())

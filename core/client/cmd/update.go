@@ -3,11 +3,14 @@ package cmd
 import (
 	"os"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
+	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +39,24 @@ var updateCmd = &cobra.Command{
 		numSig, _ := cmd.Flags().GetInt32("num-sig")
 		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
 		firewall, _ := cmd.Flags().GetString("firewall")
+		aclJSON, _ := cmd.Flags().GetString("acl")
+
+		// validate ACL
+		var aclMap map[string]interface{}
+		if len(aclJSON) > 0 {
+			err := util.FromJSON([]byte(aclJSON), &aclMap)
+			if err != nil {
+				log.Fatalf("Err: acl: malformed json")
+				return
+			}
+			errs := acl.NewInterpreter(aclMap, false).Validate()
+			if len(errs) > 0 {
+				for _, err = range errs {
+					log.Infof("Err: acl: %s", err)
+				}
+				return
+			}
+		}
 
 		// parse and validate firewall
 		var protoValidFirewallRules []*proto.FirewallRule
@@ -69,6 +90,7 @@ var updateCmd = &cobra.Command{
 			Firewall:       protoValidFirewallRules,
 			NumSignatories: numSig,
 			SigThreshold:   sigThreshold,
+			ACL:            types.NewACLMap(aclMap).ToJSON(),
 		}
 
 		if err := client.UpdateCocoon(args[0], upd); err != nil {
@@ -89,4 +111,5 @@ func init() {
 	updateCmd.Flags().StringP("cpu-share", "c", "", "The share of cpu to allocate. e.g 1x or 2x")
 	updateCmd.Flags().Int32P("num-sig", "s", 0, "The number of signatories")
 	updateCmd.Flags().Int32P("sig-threshold", "t", 0, "The number of signatures required to confirm a new release")
+	updateCmd.Flags().StringP("acl", "a", "", "The access level control rules")
 }

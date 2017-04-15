@@ -89,10 +89,10 @@ func (i *Interpreter) Validate() []error {
 			if _, ok := val.(string); !ok {
 				errs = append(errs, fmt.Errorf("%s: invalid wildcard ledger value type. Expects string value", ledgerName))
 			}
-		}
-
-		if !i.isValidLedgerKeyType(val) {
-			errs = append(errs, fmt.Errorf("%s: invalid ledger value type. Expects string or map of strings", ledgerName))
+		} else {
+			if !i.isValidLedgerKeyType(val) {
+				errs = append(errs, fmt.Errorf("%s: invalid ledger value type. Expects string or map of strings", ledgerName))
+			}
 		}
 
 		if ruleVal, ok := val.(string); ok {

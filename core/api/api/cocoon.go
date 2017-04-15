@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -93,7 +92,6 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
 func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
-
 	var err error
 	var claims jwt.MapClaims
 	var releaseID = util.UUID4()
@@ -107,43 +105,50 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	cstructs.Copy(req, &cocoon)
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
-	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 	cocoon.IdentityID = claims["identity"].(string)
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
-	req = nil
+	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
+
+	// If ACL is set, create an ACLMap, set the cocoon.ACL and validate
+	if len(req.ACL) > 0 {
+		var aclMap map[string]interface{}
+		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
+			return nil, fmt.Errorf("acl: malformed json")
+		}
+		cocoon.ACL = types.NewACLMap(aclMap)
+		if errs := acl.NewInterpreterFromACLMap(cocoon.ACL, false).Validate(); len(errs) > 0 {
+			return nil, fmt.Errorf("acl: %s", errs[0])
+		}
+	}
 
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
 
-	// resolve firewall rules destination
+	// Resolve firewall rules destination
 	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall)
 	if err != nil {
 		return nil, fmt.Errorf("Firewall: %s", err)
 	}
 
-	cocoon.Firewall = outputFirewall
+	cocoon.Firewall = *outputFirewall.DeDup()
 
 	// ensure a similar cocoon does not exist
 	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: cocoon.ID})
-	if err != nil {
-		if err != types.ErrCocoonNotFound {
-			return nil, err
-		}
-	} else {
+	if err != nil && err != types.ErrCocoonNotFound {
+		return nil, err
+	} else if err == nil {
 		return nil, fmt.Errorf("cocoon with matching ID already exists")
 	}
 
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	// TODO: Provide a permission (ACL) mechanism
 	if len(cocoon.Link) > 0 {
-		if _, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{
-			ID: cocoon.Link,
-		}); err != nil {
+		if _, err = api.getCocoon(ctx, cocoon.Link); err != nil {
 			if err != types.ErrCocoonNotFound {
 				return nil, err
 			} else if err == types.ErrCocoonNotFound {
-				return nil, fmt.Errorf("cannot link to a non-existing cocoon")
+				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", cocoon.Link)
 			}
 		}
 	}
@@ -154,16 +159,17 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	}
 
 	// create new release
-	var protoNewRelReq proto.CreateReleaseRequest
-	cstructs.Copy(cocoon, &protoNewRelReq)
-	protoNewRelReq.ID = releaseID
-	protoNewRelReq.CocoonID = cocoon.ID
-	_, err = api.CreateRelease(ctx, &protoNewRelReq)
+	var releaseReq proto.CreateReleaseRequest
+	cstructs.Copy(cocoon, &releaseReq)
+	releaseReq.ID = releaseID
+	releaseReq.CocoonID = cocoon.ID
+	releaseReq.ACL = cocoon.ACL.ToJSON()
+	_, err = api.CreateRelease(ctx, &releaseReq)
 	if err != nil {
 		return nil, err
 	}
 
-	// include new cocoon id in identity cocoons list
+	// Include new cocoon id in the logged in user's cocoon list
 	identity, err := api.getIdentity(ctx, cocoon.IdentityID)
 	if err != nil {
 		return nil, err
@@ -181,8 +187,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 }
 
 // UpdateCocoon updates a cocoon and optionally creates a new
-// release. A new release is created when Release fields are
-// changed. No release is created if no change is made to previous release.
+// release. A new release is created when Release related fields are
+// changed.
 func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
 
 	var err error
@@ -199,16 +205,27 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 	loggedInIdentity := claims["identity"].(string)
 
-	// if cocoon has a identity set, ensure the identity matches that of the logged in user
-	if len(cocoon.IdentityID) != 0 && cocoon.IdentityID != loggedInIdentity {
+	// Ensure the cocoon identity matches the logged in user
+	if cocoon.IdentityID != loggedInIdentity {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
 	var cocoonUpd types.Cocoon
 	cstructs.Copy(req, &cocoonUpd)
 
-	// update new non-release fields that are different
-	// from their existing value
+	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL and validate
+	if len(req.ACL) > 0 {
+		var aclMap map[string]interface{}
+		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
+			return nil, fmt.Errorf("acl: malformed json")
+		}
+		cocoonUpd.ACL = types.NewACLMap(aclMap)
+		if errs := acl.NewInterpreterFromACLMap(cocoonUpd.ACL, false).Validate(); len(errs) > 0 {
+			return nil, fmt.Errorf("acl: %s", errs[0])
+		}
+	}
+
+	// update new non-release specific fields that have been updated
 	cocoonUpdated := false
 	if len(cocoonUpd.Memory) > 0 && cocoonUpd.Memory != cocoon.Memory {
 		cocoon.Memory = cocoonUpd.Memory
@@ -227,10 +244,16 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		cocoonUpdated = true
 	}
 
-	// validate updated cocoon
 	if err = ValidateCocoon(cocoon); err != nil {
 		return nil, err
 	}
+
+	outputFirewall, err := common.ResolveFirewall(*cocoonUpd.Firewall.DeDup())
+	if err != nil {
+		return nil, fmt.Errorf("Firewall: %s", err)
+	}
+
+	cocoonUpd.Firewall = outputFirewall
 
 	// get the last deployed release. if no recently deployed release,
 	// get the most recent release
@@ -239,13 +262,10 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
-	resp, err := api.GetRelease(ctx, &proto.GetReleaseRequest{ID: recentReleaseID})
+	release, err := api.getRelease(ctx, recentReleaseID)
 	if err != nil {
 		return nil, err
 	}
-
-	var release types.Release
-	util.FromJSON(resp.Body, &release)
 
 	// Create new release and set values if any of the release field changed
 	var releaseUpdated = false
@@ -273,6 +293,10 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		release.Firewall = cocoonUpd.Firewall
 		releaseUpdated = true
 	}
+	if len(cocoonUpd.ACL) > 0 && !cocoonUpd.ACL.Eql(release.ACL) {
+		release.ACL = cocoonUpd.ACL
+		releaseUpdated = true
+	}
 
 	var finalResp = map[string]interface{}{
 		"newReleaseID":  "",
@@ -291,14 +315,15 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		cocoon.Releases = append(cocoon.Releases, release.ID)
 
 		// validate release
-		if err = ValidateRelease(&release); err != nil {
+		if err = ValidateRelease(release); err != nil {
 			return nil, err
 		}
 
 		// persist release
-		var protoNewRelReq proto.CreateReleaseRequest
-		cstructs.Copy(release, &protoNewRelReq)
-		_, err = api.CreateRelease(ctx, &protoNewRelReq)
+		var releaseReq proto.CreateReleaseRequest
+		cstructs.Copy(release, &releaseReq)
+		releaseReq.ACL = release.ACL.ToJSON()
+		_, err = api.CreateRelease(ctx, &releaseReq)
 		if err != nil {
 			return nil, err
 		}
@@ -613,84 +638,6 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto.RemoveSignator
 	cocoon.Signatories = newSignatories
 	err = api.putCocoon(ctx, cocoon)
 	if err != nil {
-		return nil, err
-	}
-
-	return &proto.Response{
-		Status: 200,
-		Body:   cocoon.ToJSON(),
-	}, nil
-}
-
-// AddACLRule adds an ACL rule to a cocoon
-func (api *API) AddACLRule(ctx context.Context, req *proto.AddACLRuleRequest) (*proto.Response, error) {
-
-	var claims jwt.MapClaims
-	var err error
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
-
-	cocoon, err := api.getCocoon(ctx, req.CocoonID)
-	if err != nil {
-		return nil, err
-	}
-
-	loggedInUserIdentity := claims["identity"].(string)
-
-	if loggedInUserIdentity != cocoon.IdentityID {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
-	}
-
-	if err := common.IsValidACLTarget(req.Target); err != nil {
-		return nil, fmt.Errorf("target format is invalid. Valid formats are: * = target any ledger a, ledgerName.[Cocoon|@Identity]")
-	}
-
-	_privileges := strings.Split(req.Privileges, ",")
-	for _, p := range _privileges {
-		if !acl.IsValidPrivilege(p) {
-			return nil, fmt.Errorf("invalid privilege '%s' in '%s': ", p, req.Privileges)
-		}
-	}
-
-	if err = cocoon.ACL.Add(req.Target, req.Privileges); err != nil {
-		return nil, err
-	}
-
-	if err = api.putCocoon(ctx, cocoon); err != nil {
-		return nil, err
-	}
-
-	return &proto.Response{
-		Status: 200,
-		Body:   cocoon.ToJSON(),
-	}, nil
-}
-
-// RemoveACLRule removes an ACL rule to a cocoon
-func (api *API) RemoveACLRule(ctx context.Context, req *proto.RemoveACLRuleRequest) (*proto.Response, error) {
-	var claims jwt.MapClaims
-	var err error
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
-
-	cocoon, err := api.getCocoon(ctx, req.CocoonID)
-	if err != nil {
-		return nil, err
-	}
-
-	loggedInUserIdentity := claims["identity"].(string)
-
-	if loggedInUserIdentity != cocoon.IdentityID {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
-	}
-
-	cocoon.ACL.Remove(req.Target)
-
-	if err = api.putCocoon(ctx, cocoon); err != nil {
 		return nil, err
 	}
 

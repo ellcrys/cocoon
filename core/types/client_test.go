@@ -41,5 +41,23 @@ func TestAAA(t *testing.T) {
 				So(fw.Eql(fw2), ShouldEqual, true)
 			})
 		})
+
+		Convey(".DeDup", func() {
+			Convey("Should return a de-duplicated firewall", func() {
+				fw := Firewall([]*FirewallRule{
+					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
+					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
+				})
+				expected := fw.DeDup()
+				So(len(*expected), ShouldEqual, 1)
+
+				fw = Firewall([]*FirewallRule{
+					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
+					{Destination: "nairaland.com", DestinationPort: "80", Protocol: "tcp"},
+				})
+				expected = fw.DeDup()
+				So(len(*expected), ShouldEqual, 2)
+			})
+		})
 	})
 }

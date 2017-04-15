@@ -3,6 +3,10 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	"reflect"
+
+	"github.com/ellcrys/util"
 )
 
 // ACLMap represents an ACL rule collection
@@ -12,6 +16,28 @@ type ACLMap map[string]interface{}
 func NewACLMap(defValue map[string]interface{}) ACLMap {
 	aclMap := ACLMap(defValue)
 	return aclMap
+}
+
+// ToJSON returns a json encoded representation of the ACLMap
+func (m ACLMap) ToJSON() []byte {
+	b, _ := util.ToJSON(m)
+	return b
+}
+
+// Eql checks whether another ACLMap is equal
+func (m ACLMap) Eql(o ACLMap) bool {
+	if len(m) != len(o) {
+		return false
+	}
+	for k, v := range m {
+		if o[k] == nil {
+			return false
+		}
+		if !reflect.DeepEqual(v, o[k]) {
+			return false
+		}
+	}
+	return true
 }
 
 // Add a new entry.

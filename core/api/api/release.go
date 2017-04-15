@@ -26,7 +26,7 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
 	odc := orderer_proto.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
-		CocoonID: types.SystemCocoonID,
+		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
 		Transactions: []*orderer_proto.Transaction{
 			&orderer_proto.Transaction{
@@ -47,6 +47,16 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 	var release types.Release
 	cstructs.Copy(req, &release)
 	release.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+
+	// recreate ACLMap from byte value in request
+	if len(req.ACL) > 0 {
+		var aclMap map[string]interface{}
+		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
+			return nil, fmt.Errorf("acl: malformed json")
+		}
+		release.ACL = types.NewACLMap(aclMap)
+	}
+
 	req = nil
 
 	if err := ValidateRelease(&release); err != nil {

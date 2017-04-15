@@ -96,6 +96,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	cocoon.Link = release.Link
 	cocoon.LastDeployedRelease = release.ID
 	cocoon.Firewall = release.Firewall
+	cocoon.ACL = release.ACL
 
 	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.ReleaseTag, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
 	if err != nil {
