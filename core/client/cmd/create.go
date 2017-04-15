@@ -9,7 +9,9 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
+	"github.com/goware/urlx"
 	"github.com/hashicorp/hcl"
+	c_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -51,10 +53,44 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 		}
 	}
 
+	// path is a github url, download contract from the root of the master branch
+	if govalidator.IsURL(path) && c_util.IsGithubRepoURL(path) {
+		url, _ := urlx.Parse(path)
+		urls := []string{
+			fmt.Sprintf("https://raw.githubusercontent.com%s/master/contract.hcl", url.Path),
+			fmt.Sprintf("https://raw.githubusercontent.com%s/master/contract.json", url.Path),
+		}
+		for _, url := range urls {
+			var fileData []byte
+			err := util.DownloadURLToFunc(url, func(b []byte, code int) error {
+				if code == 404 {
+					return fmt.Errorf("contract file not found")
+				}
+				fileData = append(fileData, b...)
+				if len(fileData) > 5000000 {
+					return fmt.Errorf("Maximum contract file size reached. aborting download")
+				}
+				return nil
+			})
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to download contract file: %s", err))
+				return nil, errs
+			}
+			if err = hcl.Decode(&configFileData, string(fileData)); err != nil {
+				errs = append(errs, fmt.Errorf("failed to parse contract file: %s", err.Error()))
+				return nil, errs
+			}
+			path = ""
+		}
+	}
+
 	// path is a url, download it
 	if govalidator.IsURL(path) {
 		var fileData []byte
 		err := util.DownloadURLToFunc(path, func(b []byte, code int) error {
+			if code == 404 {
+				return fmt.Errorf("contract file not found")
+			}
 			fileData = append(fileData, b...)
 			if len(fileData) > 5000000 {
 				return fmt.Errorf("Maximum contract file size reached. aborting download")
@@ -63,6 +99,7 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 		})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to download contract file: %s", err))
+			return nil, errs
 		}
 		if err = hcl.Decode(&configFileData, string(fileData)); err != nil {
 			errs = append(errs, fmt.Errorf("failed to parse contract file: %s", err.Error()))
