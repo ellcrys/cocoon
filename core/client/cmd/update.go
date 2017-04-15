@@ -56,5 +56,5 @@ var updateCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(updateCmd)
-	updateCmd.PersistentFlags().StringP("version", "v", "master", "Set the branch name or commit hash for github hosted contracts")
+	updateCmd.PersistentFlags().StringP("version", "v", "master", "Set the branch name or commit hash for a github hosted contract file")
 }
