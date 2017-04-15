@@ -81,6 +81,7 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 				return nil, errs
 			}
 			path = ""
+			break
 		}
 	}
 
