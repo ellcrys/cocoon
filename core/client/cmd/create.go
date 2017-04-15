@@ -56,6 +56,9 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 		var fileData []byte
 		err := util.DownloadURLToFunc(path, func(b []byte, code int) error {
 			fileData = append(fileData, b...)
+			if len(fileData) > 5000000 {
+				return fmt.Errorf("Maximum contract file size reached. aborting download")
+			}
 			return nil
 		})
 		if err != nil {
