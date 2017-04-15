@@ -16,8 +16,6 @@ service API {
     rpc AddSignatories(AddSignatoriesRequest) returns (Response);
     rpc AddVote(AddVoteRequest) returns (Response);
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
-    rpc AddACLRule(AddACLRuleRequest) returns (Response);
-    rpc RemoveACLRule(RemoveACLRuleRequest) returns (Response);
     rpc FirewallAllow(FirewallAllowRequest) returns (Response);
 }
 
@@ -32,17 +30,6 @@ message FirewallRule {
     string destination = 1;
     string destinationPort = 2;
     string protocol = 3;
-}
-
-message AddACLRuleRequest {
-    string cocoonID = 1;
-    string target = 2;
-    string privileges = 3;
-}
-
-message RemoveACLRuleRequest {
-    string cocoonID = 1;
-    string target = 2;
 }
 
 message LoginRequest {
