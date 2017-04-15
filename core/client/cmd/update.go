@@ -23,13 +23,15 @@ var updateCmd = &cobra.Command{
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
+		version, _ := cmd.Flags().GetString("version")
+
 		if len(args) == 0 {
 			UsageError(log, cmd, `"ellcrys update" requires at least 1 argument(s)`, `ellcrys update --help`)
 		}
 
 		stopSpinner := util.Spinner("Please wait...")
 
-		cocoons, errs := parseContract(args[0])
+		cocoons, errs := parseContract(args[0], version)
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
@@ -54,4 +56,5 @@ var updateCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(updateCmd)
+	updateCmd.PersistentFlags().StringP("version", "v", "master", "Set the branch name or commit hash for github hosted contracts")
 }

@@ -23,7 +23,7 @@ import (
 )
 
 // parseContract passes a contract files
-func parseContract(path string) ([]*types.Cocoon, []error) {
+func parseContract(path, version string) ([]*types.Cocoon, []error) {
 	var id string
 	var url string
 	var lang string
@@ -57,8 +57,8 @@ func parseContract(path string) ([]*types.Cocoon, []error) {
 	if govalidator.IsURL(path) && c_util.IsGithubRepoURL(path) {
 		url, _ := urlx.Parse(path)
 		urls := []string{
-			fmt.Sprintf("https://raw.githubusercontent.com%s/master/contract.hcl", url.Path),
-			fmt.Sprintf("https://raw.githubusercontent.com%s/master/contract.json", url.Path),
+			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.hcl", url.Path, version),
+			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.json", url.Path, version),
 		}
 		for _, url := range urls {
 			var fileData []byte
@@ -207,13 +207,15 @@ var createCmd = &cobra.Command{
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
+		version, _ := cmd.Flags().GetString("version")
+
 		if len(args) == 0 {
 			UsageError(log, cmd, `"ellcrys create" requires at least 1 argument(s)`, `ellcrys create --help`)
 		}
 
 		stopSpinner := util.Spinner("Please wait...")
 
-		cocoons, errs := parseContract(args[0])
+		cocoons, errs := parseContract(args[0], version)
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
@@ -235,4 +237,5 @@ var createCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(createCmd)
+	createCmd.PersistentFlags().StringP("version", "v", "master", "Set the branch name or commit hash for github hosted contracts")
 }
