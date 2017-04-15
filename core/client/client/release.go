@@ -154,8 +154,10 @@ func GetReleases(ids []string) error {
 		stopSpinner()
 	}
 
-	bs, _ := json.MarshalIndent(releases, "", "   ")
-	log.Infof("%s", bs)
+	if len(releases) > 0 {
+		bs, _ := json.MarshalIndent(releases, "", "   ")
+		log.Infof("%s", bs)
+	}
 	if err != nil {
 		return err
 	}
