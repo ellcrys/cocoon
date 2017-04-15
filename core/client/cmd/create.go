@@ -173,13 +173,18 @@ var createCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys create" requires at least 1 argument(s)`, `ellcrys create --help`)
 		}
 
+		stopSpinner := util.Spinner("Please wait...")
+
 		cocoons, errs := parseContract(args[0])
 		if errs != nil && len(errs) > 0 {
+			stopSpinner()
 			for _, err := range errs {
 				log.Errorf("Err: %s", common.CapitalizeString(err.Error()))
 			}
 			os.Exit(1)
 		}
+
+		stopSpinner()
 
 		for i, cocoon := range cocoons {
 			err := client.CreateCocoon(cocoon)

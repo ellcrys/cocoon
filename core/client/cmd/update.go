@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -26,13 +27,18 @@ var updateCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys update" requires at least 1 argument(s)`, `ellcrys update --help`)
 		}
 
+		stopSpinner := util.Spinner("Please wait...")
+
 		cocoons, errs := parseContract(args[0])
 		if errs != nil && len(errs) > 0 {
+			stopSpinner()
 			for _, err := range errs {
 				log.Errorf("Err: %s", common.CapitalizeString(err.Error()))
 			}
 			os.Exit(1)
 		}
+
+		stopSpinner()
 
 		for i, cocoon := range cocoons {
 			var protoCreatePayloadReq proto.CocoonPayloadRequest
