@@ -37,9 +37,8 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 
 	ledgerName := op.GetParams()[0]
 
-	// link is not a principal link (principal links access their own resources).
-	// and the cocoon being accessed in the system cocoon, apply system ACL rules.
-	if op.GetLinkTo() != l.CocoonID && op.GetLinkTo() == types.SystemCocoonID {
+	// Handle link to system cocoon
+	if op.LinkTo == types.SystemCocoonID {
 		i := acl.NewInterpreter(acl.SystemACL, ledgerName == "public")
 		if errs := i.Validate(); len(errs) != 0 {
 			return fmt.Errorf("system ACL is not valid")
@@ -49,8 +48,16 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 		}
 	}
 
-	// link is not a principal link and the cocoon to access is not the system cocoon
-	if op.GetLinkTo() != l.CocoonID {
+	// Handle links to other cocoon code
+	if op.LinkTo != l.CocoonID {
+
+		cocoon, err := l.connector.GetCocoon(ctx, l.CocoonID)
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				return fmt.Errorf("cocoon not found")
+			}
+			return err
+		}
 
 		linkedCocoon, err := l.connector.GetCocoon(ctx, op.GetLinkTo())
 		if err != nil {
@@ -58,6 +65,12 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 				return fmt.Errorf("linked cocoon not found")
 			}
 			return err
+		}
+
+		// Handle natively linked cocoon
+		if cocoon.Link == op.LinkTo {
+			// natively linked cocoon currently have same privilege as the linked cocoon
+			return nil
 		}
 
 		ledger, err := l._getLedger(ctx, op.GetLinkTo(), ledgerName)
