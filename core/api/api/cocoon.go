@@ -101,11 +101,13 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
+	loggedInIdentity := claims["identity"].(string)
+
 	var cocoon types.Cocoon
 	cstructs.Copy(req, &cocoon)
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
-	cocoon.IdentityID = claims["identity"].(string)
+	cocoon.IdentityID = loggedInIdentity
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
@@ -144,12 +146,17 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	// TODO: Provide a permission (ACL) mechanism
 	if len(cocoon.Link) > 0 {
-		if _, err = api.getCocoon(ctx, cocoon.Link); err != nil {
+		cocoonToLinkTo, err := api.getCocoon(ctx, cocoon.Link)
+		if err != nil {
 			if err != types.ErrCocoonNotFound {
 				return nil, err
 			} else if err == types.ErrCocoonNotFound {
 				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", cocoon.Link)
 			}
+		}
+		// ensure logged in user owns the cocoon being linked
+		if loggedInIdentity != cocoonToLinkTo.IdentityID {
+			return nil, fmt.Errorf("link: Permission denied. Cannot create a native link to a cocoon you did not create")
 		}
 	}
 
