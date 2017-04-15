@@ -59,7 +59,7 @@ func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 
 // MakeLegderHash takes a ledger and computes a hash
 func (s *PostgresStore) MakeLegderHash(ledger *types.Ledger) string {
-	return util.Sha256(fmt.Sprintf("%s.%t.%d", ledger.Name, ledger.Public, ledger.CreatedAt))
+	return util.Sha256(fmt.Sprintf("%s;%t;%d", ledger.Name, ledger.Public, ledger.CreatedAt))
 }
 
 // Init initializes the types. Creates the necessary tables such as the

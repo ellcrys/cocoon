@@ -44,6 +44,7 @@ import:
 - package: github.com/olekukonko/tablewriter
 - package: github.com/pkg/profile
   version: ^1.2.0
+- package: github.com/hashicorp/hcl
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2

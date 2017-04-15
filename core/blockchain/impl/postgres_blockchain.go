@@ -107,7 +107,7 @@ func (b *PostgresBlockchain) GetChain(name string) (*types.Chain, error) {
 
 // MakeChainName returns a new chain name prefixed with a namespace
 func (b *PostgresBlockchain) MakeChainName(namespace, name string) string {
-	return fmt.Sprintf("%s.%s", namespace, name)
+	return fmt.Sprintf("%s;%s", namespace, name)
 }
 
 // MakeTxsHash takes a slice of transactions and returns a SHA256
@@ -117,7 +117,7 @@ func MakeTxsHash(txs []*types.Transaction) string {
 	for _, tx := range txs {
 		txHashes = append(txHashes, tx.Hash)
 	}
-	return util.Sha256(strings.Join(txHashes, "."))
+	return util.Sha256(strings.Join(txHashes, ";"))
 }
 
 // VerifyTxs checks whether the hash of a transactions are valid hashes
@@ -134,7 +134,7 @@ func VerifyTxs(txs []*types.Transaction) (*types.Transaction, bool) {
 // MakeGenesisBlockHash creates the standard hash for the first block of a chain
 // which is a sha256 hash of a concatenated chain name and 64 chars of `0`.
 func MakeGenesisBlockHash(chainName string) string {
-	return util.Sha256(fmt.Sprintf("%s.%s", chainName, strings.Repeat("0", 64)))
+	return util.Sha256(fmt.Sprintf("%s;%s", chainName, strings.Repeat("0", 64)))
 }
 
 // CreateBlock creates a new block. It creates a chained structure by setting the new block's previous hash

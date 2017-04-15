@@ -28,7 +28,7 @@ type Transaction struct {
 // MakeHash creates a hash of a transaction
 func (t *Transaction) MakeHash() string {
 	return util.Sha256(fmt.Sprintf(
-		"%s %s %s %s %s %d",
+		"%s;%s;%s;%s;%s;%d",
 		t.ID,
 		crypto.ToBase64([]byte(t.LedgerInternal)),
 		crypto.ToBase64([]byte(t.KeyInternal)),
@@ -46,10 +46,10 @@ func (t *Transaction) ToJSON() []byte {
 // MakeTxKey creates a transaction key name for storing and querying a transaction.
 // Accepts a namespace value and the key name.
 func MakeTxKey(namespace, name string) string {
-	return fmt.Sprintf("%s.%s", namespace, name)
+	return fmt.Sprintf("%s;%s", namespace, name)
 }
 
 // GetActualKeyFromTxKey returns the real key name from a transaction key
 func GetActualKeyFromTxKey(key string) string {
-	return strings.Split(key, ".")[1]
+	return strings.Split(key, ";")[1]
 }

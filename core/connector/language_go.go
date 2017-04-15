@@ -104,9 +104,9 @@ func (g *Go) RequiresBuild() bool {
 // SetBuildParams sets and validates build parameters
 func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 	g.buildParams = buildParams
-	if pkgMgr := g.buildParams["pkg_mgr"]; pkgMgr != nil {
+	if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
 		if !util.InStringSlice([]string{"glide"}, pkgMgr.(string)) {
-			return fmt.Errorf("invalid pkg_mgr value in build script")
+			return fmt.Errorf("invalid pkgMgr value in build script")
 		}
 	}
 	return nil
@@ -118,7 +118,7 @@ func (g *Go) GetBuildScript() string {
 
 	// run known package manager fetch routine
 	pkgFetchCmd := ""
-	if pkgMgr := g.buildParams["pkg_mgr"]; pkgMgr != nil {
+	if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
 		switch pkgMgr {
 		case "glide":
 			pkgFetchCmd = "glide install"

@@ -1,5 +1,5 @@
-hash: 6cddad3c7b82a36116afbf58bebf264cd75eee196c34013c70118088b5d8e9c5
-updated: 2017-04-11T19:24:32.188566271+01:00
+hash: a8576abbc9fab078284b3e146cd064f09cea606f0145bba9e88e03f4a9fc1a52
+updated: 2017-04-15T13:41:55.44911277+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -14,7 +14,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/docker
-  version: 2f35d73b7dc7a9e234ea06f6145a26c37472c775
+  version: 2878a859b5ea11d4d380a9e65c3db51eead84816
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -170,7 +170,7 @@ imports:
   - cipher
   - json
 - name: github.com/xeonx/timeago
-  version: 1f38c69d07a911962b9fe71c744a957dfa671a1e
+  version: 3292590417a062dbad0d60663d7513f943dd9197
 - name: golang.org/x/crypto
   version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
   subpackages:

@@ -499,8 +499,8 @@ func (api *API) AddSignatories(ctx context.Context, req *proto.AddSignatoriesReq
 	}
 
 	// ensure the number of signatories to add will not exceed the total number of required signatories
-	availableSignatorySlots := cocoon.NumSignatories - int32(len(cocoon.Signatories))
-	if availableSignatorySlots < int32(len(req.IDs)) {
+	availableSignatorySlots := cocoon.NumSignatories - len(cocoon.Signatories)
+	if availableSignatorySlots < len(req.IDs) {
 		if availableSignatorySlots == 0 {
 			return nil, fmt.Errorf("max signatories already added. You can't add more")
 		}

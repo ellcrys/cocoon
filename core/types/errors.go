@@ -46,6 +46,9 @@ var (
 
 	// ErrTransportClosing represents a grpc connection closing
 	ErrTransportClosing = fmt.Errorf("transport is closing")
+
+	// ErrInvalidResourceName represents an invalid name error
+	ErrInvalidResourceName = fmt.Errorf("invalid resource name")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

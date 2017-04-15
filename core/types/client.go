@@ -16,8 +16,8 @@ type Cocoon struct {
 	BuildParam          string   `structs:"buildParam" mapstructure:"buildParam"`
 	Memory              string   `structs:"memory" mapstructure:"memory"`
 	CPUShares           string   `structs:"CPUShares" mapstructure:"CPUShares"`
-	NumSignatories      int32    `structs:"numSignatories" mapstructure:"numSignatories"`
-	SigThreshold        int32    `structs:"sigThreshold" mapstructure:"sigThreshold"`
+	NumSignatories      int      `structs:"numSignatories" mapstructure:"numSignatories"`
+	SigThreshold        int      `structs:"sigThreshold" mapstructure:"sigThreshold"`
 	Link                string   `structs:"link" mapstructure:"link"`
 	Releases            []string `structs:"releases" mapstructure:"releases"`
 	Signatories         []string `structs:"signatories" mapstructure:"signatories"`
@@ -36,7 +36,7 @@ func (c *Cocoon) ToJSON() []byte {
 
 // MakeCocoonKey constructs a cocoon key
 func MakeCocoonKey(id string) string {
-	return fmt.Sprintf("cocoon.%s", id)
+	return fmt.Sprintf("cocoon;%s", id)
 }
 
 // Firewall defines a collection of firewall rules
@@ -114,8 +114,8 @@ type Release struct {
 	Language    string   `structs:"language" mapstructure:"language"`
 	BuildParam  string   `structs:"buildParam" mapstructure:"buildParam"`
 	Link        string   `structs:"link" mapstructure:"link"`
-	SigApproved int32    `structs:"sigApproved" mapstructure:"sigApproved"`
-	SigDenied   int32    `structs:"sigDenied" mapstructure:"sigDenied"`
+	SigApproved int      `structs:"sigApproved" mapstructure:"sigApproved"`
+	SigDenied   int      `structs:"sigDenied" mapstructure:"sigDenied"`
 	VotersID    []string `structs:"votersID" mapstructure:"votersID"`
 	Firewall    Firewall `structs:"firewall" mapstructure:"firewall"`
 	ACL         ACLMap   `structs:"acl" mapstructure:"acl"`
@@ -130,5 +130,5 @@ func (r *Release) ToJSON() []byte {
 
 // MakeReleaseKey constructs an release key
 func MakeReleaseKey(id string) string {
-	return fmt.Sprintf("release.%s", id)
+	return fmt.Sprintf("release;%s", id)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	cocoon_util "github.com/ncodes/cocoon-util"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -26,8 +27,8 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if len(c.ID) == 0 {
 		return fmt.Errorf("id is required")
 	}
-	if !govalidator.IsUUIDv4(c.ID) {
-		return fmt.Errorf("id is not a valid uuid")
+	if !common.IsValidResName(c.ID) {
+		return fmt.Errorf("id is not a valid resource name")
 	}
 	if len(c.URL) == 0 {
 		return fmt.Errorf("url is required")
@@ -65,7 +66,7 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if c.SigThreshold <= 0 {
 		return fmt.Errorf("signatory threshold cannot be less than 1")
 	}
-	if c.NumSignatories < int32(len(c.Signatories)) {
+	if c.NumSignatories < len(c.Signatories) {
 		return fmt.Errorf("max signatories already added. You can't add more")
 	}
 	if c.Firewall != nil {

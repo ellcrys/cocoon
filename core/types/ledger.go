@@ -44,5 +44,5 @@ func (l *Ledger) ToJSON() []byte {
 // MakeLedgerName creates a ledger name for use for creating or querying a ledger.
 // Accepts a namespace value and the ledger name.
 func MakeLedgerName(namespace, name string) string {
-	return fmt.Sprintf("%s.%s", namespace, name)
+	return fmt.Sprintf("%s;%s", namespace, name)
 }

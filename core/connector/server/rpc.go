@@ -28,7 +28,7 @@ type RPCServer struct {
 func NewRPCServer(connector *connector.Connector) *RPCServer {
 	server := new(RPCServer)
 	server.connector = connector
-	server.ledgerOps = handlers.NewLedgerOperationHandler(connector)
+	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)
 	server.cocoonCodeOps = handlers.NewCocoonCodeHandler("127.0.0.1" + connector.GetCocoonCodeRPCAddr())
 	return server
 }

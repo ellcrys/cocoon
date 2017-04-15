@@ -12,6 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/orderer"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
+	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 )
 
@@ -20,14 +21,16 @@ type LedgerOperations struct {
 	CocoonID         string
 	ordererDiscovery *orderer.Discovery
 	connector        *connector.Connector
+	log              *logging.Logger
 }
 
 // NewLedgerOperationHandler creates a new instance of a ledger operation handler
-func NewLedgerOperationHandler(connector *connector.Connector) *LedgerOperations {
+func NewLedgerOperationHandler(log *logging.Logger, connector *connector.Connector) *LedgerOperations {
 	return &LedgerOperations{
 		connector:        connector,
 		CocoonID:         connector.GetRequest().ID,
 		ordererDiscovery: connector.GetOrdererDiscoverer(),
+		log:              log,
 	}
 }
 
@@ -54,7 +57,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 		cocoon, err := l.connector.GetCocoon(ctx, l.CocoonID)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-				return fmt.Errorf("cocoon not found")
+				return fmt.Errorf("calling cocoon not found")
 			}
 			return err
 		}
@@ -73,15 +76,21 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 			return nil
 		}
 
-		ledger, err := l._getLedger(ctx, op.GetLinkTo(), ledgerName)
-		if err != nil {
-			if common.CompareErr(err, types.ErrLedgerNotFound) == 0 {
-				return fmt.Errorf("linked cocoon ledger not found")
+		defaultACLPolicy := false
+
+		// get ledger and set the default ACL policy (the ledger visibility)
+		if op.Name != types.TxCreateLedger {
+			ledger, err := l._getLedger(ctx, op.GetLinkTo(), ledgerName)
+			if err != nil {
+				if common.CompareErr(err, types.ErrLedgerNotFound) == 0 {
+					return fmt.Errorf("linked cocoon ledger not found")
+				}
+				return err
 			}
-			return err
+			defaultACLPolicy = ledger.Public
 		}
 
-		i := acl.NewInterpreterFromACLMap(linkedCocoon.ACL, ledger.Public)
+		i := acl.NewInterpreterFromACLMap(linkedCocoon.ACL, defaultACLPolicy)
 		if errs := i.Validate(); len(errs) != 0 {
 			return fmt.Errorf("linked cocoon ACL is not valid")
 		}
@@ -127,6 +136,10 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
 		cocoonID = op.GetLinkTo()
+	}
+
+	if !common.IsValidResName(op.GetParams()[0]) {
+		return nil, types.ErrInvalidResourceName
 	}
 
 	ordererConn, err := l.ordererDiscovery.GetGRPConn()
@@ -221,6 +234,13 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 	err = util.FromJSON(op.GetBody(), &txs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coerce transaction from bytes to order_proto.Transaction")
+	}
+
+	// validate transaction key
+	for _, tx := range txs {
+		if !common.IsValidResName(tx.Key) {
+			return nil, fmt.Errorf("tx 0: %s", types.ErrInvalidResourceName)
+		}
 	}
 
 	odc := orderer_proto.NewOrdererClient(ordererConn)

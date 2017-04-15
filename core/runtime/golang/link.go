@@ -73,7 +73,7 @@ func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bo
 func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
 
 	if !common.IsValidResName(name) {
-		return nil, fmt.Errorf("invalid ledger name")
+		return nil, types.ErrInvalidResourceName
 	}
 
 	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
@@ -121,6 +121,10 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
+
+	if !common.IsValidResName(key) {
+		return nil, types.ErrInvalidResourceName
+	}
 
 	ledger, err := link.GetLedger(ledgerName)
 	if err != nil {

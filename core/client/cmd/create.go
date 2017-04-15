@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"io/ioutil"
+	"os"
 	"time"
 
-	"os"
+	"fmt"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
+	"github.com/hashicorp/hcl"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -16,90 +20,157 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// parseContract passes a contract files
+func parseContract(path string) ([]*types.Cocoon, []error) {
+	var id string
+	var url string
+	var lang string
+	var releaseTag string
+	var buildParams string
+	var memory = "512m"
+	var cpuShare = "1x"
+	var link string
+	var numSig = 1
+	var sigThreshold = 1
+	var firewall string
+	var configFileData map[string]interface{}
+	var aclMap map[string]interface{}
+	var cocoons []*types.Cocoon
+	var errs []error
+
+	// path is a local file path
+	if ok, _ := govalidator.IsFilePath(path); ok {
+		fileData, err := ioutil.ReadFile(path)
+		if err != nil {
+			errs = append(errs, err)
+			return nil, errs
+		}
+		if err = hcl.Decode(&configFileData, string(fileData)); err != nil {
+			errs = append(errs, fmt.Errorf("failed to parse contract file: %s", err.Error()))
+			return nil, errs
+		}
+	}
+
+	if len(configFileData) > 0 && configFileData["contracts"] != nil {
+		if contracts, ok := configFileData["contracts"].([]map[string]interface{}); ok && len(contracts) > 0 {
+			for i, contract := range contracts {
+
+				id = util.UUID4()
+				if _id, ok := contract["id"].(string); ok && len(_id) > 0 {
+					id = _id
+				}
+
+				if repos, ok := contract["repo"].([]map[string]interface{}); ok && len(repos) > 0 {
+					url = toStringOr(repos[0]["url"], "")
+					releaseTag = toStringOr(repos[0]["tag"], "")
+					lang = toStringOr(repos[0]["language"], "")
+					link = toStringOr(repos[0]["link"], "")
+				} else {
+					errs = append(errs, fmt.Errorf("contract %d: missing repo stanza", i))
+					return nil, errs
+				}
+
+				if builds, ok := contract["build"].([]map[string]interface{}); ok && len(builds) > 0 {
+					buildJSON, _ := util.ToJSON(builds[0])
+					buildParams = string(buildJSON)
+				}
+
+				if resources, ok := contract["resources"].([]map[string]interface{}); ok && len(resources) > 0 {
+					memory = toStringOr(resources[0]["memory"], memory)
+					cpuShare = toStringOr(resources[0]["cpuShare"], cpuShare)
+				}
+
+				if signatories, ok := contract["signatories"].([]map[string]interface{}); ok && len(signatories) > 0 {
+					numSig = toIntOr(signatories[0]["max"], numSig)
+					sigThreshold = toIntOr(signatories[0]["threshold"], sigThreshold)
+				}
+
+				if acls, ok := contract["acl"].([]map[string]interface{}); ok && len(acls) > 0 {
+					aclMap = acls[0]
+				}
+
+				if firewalls, ok := contract["firewall"].([]map[string]interface{}); ok && len(firewalls) > 0 {
+					bs, _ := util.ToJSON(firewalls)
+					firewall = string(bs)
+				}
+
+				// validate ACLMap
+				if len(aclMap) > 0 {
+					var _errs = acl.NewInterpreter(aclMap, false).Validate()
+					if len(errs) > 0 {
+						for _, err := range _errs {
+							errs = append(errs, fmt.Errorf("acl: %s", err))
+						}
+						return nil, errs
+					}
+				}
+
+				// parse and validate firewall
+				var validFirewallRules []*types.FirewallRule
+				if len(firewall) > 0 {
+					var _errs []error
+					validFirewallRules, errs = api.ValidateFirewall(firewall)
+					if _errs != nil && len(_errs) > 0 {
+						for _, err := range errs {
+							errs = append(errs, fmt.Errorf("firewall: %s", err))
+						}
+						return nil, errs
+					}
+				}
+
+				cocoons = append(cocoons, &types.Cocoon{
+					ID:             id,
+					URL:            url,
+					Language:       lang,
+					ReleaseTag:     releaseTag,
+					BuildParam:     buildParams,
+					Firewall:       validFirewallRules,
+					ACL:            aclMap,
+					Memory:         memory,
+					CPUShares:      cpuShare,
+					Link:           link,
+					NumSignatories: numSig,
+					SigThreshold:   sigThreshold,
+					CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
+				})
+			}
+		}
+	}
+
+	return cocoons, nil
+}
+
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "create [OPTIONS]",
-	Short: "Create a new cocoon configuration locally",
-	Long:  `Create a cocoon on the blockchain`,
+	Use:   "create [OPTIONS] CONTRACT_FILE_PATH",
+	Short: "Create a new cocoon",
+	Long:  `Create a new cocoon`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
-		url, _ := cmd.Flags().GetString("url")
-		lang, _ := cmd.Flags().GetString("lang")
-		releaseTag, _ := cmd.Flags().GetString("release-tag")
-		buildParams, _ := cmd.Flags().GetString("build-param")
-		memory, _ := cmd.Flags().GetString("memory")
-		cpuShare, _ := cmd.Flags().GetString("cpu-share")
-		link, _ := cmd.Flags().GetString("link")
-		numSig, _ := cmd.Flags().GetInt32("num-sig")
-		sigThreshold, _ := cmd.Flags().GetInt32("sig-threshold")
-		firewall, _ := cmd.Flags().GetString("firewall")
-		aclJSON, _ := cmd.Flags().GetString("acl")
+		if len(args) == 0 {
+			UsageError(log, cmd, `"ellcrys create" requires at least 1 argument(s)`, `ellcrys create --help`)
+		}
 
-		// validate ACL
-		var aclMap map[string]interface{}
-		if len(aclJSON) > 0 {
-			err := util.FromJSON([]byte(aclJSON), &aclMap)
+		cocoons, errs := parseContract(args[0])
+		if errs != nil && len(errs) > 0 {
+			for _, err := range errs {
+				log.Errorf("Err: %s", common.CapitalizeString(err.Error()))
+			}
+			os.Exit(1)
+		}
+
+		for i, cocoon := range cocoons {
+			err := client.CreateCocoon(cocoon)
 			if err != nil {
-				log.Fatalf("Err: acl: malformed json")
-				return
+				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
 			}
-			errs := acl.NewInterpreter(aclMap, false).Validate()
-			if len(errs) > 0 {
-				for _, err = range errs {
-					log.Infof("Err: acl: %s", err)
-				}
-				return
-			}
-		}
-
-		// parse and validate firewall
-		var validFirewallRules []*types.FirewallRule
-		if len(firewall) > 0 {
-			var errs []error
-			validFirewallRules, errs = api.ValidateFirewall(firewall)
-			if errs != nil && len(errs) > 0 {
-				for _, err := range errs {
-					log.Infof("Err: firewall: %s", err.Error())
-				}
-				os.Exit(1)
-			}
-		}
-
-		err := client.CreateCocoon(&types.Cocoon{
-			ID:             util.UUID4(),
-			URL:            url,
-			Language:       lang,
-			ReleaseTag:     releaseTag,
-			BuildParam:     buildParams,
-			Firewall:       validFirewallRules,
-			ACL:            aclMap,
-			Memory:         memory,
-			CPUShares:      cpuShare,
-			Link:           link,
-			NumSignatories: numSig,
-			SigThreshold:   sigThreshold,
-			CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
-		})
-		if err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(createCmd)
-	createCmd.Flags().StringP("url", "u", "", "The github repository url of the cocoon code")
-	createCmd.Flags().StringP("lang", "l", "", "The langauges the cocoon code is written in")
-	createCmd.Flags().StringP("release-tag", "r", "", "The github release tag. Defaults to `latest`")
-	createCmd.Flags().StringP("firewall", "f", "", "The outgoing firewall rules of the cocoon")
-	createCmd.Flags().StringP("build-param", "b", "", "Build parameters to apply during cocoon code build process")
-	createCmd.Flags().StringP("memory", "m", "512m", "The amount of memory to allocate. e.g 512m, 1g or 2g")
-	createCmd.Flags().StringP("link", "", "", "The id of an existing cocoon to natively link to.")
-	createCmd.Flags().StringP("cpu-share", "c", "1x", "The share of cpu to allocate. e.g 1x or 2x")
-	createCmd.Flags().Int32P("num-sig", "s", 1, "The number of signatories")
-	createCmd.Flags().Int32P("sig-threshold", "t", 1, "The number of signatures required to confirm a new release")
-	createCmd.Flags().StringP("acl", "a", "", "The access level control rules")
 }

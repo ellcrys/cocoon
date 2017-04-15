@@ -24,3 +24,17 @@ func UsageError2(l *logging.Logger, cmd *cobra.Command, msg, helpCmd string) {
 	l.Infof("See '%s'", helpCmd)
 	os.Exit(1)
 }
+
+func toStringOr(v interface{}, def string) string {
+	if v == nil {
+		return def
+	}
+	return v.(string)
+}
+
+func toIntOr(v interface{}, def int) int {
+	if v == nil {
+		return def
+	}
+	return v.(int)
+}

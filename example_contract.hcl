@@ -1,0 +1,60 @@
+# A contract file describes a contract specification
+contracts {
+    
+    # Optional. If a cocoon already exists, 
+    # a new release will be created for the existing cocoon. A release
+    # is only created if release related fields are updated, otherwise the cocoon
+    # is only updated. If not provided, one will be assigned.
+    id = "cocoon.1"
+    
+    # Contract source location and information
+    repo {
+        # The pubic github repository
+        url = "https://github.com/ncodes/cocoon-example-01" 
+        # The github release tag
+        tag = ""
+        # The contract source code language
+        language = "go"
+        # Specify the ID of another cocoon to link to.
+        # The contract will have the same privileges of the linked contract.
+        # Both contracts must be owned by same identity
+        link = ""
+    }
+    
+    # Provide build information if the contract code requires it
+    build {
+        # The package manager to use (supported: glide)
+        pkgMgr = "glide"
+    }
+    
+    # Resources to allocate to the contract's cocoon
+    resources {
+        # The memory to allocate (512m, 1g or 2g)
+        memory = "1g" 
+        # The cpu share to allocate (1x or 2x)
+        cpuShare = "1x"
+    }
+    
+    # Provide signatory information
+    signatories {
+        # The maximum number of signatories to accept
+        max = 1
+        # The number of signature required to approve a release
+        threshold = 1
+    }
+    
+    # Access control list stanza allows the contract
+    # to allow or deny access to perform specific operations by other contracts.
+    acl {
+        # Allow all operations but deny the ability to create ledgers
+        "*" = "allow deny-create-ledger"
+    }
+    
+    # Firewall stanza determines the addresses the contract
+    # can make outbound connections to.
+    firewall {
+        destination = "google.com"
+        destinationPort = "80"
+        protocol = "tcp"
+    }
+}
