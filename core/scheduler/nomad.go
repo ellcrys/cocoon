@@ -114,6 +114,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 	job := NewJob("master", jobID, 1)
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["ENV"] = os.Getenv("ENV")
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
