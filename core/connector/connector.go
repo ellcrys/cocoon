@@ -353,6 +353,12 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 	var repoTarURL, downloadDst string
 	var err error
 
+	// set version to latest if not provided
+	versionStr := cn.req.Version
+	if versionStr == "" {
+		versionStr = "latest"
+	}
+
 	// If version is a sha1 hash, it is a commit id, fetch the repo using this id
 	// otherwise it is considered a release tag. If version is not set, we fetch the latest release
 	if len(cn.req.Version) == 40 {
@@ -361,19 +367,13 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 			return "", fmt.Errorf("Failed to parse git url: %s", err)
 		}
 		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Version)
-		log.Debugf("Downloading repo with commit id = %s", cn.req.Version)
+		log.Debugf("Downloading repo with commit id = %s", versionStr)
 	} else {
 		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Version)
 		if err != nil {
 			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
 		log.Debugf("Downloading repo with version = %s", cn.req.Version)
-	}
-
-	// set version to latest if not provided
-	versionStr := cn.req.Version
-	if versionStr == "" {
-		versionStr = "latest"
 	}
 
 	// determine download directory
