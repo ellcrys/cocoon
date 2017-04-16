@@ -3,14 +3,14 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "cocoon.1"
+    id = "u1"
     
     # Contract source location and information
     repo {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = ""
+        version = "ee23e4890605e569f36d013d88b17acbb73cb650"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.

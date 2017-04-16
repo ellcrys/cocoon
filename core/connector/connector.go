@@ -361,7 +361,7 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 
 	// If version is a sha1 hash, it is a commit id, fetch the repo using this id
 	// otherwise it is considered a release tag. If version is not set, we fetch the latest release
-	if len(cn.req.Version) == 40 {
+	if cutil.IsGithubCommitID(cn.req.Version) {
 		url, err := urlx.Parse(cn.req.URL)
 		if err != nil {
 			return "", fmt.Errorf("Failed to parse git url: %s", err)
@@ -373,7 +373,11 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
-		log.Debugf("Downloading repo with version = %s", versionStr)
+		if len(cn.req.Version) == 0 {
+			log.Debug("Downloading latest repo")
+		} else {
+			log.Debugf("Downloading repo with release tag = %s", cn.req.Version)
+		}
 	}
 
 	// determine download directory
