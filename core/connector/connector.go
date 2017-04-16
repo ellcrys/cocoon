@@ -109,11 +109,11 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	}
 
 	lang.SetRunEnv(map[string]string{
-		"COCOON_ID":          cn.req.ID,
-		"CONNECTOR_RPC_ADDR": cn.connectorRPCAddr,
-		"COCOON_RPC_ADDR":    cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
-		"COCOON_LINK":        cn.req.Link,          // the cocoon code id to link to natively
-		"COCOON_VERSION":     cn.req.Version,
+		"COCOON_ID":           cn.req.ID,
+		"CONNECTOR_RPC_ADDR":  cn.connectorRPCAddr,
+		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
+		"COCOON_LINK":         cn.req.Link,          // the cocoon code id to link to natively
+		"COCOON_CODE_VERSION": cn.req.Version,
 	})
 
 	go cn.monitor.Monitor()
