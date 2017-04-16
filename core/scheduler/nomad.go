@@ -123,11 +123,13 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 
 	// set fluentd logger in production environment
 	if os.Getenv("ENV") == "production" {
-		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = Logging{
-			Type: "fluentd",
-			Config: map[string]string{
-				"fluentd-address": "localhost:24224",
-				"tag":             jobID,
+		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = []Logging{
+			{
+				Type: "fluentd",
+				Config: map[string]string{
+					"fluentd-address": "localhost:24224",
+					"tag":             jobID,
+				},
 			},
 		}
 	}

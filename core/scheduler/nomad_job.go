@@ -142,14 +142,14 @@ type Logging struct {
 
 // Config defines a driver/task configuration
 type Config struct {
-	NetworkMode string   `json:"network_mode"`
-	Privileged  bool     `json:"privileged"`
-	ForcePull   bool     `json:"force_pull"`
-	Volumes     []string `json:"volumes"`
-	Image       string   `json:"image"`
-	Command     string   `json:"command"`
-	Args        []string `json:"args"`
-	Logging     Logging  `json:"logging"`
+	NetworkMode string    `json:"network_mode"`
+	Privileged  bool      `json:"privileged"`
+	ForcePull   bool      `json:"force_pull"`
+	Volumes     []string  `json:"volumes"`
+	Image       string    `json:"image"`
+	Command     string    `json:"command"`
+	Args        []string  `json:"args"`
+	Logging     []Logging `json:"logging"`
 }
 
 // NomadJob represents a nomad job
