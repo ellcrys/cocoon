@@ -39,7 +39,6 @@ job "api" {
         work_dir = "/local/scripts"
         network_mode = "host"
         port_map { }
-        }
       }
 
       artifact {
