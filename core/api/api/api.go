@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
-	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
 
-var apiLog = logging.MustGetLogger("api.rpc")
+var apiLog = config.MakeLogger("api.rpc", "api")
 
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource

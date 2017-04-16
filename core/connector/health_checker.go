@@ -4,12 +4,9 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/runtime/golang/proto"
-	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
-
-var logHealthChecker = logging.MustGetLogger("connector.health_checker")
 
 // HealthChecker checks the health status of
 // the cocoon code. It repeatedly calls the cocoon coder

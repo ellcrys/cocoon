@@ -8,10 +8,10 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/common"
-	logging "github.com/op/go-logging"
+	"github.com/ncodes/cocoon/core/config"
 )
 
-var log = logging.MustGetLogger("nomad")
+var log = config.MakeLogger("nomad", "nomad")
 
 // SupportedCocoonCodeLang defines the supported chaincode language
 var SupportedCocoonCodeLang = []string{"go"}

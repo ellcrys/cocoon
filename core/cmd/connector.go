@@ -13,12 +13,11 @@ import (
 	"github.com/ncodes/cocoon/core/connector"
 	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/scheduler"
-	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
 
 var (
-	log = logging.MustGetLogger("connector")
+	log = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
 
 	// connector RPC API
 	defaultConnectorRPCAPI = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")

@@ -9,11 +9,11 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/scheduler"
-	logging "github.com/op/go-logging"
 )
 
-var discoveryLog = logging.MustGetLogger("orderer.discovery")
+var discoveryLog = config.MakeLogger("orderer.discovery", "orderer")
 
 // Discovery defines a structure for fetching a list of addresses of orderers
 // accessible in the cluster.

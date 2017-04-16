@@ -18,7 +18,7 @@ var apiLog *logging.Logger
 
 func init() {
 	config.ConfigureLogger()
-	apiLog = logging.MustGetLogger("api")
+	apiLog = config.MakeLogger("api", "api")
 	goreq.SetConnectTimeout(5 * time.Second)
 }
 

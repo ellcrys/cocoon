@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/connector/server/handlers"
@@ -13,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = logging.MustGetLogger("connector.rpc")
+var log *logging.Logger
 
 // RPCServer defines a grpc server for
 // invoking operations against cocoon code
@@ -26,6 +27,7 @@ type RPCServer struct {
 
 // NewRPCServer creates a new grpc API server
 func NewRPCServer(connector *connector.Connector) *RPCServer {
+	log = config.MakeLogger("connector.rpc", fmt.Sprintf("cocoon.%s", connector.GetRequest().ID))
 	server := new(RPCServer)
 	server.connector = connector
 	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)

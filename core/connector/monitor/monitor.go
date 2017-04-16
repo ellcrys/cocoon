@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ncodes/cocoon/core/config"
 	docker "github.com/ncodes/go-dockerclient"
 	"github.com/olebedev/emitter"
 	logging "github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("launcher.monitor")
+var log *logging.Logger
 
 // ErrNoContainerFound represents a error about not finding containers
 var ErrNoContainerFound = errors.New("no container found")
@@ -37,7 +38,8 @@ type Monitor struct {
 }
 
 // NewMonitor creates a new monitor instance.
-func NewMonitor() *Monitor {
+func NewMonitor(cocoonID string) *Monitor {
+	log = config.MakeLogger("connector.monitor", fmt.Sprintf("cocoon.%s", cocoonID))
 	e := emitter.New(10)
 	return &Monitor{
 		emitter: e,

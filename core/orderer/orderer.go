@@ -11,6 +11,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -18,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = logging.MustGetLogger("orderer")
+var log = config.MakeLogger("orderer", "orderer")
 
 // SetLogLevel sets the log level of the logger
 func SetLogLevel(l logging.Level) {

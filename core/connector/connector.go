@@ -27,17 +27,17 @@ import (
 	context "golang.org/x/net/context"
 )
 
-var log = logging.MustGetLogger("connector")
-var buildLog = logging.MustGetLogger("ccode.build")
-var runLog = logging.MustGetLogger("ccode.run")
-var configLog = logging.MustGetLogger("ccode.config")
-var ccodeLog = logging.MustGetLogger("ccode")
+var log *logging.Logger
+var buildLog *logging.Logger
+var runLog *logging.Logger
+var configLog *logging.Logger
+var ccodeLog *logging.Logger
+var logHealthChecker *logging.Logger
 var dckClient *docker.Client
 
 var bridgeName = os.Getenv("BRIDGE_NAME")
 
 func init() {
-	runLog.SetBackend(config.MessageOnlyBackend)
 }
 
 // Connector defines a structure for starting and managing a cocoon (coode)
@@ -60,13 +60,20 @@ func NewConnector(req *Request, waitCh chan bool) *Connector {
 	return &Connector{
 		req:              req,
 		waitCh:           waitCh,
-		monitor:          monitor.NewMonitor(),
+		monitor:          monitor.NewMonitor(req.ID),
 		ordererDiscovery: orderer.NewDiscovery(),
 	}
 }
 
 // Launch starts a cocoon code
 func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
+
+	log = config.MakeLogger("connector", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	buildLog = config.MakeLogger("ccode.build", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	runLog = config.MakeLoggerMessageOnly("ccode.run", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	configLog = config.MakeLogger("ccode.config", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	ccodeLog = config.MakeLogger("ccode.main", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	logHealthChecker = config.MakeLogger("connector.health_checker", fmt.Sprintf("cocoon.%s", cn.req.ID))
 
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
