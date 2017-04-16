@@ -134,6 +134,12 @@ type Check struct {
 	Protocol string
 }
 
+// Logging defines logging configuration
+type Logging struct {
+	Type   string            `json:"type"`
+	Config map[string]string `json:"config"`
+}
+
 // Config defines a driver/task configuration
 type Config struct {
 	NetworkMode string   `json:"network_mode"`
@@ -143,6 +149,7 @@ type Config struct {
 	Image       string   `json:"image"`
 	Command     string   `json:"command"`
 	Args        []string `json:"args"`
+	Logging     Logging  `json:"logging"`
 }
 
 // NomadJob represents a nomad job
