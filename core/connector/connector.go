@@ -373,7 +373,7 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
-		log.Debugf("Downloading repo with version = %s", cn.req.Version)
+		log.Debugf("Downloading repo with version = %s", versionStr)
 	}
 
 	// determine download directory
