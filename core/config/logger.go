@@ -16,7 +16,7 @@ var format3 = logging.MustStringFormatter(`%{color}%{time:15:04:05.000} [%{level
 // otherwise an os.Stderr backed is used.
 func MakeLogger(module, prefix string) *logging.Logger {
 	var b logging.Backend = backend
-	if strings.ToLower(os.Getenv("COCOON_ENV")) == "production" {
+	if strings.ToLower(os.Getenv("ENV")) == "production" {
 		b, _ = logging.NewSyslogBackend(prefix)
 	}
 	backendFormatted := logging.NewBackendFormatter(b, format3)
