@@ -47,6 +47,7 @@ import:
   version: 69e9cd42e36dbe5a951ae60539c1a1b701167b66
 - package: github.com/ellcrys/util
   version: 4f0a2d2b43350cec9c9003959779b8b24190b641
+- package: github.com/kr/pretty
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2

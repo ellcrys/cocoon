@@ -1,5 +1,5 @@
-hash: 6b329bbba33fe28581c96e7821d8db5c03a8564c29f9b227d8294093eab45d1a
-updated: 2017-04-16T09:26:05.125957451+01:00
+hash: 346743769d391e60890c534fc9d84aa7f97e1d129f9e31757a49cc906d6d0258
+updated: 2017-04-16T11:05:05.131651526+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -90,6 +90,10 @@ imports:
   - dialects/postgres
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
+- name: github.com/kr/pretty
+  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/lib/pq
   version: 2704adc878c21e1329f46f6e56a1c387d788ff94
   subpackages:
