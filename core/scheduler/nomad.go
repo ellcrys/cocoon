@@ -129,7 +129,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 				Config: []map[string]string{
 					{
 						"fluentd-address": "localhost:24224",
-						"tag":             fmt.Sprintf("cocoon-%s", "jobID"),
+						"tag":             fmt.Sprintf("cocoon-%s", jobID),
 					},
 				},
 			},
