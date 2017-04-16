@@ -282,35 +282,26 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.Version) > 0 && cocoonUpd.Version != release.Version {
-		apiLog.Info("Release changed 2", release.Version, cocoonUpd.Version)
 		release.Version = cocoonUpd.Version
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.Language) > 0 && cocoonUpd.Language != release.Language {
-		apiLog.Info("Release changed 3")
 		release.Language = cocoonUpd.Language
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.BuildParam) > 0 && cocoonUpd.BuildParam != release.BuildParam {
-		apiLog.Info("Release changed 4")
 		release.BuildParam = cocoonUpd.BuildParam
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.Link) > 0 && cocoonUpd.Link != release.Link {
-		apiLog.Info("Release changed 5")
 		release.Link = cocoonUpd.Link
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.Firewall) > 0 && !cocoonUpd.Firewall.Eql(release.Firewall) {
-		apiLog.Info("Release changed 6")
-		util.Printify(release.Firewall)
-		fmt.Println("---")
-		util.Printify(cocoonUpd.Firewall)
 		release.Firewall = cocoonUpd.Firewall
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.ACL) > 0 && !cocoonUpd.ACL.Eql(release.ACL) {
-		apiLog.Info("Release changed 7")
 		release.ACL = cocoonUpd.ACL
 		releaseUpdated = true
 	}
