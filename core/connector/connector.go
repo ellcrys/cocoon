@@ -15,6 +15,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
+	"github.com/goware/urlx"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -346,15 +347,26 @@ func (cn *Connector) fetchSource(lang Language) (string, error) {
 }
 
 // fetchFromGit fetches cocoon code from git repo.
-// and returns the download directory.
+// and returns the download directory path.
 func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 
 	var repoTarURL, downloadDst string
 	var err error
 
-	repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Tag)
-	if err != nil {
-		return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
+	// If tag is a sha1 hash, it is a commit id, fetch the repo using this id
+	if len(cn.req.Tag) == 40 {
+		url, err := urlx.Parse(cn.req.URL)
+		if err != nil {
+			return "", fmt.Errorf("Failed to parse git url: %s", err)
+		}
+		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Tag)
+		log.Debugf("Downloading repo with commit id = %s", cn.req.Tag)
+	} else {
+		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Tag)
+		if err != nil {
+			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
+		}
+		log.Debugf("Downloading repo with release tag = %s", cn.req.Tag)
 	}
 
 	// set tag to latest if not provided
