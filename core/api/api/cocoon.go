@@ -328,10 +328,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		}
 
 		// persist release
-		var releaseReq proto.CreateReleaseRequest
-		cstructs.Copy(release, &releaseReq)
-		releaseReq.ACL = release.ACL.ToJSON()
-		_, err = api.CreateRelease(ctx, &releaseReq)
+		err = api.putRelease(ctx, release)
 		if err != nil {
 			return nil, err
 		}
