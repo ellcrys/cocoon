@@ -304,6 +304,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	if len(cocoonUpd.Firewall) > 0 && !cocoonUpd.Firewall.Eql(release.Firewall) {
 		apiLog.Info("Release changed 6")
 		util.Printify(release.Firewall)
+		fmt.Println("---")
 		util.Printify(cocoonUpd.Firewall)
 		release.Firewall = cocoonUpd.Firewall
 		releaseUpdated = true
