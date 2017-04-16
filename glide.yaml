@@ -18,7 +18,6 @@ import:
   subpackages:
   - dialects/postgres
 - package: github.com/mitchellh/go-homedir
-- package: github.com/ncodes/cocoon-util
 - package: github.com/ncodes/cstructs
 - package: github.com/ncodes/go-dockerclient
 - package: github.com/olebedev/emitter
@@ -44,8 +43,10 @@ import:
 - package: github.com/pkg/profile
   version: ^1.2.0
 - package: github.com/hashicorp/hcl
+- package: github.com/ncodes/cocoon-util
+  version: 69e9cd42e36dbe5a951ae60539c1a1b701167b66
 - package: github.com/ellcrys/util
-  version: 06c90bcf524ac0d91a74b390cdb1536296866943
+  version: 4f0a2d2b43350cec9c9003959779b8b24190b641
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2

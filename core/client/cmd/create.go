@@ -23,11 +23,11 @@ import (
 )
 
 // parseContract passes a contract files
-func parseContract(path, version string) ([]*types.Cocoon, []error) {
+func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 	var id string
 	var url string
 	var lang string
-	var releaseTag string
+	var version string
 	var buildParams string
 	var memory = "512m"
 	var cpuShare = "1x"
@@ -57,8 +57,8 @@ func parseContract(path, version string) ([]*types.Cocoon, []error) {
 	if govalidator.IsURL(path) && c_util.IsGithubRepoURL(path) {
 		url, _ := urlx.Parse(path)
 		urls := []string{
-			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.hcl", url.Path, version),
-			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.json", url.Path, version),
+			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.hcl", url.Path, repoVersion),
+			fmt.Sprintf("https://raw.githubusercontent.com%s/%s/contract.json", url.Path, repoVersion),
 		}
 		for _, url := range urls {
 			var fileData []byte
@@ -119,7 +119,7 @@ func parseContract(path, version string) ([]*types.Cocoon, []error) {
 
 				if repos, ok := contract["repo"].([]map[string]interface{}); ok && len(repos) > 0 {
 					url = toStringOr(repos[0]["url"], "")
-					releaseTag = toStringOr(repos[0]["tag"], "")
+					version = toStringOr(repos[0]["version"], "")
 					lang = toStringOr(repos[0]["language"], "")
 					link = toStringOr(repos[0]["link"], "")
 				} else {
@@ -179,7 +179,7 @@ func parseContract(path, version string) ([]*types.Cocoon, []error) {
 					ID:             id,
 					URL:            url,
 					Language:       lang,
-					ReleaseTag:     releaseTag,
+					Version:        version,
 					BuildParam:     buildParams,
 					Firewall:       validFirewallRules,
 					ACL:            aclMap,
@@ -207,7 +207,7 @@ var createCmd = &cobra.Command{
 		log := logging.MustGetLogger("api.client")
 		log.SetBackend(config.MessageOnlyBackend)
 
-		version, _ := cmd.Flags().GetString("version")
+		v, _ := cmd.Flags().GetString("version")
 
 		if len(args) == 0 {
 			UsageError(log, cmd, `"ellcrys create" requires at least 1 argument(s)`, `ellcrys create --help`)
@@ -215,7 +215,7 @@ var createCmd = &cobra.Command{
 
 		stopSpinner := util.Spinner("Please wait...")
 
-		cocoons, errs := parseContract(args[0], version)
+		cocoons, errs := parseContract(args[0], v)
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {

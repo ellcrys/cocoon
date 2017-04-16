@@ -4,7 +4,7 @@ package connector
 type Request struct {
 	ID          string
 	URL         string
-	Tag         string
+	Version         string
 	Lang        string
 	DiskLimit   int64
 	BuildParams string

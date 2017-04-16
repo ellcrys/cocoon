@@ -91,7 +91,7 @@ func makeLinkToServiceTag(linkID string) string {
 }
 
 // Deploy a cocoon code to the scheduler
-func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuShare string) (*DeploymentInfo, error) {
+func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, cpuShare string) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -103,7 +103,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 		return nil, err
 	}
 
-	log.Debugf("Deploying cocoon code with language=%s, url=%s, tag=%s", lang, url, tag)
+	log.Debugf("Deploying cocoon code with language=%s, url=%s, version=%s", lang, url, version)
 
 	if len(buildParams) > 0 {
 		buildParams = crypto.ToBase64([]byte(buildParams))
@@ -113,7 +113,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, tag, buildParams, linkID, memory, cpuS
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_TAG"] = tag
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_TAG"] = version
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])

@@ -11,7 +11,7 @@ type Cocoon struct {
 	IdentityID          string   `structs:"identity_id" mapstructure:"identity_id"`
 	ID                  string   `structs:"ID" mapstructure:"ID"`
 	URL                 string   `structs:"URL" mapstructure:"URL"`
-	ReleaseTag          string   `structs:"releaseTag" mapstructure:"releaseTag"`
+	Version          string   `structs:"version" mapstructure:"version"`
 	Language            string   `structs:"language" mapstructure:"language"`
 	BuildParam          string   `structs:"buildParam" mapstructure:"buildParam"`
 	Memory              string   `structs:"memory" mapstructure:"memory"`
@@ -110,7 +110,7 @@ type Release struct {
 	ID          string   `structs:"ID" mapstructure:"ID"`
 	CocoonID    string   `structs:"cocoonID" mapstructure:"cocoonID"`
 	URL         string   `structs:"URL" mapstructure:"URL"`
-	ReleaseTag  string   `structs:"releaseTag" mapstructure:"releaseTag"`
+	Version  string   `structs:"version" mapstructure:"version"`
 	Language    string   `structs:"language" mapstructure:"language"`
 	BuildParam  string   `structs:"buildParam" mapstructure:"buildParam"`
 	Link        string   `structs:"link" mapstructure:"link"`

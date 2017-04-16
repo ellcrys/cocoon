@@ -280,8 +280,8 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		release.URL = cocoonUpd.URL
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.ReleaseTag) > 0 && cocoonUpd.ReleaseTag != release.ReleaseTag {
-		release.ReleaseTag = cocoonUpd.ReleaseTag
+	if len(cocoonUpd.Version) > 0 && cocoonUpd.Version != release.Version {
+		release.Version = cocoonUpd.Version
 		releaseUpdated = true
 	}
 	if len(cocoonUpd.Language) > 0 && cocoonUpd.Language != release.Language {

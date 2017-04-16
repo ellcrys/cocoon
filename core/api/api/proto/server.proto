@@ -56,7 +56,7 @@ message CocoonPayloadRequest {
     string ID = 1;
     string URL = 2;
     string language = 3;
-    string releaseTag = 4;
+    string version = 4;
     string buildParam = 5;
     repeated FirewallRule firewall = 6;
     bytes ACL = 7;
@@ -81,7 +81,7 @@ message CreateReleaseRequest {
     string cocoonID = 2;
     string URL = 3;
     string language = 4;
-    string releaseTag = 5;
+    string version = 5;
     string buildParam = 6;
     string link = 7;
     repeated FirewallRule firewall = 8;

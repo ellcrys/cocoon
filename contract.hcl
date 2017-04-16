@@ -9,8 +9,8 @@ contracts {
     repo {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
-        # The github release tag
-        tag = ""
+        # The github release tag or commit id (default: latest release)
+        version = ""
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.

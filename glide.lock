@@ -1,5 +1,5 @@
-hash: 0a890ab5861b8dc735268647a46a193d48217e669c5d306d53fccc8cc65dec7b
-updated: 2017-04-15T20:59:59.458591752+01:00
+hash: 6b329bbba33fe28581c96e7821d8db5c03a8564c29f9b227d8294093eab45d1a
+updated: 2017-04-16T09:26:05.125957451+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -52,7 +52,7 @@ imports:
 - name: github.com/ellcrys/crypto
   version: 0a4b0be14cff5c4fae8174303e203d25425b5016
 - name: github.com/ellcrys/util
-  version: 06c90bcf524ac0d91a74b390cdb1536296866943
+  version: 4f0a2d2b43350cec9c9003959779b8b24190b641
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/fatih/structs
@@ -112,7 +112,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/ncodes/cocoon-util
-  version: 690b1d8425298b1fecd83ed0ade30a6e52a91397
+  version: 69e9cd42e36dbe5a951ae60539c1a1b701167b66
 - name: github.com/ncodes/cstructs
   version: ceebf9da91137bf39d30cefc2aa81a3e92a1c356
 - name: github.com/ncodes/go-dockerclient

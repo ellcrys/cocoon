@@ -91,14 +91,14 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 	// update the cocoon values to match the release we are about to start
 	cocoon.Language = release.Language
 	cocoon.URL = release.URL
-	cocoon.ReleaseTag = release.ReleaseTag
+	cocoon.Version = release.Version
 	cocoon.BuildParam = string(release.BuildParam)
 	cocoon.Link = release.Link
 	cocoon.LastDeployedRelease = release.ID
 	cocoon.Firewall = release.Firewall
 	cocoon.ACL = release.ACL
 
-	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.ReleaseTag, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
+	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.Version, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			apiLog.Error(err.Error())

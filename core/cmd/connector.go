@@ -38,7 +38,7 @@ func getRequest() (*connector.Request, error) {
 	// get cocoon code github link and language
 	ccID := os.Getenv("COCOON_ID")
 	ccURL := os.Getenv("COCOON_CODE_URL")
-	ccTag := os.Getenv("COCOON_CODE_TAG")
+	ccVersion := os.Getenv("COCOON_CODE_TAG")
 	ccLang := os.Getenv("COCOON_CODE_LANG")
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
@@ -57,7 +57,7 @@ func getRequest() (*connector.Request, error) {
 	return &connector.Request{
 		ID:          ccID,
 		URL:         ccURL,
-		Tag:         ccTag,
+		Version:     ccVersion,
 		Lang:        ccLang,
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,

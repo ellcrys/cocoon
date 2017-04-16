@@ -353,26 +353,27 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 	var repoTarURL, downloadDst string
 	var err error
 
-	// If tag is a sha1 hash, it is a commit id, fetch the repo using this id
-	if len(cn.req.Tag) == 40 {
+	// If version is a sha1 hash, it is a commit id, fetch the repo using this id
+	// otherwise it is considered a release tag. If version is not set, we fetch the latest release
+	if len(cn.req.Version) == 40 {
 		url, err := urlx.Parse(cn.req.URL)
 		if err != nil {
 			return "", fmt.Errorf("Failed to parse git url: %s", err)
 		}
-		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Tag)
-		log.Debugf("Downloading repo with commit id = %s", cn.req.Tag)
+		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Version)
+		log.Debugf("Downloading repo with commit id = %s", cn.req.Version)
 	} else {
-		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Tag)
+		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Version)
 		if err != nil {
 			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
-		log.Debugf("Downloading repo with release tag = %s", cn.req.Tag)
+		log.Debugf("Downloading repo with version = %s", cn.req.Version)
 	}
 
-	// set tag to latest if not provided
-	tagStr := cn.req.Tag
-	if tagStr == "" {
-		tagStr = "latest"
+	// set version to latest if not provided
+	versionStr := cn.req.Version
+	if versionStr == "" {
+		versionStr = "latest"
 	}
 
 	// determine download directory
@@ -392,7 +393,7 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 		return "", fmt.Errorf("Failed to create download directory. %s", err)
 	}
 
-	log.Infof("Downloading cocoon repository with tag=%s, dst=%s", tagStr, downloadDst)
+	log.Infof("Downloading cocoon repository with version=%s, dst=%s", versionStr, downloadDst)
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
 	err = cutil.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
 	if err != nil {

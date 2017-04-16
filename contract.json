@@ -4,7 +4,7 @@
             "id": "cocoon.2",
             "repo": {
                 "url": "https://github.com/ncodes/cocoon-example-01",
-                "tag": "",
+                "version": "",
                 "language": "go",
                 "link": ""
             },

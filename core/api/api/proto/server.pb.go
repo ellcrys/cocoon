@@ -219,7 +219,7 @@ type CocoonPayloadRequest struct {
 	ID             string          `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
 	URL            string          `protobuf:"bytes,2,opt,name=URL" json:"URL,omitempty"`
 	Language       string          `protobuf:"bytes,3,opt,name=language" json:"language,omitempty"`
-	ReleaseTag     string          `protobuf:"bytes,4,opt,name=releaseTag" json:"releaseTag,omitempty"`
+	Version     string          `protobuf:"bytes,4,opt,name=version" json:"version,omitempty"`
 	BuildParam     string          `protobuf:"bytes,5,opt,name=buildParam" json:"buildParam,omitempty"`
 	Firewall       []*FirewallRule `protobuf:"bytes,6,rep,name=firewall" json:"firewall,omitempty"`
 	ACL            []byte          `protobuf:"bytes,7,opt,name=ACL,proto3" json:"ACL,omitempty"`
@@ -256,9 +256,9 @@ func (m *CocoonPayloadRequest) GetLanguage() string {
 	return ""
 }
 
-func (m *CocoonPayloadRequest) GetReleaseTag() string {
+func (m *CocoonPayloadRequest) GetVersion() string {
 	if m != nil {
-		return m.ReleaseTag
+		return m.Version
 	}
 	return ""
 }
@@ -364,7 +364,7 @@ type CreateReleaseRequest struct {
 	CocoonID   string          `protobuf:"bytes,2,opt,name=cocoonID" json:"cocoonID,omitempty"`
 	URL        string          `protobuf:"bytes,3,opt,name=URL" json:"URL,omitempty"`
 	Language   string          `protobuf:"bytes,4,opt,name=language" json:"language,omitempty"`
-	ReleaseTag string          `protobuf:"bytes,5,opt,name=releaseTag" json:"releaseTag,omitempty"`
+	Version string          `protobuf:"bytes,5,opt,name=version" json:"version,omitempty"`
 	BuildParam string          `protobuf:"bytes,6,opt,name=buildParam" json:"buildParam,omitempty"`
 	Link       string          `protobuf:"bytes,7,opt,name=link" json:"link,omitempty"`
 	Firewall   []*FirewallRule `protobuf:"bytes,8,rep,name=firewall" json:"firewall,omitempty"`
@@ -404,9 +404,9 @@ func (m *CreateReleaseRequest) GetLanguage() string {
 	return ""
 }
 
-func (m *CreateReleaseRequest) GetReleaseTag() string {
+func (m *CreateReleaseRequest) GetVersion() string {
 	if m != nil {
-		return m.ReleaseTag
+		return m.Version
 	}
 	return ""
 }
