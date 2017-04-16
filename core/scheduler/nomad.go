@@ -126,9 +126,11 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = []Logging{
 			{
 				Type: "fluentd",
-				Config: map[string]string{
-					"fluentd-address": "localhost:24224",
-					"tag":             jobID,
+				Config: []map[string]string{
+					{
+						"fluentd-address": "localhost:24224",
+						"tag":             fmt.Sprintf("cocoon-%s", "jobID"),
+					},
 				},
 			},
 		}

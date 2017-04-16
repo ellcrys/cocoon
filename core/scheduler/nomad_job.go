@@ -136,8 +136,8 @@ type Check struct {
 
 // Logging defines logging configuration
 type Logging struct {
-	Type   string            `json:"type"`
-	Config map[string]string `json:"config"`
+	Type   string              `json:"type"`
+	Config []map[string]string `json:"config"`
 }
 
 // Config defines a driver/task configuration
