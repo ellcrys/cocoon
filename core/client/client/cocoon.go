@@ -23,6 +23,7 @@ import (
 	"github.com/xeonx/timeago"
 )
 
+// MaxBulkObjCount determines the number of bulk objects in commands that perform bulk requests
 var MaxBulkObjCount = 25
 
 // CreateCocoon a new cocoon
@@ -33,12 +34,14 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 		return err
 	}
 
+	stopSpinner := util.Spinner("Please wait")
+
 	err = api.ValidateCocoon(cocoon)
 	if err != nil {
+		stopSpinner()
 		return err
 	}
 
-	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())

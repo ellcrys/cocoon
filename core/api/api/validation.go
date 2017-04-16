@@ -7,6 +7,7 @@ import (
 	"github.com/ellcrys/util"
 	cocoon_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/connector/server/acl"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -35,6 +36,12 @@ func ValidateCocoon(c *types.Cocoon) error {
 	}
 	if !cocoon_util.IsGithubRepoURL(c.URL) {
 		return fmt.Errorf("url is not a valid github repo url")
+	}
+	if !cocoon_util.IsExistingGithubRepo(c.URL) {
+		return fmt.Errorf("repository url could not be reached")
+	}
+	if cocoon_util.IsGithubCommitID(c.Version) && !cocoon_util.IsValidGithubCommitID(c.URL, c.Version) {
+		return fmt.Errorf("repository version appears to be a commit id but it does not exist")
 	}
 	if len(c.Language) == 0 {
 		return fmt.Errorf("language is required")
@@ -73,6 +80,11 @@ func ValidateCocoon(c *types.Cocoon) error {
 		_, errs := ValidateFirewall(c.Firewall.ToMap())
 		if len(errs) != 0 {
 			return fmt.Errorf("firewall: %s, ", errs[0])
+		}
+	}
+	if len(c.ACL) > 0 {
+		if errs := acl.NewInterpreterFromACLMap(c.ACL, false).Validate(); len(errs) > 0 {
+			return fmt.Errorf("acl: %s", errs[0])
 		}
 	}
 

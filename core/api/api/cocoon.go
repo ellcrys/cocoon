@@ -9,7 +9,6 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/acl"
 	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -111,16 +110,13 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
-	// If ACL is set, create an ACLMap, set the cocoon.ACL and validate
+	// If ACL is set, create an ACLMap, set the cocoon.ACL
 	if len(req.ACL) > 0 {
 		var aclMap map[string]interface{}
 		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
 			return nil, fmt.Errorf("acl: malformed json")
 		}
 		cocoon.ACL = types.NewACLMap(aclMap)
-		if errs := acl.NewInterpreterFromACLMap(cocoon.ACL, false).Validate(); len(errs) > 0 {
-			return nil, fmt.Errorf("acl: %s", errs[0])
-		}
 	}
 
 	if err := ValidateCocoon(&cocoon); err != nil {
@@ -220,16 +216,13 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	var cocoonUpd types.Cocoon
 	cstructs.Copy(req, &cocoonUpd)
 
-	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL and validate
+	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL
 	if len(req.ACL) > 0 {
 		var aclMap map[string]interface{}
 		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
 			return nil, fmt.Errorf("acl: malformed json")
 		}
 		cocoonUpd.ACL = types.NewACLMap(aclMap)
-		if errs := acl.NewInterpreterFromACLMap(cocoonUpd.ACL, false).Validate(); len(errs) > 0 {
-			return nil, fmt.Errorf("acl: %s", errs[0])
-		}
 	}
 
 	// update new non-release specific fields that have been updated
