@@ -193,6 +193,7 @@ func NewJob(version, id string, count int) *NomadJob {
 							},
 							Env: map[string]string{
 								"VERSION":               "${NOMAD_META_VERSION}",
+								"ENV":                   "production",
 								"COCOON_ID":             id,
 								"COCOON_CODE_URL":       "",
 								"COCOON_CODE_VERSION":   "",

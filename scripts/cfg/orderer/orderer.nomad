@@ -52,6 +52,7 @@ job "orderer" {
       }
       
       env {
+        ENV = "production"
         STORE_CON_STR = "host=localhost user=postgres dbname=cocoon sslmode=disable password="
       }
 

@@ -30,7 +30,7 @@ func MakeLogger(module, prefix string) *logging.Logger {
 // otherwise an os.Stderr backed is used. It uses a format that only displays the message.
 func MakeLoggerMessageOnly(module, prefix string) *logging.Logger {
 	var b logging.Backend = backend
-	if strings.ToLower(os.Getenv("COCOON_ENV")) == "production" {
+	if strings.ToLower(os.Getenv("ENV")) == "production" {
 		b, _ = logging.NewSyslogBackend(prefix)
 	}
 	backendFormatted := logging.NewBackendFormatter(b, format2)
