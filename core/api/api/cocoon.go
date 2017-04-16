@@ -7,7 +7,6 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/acl"
@@ -304,8 +303,8 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	}
 	if len(cocoonUpd.Firewall) > 0 && !cocoonUpd.Firewall.Eql(release.Firewall) {
 		apiLog.Info("Release changed 6")
-		pretty.Println(release.Firewall)
-		pretty.Println(cocoonUpd.Firewall)
+		util.Printify(release.Firewall)
+		util.Printify(cocoonUpd.Firewall)
 		release.Firewall = cocoonUpd.Firewall
 		releaseUpdated = true
 	}
