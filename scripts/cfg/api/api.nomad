@@ -39,13 +39,6 @@ job "api" {
         work_dir = "/local/scripts"
         network_mode = "host"
         port_map { }
-        logging {
-          type = "fluentd"
-            config {
-              fluentd-address = "localhost:24224"
-              tag = "api"
-            }
-        }
       }
 
       artifact {
