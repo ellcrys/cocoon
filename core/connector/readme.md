@@ -13,5 +13,5 @@ These are supported languages.
 ## Required Environment Variable
 *COCOON_ID* - The unique id for the cocoon. 
 *COCOON_CODE_URL* - The github repo url of the cocoon code.
-*COCOON_CODE_TAG* - The github repo release to install
+*COCOON_CODE_VERSION* - The github repo release to install
 *COCOON_CODE_LANG* - The github repo language (e.g go).

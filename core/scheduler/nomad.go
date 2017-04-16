@@ -113,7 +113,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_TAG"] = version
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])

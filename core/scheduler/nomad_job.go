@@ -195,7 +195,7 @@ func NewJob(version, id string, count int) *NomadJob {
 								"VERSION":               "${NOMAD_META_VERSION}",
 								"COCOON_ID":             id,
 								"COCOON_CODE_URL":       "",
-								"COCOON_CODE_TAG":       "",
+								"COCOON_CODE_VERSION":   "",
 								"COCOON_CODE_LANG":      "",
 								"COCOON_BUILD_PARAMS":   "",
 								"COCOON_LINK":           "",
