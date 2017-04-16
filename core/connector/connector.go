@@ -113,6 +113,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		"CONNECTOR_RPC_ADDR": cn.connectorRPCAddr,
 		"COCOON_RPC_ADDR":    cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
 		"COCOON_LINK":        cn.req.Link,          // the cocoon code id to link to natively
+		"COCOON_VERSION":     cn.req.Version,
 	})
 
 	go cn.monitor.Monitor()
