@@ -12,7 +12,7 @@ term_handler() {
     exit 143; 
 }
 
-trap 'kill term_handler' SIGTERM SIGINT
+trap 'term_handler' SIGTERM SIGINT
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
