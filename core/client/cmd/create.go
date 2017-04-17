@@ -192,9 +192,10 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 				})
 			}
 		}
+		return cocoons, nil
 	}
 
-	return cocoons, nil
+	return nil, []error{fmt.Errorf("Unrecognised path: %s", path)}
 }
 
 // createCmd represents the create command
