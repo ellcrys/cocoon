@@ -1,0 +1,24 @@
+package: github.com/ncodes/go-dockerclient
+import:
+- package: github.com/Microsoft/go-winio
+  version: ^0.3.8
+- package: github.com/docker/docker
+  version: ^17.3.0-ce-rc1
+  subpackages:
+  - api/types/swarm
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/homedir
+  - pkg/jsonmessage
+  - pkg/stdcopy
+- package: github.com/docker/go-units
+  version: ^0.3.1
+- package: github.com/ncodes/go-dockerclient
+- package: github.com/gorilla/mux
+  version: ^1.3.0
+- package: github.com/hashicorp/go-cleanhttp
+- package: golang.org/x/net
+  subpackages:
+  - context
+  - context/ctxhttp
