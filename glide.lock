@@ -1,6 +1,16 @@
-hash: 346743769d391e60890c534fc9d84aa7f97e1d129f9e31757a49cc906d6d0258
-updated: 2017-04-16T11:05:05.131651526+01:00
+hash: 8853c78ed7a8c940ad4d2aefc181c3dd72b8288439e9a4cb97c6dc2233e2f22a
+updated: 2017-04-17T16:22:14.685542553+01:00
 imports:
+- name: cloud.google.com/go
+  version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
+  subpackages:
+  - compute/metadata
+  - internal
+  - internal/version
+  - logging
+  - logging/apiv2
+  - logging/internal
+  - logging/logadmin
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/Azure/go-ansiterm
@@ -42,7 +52,7 @@ imports:
   - pkg/term
   - pkg/term/windows
 - name: github.com/docker/go-connections
-  version: a2afab9802043837035592f1c24827fb70766de9
+  version: e15c02316c12de00874640cd76311849de2aeed5
   subpackages:
   - nat
 - name: github.com/docker/go-units
@@ -50,7 +60,7 @@ imports:
 - name: github.com/dustin/go-humanize
   version: 259d2a102b871d17f30e3cd9881a642961a1e486
 - name: github.com/ellcrys/crypto
-  version: 0a4b0be14cff5c4fae8174303e203d25425b5016
+  version: 4260838a35589024ba32fad882cbc4520df31a58
 - name: github.com/ellcrys/util
   version: 4f0a2d2b43350cec9c9003959779b8b24190b641
 - name: github.com/fatih/color
@@ -62,9 +72,18 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/golang/protobuf
-  version: 69b215d01a5606c843240eab4937eab3acee6530
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
   subpackages:
   - proto
+  - protoc-gen-go/descriptor
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/empty
+  - ptypes/struct
+  - ptypes/timestamp
+- name: github.com/googleapis/gax-go
+  version: 8c5154c0fe5bf18cf649634d4c6df50897a32751
 - name: github.com/goware/urlx
   version: 8bb4a2e4339f55b15164907177e96e9faf885504
 - name: github.com/hashicorp/go-cleanhttp
@@ -92,8 +111,6 @@ imports:
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/kr/pretty
   version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
-- name: github.com/kr/text
-  version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/lib/pq
   version: 2704adc878c21e1329f46f6e56a1c387d788ff94
   subpackages:
@@ -134,7 +151,7 @@ imports:
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/opencontainers/runc
-  version: 653207bc29a6d2d62b5d4f55b596467cb715a128
+  version: 13a8c5d140b66e2c6372a70bd513a85584a33ffb
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -143,7 +160,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: f6e7596e8daafd44dc9e5c208dc73035020c8481
+  version: fe206efb84b2bc8e8cfafe6b4c1826622be969e3
 - name: github.com/pkg/profile
   version: 1c16f117a3ab788fdf0e334e623b8bccf5679866
 - name: github.com/PuerkitoBio/purell
@@ -159,30 +176,30 @@ imports:
   subpackages:
   - mem
 - name: github.com/spf13/cast
-  version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
+  version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
 - name: github.com/spf13/cobra
-  version: 7be4beda01ec05d0b93d80b3facd2b6f44080d94
+  version: 5deb57bbca49eb370538fc295ba4b2988f9f5e09
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
-  version: d16db1e50e33dff1b6cdf37596cef36742128670
+  version: e453343e6260b4a3a89f1f0e10a2fbb07f8d9750
 - name: github.com/spf13/viper
-  version: 84f94806c67f59dd7ae87bc5351f7a9c94a4558d
+  version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
 - name: github.com/square/go-jose
   version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
   subpackages:
   - cipher
   - json
 - name: github.com/xeonx/timeago
-  version: 3292590417a062dbad0d60663d7513f943dd9197
+  version: 49df971d6c5d5b073f921e8c580fbb6a0bb629c1
 - name: golang.org/x/crypto
-  version: 459e26527287adbc2adcc5d0d49abff9a5f315a7
+  version: cbc3d0884eac986df6e78a039b8792e869bff863
   subpackages:
   - bcrypt
   - blowfish
   - ssh/terminal
 - name: golang.org/x/net
-  version: 10c134ea0df15f7e34d789338c7a2d76cc7a3ab9
+  version: 5602c733f70afc6dcec6766be0d5034d4c4f14de
   subpackages:
   - context
   - context/ctxhttp
@@ -192,22 +209,67 @@ imports:
   - internal/timeseries
   - lex/httplex
   - trace
+- name: golang.org/x/oauth2
+  version: a6bd8cefa1811bd24b86f8902872e4e8225f74c4
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
 - name: golang.org/x/sys
-  version: 9a7256cb28ed514b4e1e5f68959914c4c28a92e0
+  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: fc7fa097411d30e6708badff276c4c164425590c
+  version: f4b4367115ec2de254587813edaa901bc1c723a8
   subpackages:
+  - secure/bidirule
   - transform
+  - unicode/bidi
   - unicode/norm
   - width
+- name: google.golang.org/api
+  version: cbeb0ff89adddeef6a3287fa481dcca2b596ed36
+  subpackages:
+  - googleapi/transport
+  - internal
+  - iterator
+  - option
+  - support/bundler
+  - transport
+- name: google.golang.org/appengine
+  version: 170382fa85b10b94728989dfcf6cc818b335c952
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/socket
+  - internal/urlfetch
+  - socket
+  - urlfetch
+- name: google.golang.org/genproto
+  version: 411e09b969b1170a9f0c467558eb4c4c110d9c77
+  subpackages:
+  - googleapis/api/annotations
+  - googleapis/api/distribution
+  - googleapis/api/label
+  - googleapis/api/metric
+  - googleapis/api/monitoredres
+  - googleapis/cloud/audit
+  - googleapis/logging/type
+  - googleapis/logging/v2
+  - googleapis/rpc/status
 - name: google.golang.org/grpc
   version: 8050b9cbc271307e5a716a9d782803d09b0d6f2d
   subpackages:
   - codes
   - credentials
+  - credentials/oauth
   - grpclog
   - internal
   - keepalive
@@ -227,7 +289,7 @@ imports:
 - name: gopkg.in/square/go-jose.v1
   version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
 - name: gopkg.in/yaml.v2
-  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports:
 - name: github.com/gopherjs/gopherjs
   version: 3496c6f94e1b945f3fc9580f6982675c0a74cd6c
