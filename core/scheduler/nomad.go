@@ -137,7 +137,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 	}
 
 	// if cocoon linkID is provided, set env variable and also add id to
-	// the service tag. This will allow us use discover the link via consul service discovery.
+	// the service tag. This will allow us to discover the link via consul service discovery.
 	// Tag format is `link_to:the_id`
 	if len(linkID) > 0 {
 		job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = linkID
