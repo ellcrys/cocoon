@@ -7,7 +7,7 @@ printf "> Starting Cocoon\n"
 term_connector() {
     if [ $cpid -ne 0 ]; then
         kill -SIGTERM "$cpid"
-        wait "$cpid"
+        # wait "$cpid"
     fi
     exit 143;
 }
