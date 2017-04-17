@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u2"
+    id = "u3"
     
     # Contract source location and information
     repo {
@@ -20,10 +20,10 @@ contracts {
     }
     
     # Provide build information if the contract code requires it
-    build {
-        # The package manager to use (supported: glide)
-        pkgMgr = "glide"
-    }
+    // build {
+    //     # The package manager to use (supported: glide)
+    //     pkgMgr = "glide"
+    // }
     
     # Resources to allocate to the contract's cocoon
     resources {

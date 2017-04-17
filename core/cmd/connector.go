@@ -115,13 +115,17 @@ var connectorCmd = &cobra.Command{
 		<-serverStartedCh
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
 
+		exitCode := 0
 		if <-waitCh {
+			exitCode = 1
 			rpcServer.Stop(1)
 		} else {
+			exitCode = 0
 			rpcServer.Stop(0)
 		}
 
 		log.Info("Connector stopped")
+		os.Exit(exitCode)
 	},
 }
 
