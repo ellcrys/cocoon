@@ -10,6 +10,7 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/ncodes/cocoon/core/types"
 	"google.golang.org/grpc"
 )
 
@@ -23,6 +24,7 @@ type API struct {
 	endedCh          chan bool
 	ordererDiscovery *orderer.Discovery
 	scheduler        scheduler.Scheduler
+	logProvider      types.LogProvider
 }
 
 // NewAPI creates a new GRPCAPI object
@@ -30,6 +32,7 @@ func NewAPI(scheduler scheduler.Scheduler) *API {
 	return &API{
 		scheduler:        scheduler,
 		ordererDiscovery: orderer.NewDiscovery(),
+		logProvider:      &StackDriverLog{},
 	}
 }
 
@@ -41,6 +44,11 @@ func (api *API) Start(addr string, endedCh chan bool) {
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s", addr))
 	if err != nil {
 		apiLog.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
+	}
+
+	err = api.logProvider.Init(map[string]interface{}{"projectId": "visiontest-1281"})
+	if err != nil {
+		apiLog.Fatalf("failed to initialize log provider: %v", err)
 	}
 
 	time.AfterFunc(2*time.Second, func() {

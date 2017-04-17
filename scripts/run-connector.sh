@@ -2,6 +2,8 @@
 # Run the connector 
 set -e
 
+printf "> Starting Cocoon\n"
+
 term_connector() {
     if [ $cpid -ne 0 ]; then
         kill -SIGTERM "$cpid"
