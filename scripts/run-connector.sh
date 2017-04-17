@@ -7,13 +7,13 @@ printf "> Starting Cocoon\n"
 term_connector() {
     if [ $cpid -ne 0 ]; then
         kill -SIGTERM "$cpid"
-        # wait "$cpid"
+        wait "$cpid"
     fi
     exit 143;
 }
 
 # trap terminate signal and pass to cocoon process
-trap 'term_connector' SIGTERM SIGINT
+trap 'kill ${!}; term_connector' SIGTERM SIGINT
 
 # Set up go environment
 export GOPATH=/go
@@ -40,12 +40,7 @@ printf "Running Cocoon Connector\n"
 cocoon connector & 
 cpid=$!
 
-# sleep as long as $pid is running
 while true
 do
-  sleep 10
-  ps -p $cpid > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    break
-  fi
+  tail -f /dev/null & wait ${!}
 done
