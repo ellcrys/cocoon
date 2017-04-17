@@ -110,6 +110,4 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 
 		util.FromJSON(resp.Body, &messages)
 	}
-
-	return nil
 }
