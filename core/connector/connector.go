@@ -200,7 +200,7 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 		var buildParams map[string]interface{}
 
 		if len(cn.req.BuildParams) == 0 {
-			log.Info("No build parameters provided. Skipping build step")
+			log.Info("No build parameters provided. Making binary.")
 		} else {
 			log.Info("Parsing build parameters")
 			cn.req.BuildParams, err = crypto.FromBase64(cn.req.BuildParams)
@@ -213,11 +213,11 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 			if err = lang.SetBuildParams(buildParams); err != nil {
 				return nil, fmt.Errorf("failed to set and validate build parameter. %s", err)
 			}
+		}
 
-			err = cn.build(container, lang)
-			if err != nil {
-				return nil, fmt.Errorf(err.Error())
-			}
+		err = cn.build(container, lang)
+		if err != nil {
+			return nil, fmt.Errorf(err.Error())
 		}
 	}
 

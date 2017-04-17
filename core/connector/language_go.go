@@ -116,20 +116,26 @@ func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 // to create an executable
 func (g *Go) GetBuildScript() string {
 
-	// run known package manager fetch routine
-	pkgFetchCmd := ""
-	if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
-		switch pkgMgr {
-		case "glide":
-			pkgFetchCmd = "glide install"
+	cmds := []string{
+		// change dir to cocoon source root directory
+		fmt.Sprintf("cd %s", g.GetSourceRootDir()),
+	}
+
+	// add pre-build commands
+	if len(g.buildParams) > 0 {
+		if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
+			switch pkgMgr {
+			case "glide":
+				cmds = append(cmds, "glide install")
+			}
 		}
 	}
 
-	return strings.Join(util.RemoveEmptyInStringSlice([]string{
-		fmt.Sprintf("cd %s", g.GetSourceRootDir()), // cd into cocoon source root directory
-		pkgFetchCmd,                                // run the package manager build command
-		"go build -v -o /bin/ccode",                // build the cocoon code binary
-	}), " && ")
+	// build the source
+	cmds = append(cmds, "go build -v -o /bin/ccode")
+
+	// run the commands
+	return strings.Join(util.RemoveEmptyInStringSlice(cmds), " && ")
 }
 
 // GetRunScript returns the script required to start the
