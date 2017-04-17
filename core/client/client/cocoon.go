@@ -322,27 +322,7 @@ func StopCocoon(ids []string) error {
 
 	for _, id := range ids {
 
-		// find cocoon
 		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cc()
-		resp, err := cl.GetCocoon(ctx, &proto.GetCocoonRequest{ID: id})
-		if err != nil {
-			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
-				errs = append(errs, fmt.Errorf("No such cocoon: %s", common.GetShortID(id)))
-				continue
-			}
-			stopSpinner()
-			return err
-		}
-
-		var cocoon types.Cocoon
-		util.FromJSON(resp.GetBody(), &cocoon)
-		if cocoon.Status == api.CocoonStatusStopped {
-			errs = append(errs, fmt.Errorf("%s is not running", common.GetShortID(id)))
-			continue
-		}
-
-		ctx, cc = context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
 		ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
 		_, err = cl.StopCocoon(ctx, &proto.StopCocoonRequest{ID: id})
