@@ -13,7 +13,7 @@ term_connector() {
 }
 
 # trap terminate signal and pass to cocoon process
-trap 'kill ${!}; term_connector' SIGTERM SIGINT
+trap 'term_connector' SIGTERM SIGINT
 
 # Set up go environment
 export GOPATH=/go
@@ -42,8 +42,8 @@ cpid=$!
 
 while true
 do
-  sleep 60 & wait ${!}
-  ps -p $cpid > /dev/null
+  sleep 30
+  ps -p $cpid > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     break
   fi
