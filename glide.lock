@@ -1,5 +1,5 @@
-hash: 8853c78ed7a8c940ad4d2aefc181c3dd72b8288439e9a4cb97c6dc2233e2f22a
-updated: 2017-04-17T16:22:14.685542553+01:00
+hash: aa4a2902a95dcf08c2cfe26b750c8b6d928155d108868dc40d1b656c47fe5bea
+updated: 2017-04-17T17:40:19.690799146+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -88,6 +88,8 @@ imports:
   version: 8bb4a2e4339f55b15164907177e96e9faf885504
 - name: github.com/hashicorp/go-cleanhttp
   version: 3573b8b52aa7b37b9358d966a898feb387f62437
+- name: github.com/hashicorp/golang-lru
+  version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
 - name: github.com/hashicorp/hcl
   version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
   subpackages:
@@ -217,7 +219,7 @@ imports:
   - jws
   - jwt
 - name: golang.org/x/sys
-  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
   - windows

@@ -26,8 +26,9 @@ var logsCmd = &cobra.Command{
 		stderrOnly, _ := cmd.Flags().GetBool("stderr")
 		stdoutOnly, _ := cmd.Flags().GetBool("stdout")
 		tail, _ := cmd.Flags().GetBool("tail")
+		disableColors, _ := cmd.Flags().GetBool("no-colors")
 
-		if err := client.GetLogs(args[0], numLines, tail, stderrOnly, stdoutOnly); err != nil {
+		if err := client.GetLogs(args[0], numLines, tail, stderrOnly, stdoutOnly, disableColors); err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
 	},
@@ -38,5 +39,6 @@ func init() {
 	logsCmd.PersistentFlags().IntP("num", "n", client.MinimumLogLines, "Number of lines to display")
 	logsCmd.PersistentFlags().Bool("stderr", false, "Display only stderr logs")
 	logsCmd.PersistentFlags().Bool("stdout", false, "Display only stdout logs")
+	logsCmd.PersistentFlags().Bool("no-colors", false, "Disable the use of colors")
 	logsCmd.PersistentFlags().BoolP("tail", "t", false, "Continually stream logs")
 }

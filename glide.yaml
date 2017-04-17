@@ -46,6 +46,7 @@ import:
 - package: github.com/kr/pretty
 - package: google.golang.org/api
   version: cbeb0ff89adddeef6a3287fa481dcca2b596ed36
+- package: github.com/hashicorp/golang-lru
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2

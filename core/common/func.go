@@ -140,3 +140,8 @@ func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 	}
 	return newResolvedFirewall, nil
 }
+
+// RemoveASCIIColors takes a byte slice and remove ASCII colors
+func RemoveASCIIColors(s []byte) []byte {
+	return regexp.MustCompile("\033\\[[0-9;]*m").ReplaceAll(s, []byte(""))
+}

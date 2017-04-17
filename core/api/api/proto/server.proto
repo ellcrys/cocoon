@@ -23,8 +23,7 @@ service API {
 message GetLogsRequest {
     string cocoonID = 1;
     int32 numLines = 2;
-    bool followTail = 3;
-    string source = 4;
+    string source = 3;
 }
 
 message FirewallAllowRequest {

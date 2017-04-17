@@ -23,10 +23,12 @@ func TestFunc(t *testing.T) {
 		Convey(".IsValidResName", func() {
 
 			cases := [][]interface{}{
-				[]interface{}{"lord.luggard", false},
+				[]interface{}{"lord.luggard", true},
 				[]interface{}{"lord_luggard", true},
-				[]interface{}{"lord-luggard", false},
+				[]interface{}{"lord-luggard", true},
 				[]interface{}{"lordluggard", true},
+				[]interface{}{"lord;luggard", false},
+				[]interface{}{"lord@luggard", false},
 			}
 
 			for _, c := range cases {
@@ -98,7 +100,7 @@ func TestFunc(t *testing.T) {
 
 		Convey(".ResolveFirewall", func() {
 			Convey("Should return error if a rule's destination address could not be resolved", func() {
-				_, err := ResolveFirewall([]types.FirewallRule{
+				_, err := ResolveFirewall([]*types.FirewallRule{
 					{Destination: "googleasadsa.com", DestinationPort: "80", Protocol: "udp"},
 				})
 				So(err, ShouldNotBeNil)
@@ -106,7 +108,7 @@ func TestFunc(t *testing.T) {
 			})
 
 			Convey("Should successfully resolve rules destination", func() {
-				rules, err := ResolveFirewall([]types.FirewallRule{
+				rules, err := ResolveFirewall([]*types.FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
@@ -114,6 +116,12 @@ func TestFunc(t *testing.T) {
 				So(len(rules), ShouldEqual, 2)
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 				So(rules[1].Destination, ShouldNotEqual, "facebook.com")
+			})
+		})
+
+		Convey(".RemoveASCIIColors", func() {
+			Convey("Should successfully remove color", func() {
+				So(RemoveASCIIColors([]byte("\033[1mHello Bold World!\033[0m")), ShouldResemble, []byte("Hello Bold World!"))
 			})
 		})
 	})
