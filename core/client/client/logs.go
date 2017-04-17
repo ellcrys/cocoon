@@ -72,7 +72,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 
 	var messages []types.LogMessage
 	util.FromJSON(resp.Body, &messages)
-	seen, err := lru.New(1000)
+	seen, err := lru.New(10000)
 	if err != nil {
 		return fmt.Errorf("failed to create log cache")
 	}

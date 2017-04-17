@@ -2,7 +2,7 @@
 # Runner.sh fetches the relevant run script for
 # the connector. 
 set -e
-echo "Runner.sh has started"
+printf "Runner.sh has started\n"
 
 term_handler() {
     if [ $pid -ne 0 ]; then
@@ -12,7 +12,7 @@ term_handler() {
     exit 143; 
 }
 
-trap 'kill ${!}; term_handler' SIGTERM SIGINT
+trap 'kill term_handler' SIGTERM SIGINT
 
 # Fetch the script and run it.
 rm -f $RUN_SCRIPT_NAME
@@ -21,7 +21,14 @@ chmod +x $RUN_SCRIPT_NAME
 ./$RUN_SCRIPT_NAME &
 pid=$!
 
+# sleep as long as $pid is running
 while true
 do
-  tail -f /dev/null & wait ${!}
+  sleep 10
+  ps -p $pid > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    break
+  fi
 done
+
+printf "Runner stopped\n"

@@ -40,9 +40,10 @@ printf "Running Cocoon Connector\n"
 cocoon connector & 
 cpid=$!
 
+# sleep as long as $pid is running
 while true
 do
-  sleep 30
+  sleep 10
   ps -p $cpid > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     break
