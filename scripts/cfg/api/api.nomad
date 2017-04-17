@@ -53,6 +53,7 @@ job "api" {
       
       env {
           ENV = "production"
+          GCP_PROJECT_ID = "visiontest-1281"
           CONSUL_ADDR = "localhost:8500"
           API_SIGN_KEY = "x/A%D*G-KaPdSgVkYp3s6v9y$B&E(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUjXn2r"
       }

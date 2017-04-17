@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"os"
+
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer"
@@ -46,7 +48,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 		apiLog.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
 	}
 
-	err = api.logProvider.Init(map[string]interface{}{"projectId": "visiontest-1281"})
+	err = api.logProvider.Init(map[string]interface{}{"projectId": os.Getenv("GCP_PROJECT_ID")})
 	if err != nil {
 		apiLog.Fatalf("failed to initialize log provider: %v", err)
 	}
