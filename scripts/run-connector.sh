@@ -27,14 +27,14 @@ rm -rf cocoon
 git clone --depth=1 -b $branch https://$repoOwner/cocoon
 
 # build the binary
-printf "> Building cocoon"
+printf "> Building cocoon\n"
 cd cocoon
 rm -rf .glide/ && rm -rf vendor
 glide --debug install
 go build -v -o $GOPATH/bin/cocoon core/main.go
 
 # start connector, store its process id and wait for it.
-printf "Running Cocoon Connector"
+printf "Running Cocoon Connector\n"
 cocoon connector & 
 cpid=$!
 
