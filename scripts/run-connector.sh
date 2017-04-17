@@ -42,5 +42,9 @@ cpid=$!
 
 while true
 do
-  tail -f /dev/null & wait ${!}
+  sleep 60 & wait ${!}
+  ps -p $cpid > /dev/null
+  if [ $? -ne 0 ]; then
+    break
+  fi
 done
