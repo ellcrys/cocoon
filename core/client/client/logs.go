@@ -102,7 +102,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 			return nil
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 		resp, err := fetch()
 		if err != nil {
 			return err
