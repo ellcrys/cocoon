@@ -401,7 +401,6 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		mkdir -p ` + downloadDst + ` &&
 		wget ` + repoTarURL + ` -O ` + filePath + ` &&
 		tar -xvf ` + filePath + ` &&
-		cd ` + cn.req.ID + ` &&
 		ls
 	`
 
