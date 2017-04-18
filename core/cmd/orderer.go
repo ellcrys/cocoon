@@ -4,7 +4,7 @@ import (
 	"github.com/ellcrys/util"
 	b_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/spf13/cobra"

@@ -20,7 +20,7 @@ import (
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
-	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/types"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
