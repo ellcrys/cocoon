@@ -4,6 +4,3 @@ FROM ncodes/cocoon-go:latest
 RUN apt-get update
 RUN apt-get -y install aufs-tools iptables git
 RUN curl https://glide.sh/get | sh
-
-# for testing
-RUN go get -v github.com/jpillora/go-echo-server
