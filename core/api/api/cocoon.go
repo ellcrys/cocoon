@@ -110,6 +110,14 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
+	// ensure a similar cocoon does not exist
+	_, err = api.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: cocoon.ID})
+	if err != nil && err != types.ErrCocoonNotFound {
+		return nil, err
+	} else if err == nil {
+		return nil, fmt.Errorf("cocoon with matching ID already exists")
+	}
+
 	// If ACL is set, create an ACLMap, set the cocoon.ACL
 	if len(req.ACL) > 0 {
 		var aclMap map[string]interface{}
@@ -130,14 +138,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	cocoon.Firewall = *outputFirewall.DeDup()
-
-	// ensure a similar cocoon does not exist
-	_, err = api.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: cocoon.ID})
-	if err != nil && err != types.ErrCocoonNotFound {
-		return nil, err
-	} else if err == nil {
-		return nil, fmt.Errorf("cocoon with matching ID already exists")
-	}
 
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	// TODO: Provide a permission (ACL) mechanism
