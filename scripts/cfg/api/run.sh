@@ -10,7 +10,7 @@ git clone --depth=1 -b $branch https://github.com/ncodes/cocoon
 cd cocoon 
 git checkout $branch
 
-# start the orderer
-glide --debug install
-go build -o cocoon core/main.go
-./cocoon api start
+# start the api
+glide install
+go build -o api core/api/main.go
+./api start
