@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-
 	"path"
 
 	"time"
@@ -32,6 +31,7 @@ var buildLog *logging.Logger
 var runLog *logging.Logger
 var configLog *logging.Logger
 var ccodeLog *logging.Logger
+var fetchLog *logging.Logger
 var logHealthChecker *logging.Logger
 var dckClient *docker.Client
 
@@ -73,6 +73,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	runLog = config.MakeLoggerMessageOnly("ccode.run", fmt.Sprintf("cocoon.%s", cn.req.ID))
 	configLog = config.MakeLogger("ccode.config", fmt.Sprintf("cocoon.%s", cn.req.ID))
 	ccodeLog = config.MakeLogger("ccode.main", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	fetchLog = config.MakeLogger("ccode.fetch", fmt.Sprintf("cocoon.%s", cn.req.ID))
 	logHealthChecker = config.MakeLogger("connector.health_checker", fmt.Sprintf("cocoon.%s", cn.req.ID))
 
 	endpoint := "unix:///var/run/docker.sock"
@@ -182,19 +183,20 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 
 	// set flag to true to indicate that the container is running
 	cn.containerRunning = true
+	cn.container = container
+	cn.monitor.SetContainerID(cn.container.ID)
+	cn.HookToMonitor(cn.req)
 
-	_, err = cn.fetchSource(lang)
+	err = cn.fetchSource(lang)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = cn.copySourceToContainer(lang, container); err != nil {
-		return nil, err
-	}
+	return container, nil
 
-	cn.container = container
-	cn.monitor.SetContainerID(cn.container.ID)
-	cn.HookToMonitor(cn.req)
+	// if err = cn.copySourceToContainer(lang, container); err != nil {
+	// 	return nil, err
+	// }
 
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
@@ -345,18 +347,18 @@ func (cn *Connector) GetLanguages() []Language {
 
 // fetchSource fetches the cocoon code source from
 // a remote address
-func (cn *Connector) fetchSource(lang Language) (string, error) {
+func (cn *Connector) fetchSource(lang Language) error {
 
 	if !cutil.IsGithubRepoURL(cn.req.URL) {
-		return "", fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
+		return fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
 	return cn.fetchFromGit(lang)
 }
 
-// fetchFromGit fetches cocoon code from git repo.
+// fetchFromGit fetches cocoon code from git repo
 // and returns the download directory path.
-func (cn *Connector) fetchFromGit(lang Language) (string, error) {
+func (cn *Connector) fetchFromGit(lang Language) error {
 
 	var repoTarURL, downloadDst string
 	var err error
@@ -372,14 +374,14 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 	if cutil.IsGithubCommitID(cn.req.Version) {
 		url, err := urlx.Parse(cn.req.URL)
 		if err != nil {
-			return "", fmt.Errorf("Failed to parse git url: %s", err)
+			return fmt.Errorf("Failed to parse git url: %s", err)
 		}
 		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Version)
 		log.Debugf("Downloading repo with commit id = %s", versionStr)
 	} else {
 		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Version)
 		if err != nil {
-			return "", fmt.Errorf("Failed to fetch release from github repo. %s", err)
+			return fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
 		if len(cn.req.Version) == 0 {
 			log.Debug("Downloading latest repo")
@@ -390,44 +392,45 @@ func (cn *Connector) fetchFromGit(lang Language) (string, error) {
 
 	// determine download directory
 	downloadDst = lang.GetDownloadDestination()
-
-	// delete download directory if it exists
-	if _, err := os.Stat(downloadDst); err == nil {
-		log.Info("Download destination is not empty. Deleting content")
-		if err = os.RemoveAll(downloadDst); err != nil {
-			return "", fmt.Errorf("failed to delete contents of download directory")
-		}
-		log.Info("Download directory has been deleted")
-	}
-
-	// create the download directory
-	if err = os.MkdirAll(downloadDst, os.ModePerm); err != nil {
-		return "", fmt.Errorf("Failed to create download directory. %s", err)
-	}
-
 	log.Infof("Downloading cocoon repository with version=%s, dst=%s", versionStr, downloadDst)
+
+	// construct fetch script
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
-	err = cutil.DownloadFile(repoTarURL, filePath, func(buf []byte) {})
-	if err != nil {
-		return "", err
-	}
+	fetchScript := `
+		rm -rf ` + downloadDst + ` &&			
+		mkdir -p ` + downloadDst + ` &&
+		wget ` + repoTarURL + ` -O ` + filePath + ` &&
+		unzip ` + filePath + ` &&
+		cd ` + cn.req.ID + ` &&
+		ls
+	`
 
-	log.Info("Successfully downloaded cocoon code")
-	log.Debugf("Unpacking cocoon code to %s", filePath)
+	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
+	return cn.execInContainer(cn.container, "FETCH", cmd, true, fetchLog, func(state string, exitCode interface{}) error {
+		switch state {
+		case "end":
+			if exitCode.(int) == 0 {
+				log.Info("Fetch succeeded!")
+			} else {
+				return fmt.Errorf("Fetch has failed with exit code=%d", exitCode.(int))
+			}
+		}
+		return nil
+	})
 
-	// unpack tarball
-	cmd := "tar"
-	args := []string{"-xf", filePath, "-C", downloadDst, "--strip-components", "1"}
-	if err = exec.Command(cmd, args...).Run(); err != nil {
-		return "", fmt.Errorf("Failed to unpack cocoon code repo tarball. %s", err)
-	}
+	// // unpack tarball
+	// cmd := "tar"
+	// args := []string{"-xf", filePath, "-C", downloadDst, "--strip-components", "1"}
+	// if err = exec.Command(cmd, args...).Run(); err != nil {
+	// 	return "", fmt.Errorf("Failed to unpack cocoon code repo tarball. %s", err)
+	// }
 
-	log.Infof("Successfully unpacked cocoon code to %s", downloadDst)
+	// log.Infof("Successfully unpacked cocoon code to %s", downloadDst)
 
-	os.Remove(filePath)
-	log.Info("Deleted the cocoon code tarball")
+	// os.Remove(filePath)
+	// log.Info("Deleted the cocoon code tarball")
 
-	return downloadDst, nil
+	return nil
 }
 
 // getContainer returns a container with a

@@ -30,7 +30,7 @@ func NewGo(req *Request) *Go {
 	g := &Go{
 		name:      "go",
 		image:     "ncodes/launch-go",
-		userHome:  os.Getenv("HOME"),
+		userHome:  "/home",
 		imgGoPath: "/go",
 		req:       req,
 		env:       map[string]string{},
