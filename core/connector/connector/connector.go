@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"path"
 
 	"time"
@@ -435,36 +434,6 @@ func (cn *Connector) getContainer(name string) (*docker.APIContainers, error) {
 	}
 
 	return nil, nil
-}
-
-// copySourceToContainer copies the downloaded cocoon code source into the cocoon code container
-func (cn *Connector) copySourceToContainer(lang Language, container *docker.APIContainers) error {
-
-	// no matter what happens, remove download directory
-	defer func() {
-		os.RemoveAll(lang.GetDownloadDestination())
-		log.Info("Removed download directory")
-	}()
-
-	// create source root directory
-	cmd := []string{"bash", "-c", "mkdir -p " + lang.GetSourceRootDir()}
-	cn.execInContainer(container, "CREATE_SOURCE_DIR", cmd, true, buildLog, func(state string, exitCode interface{}) error {
-		if state == "end" && exitCode.(int) != 0 {
-			return fmt.Errorf("failed to create source directory")
-		}
-		return nil
-	})
-
-	// copy source directory to the container's source directory
-	log.Debugf("Copying source from %s to container:%s", lang.GetDownloadDestination(), lang.GetCopyDestination())
-	args := []string{"cp", lang.GetDownloadDestination(), fmt.Sprintf("%s:%s", container.ID, lang.GetCopyDestination())}
-	if err := exec.Command("docker", args...).Run(); err != nil {
-		return fmt.Errorf("failed to copy cocoon code source to cocoon. %s", err)
-	}
-
-	log.Info("Copied cocoon code source to cocoon")
-
-	return nil
 }
 
 // stopContainer stop container. Kill it if it doesn't
