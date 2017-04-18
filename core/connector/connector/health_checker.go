@@ -33,7 +33,8 @@ func (hc *HealthChecker) Start() {
 
 	logHealthChecker.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
 
-	if hc.check() != nil {
+	if err := hc.check(); err != nil {
+		logHealthChecker.Infof(err.Error())
 		if hc.OnDeadFunc != nil {
 			hc.OnDeadFunc()
 		}
