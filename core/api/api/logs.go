@@ -33,6 +33,11 @@ func (api *API) GetLogs(ctx context.Context, req *proto_api.GetLogsRequest) (*pr
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
+	// cap lines to fetch at 5000
+	if req.NumLines > 5000 {
+		req.NumLines = 5000
+	}
+
 	messages, err := api.logProvider.Get(ctx, fmt.Sprintf("connector-%s", req.CocoonID), int(req.NumLines), req.Source)
 	if err != nil {
 		return nil, err
