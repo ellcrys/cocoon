@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		libc6-dev \
 		make \
 		unzip \
-		sudo
-		wget
-		git
-		curl
+		sudo \
+		wget \
+		git \
+		curl \
 		pkg-config \
 	&& rm -rf /var/lib/apt/lists/*
 
