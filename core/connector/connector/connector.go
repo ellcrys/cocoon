@@ -350,8 +350,8 @@ func (cn *Connector) fetchSource(lang Language) error {
 	return cn.fetchFromGit(lang)
 }
 
-// fetchFromGit fetches cocoon code from git repo
-// and returns the download directory path.
+// fetchFromGit execs fetch script that fetches the cocoon code source
+// into the cocoon code container and readies it form the build stage.
 func (cn *Connector) fetchFromGit(lang Language) error {
 
 	var repoTarURL, downloadDst string
