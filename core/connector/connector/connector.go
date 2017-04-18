@@ -391,6 +391,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 	// construct fetch script
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
 	fetchScript := `
+	    iptables -F
 		rm -rf ` + downloadDst + ` &&			
 		mkdir -p ` + downloadDst + ` &&
 		printf "Downloading source from remote url to download destination\n" &&
@@ -401,8 +402,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		printf "Creating source root directory\n" &&
 		mkdir -p ` + lang.GetSourceRootDir() + ` &&
 		printf "Moving source to new source root directory\n" &&
-		mv ` + downloadDst + `/* ` + lang.GetSourceRootDir() + ` &&
-		ls ` + lang.GetSourceRootDir() + `
+		mv ` + downloadDst + `/* ` + lang.GetSourceRootDir() + `
 	`
 
 	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
