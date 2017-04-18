@@ -313,3 +313,8 @@ func NewJob(version, id string, count int) *NomadJob {
 func (j *NomadJob) GetSpec() *Job {
 	return j.Job
 }
+
+//SetVersion set the connectors version
+func (j *NomadJob) SetVersion(v string) {
+	j.GetSpec().TaskGroups[0].Meta["VERSION"] = v
+}

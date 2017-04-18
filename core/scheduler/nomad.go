@@ -112,10 +112,18 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 	}
 
 	job := NewJob("master", jobID, 1)
+	job.GetSpec().Region = "global"
+	job.GetSpec().Datacenters = []string{"dc1"}
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["ENV"] = os.Getenv("ENV")
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
 
 	// set fluentd logger in production environment
 	if os.Getenv("ENV") == "production" {
-		job = NewJob("1.0.0", jobID, 1)
+		job.SetVersion("1.0.0")
 		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = []Logging{
 			{
 				Type: "fluentd",
@@ -128,15 +136,6 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 			},
 		}
 	}
-
-	job.GetSpec().Region = "global"
-	job.GetSpec().Datacenters = []string{"dc1"}
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["ENV"] = os.Getenv("ENV")
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
 
 	// if cocoon linkID is provided, set env variable and also add id to
 	// the service tag. This will allow us to discover the link via consul service discovery.
