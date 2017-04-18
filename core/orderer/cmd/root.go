@@ -29,9 +29,16 @@ var RootCmd = &cobra.Command{
 	Use:   "orderer",
 	Short: "Provides access to the blockchain-inspired ledger",
 	Long:  `Provides access to the blockchain-inspired ledger`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {
+		showVersion, _ := cmd.Flags().GetBool("version")
+		if showVersion {
+			fmt.Println("Orderer version", version)
+			return
+		}
+		fmt.Println(cmd.Long)
+		fmt.Println("")
+		cmd.Usage()
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -44,16 +51,8 @@ func Execute() {
 }
 
 func init() {
+	RootCmd.Flags().BoolP("version", "v", false, "Display the Connector version information")
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application.
-
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.orderer.yaml)")
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

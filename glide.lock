@@ -1,5 +1,5 @@
-hash: aa4a2902a95dcf08c2cfe26b750c8b6d928155d108868dc40d1b656c47fe5bea
-updated: 2017-04-17T17:40:19.690799146+01:00
+hash: ccf4b0b17cba4b686708de0063d80be9fa20a82309dca898500700072cd807da
+updated: 2017-04-18T10:56:28.880593092+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -82,6 +82,10 @@ imports:
   - ptypes/empty
   - ptypes/struct
   - ptypes/timestamp
+- name: github.com/google/go-genproto
+  version: 411e09b969b1170a9f0c467558eb4c4c110d9c77
+  subpackages:
+  - googleapis/rpc/status
 - name: github.com/googleapis/gax-go
   version: 8c5154c0fe5bf18cf649634d4c6df50897a32751
 - name: github.com/goware/urlx
@@ -90,6 +94,8 @@ imports:
   version: 3573b8b52aa7b37b9358d966a898feb387f62437
 - name: github.com/hashicorp/golang-lru
   version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
+  subpackages:
+  - simplelru
 - name: github.com/hashicorp/hcl
   version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
   subpackages:
@@ -267,7 +273,7 @@ imports:
   - googleapis/logging/v2
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: 8050b9cbc271307e5a716a9d782803d09b0d6f2d
+  version: 0c1d39df28cc4e0369b185df2b33b1094cd543fb
   subpackages:
   - codes
   - credentials
@@ -279,6 +285,7 @@ imports:
   - naming
   - peer
   - stats
+  - status
   - tap
   - transport
 - name: gopkg.in/mgo.v2

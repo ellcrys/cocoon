@@ -13,16 +13,18 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "ellcrys",
-	Short: "A blockchain-inspired, shared ledger and smart contract platform",
-	Long:  `A blockchain-inspired, shared ledger and smart contract platform`,
+	Short: "Ellcrys client to the blockchain-inspired, shared ledger and smart contract platform",
+	Long:  `Ellcrys client to the blockchain-inspired, shared ledger and smart contract platform`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
 		showVersion, _ := cmd.Flags().GetBool("version")
 		if showVersion {
-			fmt.Println("Cocoon version 0.0.5")
+			fmt.Println("Cocoon version 1.0.0")
 			return
 		}
+		fmt.Println(cmd.Long)
+		fmt.Println("")
 		cmd.Usage()
 	},
 }

@@ -42,11 +42,14 @@ func (ml *MyLang) SetBuildParams(map[string]interface{}) error {
 	return nil
 }
 
+func (ml *MyLang) SetRunEnv(env map[string]string) {
+}
+
 func TestLauncher(t *testing.T) {
-	Convey("Launcher", t, func() {
+	Convey("Connector", t, func() {
 
 		Convey("AddLanguage", func() {
-			lc := NewLauncher(make(chan bool))
+			lc := NewConnector(&Request{}, make(chan bool))
 			Convey("should successfully add new language and return nil", func() {
 				err := lc.AddLanguage(&MyLang{})
 				So(err, ShouldBeNil)
@@ -60,7 +63,7 @@ func TestLauncher(t *testing.T) {
 		})
 
 		Convey("GetLanguage", func() {
-			lc := NewLauncher(make(chan bool))
+			lc := NewConnector(&Request{}, make(chan bool))
 			l := new(MyLang)
 			err := lc.AddLanguage(l)
 			So(err, ShouldBeNil)

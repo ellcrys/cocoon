@@ -47,6 +47,10 @@ import:
 - package: google.golang.org/api
   version: cbeb0ff89adddeef6a3287fa481dcca2b596ed36
 - package: github.com/hashicorp/golang-lru
+- package: google.golang.org/grpc
+  version: 0c1d39df28cc4e0369b185df2b33b1094cd543fb
+  subpackages:
+  - metadata
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2
