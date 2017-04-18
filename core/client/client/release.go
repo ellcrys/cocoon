@@ -44,7 +44,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	client := proto_api.NewAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
-	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
 
 	// if id is a cocoon id, get the cocoon's most recent release
 	if isCocoonID {

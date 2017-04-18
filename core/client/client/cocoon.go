@@ -51,7 +51,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	}
 	defer conn.Close()
 
-	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
 	var prCreateCocoonReq proto_api.CocoonPayloadRequest
 	cstructs.Copy(cocoon, &prCreateCocoonReq)
 	prCreateCocoonReq.ACL = cocoon.ACL.ToJSON()
@@ -90,7 +90,7 @@ func UpdateCocoon(id string, upd *proto_api.CocoonPayloadRequest) error {
 	}
 	defer conn.Close()
 
-	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	cl := proto_api.NewAPIClient(conn)
@@ -324,7 +324,7 @@ func StopCocoon(ids []string) error {
 
 		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
-		ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
 		_, err = cl.StopCocoon(ctx, &proto_api.StopCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
@@ -369,7 +369,7 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 
 	md := metadata.Pairs("access_token", userSession.Token)
 	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, md)
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	stopSpinner := util.Spinner("Please wait")
 
@@ -432,7 +432,7 @@ func AddSignatories(cocoonID string, ids []string) error {
 	defer stopSpinner()
 
 	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
 	cl := proto_api.NewAPIClient(conn)
 	resp, err := cl.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
 		CocoonID: cocoonID,
@@ -489,7 +489,7 @@ func RemoveSignatories(cocoonID string, ids []string) error {
 	defer stopSpinner()
 
 	ctx := context.Background()
-	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
 	cl := proto_api.NewAPIClient(conn)
 	_, err = cl.RemoveSignatories(ctx, &proto_api.RemoveSignatoriesRequest{
 		CocoonID: cocoonID,
