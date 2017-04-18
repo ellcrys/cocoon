@@ -51,17 +51,26 @@ func (hc *HealthChecker) Start() {
 	}
 }
 
+// check calls the check endpont of the stub.
+// It will retry the health check for upto 5 times with
+// a 1 second wait duration if health check fails.
 func (hc *HealthChecker) check() error {
-	client, err := grpc.Dial(hc.cocoonCodeAddr, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
+	retryLimit := 5
+	for retryLimit > 0 {
+		client, err := grpc.Dial(hc.cocoonCodeAddr, grpc.WithInsecure())
+		if err != nil {
+			return err
+		}
 
-	stub := proto_runtime.NewStubClient(client)
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = stub.HealthCheck(ctx, &proto_runtime.Ok{})
-	if err != nil {
-		return err
+		stub := proto_runtime.NewStubClient(client)
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		_, err = stub.HealthCheck(ctx, &proto_runtime.Ok{})
+		if err != nil {
+			retryLimit--
+			time.Sleep(1 * time.Second)
+			return err
+		}
+		return nil
 	}
 	return nil
 }
