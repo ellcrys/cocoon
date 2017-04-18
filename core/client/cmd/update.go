@@ -43,7 +43,7 @@ var updateCmd = &cobra.Command{
 		stopSpinner()
 
 		for i, cocoon := range cocoons {
-			var protoCreatePayloadReq proto.CocoonPayloadRequest
+			var protoCreatePayloadReq proto_api.CocoonPayloadRequest
 			cstructs.Copy(cocoon, &protoCreatePayloadReq)
 			protoCreatePayloadReq.ACL = cocoon.ACL.ToJSON()
 			err := client.UpdateCocoon(protoCreatePayloadReq.ID, &protoCreatePayloadReq)
