@@ -5,7 +5,7 @@ export GOPATH=/go
 
 printf "> Starting Cocoon\n"
 
-if [ $ENV == "production" ]; then
+if [ $ENV != "production" ]; then
     # Pull cocoon source
     branch=$VERSION
     repoOwner=github.com/ncodes
