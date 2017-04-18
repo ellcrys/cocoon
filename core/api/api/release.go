@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
-	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	context "golang.org/x/net/context"
@@ -24,12 +24,12 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 	defer ordererConn.Close()
 
 	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
 				Key:       types.MakeReleaseKey(release.ID),
 				Value:     string(release.ToJSON()),
@@ -42,7 +42,7 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 }
 
 // CreateRelease creates a release
-func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseRequest) (*proto.Response, error) {
+func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseRequest) (*proto_api.Response, error) {
 
 	var release types.Release
 	cstructs.Copy(req, &release)
@@ -75,7 +75,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto.CreateReleaseReque
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   release.ToJSON(),
 	}, nil
@@ -90,8 +90,8 @@ func (api *API) getRelease(ctx context.Context, id string) (*types.Release, erro
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeReleaseKey(id),
 		Ledger:   types.GetSystemPublicLedgerName(),
@@ -107,14 +107,14 @@ func (api *API) getRelease(ctx context.Context, id string) (*types.Release, erro
 }
 
 // GetRelease returns a release
-func (api *API) GetRelease(ctx context.Context, req *proto.GetReleaseRequest) (*proto.Response, error) {
+func (api *API) GetRelease(ctx context.Context, req *proto_api.GetReleaseRequest) (*proto_api.Response, error) {
 
 	release, err := api.getRelease(ctx, req.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Body:   []byte(release.ToJSON()),
 		Status: 200,
 	}, nil

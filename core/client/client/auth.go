@@ -5,7 +5,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -25,8 +25,8 @@ func Login(email, password string) error {
 
 	stopSpinner := util.Spinner("Please wait")
 
-	client := proto.NewAPIClient(conn)
-	resp, err := client.Login(context.Background(), &proto.LoginRequest{
+	client := proto_api.NewAPIClient(conn)
+	resp, err := client.Login(context.Background(), &proto_api.LoginRequest{
 		Email:    email,
 		Password: password,
 	})

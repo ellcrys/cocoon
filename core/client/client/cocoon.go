@@ -15,7 +15,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
@@ -52,10 +52,10 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	defer conn.Close()
 
 	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-	var prCreateCocoonReq proto.CocoonPayloadRequest
+	var prCreateCocoonReq proto_api.CocoonPayloadRequest
 	cstructs.Copy(cocoon, &prCreateCocoonReq)
 	prCreateCocoonReq.ACL = cocoon.ACL.ToJSON()
-	cocoonJSON, err := proto.NewAPIClient(conn).CreateCocoon(ctx, &prCreateCocoonReq)
+	cocoonJSON, err := proto_api.NewAPIClient(conn).CreateCocoon(ctx, &prCreateCocoonReq)
 	if err != nil {
 		stopSpinner()
 		return err
@@ -75,7 +75,7 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 // release. A new release is created when Release fields are
 // set/defined. No release is created if updated release fields match
 // existing fields.
-func UpdateCocoon(id string, upd *proto.CocoonPayloadRequest) error {
+func UpdateCocoon(id string, upd *proto_api.CocoonPayloadRequest) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -93,7 +93,7 @@ func UpdateCocoon(id string, upd *proto.CocoonPayloadRequest) error {
 	ctx := metadata.NewContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
-	cl := proto.NewAPIClient(conn)
+	cl := proto_api.NewAPIClient(conn)
 	resp, err := cl.UpdateCocoon(ctx, upd)
 	if err != nil {
 		if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
@@ -139,7 +139,7 @@ func GetCocoons(ids []string) error {
 
 	var cocoons = []types.Cocoon{}
 	var err error
-	var resp *proto.Response
+	var resp *proto_api.Response
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
@@ -150,8 +150,8 @@ func GetCocoons(ids []string) error {
 		stopSpinner := util.Spinner("Please wait")
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
-		cl := proto.NewAPIClient(conn)
-		resp, err = cl.GetCocoon(ctx, &proto.GetCocoonRequest{
+		cl := proto_api.NewAPIClient(conn)
+		resp, err = cl.GetCocoon(ctx, &proto_api.GetCocoonRequest{
 			ID: id,
 		})
 		if err != nil {
@@ -191,8 +191,8 @@ func deploy(ctx context.Context, cocoonID string, useLastDeployedRelease bool) e
 	}
 	defer conn.Close()
 
-	client := proto.NewAPIClient(conn)
-	resp, err := client.Deploy(ctx, &proto.DeployRequest{
+	client := proto_api.NewAPIClient(conn)
+	resp, err := client.Deploy(ctx, &proto_api.DeployRequest{
 		CocoonID:               cocoonID,
 		UseLastDeployedRelease: useLastDeployedRelease,
 	})
@@ -224,11 +224,11 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
-	client := proto.NewAPIClient(conn)
+	client := proto_api.NewAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	resp, err := client.GetIdentity(ctx, &proto.GetIdentityRequest{
+	resp, err := client.GetIdentity(ctx, &proto_api.GetIdentityRequest{
 		Email: userSession.Email,
 	})
 	if err != nil {
@@ -246,7 +246,7 @@ func ListCocoons(showAll, jsonFormatted bool) error {
 
 		ctx, cancel = context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
-		resp, err = client.GetCocoon(ctx, &proto.GetCocoonRequest{
+		resp, err = client.GetCocoon(ctx, &proto_api.GetCocoonRequest{
 			ID: cid,
 		})
 		if err != nil {
@@ -317,7 +317,7 @@ func StopCocoon(ids []string) error {
 	}
 	defer conn.Close()
 
-	cl := proto.NewAPIClient(conn)
+	cl := proto_api.NewAPIClient(conn)
 	stopSpinner := util.Spinner("Please wait")
 
 	for _, id := range ids {
@@ -325,7 +325,7 @@ func StopCocoon(ids []string) error {
 		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cc()
 		ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
-		_, err = cl.StopCocoon(ctx, &proto.StopCocoonRequest{ID: id})
+		_, err = cl.StopCocoon(ctx, &proto_api.StopCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
 			return err
@@ -433,8 +433,8 @@ func AddSignatories(cocoonID string, ids []string) error {
 
 	ctx := context.Background()
 	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
-	cl := proto.NewAPIClient(conn)
-	resp, err := cl.AddSignatories(ctx, &proto.AddSignatoriesRequest{
+	cl := proto_api.NewAPIClient(conn)
+	resp, err := cl.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
 		CocoonID: cocoonID,
 		IDs:      ids,
 	})
@@ -490,8 +490,8 @@ func RemoveSignatories(cocoonID string, ids []string) error {
 
 	ctx := context.Background()
 	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
-	cl := proto.NewAPIClient(conn)
-	_, err = cl.RemoveSignatories(ctx, &proto.RemoveSignatoriesRequest{
+	cl := proto_api.NewAPIClient(conn)
+	_, err = cl.RemoveSignatories(ctx, &proto_api.RemoveSignatoriesRequest{
 		CocoonID: cocoonID,
 		IDs:      ids,
 	})

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package proto;
+package proto_runtime;
 
 service Stub {
     rpc HealthCheck(Ok) returns (Ok);

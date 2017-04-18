@@ -8,7 +8,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"golang.org/x/crypto/bcrypt"
@@ -62,7 +62,7 @@ func makeAuthToken(id, identity, _type string, exp int64, secret string) (string
 }
 
 // Login authenticates a user and returns a JWT token
-func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Response, error) {
+func (api *API) Login(ctx context.Context, req *proto_api.LoginRequest) (*proto_api.Response, error) {
 
 	identity, err := api.getIdentity(ctx, types.NewIdentity(req.GetEmail(), "").GetID())
 	if err != nil {
@@ -90,7 +90,7 @@ func (api *API) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Resp
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   []byte(ss),
 	}, nil

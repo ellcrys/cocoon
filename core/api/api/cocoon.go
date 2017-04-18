@@ -7,9 +7,9 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
-	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	context "golang.org/x/net/context"
@@ -71,12 +71,12 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 	defer ordererConn.Close()
 
 	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
 				Key:       types.MakeCocoonKey(cocoon.ID),
 				Value:     string(cocoon.ToJSON()),
@@ -90,7 +90,7 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
-func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
+func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
 	var err error
 	var claims jwt.MapClaims
 	var releaseID = util.UUID4()
@@ -132,7 +132,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	cocoon.Firewall = *outputFirewall.DeDup()
 
 	// ensure a similar cocoon does not exist
-	_, err = api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: cocoon.ID})
+	_, err = api.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: cocoon.ID})
 	if err != nil && err != types.ErrCocoonNotFound {
 		return nil, err
 	} else if err == nil {
@@ -162,7 +162,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 	}
 
 	// create new release
-	var releaseReq proto.CreateReleaseRequest
+	var releaseReq proto_api.CreateReleaseRequest
 	cstructs.Copy(cocoon, &releaseReq)
 	releaseReq.ID = releaseID
 	releaseReq.CocoonID = cocoon.ID
@@ -183,7 +183,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
@@ -192,7 +192,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release related fields are
 // changed.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadRequest) (*proto.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
@@ -339,7 +339,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto.CocoonPayloadReques
 
 	value, _ := util.ToJSON(&finalResp)
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   value,
 	}, nil
@@ -354,8 +354,8 @@ func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error)
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeCocoonKey(id),
 		Ledger:   types.GetSystemPublicLedgerName(),
@@ -374,14 +374,14 @@ func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error)
 }
 
 // GetCocoon fetches a cocoon
-func (api *API) GetCocoon(ctx context.Context, req *proto.GetCocoonRequest) (*proto.Response, error) {
+func (api *API) GetCocoon(ctx context.Context, req *proto_api.GetCocoonRequest) (*proto_api.Response, error) {
 
 	cocoon, err := api.getCocoon(ctx, req.GetID())
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
@@ -420,7 +420,7 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 }
 
 // StopCocoon stops a running cocoon and sets its status to `stopped`
-func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*proto.Response, error) {
+func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest) (*proto_api.Response, error) {
 
 	var claims jwt.MapClaims
 	var err error
@@ -452,14 +452,14 @@ func (api *API) StopCocoon(ctx context.Context, req *proto.StopCocoonRequest) (*
 		return nil, fmt.Errorf("failed to update cocoon status")
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   []byte("done"),
 	}, nil
 }
 
 // AddSignatories adds one ore more signatories to a cocoon
-func (api *API) AddSignatories(ctx context.Context, req *proto.AddSignatoriesRequest) (*proto.Response, error) {
+func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatoriesRequest) (*proto_api.Response, error) {
 
 	var added = []string{}
 	var errs = []string{}
@@ -532,14 +532,14 @@ func (api *API) AddSignatories(ctx context.Context, req *proto.AddSignatoriesReq
 		"errs":  errs,
 	})
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   r,
 	}, nil
 }
 
 // AddVote adds a vote to a release where the logged in user is a signatory
-func (api *API) AddVote(ctx context.Context, req *proto.AddVoteRequest) (*proto.Response, error) {
+func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*proto_api.Response, error) {
 
 	var claims jwt.MapClaims
 	var err error
@@ -591,14 +591,14 @@ func (api *API) AddVote(ctx context.Context, req *proto.AddVoteRequest) (*proto.
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   release.ToJSON(),
 	}, nil
 }
 
 // RemoveSignatories removes one or more signatories
-func (api *API) RemoveSignatories(ctx context.Context, req *proto.RemoveSignatoriesRequest) (*proto.Response, error) {
+func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSignatoriesRequest) (*proto_api.Response, error) {
 
 	var claims jwt.MapClaims
 	var err error
@@ -639,13 +639,13 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto.RemoveSignator
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
 }
 
 // FirewallAllow an 'allow' firewall rule to a cocoon
-func (api *API) FirewallAllow(ctx context.Context, req *proto.FirewallAllowRequest) (*proto.Response, error) {
+func (api *API) FirewallAllow(ctx context.Context, req *proto_api.FirewallAllowRequest) (*proto_api.Response, error) {
 	return nil, fmt.Errorf("not implemented")
 }

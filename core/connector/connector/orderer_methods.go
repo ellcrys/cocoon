@@ -7,7 +7,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
@@ -21,8 +21,8 @@ func (cn *Connector) GetCocoon(ctx context.Context, cocoonID string) (*types.Coc
 	}
 	defer ordererConn.Close()
 
-	odc := proto.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &proto.GetParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeCocoonKey(cocoonID),
 		Ledger:   types.GetSystemPublicLedgerName(),
@@ -50,12 +50,12 @@ func (cn *Connector) PutCocoon(ctx context.Context, cocoon *types.Cocoon) error 
 	defer ordererConn.Close()
 
 	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
-	odc := proto.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &proto.PutTransactionParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*proto.Transaction{
-			&proto.Transaction{
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
 				Key:       types.MakeCocoonKey(cocoon.ID),
 				Value:     string(cocoon.ToJSON()),

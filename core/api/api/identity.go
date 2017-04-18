@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
-	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	"golang.org/x/crypto/bcrypt"
@@ -30,12 +30,12 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 
 	identity.Password = ""
 	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
 				Key:       types.MakeIdentityKey(identity.GetID()),
 				Value:     string(identity.ToJSON()),
@@ -45,11 +45,11 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 	})
 
 	// save identity password alone in the system private ledger
-	_, err = odc.Put(ctx, &orderer_proto.PutTransactionParams{
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPrivateLedgerName(),
-		Transactions: []*orderer_proto.Transaction{
-			&orderer_proto.Transaction{
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
 				Key:       types.MakeIdentityKey(identity.GetID()),
 				Value:     password,
@@ -63,7 +63,7 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 
 // CreateIdentity creates a new identity. It returns error if identity
 // already exists.
-func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityRequest) (*proto.Response, error) {
+func (api *API) CreateIdentity(ctx context.Context, req *proto_api.CreateIdentityRequest) (*proto_api.Response, error) {
 
 	var identity types.Identity
 	identity.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
@@ -96,7 +96,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto.CreateIdentityReq
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   identity.ToJSON(),
 	}, nil
@@ -114,8 +114,8 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeIdentityKey(id),
 		Ledger:   types.GetSystemPublicLedgerName(),
@@ -128,7 +128,7 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 		return nil, err
 	}
 
-	passwordTx, err := odc.Get(ctx, &orderer_proto.GetParams{
+	passwordTx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
 		Key:      types.MakeIdentityKey(id),
 		Ledger:   types.GetSystemPrivateLedgerName(),
@@ -150,7 +150,7 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 // GetIdentity fetches an identity by email or id. If Email field is set in the request,
 // it will find the identity by the email (converts the email to an identity key format) or if
 // ID field is set, it finds the identity by the id directly.
-func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) (*proto.Response, error) {
+func (api *API) GetIdentity(ctx context.Context, req *proto_api.GetIdentityRequest) (*proto_api.Response, error) {
 
 	var key = req.ID
 	if len(req.Email) > 0 {
@@ -162,7 +162,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto.GetIdentityRequest) 
 		return nil, err
 	}
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   identity.ToJSON(),
 	}, nil

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package connector_proto;
+package proto_connector;
 
 service Connector {
     rpc Transact(Request) returns (Response);

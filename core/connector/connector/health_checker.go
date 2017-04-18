@@ -3,7 +3,8 @@ package connector
 import (
 	"time"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -56,9 +57,9 @@ func (hc *HealthChecker) check() error {
 		return err
 	}
 
-	stub := proto.NewStubClient(client)
+	stub := proto_runtime.NewStubClient(client)
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = stub.HealthCheck(ctx, &proto.Ok{})
+	_, err = stub.HealthCheck(ctx, &proto_runtime.Ok{})
 	if err != nil {
 		return err
 	}

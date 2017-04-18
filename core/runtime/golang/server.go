@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"golang.org/x/net/context"
 )
 
@@ -14,17 +14,17 @@ type stubServer struct {
 }
 
 // HealthCheck returns health status
-func (server *stubServer) HealthCheck(context.Context, *proto.Ok) (*proto.Ok, error) {
-	return &proto.Ok{
+func (server *stubServer) HealthCheck(context.Context, *proto_runtime.Ok) (*proto_runtime.Ok, error) {
+	return &proto_runtime.Ok{
 		Status: 200,
 	}, nil
 }
 
 // Invoke invokes a function on the running cocoon code
-func (server *stubServer) Invoke(ctx context.Context, params *proto.InvokeParam) (*proto.InvokeResponse, error) {
+func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.InvokeParam) (*proto_runtime.InvokeResponse, error) {
 
 	var err error
-	var resp = &proto.InvokeResponse{
+	var resp = &proto_runtime.InvokeResponse{
 		ID: params.GetID(),
 	}
 

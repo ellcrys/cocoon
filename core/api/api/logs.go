@@ -7,12 +7,12 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/types"
 )
 
 // GetLogs fetches logs
-func (api *API) GetLogs(ctx context.Context, req *proto.GetLogsRequest) (*proto.Response, error) {
+func (api *API) GetLogs(ctx context.Context, req *proto_api.GetLogsRequest) (*proto_api.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
@@ -40,7 +40,7 @@ func (api *API) GetLogs(ctx context.Context, req *proto.GetLogsRequest) (*proto.
 
 	messagesBytes, _ := util.ToJSON(messages)
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   messagesBytes,
 	}, nil

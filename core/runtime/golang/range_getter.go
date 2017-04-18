@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -50,7 +50,7 @@ func NewRangeGetter(ledgerName, to, start, end string, inclusive bool) *RangeGet
 // fetch transactions
 func (rg *RangeGetter) fetch() error {
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxRangeGet,
 		LinkTo: rg.to,

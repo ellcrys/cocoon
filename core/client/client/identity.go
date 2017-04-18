@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
@@ -33,9 +33,9 @@ func CreateIdentity(email string) error {
 
 	stopSpinner := util.Spinner("Please wait")
 
-	client := proto.NewAPIClient(conn)
+	client := proto_api.NewAPIClient(conn)
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
-	resp, err := client.GetIdentity(ctx, &proto.GetIdentityRequest{
+	resp, err := client.GetIdentity(ctx, &proto_api.GetIdentityRequest{
 		Email: email,
 	})
 
@@ -73,7 +73,7 @@ func CreateIdentity(email string) error {
 	}
 
 	stopSpinner = util.Spinner("Please wait")
-	resp, err = client.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+	resp, err = client.CreateIdentity(context.Background(), &proto_api.CreateIdentityRequest{
 		Email:    email,
 		Password: string(password),
 	})

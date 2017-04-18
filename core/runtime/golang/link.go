@@ -6,7 +6,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -76,7 +76,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 		return nil, types.ErrInvalidResourceName
 	}
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxCreateLedger,
 		LinkTo: link.GetCocoonID(),
@@ -98,7 +98,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 // GetLedger fetches a ledger
 func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxGetLedger,
 		LinkTo: link.GetCocoonID(),
@@ -166,7 +166,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	}
 
 	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
-	_, err = sendLedgerOp(&connector_proto.LedgerOperation{
+	_, err = sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
 		LinkTo: link.GetCocoonID(),
@@ -194,7 +194,7 @@ func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
 // GetFrom returns a transaction by its key and the ledger it belongs to
 func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxGet,
 		LinkTo: link.GetCocoonID(),
@@ -228,7 +228,7 @@ func (link *Link) Get(key string) (*types.Transaction, error) {
 // GetByIDFrom returns a transaction by its id and the ledger it belongs to
 func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxGetByID,
 		LinkTo: link.GetCocoonID(),
@@ -262,7 +262,7 @@ func (link *Link) GetByID(id string) (*types.Transaction, error) {
 // GetBlockFrom returns a block from a ledger by its block id
 func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxGetBlockByID,
 		LinkTo: link.GetCocoonID(),

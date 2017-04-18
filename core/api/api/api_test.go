@@ -13,7 +13,7 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
@@ -89,7 +89,7 @@ func TestOrderer(t *testing.T) {
 							Password: "somepassword",
 						}
 
-						i, err := api.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+						i, err := api.CreateIdentity(context.Background(), &proto_api.CreateIdentityRequest{
 							Email:    identity.Email,
 							Password: identity.Password,
 						})
@@ -97,7 +97,7 @@ func TestOrderer(t *testing.T) {
 						So(i.Status, ShouldEqual, 200)
 
 						Convey("Should return error if identity with same credentials already exists", func() {
-							i, err := api.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+							i, err := api.CreateIdentity(context.Background(), &proto_api.CreateIdentityRequest{
 								Email:    identity.Email,
 								Password: identity.Password,
 							})
@@ -117,7 +117,7 @@ func TestOrderer(t *testing.T) {
 							Convey("Should successfully create a cocoon", func() {
 
 								id := util.UUID4()
-								r, err := api.CreateCocoon(ctx, &proto.CocoonPayloadRequest{
+								r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
 									ID:             id,
 									URL:            "https://github.com/ncodes/cocoon-example-01",
 									Language:       "go",
@@ -131,7 +131,7 @@ func TestOrderer(t *testing.T) {
 								So(len(r.Body), ShouldNotEqual, 0)
 
 								Convey("Should fail to create cocoon with an already used id", func() {
-									r, err := api.CreateCocoon(ctx, &proto.CocoonPayloadRequest{
+									r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
 										ID:             id,
 										URL:            "https://github.com/ncodes/cocoon-example-01",
 										Language:       "go",
@@ -147,7 +147,7 @@ func TestOrderer(t *testing.T) {
 
 								Convey(".GetCocoon", func() {
 									Convey("Should successfully get an existing cocoon by id", func() {
-										c, err := api.GetCocoon(context.Background(), &proto.GetCocoonRequest{
+										c, err := api.GetCocoon(context.Background(), &proto_api.GetCocoonRequest{
 											ID: id,
 										})
 										So(err, ShouldBeNil)
@@ -155,7 +155,7 @@ func TestOrderer(t *testing.T) {
 									})
 
 									Convey("Should return error if cocoon does not exists", func() {
-										_, err = api.GetCocoon(context.Background(), &proto.GetCocoonRequest{
+										_, err = api.GetCocoon(context.Background(), &proto_api.GetCocoonRequest{
 											ID: "unknown",
 										})
 										So(err, ShouldNotBeNil)
@@ -169,7 +169,7 @@ func TestOrderer(t *testing.T) {
 
 							Convey("Should successfully create a release", func() {
 								id := util.UUID4()
-								r, err := api.CreateRelease(context.Background(), &proto.CreateReleaseRequest{
+								r, err := api.CreateRelease(context.Background(), &proto_api.CreateReleaseRequest{
 									ID:       id,
 									CocoonID: "cocoon-123",
 									URL:      "https://github.com/ncodes/cocoon-example-01",
@@ -180,7 +180,7 @@ func TestOrderer(t *testing.T) {
 								So(len(r.Body), ShouldNotEqual, 0)
 
 								Convey("Should fail to create release with an already used id", func() {
-									r, err := api.CreateRelease(context.Background(), &proto.CreateReleaseRequest{
+									r, err := api.CreateRelease(context.Background(), &proto_api.CreateReleaseRequest{
 										ID:       id,
 										CocoonID: "cocoon-123",
 										URL:      "https://github.com/ncodes/cocoon-example-01",
@@ -193,7 +193,7 @@ func TestOrderer(t *testing.T) {
 
 								Convey(".GetRelease", func() {
 									Convey("Should successfully get an existing release", func() {
-										r, err := api.GetRelease(context.Background(), &proto.GetReleaseRequest{
+										r, err := api.GetRelease(context.Background(), &proto_api.GetReleaseRequest{
 											ID: id,
 										})
 										So(err, ShouldBeNil)
@@ -202,7 +202,7 @@ func TestOrderer(t *testing.T) {
 									})
 
 									Convey("Should return error if release is not found", func() {
-										r, err := api.GetRelease(context.Background(), &proto.GetReleaseRequest{
+										r, err := api.GetRelease(context.Background(), &proto_api.GetReleaseRequest{
 											ID: id,
 										})
 										So(err, ShouldBeNil)
@@ -218,7 +218,7 @@ func TestOrderer(t *testing.T) {
 				Convey(".GetIdentity", func() {
 
 					identity := types.Identity{Email: util.RandString(5) + "@example.com"}
-					i, err := api.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+					i, err := api.CreateIdentity(context.Background(), &proto_api.CreateIdentityRequest{
 						Email:    identity.Email,
 						Password: "somepassword",
 					})
@@ -226,7 +226,7 @@ func TestOrderer(t *testing.T) {
 					So(i.Status, ShouldEqual, 200)
 
 					Convey("Should successfully get an existing identity by email", func() {
-						i, err := api.GetIdentity(context.Background(), &proto.GetIdentityRequest{
+						i, err := api.GetIdentity(context.Background(), &proto_api.GetIdentityRequest{
 							Email: identity.Email,
 						})
 						So(err, ShouldBeNil)
@@ -235,7 +235,7 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should successfully get an existing identity by ID", func() {
-						i, err := api.GetIdentity(context.Background(), &proto.GetIdentityRequest{
+						i, err := api.GetIdentity(context.Background(), &proto_api.GetIdentityRequest{
 							ID: identity.GetID(),
 						})
 						So(err, ShouldBeNil)
@@ -246,7 +246,7 @@ func TestOrderer(t *testing.T) {
 
 				Convey(".Login", func() {
 					email := util.RandString(5) + "@example.com"
-					i, err := api.CreateIdentity(context.Background(), &proto.CreateIdentityRequest{
+					i, err := api.CreateIdentity(context.Background(), &proto_api.CreateIdentityRequest{
 						Email:    email,
 						Password: "somepassword",
 					})
@@ -254,7 +254,7 @@ func TestOrderer(t *testing.T) {
 					So(i.Status, ShouldEqual, 200)
 
 					Convey("Should successfully authenticate an identity", func() {
-						r, err := api.Login(context.Background(), &proto.LoginRequest{
+						r, err := api.Login(context.Background(), &proto_api.LoginRequest{
 							Email:    email,
 							Password: "somepassword",
 						})
@@ -263,7 +263,7 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should return error if identity email is invalid", func() {
-						r, err := api.Login(context.Background(), &proto.LoginRequest{
+						r, err := api.Login(context.Background(), &proto_api.LoginRequest{
 							Email:    "invalid@example.com",
 							Password: "somepassword",
 						})
@@ -273,7 +273,7 @@ func TestOrderer(t *testing.T) {
 					})
 
 					Convey("Should return error if identity password is invalid", func() {
-						r, err := api.Login(context.Background(), &proto.LoginRequest{
+						r, err := api.Login(context.Background(), &proto_api.LoginRequest{
 							Email:    email,
 							Password: "somewrongpassword",
 						})

@@ -6,7 +6,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
@@ -14,7 +14,7 @@ import (
 // Deploy instructs the scheduler to start a cocoon. The latest release is
 // fetched and validated to ensure it has enough votes. If the required votes
 // are available, the cocoon is updated with the release value and also executed.
-func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Response, error) {
+func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*proto_api.Response, error) {
 
 	apiLog.Infof("New deploy request for cocoon = [%s]", req.CocoonID)
 
@@ -25,7 +25,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	resp, err := api.GetCocoon(ctx, &proto.GetCocoonRequest{ID: req.GetCocoonID()})
+	resp, err := api.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: req.GetCocoonID()})
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		return nil, fmt.Errorf("No release to run")
 	}
 
-	protoReleaseReq := &proto.GetReleaseRequest{
+	protoReleaseReq := &proto_api.GetReleaseRequest{
 		ID: cocoon.Releases[len(cocoon.Releases)-1],
 	}
 
@@ -124,7 +124,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 		// to delete (stop it - according to nomad).
 		if status == CocoonStatusDead {
 			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
-			_, err = api.StopCocoon(ctx, &proto.StopCocoonRequest{ID: cocoon.ID})
+			_, err = api.StopCocoon(ctx, &proto_api.StopCocoonRequest{ID: cocoon.ID})
 			if err != nil {
 				return fmt.Errorf("failed to stop dead cocoon: %s", err)
 			}
@@ -144,7 +144,7 @@ func (api *API) Deploy(ctx context.Context, req *proto.DeployRequest) (*proto.Re
 
 	apiLog.Infof("Successfully deployed cocoon code %s", depInfo.ID)
 
-	return &proto.Response{
+	return &proto_api.Response{
 		Status: 200,
 		Body:   []byte(depInfo.ID),
 	}, nil

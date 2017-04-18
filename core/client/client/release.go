@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	"google.golang.org/grpc"
@@ -41,7 +41,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	}
 	defer conn.Close()
 
-	client := proto.NewAPIClient(conn)
+	client := proto_api.NewAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 	ctx = metadata.NewContext(ctx, metadata.Pairs("access_token", userSession.Token))
@@ -49,7 +49,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	// if id is a cocoon id, get the cocoon's most recent release
 	if isCocoonID {
 
-		resp, err := client.GetCocoon(ctx, &proto.GetCocoonRequest{ID: id})
+		resp, err := client.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
@@ -83,7 +83,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 
 	stopSpinner = util.Spinner("Please wait")
 
-	_, err = client.AddVote(ctx, &proto.AddVoteRequest{
+	_, err = client.AddVote(ctx, &proto_api.AddVoteRequest{
 		ReleaseID: releaseID,
 		Vote:      vote,
 	})
@@ -120,7 +120,7 @@ func GetReleases(ids []string) error {
 
 	var releases []types.Release
 	var err error
-	var resp *proto.Response
+	var resp *proto_api.Response
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
@@ -131,8 +131,8 @@ func GetReleases(ids []string) error {
 		stopSpinner := util.Spinner("Please wait")
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
-		cl := proto.NewAPIClient(conn)
-		resp, err = cl.GetRelease(ctx, &proto.GetReleaseRequest{
+		cl := proto_api.NewAPIClient(conn)
+		resp, err = cl.GetRelease(ctx, &proto_api.GetReleaseRequest{
 			ID: id,
 		})
 		if err != nil {

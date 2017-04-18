@@ -13,9 +13,9 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/runtime/golang/config"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -117,7 +117,7 @@ func Run(cc CocoonCode) {
 
 	log.Infof("Started stub service at port=%s", bindPort)
 	server := grpc.NewServer()
-	proto.RegisterStubServer(server, defaultServer)
+	proto_runtime.RegisterStubServer(server, defaultServer)
 	go startServer(server, lis)
 
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
@@ -171,7 +171,7 @@ func blockCommitter(entries []*Entry) interface{} {
 
 	ledgerName := entries[0].Tx.Ledger
 	txsJSON, _ := util.ToJSON(txs)
-	result, err := sendLedgerOp(&connector_proto.LedgerOperation{
+	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
 		LinkTo: entries[0].LinkTo,
@@ -192,7 +192,7 @@ func blockCommitter(entries []*Entry) interface{} {
 
 // sendLedgerOp sends a ledger transaction to the
 // connector.
-func sendLedgerOp(op *connector_proto.LedgerOperation) ([]byte, error) {
+func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 
 	client, err := grpc.Dial(connectorRPCAddr, grpc.WithInsecure())
 	if err != nil {
@@ -200,10 +200,10 @@ func sendLedgerOp(op *connector_proto.LedgerOperation) ([]byte, error) {
 	}
 	defer client.Close()
 
-	ccClient := connector_proto.NewConnectorClient(client)
+	ccClient := proto_connector.NewConnectorClient(client)
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	resp, err := ccClient.Transact(ctx, &connector_proto.Request{
-		OpType:   connector_proto.OpType_LedgerOp,
+	resp, err := ccClient.Transact(ctx, &proto_connector.Request{
+		OpType:   proto_connector.OpType_LedgerOp,
 		LedgerOp: op,
 	})
 

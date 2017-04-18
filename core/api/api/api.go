@@ -8,7 +8,7 @@ import (
 
 	"os"
 
-	"github.com/ncodes/cocoon/core/api/api/proto"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
@@ -63,7 +63,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 	})
 
 	api.server = grpc.NewServer()
-	proto.RegisterAPIServer(api.server, api)
+	proto_api.RegisterAPIServer(api.server, api)
 	api.server.Serve(lis)
 }
 

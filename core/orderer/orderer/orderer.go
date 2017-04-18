@@ -12,7 +12,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	logging "github.com/op/go-logging"
@@ -107,7 +107,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 	})
 
 	od.server = grpc.NewServer()
-	proto.RegisterOrdererServer(od.server, od)
+	proto_orderer.RegisterOrdererServer(od.server, od)
 	od.server.Serve(lis)
 }
 
@@ -132,7 +132,7 @@ func (od *Orderer) SetBlockchain(b types.Blockchain) {
 }
 
 // CreateLedger creates a new ledger
-func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerParams) (*proto.Ledger, error) {
+func (od *Orderer) CreateLedger(ctx context.Context, params *proto_orderer.CreateLedgerParams) (*proto_orderer.Ledger, error) {
 
 	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
 	ledger, err := od.store.CreateLedger(internalName, params.GetChained(), params.GetPublic())
@@ -143,14 +143,14 @@ func (od *Orderer) CreateLedger(ctx context.Context, params *proto.CreateLedgerP
 	ledger.Name = params.GetName()
 	ledger.NameInternal = internalName
 
-	var protoLedger proto.Ledger
+	var protoLedger proto_orderer.Ledger
 	cstructs.Copy(ledger, &protoLedger)
 
 	return &protoLedger, nil
 }
 
 // GetLedger returns a ledger
-func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams) (*proto.Ledger, error) {
+func (od *Orderer) GetLedger(ctx context.Context, params *proto_orderer.GetLedgerParams) (*proto_orderer.Ledger, error) {
 
 	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
 	ledger, err := od.store.GetLedger(internalName)
@@ -163,14 +163,14 @@ func (od *Orderer) GetLedger(ctx context.Context, params *proto.GetLedgerParams)
 	ledger.Name = params.GetName()
 	ledger.NameInternal = internalName
 
-	var protoLedger proto.Ledger
+	var protoLedger proto_orderer.Ledger
 	cstructs.Copy(ledger, &protoLedger)
 
 	return &protoLedger, nil
 }
 
 // Put creates a new transaction
-func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) (*proto.PutResult, error) {
+func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransactionParams) (*proto_orderer.PutResult, error) {
 
 	start := time.Now()
 
@@ -183,7 +183,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		return nil, types.ErrLedgerNotFound
 	}
 
-	// copy individual tx from []proto.Transaction to []types.Transaction
+	// copy individual tx from []proto_orderer.Transaction to []types.Transaction
 	// and set transactions key and block id
 	blockID := util.Sha256(util.UUID4())
 	var transactions = make([]*types.Transaction, len(params.GetTransactions()))
@@ -197,10 +197,10 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 		}
 	}
 
-	var block *proto.Block
+	var block *proto_orderer.Block
 	var createBlockFunc func() error
 	if ledger.Chained {
-		block = &proto.Block{}
+		block = &proto_orderer.Block{}
 
 		createBlockFunc = func() error {
 			var err error
@@ -238,17 +238,17 @@ func (od *Orderer) Put(ctx context.Context, params *proto.PutTransactionParams) 
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
 
-	return &proto.PutResult{
+	return &proto_orderer.PutResult{
 		Added: int32(len(transactions)),
 		Block: block,
 	}, nil
 }
 
 // Get returns a transaction with a matching key
-func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
+func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*proto_orderer.Transaction, error) {
 
 	start := time.Now()
-	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
 	})
@@ -281,7 +281,7 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 		tx.BlockID = ""
 	}
 
-	var protoTx proto.Transaction
+	var protoTx proto_orderer.Transaction
 	cstructs.Copy(tx, &protoTx)
 
 	log.Debug("Get(): Time taken: ", time.Since(start))
@@ -290,9 +290,9 @@ func (od *Orderer) Get(ctx context.Context, params *proto.GetParams) (*proto.Tra
 }
 
 // GetByID finds and returns a transaction with a matching id
-func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto.Transaction, error) {
+func (od *Orderer) GetByID(ctx context.Context, params *proto_orderer.GetParams) (*proto_orderer.Transaction, error) {
 
-	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
 	})
@@ -324,16 +324,16 @@ func (od *Orderer) GetByID(ctx context.Context, params *proto.GetParams) (*proto
 		tx.BlockID = ""
 	}
 
-	var protoTx proto.Transaction
+	var protoTx proto_orderer.Transaction
 	cstructs.Copy(tx, &protoTx)
 
 	return &protoTx, nil
 }
 
 // GetBlockByID returns a block by its id and chain/ledger name
-func (od *Orderer) GetBlockByID(ctx context.Context, params *proto.GetBlockParams) (*proto.Block, error) {
+func (od *Orderer) GetBlockByID(ctx context.Context, params *proto_orderer.GetBlockParams) (*proto_orderer.Block, error) {
 
-	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
 	})
@@ -348,16 +348,16 @@ func (od *Orderer) GetBlockByID(ctx context.Context, params *proto.GetBlockParam
 		return nil, types.ErrBlockNotFound
 	}
 
-	var protoBlk proto.Block
+	var protoBlk proto_orderer.Block
 	cstructs.Copy(blk, &protoBlk)
 
 	return &protoBlk, nil
 }
 
 // GetRange fetches transactions between a range of keys
-func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (*proto.Transactions, error) {
+func (od *Orderer) GetRange(ctx context.Context, params *proto_orderer.GetRangeParams) (*proto_orderer.Transactions, error) {
 
-	ledger, err := od.GetLedger(ctx, &proto.GetLedgerParams{
+	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
 		CocoonID: params.GetCocoonID(),
 		Name:     params.GetLedger(),
 	})
@@ -382,8 +382,8 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 		return nil, err
 	}
 
-	// fetch transaction blocks and copy individual tx from []types.Transaction to []proto.Transaction
-	var protoTxs = make([]*proto.Transaction, len(txs))
+	// fetch transaction blocks and copy individual tx from []types.Transaction to []proto_orderer.Transaction
+	var protoTxs = make([]*proto_orderer.Transaction, len(txs))
 	for i, tx := range txs {
 
 		if ledger.Chained {
@@ -402,12 +402,12 @@ func (od *Orderer) GetRange(ctx context.Context, params *proto.GetRangeParams) (
 		tx.Key = types.GetActualKeyFromTxKey(tx.Key)
 		tx.LedgerInternal = tx.Ledger
 		tx.Ledger = params.GetLedger()
-		var protoTx = proto.Transaction{}
+		var protoTx = proto_orderer.Transaction{}
 		cstructs.Copy(tx, &protoTx)
 		protoTxs[i] = &protoTx
 	}
 
-	return &proto.Transactions{
+	return &proto_orderer.Transactions{
 		Transactions: protoTxs,
 	}, nil
 }
