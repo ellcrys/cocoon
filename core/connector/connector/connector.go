@@ -391,7 +391,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 	// construct fetch script
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
 	fetchScript := `
-	    iptables -F
+	    iptables -F &&
 		rm -rf ` + downloadDst + ` &&			
 		mkdir -p ` + downloadDst + ` &&
 		printf "Downloading source from remote url to download destination\n" &&
