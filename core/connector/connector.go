@@ -589,7 +589,7 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
-			log.Info("Building cocoon code...")
+			log.Info("Building cocoon code")
 			cn.setStatus(api.CocoonStatusBuilding)
 		case "end":
 			if exitCode.(int) == 0 {
