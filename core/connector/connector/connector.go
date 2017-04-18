@@ -398,7 +398,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		printf "Unpacking downloaded source to download destination\n" &&
 		tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null &&
 		rm -rf ` + filePath + ` &&
-		cd ` + downloadDst + ` &&
+		cd ` + downloadDst + `
 	`
 
 	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
@@ -414,8 +414,6 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		}
 		return nil
 	})
-
-	return nil
 }
 
 // getContainer returns a container with a
