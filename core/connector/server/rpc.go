@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/connector"
+	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/connector/server/handlers"
 	logging "github.com/op/go-logging"

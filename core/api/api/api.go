@@ -10,7 +10,7 @@ import (
 
 	"github.com/ncodes/cocoon/core/api/api/proto"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/orderer"
+	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	"google.golang.org/grpc"

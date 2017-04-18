@@ -21,7 +21,7 @@ func TestValidation(t *testing.T) {
 					ID: "some id",
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "id is not a valid uuid")
+				So(err.Error(), ShouldEqual, "id is not a valid resource name")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID: util.UUID4(),

@@ -10,7 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/connector"
+	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/spf13/cobra"
@@ -75,11 +75,11 @@ func onTerminate(f func(s os.Signal)) {
 	}()
 }
 
-// connectorCmd represents the connector command
-var connectorCmd = &cobra.Command{
-	Use:   "connector",
-	Short: "Start the connector",
-	Long:  `Starts the connector and launches a cocoon code.`,
+// startCmd represents the connector command
+var startCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Starts the connector and launch a cocoon code",
+	Long:  `Starts the connector and launch a cocoon code`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		waitCh := make(chan bool, 1)
@@ -126,5 +126,5 @@ var connectorCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(connectorCmd)
+	RootCmd.AddCommand(startCmd)
 }

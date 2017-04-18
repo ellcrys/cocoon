@@ -42,7 +42,7 @@ func (api *API) authenticateToken(tokenStr string) (jwt.MapClaims, error) {
 
 // checkCtxAccessToken authenticates the access token in the context
 func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) {
-	md, _ := metadata.FromContext(ctx)
+	md, _ := metadata.FromOutgoingContext(ctx)
 	accessTokens := md["access_token"]
 	if accessTokens == nil {
 		return nil, fmt.Errorf("access token is required")
