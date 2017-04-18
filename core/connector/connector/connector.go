@@ -402,7 +402,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		mkdir -p ` + lang.GetSourceRootDir() + ` &&
 		printf "Moving source to new source root directory\n" &&
 		mv ` + downloadDst + ` ` + lang.GetSourceRootDir() + ` &&
-		ls ` + lang.GetSourceRootDir() + `
+		ls ` + lang.GetSourceRootDir() + `/cocoon-example-01
 	`
 
 	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
