@@ -192,12 +192,6 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 		return nil, err
 	}
 
-	return container, nil
-
-	// if err = cn.copySourceToContainer(lang, container); err != nil {
-	// 	return nil, err
-	// }
-
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
 
@@ -392,17 +386,19 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 
 	// determine download directory
 	downloadDst = lang.GetDownloadDestination()
-	log.Infof("Downloading cocoon repository with version=%s, dst=%s", versionStr, downloadDst)
+	log.Infof("Downloading cocoon repository with version=%s", versionStr)
 
 	// construct fetch script
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
 	fetchScript := `
 		rm -rf ` + downloadDst + ` &&			
 		mkdir -p ` + downloadDst + ` &&
-		wget ` + repoTarURL + ` -O ` + filePath + ` &&
-		tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &&
+		printf "Downloading source from remote url\n" &&
+		wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null &&
+		printf "Unpacking downloaded source to download destination\n" &&
+		tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null &&
+		rm -rf ` + filePath + ` &&
 		cd ` + downloadDst + ` &&
-		ls
 	`
 
 	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
@@ -410,25 +406,14 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		switch state {
 		case "end":
 			if exitCode.(int) == 0 {
-				log.Info("Fetch succeeded!")
+				fetchLog.Info("Fetch succeeded!")
+				fetchLog.Infof("Successfully unpacked cocoon code")
 			} else {
 				return fmt.Errorf("Fetch has failed with exit code=%d", exitCode.(int))
 			}
 		}
 		return nil
 	})
-
-	// // unpack tarball
-	// cmd := "tar"
-	// args := []string{"-xf", filePath, "-C", downloadDst, "--strip-components", "1"}
-	// if err = exec.Command(cmd, args...).Run(); err != nil {
-	// 	return "", fmt.Errorf("Failed to unpack cocoon code repo tarball. %s", err)
-	// }
-
-	// log.Infof("Successfully unpacked cocoon code to %s", downloadDst)
-
-	// os.Remove(filePath)
-	// log.Info("Deleted the cocoon code tarball")
 
 	return nil
 }
