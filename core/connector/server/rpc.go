@@ -7,8 +7,8 @@ import (
 
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
 	"github.com/ncodes/cocoon/core/connector/server/handlers"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -57,7 +57,7 @@ func (rpc *RPCServer) Start(addr string, startedCh chan bool) {
 	})
 
 	rpc.server = grpc.NewServer()
-	connector_proto.RegisterConnectorServer(rpc.server, rpc)
+	proto_connector.RegisterConnectorServer(rpc.server, rpc)
 	rpc.server.Serve(lis)
 	rpc.Stop(1)
 }
@@ -71,11 +71,11 @@ func (rpc *RPCServer) Stop(exitCode int) int {
 }
 
 // Transact handles cocoon code or ledger bound transactions.
-func (rpc *RPCServer) Transact(ctx context.Context, req *connector_proto.Request) (*connector_proto.Response, error) {
+func (rpc *RPCServer) Transact(ctx context.Context, req *proto_connector.Request) (*proto_connector.Response, error) {
 	switch req.OpType {
-	case connector_proto.OpType_LedgerOp:
+	case proto_connector.OpType_LedgerOp:
 		return rpc.ledgerOps.Handle(ctx, req.LedgerOp)
-	case connector_proto.OpType_CocoonCodeOp:
+	case proto_connector.OpType_CocoonCodeOp:
 		return rpc.cocoonCodeOps.Handle(ctx, req.CocoonCodeOp)
 	default:
 		return nil, fmt.Errorf("unsupported operation type")

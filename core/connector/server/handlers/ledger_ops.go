@@ -8,9 +8,9 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/server/acl"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
-	orderer_proto "github.com/ncodes/cocoon/core/orderer/proto"
+	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
@@ -36,7 +36,7 @@ func NewLedgerOperationHandler(log *logging.Logger, connector *connector.Connect
 
 // checkACL checks the operation against the ACL rules of the access cocoon
 // that owns the ledger being accessed.
-func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.LedgerOperation) error {
+func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.LedgerOperation) error {
 
 	ledgerName := op.GetParams()[0]
 
@@ -103,7 +103,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *connector_proto.Led
 }
 
 // Handle handles all types of ledger operations
-func (l *LedgerOperations) Handle(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) Handle(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	if err := l.checkACL(ctx, op); err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (l *LedgerOperations) Handle(ctx context.Context, op *connector_proto.Ledge
 
 // createLedger sends a request to the orderer
 // to create a new ledger.
-func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) createLedger(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
@@ -148,8 +148,8 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	result, err := odc.CreateLedger(ctx, &orderer_proto.CreateLedgerParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	result, err := odc.CreateLedger(ctx, &proto_orderer.CreateLedgerParams{
 		CocoonID: cocoonID,
 		Name:     op.GetParams()[0],
 		Chained:  op.GetParams()[1] == "true",
@@ -162,7 +162,7 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 
 	body, _ := util.ToJSON(result)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,
@@ -170,7 +170,7 @@ func (l *LedgerOperations) createLedger(ctx context.Context, op *connector_proto
 }
 
 // _getLedger fetches a ledger
-func (l *LedgerOperations) _getLedger(ctx context.Context, cocoonID, ledgerName string) (*orderer_proto.Ledger, error) {
+func (l *LedgerOperations) _getLedger(ctx context.Context, cocoonID, ledgerName string) (*proto_orderer.Ledger, error) {
 
 	ordererConn, err := l.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -178,8 +178,8 @@ func (l *LedgerOperations) _getLedger(ctx context.Context, cocoonID, ledgerName 
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	result, err := odc.GetLedger(ctx, &orderer_proto.GetLedgerParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	result, err := odc.GetLedger(ctx, &proto_orderer.GetLedgerParams{
 		Name:     ledgerName,
 		CocoonID: cocoonID,
 	})
@@ -191,7 +191,7 @@ func (l *LedgerOperations) _getLedger(ctx context.Context, cocoonID, ledgerName 
 }
 
 // getLedger fetches a ledger
-func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) getLedger(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
@@ -205,7 +205,7 @@ func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.Le
 
 	body, _ := util.ToJSON(ledger)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,
@@ -213,7 +213,7 @@ func (l *LedgerOperations) getLedger(ctx context.Context, op *connector_proto.Le
 }
 
 // put adds a new transaction to a ledger
-func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) put(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
@@ -230,7 +230,7 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 	}
 	defer ordererConn.Close()
 
-	var txs []*orderer_proto.Transaction
+	var txs []*proto_orderer.Transaction
 	err = util.FromJSON(op.GetBody(), &txs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coerce transaction from bytes to order_proto.Transaction")
@@ -243,8 +243,8 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 		}
 	}
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	result, err := odc.Put(ctx, &orderer_proto.PutTransactionParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	result, err := odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:     cocoonID,
 		LedgerName:   op.GetParams()[0],
 		Transactions: txs,
@@ -256,7 +256,7 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 
 	body, _ := util.ToJSON(result.Block)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,
@@ -265,9 +265,9 @@ func (l *LedgerOperations) put(ctx context.Context, op *connector_proto.LedgerOp
 
 // get gets a transaction by its key.
 // If byID is set, it will find the transaction by id specified in tx.Id.
-func (l *LedgerOperations) get(ctx context.Context, op *connector_proto.LedgerOperation, byID bool) (*connector_proto.Response, error) {
+func (l *LedgerOperations) get(ctx context.Context, op *proto_connector.LedgerOperation, byID bool) (*proto_connector.Response, error) {
 
-	var result *orderer_proto.Transaction
+	var result *proto_orderer.Transaction
 	var err error
 
 	var cocoonID = l.CocoonID
@@ -281,16 +281,16 @@ func (l *LedgerOperations) get(ctx context.Context, op *connector_proto.LedgerOp
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
+	odc := proto_orderer.NewOrdererClient(ordererConn)
 
 	if !byID {
-		result, err = odc.Get(ctx, &orderer_proto.GetParams{
+		result, err = odc.Get(ctx, &proto_orderer.GetParams{
 			CocoonID: cocoonID,
 			Ledger:   op.GetParams()[0],
 			Key:      op.GetParams()[1],
 		})
 	} else {
-		result, err = odc.GetByID(ctx, &orderer_proto.GetParams{
+		result, err = odc.GetByID(ctx, &proto_orderer.GetParams{
 			CocoonID: cocoonID,
 			Ledger:   op.GetParams()[0],
 			Id:       op.GetParams()[1],
@@ -303,7 +303,7 @@ func (l *LedgerOperations) get(ctx context.Context, op *connector_proto.LedgerOp
 
 	body, _ := util.ToJSON(result)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,
@@ -311,7 +311,7 @@ func (l *LedgerOperations) get(ctx context.Context, op *connector_proto.LedgerOp
 }
 
 // getBlock gets a block by its ledger name and id
-func (l *LedgerOperations) getBlock(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) getBlock(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
@@ -324,8 +324,8 @@ func (l *LedgerOperations) getBlock(ctx context.Context, op *connector_proto.Led
 	}
 	defer ordererConn.Close()
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	block, err := odc.GetBlockByID(ctx, &orderer_proto.GetBlockParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	block, err := odc.GetBlockByID(ctx, &proto_orderer.GetBlockParams{
 		CocoonID: cocoonID,
 		Ledger:   op.GetParams()[0],
 		Id:       op.GetParams()[1],
@@ -337,7 +337,7 @@ func (l *LedgerOperations) getBlock(ctx context.Context, op *connector_proto.Led
 
 	body, _ := util.ToJSON(block)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,
@@ -345,7 +345,7 @@ func (l *LedgerOperations) getBlock(ctx context.Context, op *connector_proto.Led
 }
 
 // getRange fetches transactions with keys between a specified range.
-func (l *LedgerOperations) getRange(ctx context.Context, op *connector_proto.LedgerOperation) (*connector_proto.Response, error) {
+func (l *LedgerOperations) getRange(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var cocoonID = l.CocoonID
 	if len(op.GetLinkTo()) > 0 {
@@ -361,8 +361,8 @@ func (l *LedgerOperations) getRange(ctx context.Context, op *connector_proto.Led
 	limit, _ := strconv.Atoi(op.GetParams()[4])
 	offset, _ := strconv.Atoi(op.GetParams()[5])
 
-	odc := orderer_proto.NewOrdererClient(ordererConn)
-	txs, err := odc.GetRange(ctx, &orderer_proto.GetRangeParams{
+	odc := proto_orderer.NewOrdererClient(ordererConn)
+	txs, err := odc.GetRange(ctx, &proto_orderer.GetRangeParams{
 		CocoonID:  cocoonID,
 		Ledger:    op.GetParams()[0],
 		StartKey:  op.GetParams()[1],
@@ -378,7 +378,7 @@ func (l *LedgerOperations) getRange(ctx context.Context, op *connector_proto.Led
 
 	body, _ := util.ToJSON(txs.Transactions)
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,
 		Body:   body,

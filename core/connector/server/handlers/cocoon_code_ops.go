@@ -6,8 +6,8 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/connector_proto"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto"
+	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
+	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"google.golang.org/grpc"
 )
 
@@ -24,7 +24,7 @@ func NewCocoonCodeHandler(cocoonCodeRPCAddr string) *CocoonCodeOperations {
 }
 
 // Handle handles cocoon operations
-func (l *CocoonCodeOperations) Handle(ctx context.Context, op *connector_proto.CocoonCodeOperation) (*connector_proto.Response, error) {
+func (l *CocoonCodeOperations) Handle(ctx context.Context, op *proto_connector.CocoonCodeOperation) (*proto_connector.Response, error) {
 
 	client, err := grpc.Dial(l.cocoonCodeRPCAddr, grpc.WithInsecure())
 	if err != nil {
@@ -32,8 +32,8 @@ func (l *CocoonCodeOperations) Handle(ctx context.Context, op *connector_proto.C
 	}
 	defer client.Close()
 
-	stub := proto.NewStubClient(client)
-	resp, err := stub.Invoke(ctx, &proto.InvokeParam{
+	stub := proto_runtime.NewStubClient(client)
+	resp, err := stub.Invoke(ctx, &proto_runtime.InvokeParam{
 		ID:       util.UUID4(),
 		Function: op.GetFunction(),
 		Params:   op.GetParams(),
@@ -43,7 +43,7 @@ func (l *CocoonCodeOperations) Handle(ctx context.Context, op *connector_proto.C
 		return nil, fmt.Errorf("invoke error: %s", common.GetRPCErrDesc(err))
 	}
 
-	return &connector_proto.Response{
+	return &proto_connector.Response{
 		ID:     resp.ID,
 		Status: 200,
 		Body:   resp.Body,
