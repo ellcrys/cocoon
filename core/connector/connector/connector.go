@@ -401,8 +401,8 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 		printf "Creating source root directory\n" &&
 		mkdir -p ` + lang.GetSourceRootDir() + ` &&
 		printf "Moving source to new source root directory\n" &&
-		mv ` + downloadDst + ` ` + lang.GetSourceRootDir() + ` &&
-		ls ` + lang.GetSourceRootDir() + `/cocoon-example-01
+		mv ` + downloadDst + `/* ` + lang.GetSourceRootDir() + ` &&
+		ls ` + lang.GetSourceRootDir() + `
 	`
 
 	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
