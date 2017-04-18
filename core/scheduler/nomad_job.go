@@ -196,7 +196,7 @@ func NewJob(version, id string, count int) *NomadJob {
 									"/var/run/docker.sock:/var/run/docker.sock",
 								},
 								Command: "bash",
-								Args:    []string{"/local/runner.sh"},
+								Args:    []string{"/local/run-connector.sh"},
 							},
 							Env: map[string]string{
 								"VERSION":               "${NOMAD_META_VERSION}",
@@ -208,11 +208,6 @@ func NewJob(version, id string, count int) *NomadJob {
 								"COCOON_BUILD_PARAMS":   "",
 								"COCOON_LINK":           "",
 								"COCOON_CONTAINER_NAME": "code-${NOMAD_ALLOC_ID}",
-
-								// The name of the connector runner script and a link to the script.
-								// The runner script will fetch and run whatever is found in this environment var.
-								"RUN_SCRIPT_NAME": "run-connector.sh",
-								"RUN_SCRIPT_URL":  "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/run-connector.sh",
 							},
 							Services: []NomadService{
 								NomadService{
@@ -229,7 +224,7 @@ func NewJob(version, id string, count int) *NomadJob {
 							Templates: []Template{},
 							Artifacts: []Artifact{
 								Artifact{
-									GetterSource: "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/${NOMAD_META_VERSION}/scripts/runner.sh",
+									GetterSource: "https://raw.githubusercontent.com/${NOMAD_META_REPO_USER}/cocoon/master/scripts/run-connector.sh",
 									RelativeDest: "/local",
 								},
 							},
