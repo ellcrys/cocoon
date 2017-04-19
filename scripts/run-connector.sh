@@ -27,6 +27,9 @@ else
     wget "https://storage.googleapis.com/krogan/connector_${VERSION}.zip"
     unzip "connector_${VERSION}.zip"
     mv connector $GOPATH/bin/connector
+    
+    # Give the cocoon container some time to start
+    sleep 5
 fi
 
 # start connector
