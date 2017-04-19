@@ -18,8 +18,7 @@ if [ $ENV != "production" ]; then
     # build the binary
     printf "> Building connector\n"
     cd cocoon
-    rm -rf .glide/ && rm -rf vendor
-    glide install
+    govendor fetch -v +out
     go build -v -o $GOPATH/bin/connector core/connector/main.go
 else
     # Fetch pre-built binary 

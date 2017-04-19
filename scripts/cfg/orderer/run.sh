@@ -14,6 +14,6 @@ cd cocoon
 git checkout $branch
 
 # start the orderer
-glide install
+govendor fetch -v +out
 go build -o orderer core/orderer/main.go
 ./orderer start

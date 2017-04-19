@@ -11,6 +11,6 @@ cd cocoon
 git checkout $branch
 
 # start the api
-glide install
+govendor fetch -v +out
 go build -o api core/api/main.go
 ./api start
