@@ -4,7 +4,7 @@ FROM ncodes/cocoon:latest
 #RUN echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get -y install aufs-tools bridge-utils nmap iproute2
-RUN curl https://glide.sh/get | sh
+RUN go get -u github.com/kardianos/govendor
 
 # create working directorys
 WORKDIR src
