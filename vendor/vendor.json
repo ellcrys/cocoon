@@ -560,16 +560,16 @@
 			"revisionTime": "2015-02-08T08:19:50Z"
 		},
 		{
-			"checksumSHA1": "8Y05Pz7onrQPcVWW6JStSsYRh6E=",
+			"checksumSHA1": "F1IYMLBLAZaTOWnmXsgaxTGvrWI=",
 			"path": "github.com/pelletier/go-buffruneio",
-			"revision": "df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d",
-			"revisionTime": "2016-01-24T19:35:03Z"
+			"revision": "c37440a7cf42ac63b919c752ca73a85067e05992",
+			"revisionTime": "2017-02-27T22:03:11Z"
 		},
 		{
-			"checksumSHA1": "nt7BOOwTv0OJNSi3R05uk+LLmcU=",
+			"checksumSHA1": "E1K4zMZZcF2HvuJ8aOr9e86bUzY=",
 			"path": "github.com/pelletier/go-toml",
-			"revision": "c9506ee96398e7571356462217b9e24d6a628d71",
-			"revisionTime": "2017-02-09T21:38:35Z"
+			"revision": "fe206efb84b2bc8e8cfafe6b4c1826622be969e3",
+			"revisionTime": "2017-04-05T01:41:05Z"
 		},
 		{
 			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
