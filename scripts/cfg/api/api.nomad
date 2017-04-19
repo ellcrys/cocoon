@@ -52,7 +52,7 @@ job "api" {
       }
       
       env {
-          ENV = "dev"                  
+          ENV = "production"                  
           CONNECTOR_VERSION = "1.0.0"
           GCP_PROJECT_ID = "visiontest-1281"
           CONSUL_ADDR = "localhost:8500"
