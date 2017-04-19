@@ -17,3 +17,5 @@ test-client:
 	@bash -c "go test -v ./core/client/client/..."
 test-runtime-go:
 	@bash -c "go test -v ./core/runtime/golang/..."
+test-common:
+	@bash -c "go test -v ./core/common/..."
