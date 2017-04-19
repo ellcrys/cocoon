@@ -2,11 +2,10 @@
 # Run the connector 
 set -e
 export GOPATH=/go
+printf "> Starting Cocoon [env=$ENV]\n"
 
-printf "> Starting Cocoon\n"
-
+# Fetch and build connector from source in dev/test environemtn
 if [ $ENV != "production" ]; then
-    # Pull cocoon source
     branch=$VERSION
     repoOwner=github.com/ncodes
     repoOwnerDir=$GOPATH/src/$repoOwner
@@ -23,12 +22,13 @@ if [ $ENV != "production" ]; then
     glide install
     go build -v -o $GOPATH/bin/connector core/connector/main.go
 else
-    printf "> Downloading pre-built binary [version: $VERSION]"
+    # Fetch pre-built binary 
+    printf "> Downloading pre-built binary [version: $VERSION]\n"
     wget "https://storage.googleapis.com/krogan/connector_${VERSION}.zip"
     unzip "connector_${VERSION}.zip"
     mv connector $GOPATH/bin/connector
 fi
 
-# start connector, store its process id and wait for it.
+# start connector
 printf "> Running Connector\n"
 exec connector start

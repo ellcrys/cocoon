@@ -72,7 +72,6 @@ func (sc *Nomad) SetAddr(addr string, https bool) {
 
 // deployJob registers a new job
 func (sc *Nomad) deployJob(jobSpec string) (string, int, error) {
-
 	res, err := goreq.Request{
 		Method: "POST",
 		Uri:    sc.API + "/v1/jobs",
@@ -123,17 +122,13 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 
 	// set fluentd logger in production environment
 	if os.Getenv("ENV") == "production" {
-		job.SetVersion("1.0.0")
-		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = []Logging{
-			{
-				Type: "fluentd",
-				Config: []map[string]string{
-					{
-						"fluentd-address": "localhost:24224",
-						"tag":             fmt.Sprintf("cocoon-%s", jobID),
-					},
-				},
-			},
+		job.SetVersion(os.Getenv("CONNECTOR_VERSION"))
+		job.GetSpec().TaskGroups[0].Tasks[0].Config.Logging = []Logging{{
+			Type: "fluentd",
+			Config: []map[string]string{{
+				"fluentd-address": "localhost:24224",
+				"tag":             fmt.Sprintf("cocoon-%s", jobID),
+			}}},
 		}
 	}
 
