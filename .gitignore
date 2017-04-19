@@ -1,4 +1,4 @@
 pkg
-vendor/*
+*vendor*/*
 !vendor/vendor.json
 vagrant/.vagrant
