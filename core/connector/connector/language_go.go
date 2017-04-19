@@ -12,6 +12,12 @@ import (
 	"github.com/goware/urlx"
 )
 
+// SupportedVendorTool includes a list of supported vendor packaging tool
+var SupportedVendorTool = []string{
+	"glide",
+	"govendor",
+}
+
 // Go defines a deployment helper for go cocoon.
 type Go struct {
 	req         *Request
@@ -103,12 +109,16 @@ func (g *Go) RequiresBuild() bool {
 
 // SetBuildParams sets and validates build parameters
 func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
-	g.buildParams = buildParams
-	if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
-		if !util.InStringSlice([]string{"glide"}, pkgMgr.(string)) {
-			return fmt.Errorf("invalid pkgMgr value in build script")
+	if pkgMgr := buildParams["pkgMgr"]; pkgMgr != nil {
+		if pkgMgrVal, ok := pkgMgr.(string); ok {
+			if !util.InStringSlice(SupportedVendorTool, pkgMgrVal) {
+				return fmt.Errorf("invalid `pkgMgr` value in build script")
+			}
+		} else {
+			return fmt.Errorf("invalid type for `pkgMgr` paremeter, expected string")
 		}
 	}
+	g.buildParams = buildParams
 	return nil
 }
 
@@ -127,6 +137,8 @@ func (g *Go) GetBuildScript() string {
 			switch pkgMgr {
 			case "glide":
 				cmds = append(cmds, "glide install")
+			case "govendor":
+				cmds = append(cmds, "govendor fetch -v +out")
 			}
 		}
 	}
