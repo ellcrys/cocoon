@@ -10,7 +10,7 @@ contracts {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "0f44f142a63fa0bcbbc50d069eb6795d9f46b98b"
+        version = "d6c501eb2cd6acb366bc14cf7c773fb66675e067"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -21,8 +21,8 @@ contracts {
     
     # Provide build information if the contract code requires it
     build {
-        # The package manager to use (supported: glide)
-        pkgMgr = "glide"
+        # The package manager to use (supported: glide, govendor)
+        pkgMgr = "govendor"
     }
     
     # Resources to allocate to the contract's cocoon
