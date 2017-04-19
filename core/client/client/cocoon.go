@@ -132,7 +132,7 @@ func UpdateCocoon(id string, upd *proto_api.CocoonPayloadRequest) error {
 
 // GetCocoons fetches one or more cocoons and logs them
 func GetCocoons(ids []string) error {
-	
+
 	if len(ids) > MaxBulkObjCount {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}

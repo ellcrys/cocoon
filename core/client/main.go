@@ -18,8 +18,11 @@ import (
 	"os"
 	"path"
 
+	"google.golang.org/grpc/grpclog"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/ncodes/cocoon/core/client/cmd"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
 )
@@ -52,6 +55,11 @@ func init() {
 	log = logging.MustGetLogger("api.client")
 	createConfigDir()
 	log.SetBackend(config.MessageOnlyBackend)
+	if len(os.Getenv("ENABLE_GRPC_LOG")) == 0 {
+		gl := common.GLogger{}
+		gl.Disable(true, true)
+		grpclog.SetLogger(&gl)
+	}
 }
 
 func main() {

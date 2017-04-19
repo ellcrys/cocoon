@@ -84,7 +84,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 			break
 		}
 	}
-
+	
 	// path is a url, download it
 	if govalidator.IsURL(path) {
 		var fileData []byte
