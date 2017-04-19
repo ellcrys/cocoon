@@ -117,6 +117,16 @@ func TestFunc(t *testing.T) {
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 				So(rules[1].Destination, ShouldNotEqual, "facebook.com")
 			})
+
+			Convey("Should handle nil rules by ignoring them", func() {
+				rules, err := ResolveFirewall([]*types.FirewallRule{
+					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
+					nil,
+				})
+				So(err, ShouldBeNil)
+				So(len(rules), ShouldEqual, 1)
+				So(rules[0].Destination, ShouldNotEqual, "google.com")
+			})
 		})
 
 		Convey(".RemoveASCIIColors", func() {

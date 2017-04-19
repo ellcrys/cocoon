@@ -116,6 +116,9 @@ func IsValidACLTarget(target string) error {
 func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 	var newResolvedFirewall = types.Firewall{}
 	for i, rule := range rules {
+		if rule == nil {
+			continue
+		}
 		if !govalidator.IsIP(rule.Destination) {
 			IPs, err := net.LookupHost(rule.Destination)
 			if err != nil {
