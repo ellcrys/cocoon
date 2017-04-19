@@ -980,17 +980,10 @@
 			"revisionTime": "2017-04-18T17:54:52Z"
 		},
 		{
-			"checksumSHA1": "zTjQOFGy4XTv4L33Kd2FhrV+mbM=",
-			"path": "gopkg.in/mgo.v2/bson",
-			"revision": "29cc868a5ca65f401ff318143f9408d02f4799cc",
-			"revisionTime": "2016-06-09T18:00:28Z"
-		},
-		{
-			"checksumSHA1": "dvOPq+8aiT6jvYOrJvVCDA0ZBvw=",
-			"origin": "github.com/ellcrys/util/vendor/gopkg.in/mgo.v2/internal/json",
-			"path": "gopkg.in/mgo.v2/internal/json",
-			"revision": "4f0a2d2b43350cec9c9003959779b8b24190b641",
-			"revisionTime": "2017-04-16T08:21:50Z"
+			"checksumSHA1": "1D8GzeoFGUs5FZOoyC2DpQg8c5Y=",
+			"path": "gopkg.in/mgo.v2",
+			"revision": "3f83fa5005286a7fe593b055f0d7771a7dce4655",
+			"revisionTime": "2016-08-18T02:01:20Z"
 		},
 		{
 			"checksumSHA1": "7YPmpDeCouwlD2QYzDCE83USHTg=",
