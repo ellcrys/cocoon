@@ -4,7 +4,10 @@ import (
 	"os"
 	"time"
 
+	"google.golang.org/grpc/grpclog"
+
 	"github.com/franela/goreq"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/cmd"
 	logging "github.com/op/go-logging"
@@ -16,6 +19,11 @@ func init() {
 	config.ConfigureLogger()
 	log = logging.MustGetLogger("main")
 	goreq.SetConnectTimeout(5 * time.Second)
+	if len(os.Getenv("ENABLE_GRPC_LOG")) == 0 {
+		gl := common.GLogger{}
+		gl.Disable(true, true)
+		grpclog.SetLogger(&gl)
+	}
 }
 
 func main() {
