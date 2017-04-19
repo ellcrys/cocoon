@@ -19,7 +19,6 @@ import (
 	"path"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/client/cmd"
 	"github.com/ncodes/cocoon/core/config"
 	logging "github.com/op/go-logging"
@@ -56,7 +55,5 @@ func init() {
 }
 
 func main() {
-	db := client.GetDefaultDB()
 	cmd.Execute()
-	db.Close()
 }

@@ -11,27 +11,18 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-var defaultDB *bolt.DB
-
 // ProjectName is the official name of the project
 var ProjectName = "cocoon"
 
 // GetDefaultDB returns a handle to the client's database
 func GetDefaultDB() *bolt.DB {
-
-	if defaultDB != nil {
-		return defaultDB
-	}
-
 	home, _ := homedir.Dir()
 	dbFile := path.Join(home, ".config", ProjectName, "client.db")
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defaultDB = db
-	return defaultDB
+	return db
 }
 
 // GetFirstByPrefix returns the first key with the matching prefix
@@ -54,6 +45,8 @@ func GetUserSessionToken() (*types.UserSession, error) {
 
 	var err error
 	var userSession types.UserSession
+	var defaultDB = GetDefaultDB()
+	defer defaultDB.Close()
 
 	err = defaultDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("auth"))

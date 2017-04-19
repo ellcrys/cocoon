@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/config"
+	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +16,10 @@ var psCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		showAll, _ := cmd.Flags().GetBool("all")
 		jsonFormatted, _ := cmd.Flags().GetBool("json")
+
+		log := logging.MustGetLogger("api.client")
+		log.SetBackend(config.MessageOnlyBackend)
+
 		if err := client.ListCocoons(showAll, jsonFormatted); err != nil {
 			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
 		}
