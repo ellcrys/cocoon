@@ -1,7 +1,7 @@
 # Run an API. 
 set -e 
 
-version="master"
+version=$API_VERSION
 
 # Fetch and build API from source in dev/test environemtn
 if [ $ENV != "production" ]; then
