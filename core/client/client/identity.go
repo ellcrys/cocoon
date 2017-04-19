@@ -87,8 +87,8 @@ func CreateIdentity(email string) error {
 
 	stopSpinner()
 	log.Info("==> Successfully created a new identity")
-	log.Info("==> Email:", email)
-	log.Info("==> ID:", (&types.Identity{Email: email}).GetID())
+	log.Infof("==> Email: %s", email)
+	log.Infof("==> ID: %s", types.NewIdentity(email, "").GetID())
 
 	return nil
 }
