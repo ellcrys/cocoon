@@ -28,7 +28,7 @@ contracts {
     # Resources to allocate to the contract's cocoon
     resources {
         # The memory to allocate (512m, 1g or 2g)
-        memory = "1g" 
+        memory = "512m" 
         # The cpu share to allocate (1x or 2x)
         cpuShare = "1x"
     }

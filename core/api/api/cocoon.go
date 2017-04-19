@@ -7,6 +7,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
+	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
@@ -248,6 +249,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, err
 	}
 
+	pretty.Println(cocoonUpd.Firewall, "<<<")
 	outputFirewall, err := common.ResolveFirewall(*cocoonUpd.Firewall.DeDup())
 	if err != nil {
 		return nil, fmt.Errorf("Firewall: %s", err)
