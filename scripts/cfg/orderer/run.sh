@@ -16,8 +16,10 @@ if [ $ENV != "production" ]; then
 else
      # Fetch pre-built binary 
     printf "> Downloading pre-built binary [version: $VERSION]\n"
-    wget "https://storage.googleapis.com/krogan/orderer_${VERSION}.zip"
-    unzip "orderer_${VERSION}.zip"
+    fileName="orderer_${VERSION}.zip"
+    rm -rf $fileName
+    wget "https://storage.googleapis.com/krogan/${fileName}"
+    unzip $fileName
     mv orderer $GOPATH/bin/orderer
 fi
 

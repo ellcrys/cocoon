@@ -23,8 +23,10 @@ if [ $ENV != "production" ]; then
 else
     # Fetch pre-built binary 
     printf "> Downloading pre-built binary [version: $VERSION]\n"
-    wget "https://storage.googleapis.com/krogan/connector_${VERSION}.zip"
-    unzip "connector_${VERSION}.zip"
+    fileName="connector_${VERSION}.zip"
+    rm -rf $fileName
+    wget "https://storage.googleapis.com/krogan/${fileName}"
+    unzip $fileName
     mv connector $GOPATH/bin/connector
     
     # Give the cocoon container some time to start
