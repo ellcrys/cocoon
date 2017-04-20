@@ -15,9 +15,10 @@ if [ $ENV != "production" ]; then
     go build -o $GOPATH/bin/orderer core/orderer/main.go
 else
      # Fetch pre-built binary 
-    printf "> Downloading pre-built binary [version: $VERSION]\n"
     fileName="orderer_${VERSION}.zip"
     rm -rf $fileName
+    rm -rf $GOPATH/bin/orderer
+    printf "> Downloading pre-built binary [version: $VERSION]\n"
     wget "https://storage.googleapis.com/krogan/${fileName}"
     unzip $fileName
     mv orderer $GOPATH/bin/orderer

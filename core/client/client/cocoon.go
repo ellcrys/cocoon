@@ -33,6 +33,8 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("====")
+	util.Printify(cocoon.Firewall)
 
 	stopSpinner := util.Spinner("Please wait")
 

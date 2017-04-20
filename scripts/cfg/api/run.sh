@@ -15,9 +15,10 @@ if [ $ENV != "production" ]; then
     go build -o $GOPATH/bin/api core/api/main.go
 else
      # Fetch pre-built binary 
-    printf "> Downloading pre-built binary [version: $VERSION]\n"
     fileName="api_${VERSION}.zip"
     rm -rf $fileName
+    rm -rf $GOPATH/bin/api
+    printf "> Downloading pre-built binary [version: $VERSION]\n"
     wget "https://storage.googleapis.com/krogan/${fileName}"
     unzip $fileName
     mv api $GOPATH/bin/api
