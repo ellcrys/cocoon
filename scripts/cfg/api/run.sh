@@ -22,6 +22,7 @@ else
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv api $GOPATH/bin/api
+    printf "Binary Sha: $(shasum $GOPATH/bin/api)"
 fi
 
 # start the api

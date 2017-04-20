@@ -22,6 +22,7 @@ else
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv orderer $GOPATH/bin/orderer
+    printf "Binary Sha: $(shasum $GOPATH/bin/orderer)"
 fi
 
 # start the orderer
