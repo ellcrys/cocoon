@@ -62,7 +62,7 @@ func getRequest() (*connector.Request, error) {
 		BuildParams: buildParam,
 		Link:        ccLink,
 		Memory:      int64(memoryMB),
-		CPUShares:   int64(cpuShare),
+		CPUShare:   int64(cpuShare),
 	}, nil
 }
 

@@ -98,7 +98,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	cocoon.Firewall = release.Firewall
 	cocoon.ACL = release.ACL
 
-	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.Version, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShares)
+	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.Version, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShare)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			apiLog.Error(err.Error())

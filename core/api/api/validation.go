@@ -18,8 +18,8 @@ var (
 	// supportedMemory list the memory values supported
 	supportedMemory = []string{"512m", "1g", "2g"}
 
-	// supportedCPUShares list the cpu share values supported
-	supportedCPUShares = []string{"1x", "2x"}
+	// supportedCPUShare list the cpu share values supported
+	supportedCPUShare = []string{"1x", "2x"}
 )
 
 // ValidateCocoon validates a cocoon to be created
@@ -55,17 +55,14 @@ func ValidateCocoon(c *types.Cocoon) error {
 			return fmt.Errorf("build parameter is not valid json")
 		}
 	}
-	if len(c.Memory) == 0 {
+	if c.Memory == 0 {
 		return fmt.Errorf("memory is required")
 	}
-	if !util.InStringSlice(supportedMemory, c.Memory) {
-		return fmt.Errorf("Memory value is not supported. Expects one of these values %s", supportedMemory)
-	}
-	if len(c.CPUShares) == 0 {
+	if c.CPUShare == 0 {
 		return fmt.Errorf("CPU share is required")
 	}
-	if !util.InStringSlice(supportedCPUShares, c.CPUShares) {
-		return fmt.Errorf("CPU share value is not supported. Expects one of these values %s", supportedCPUShares)
+	if common.GetResourceSet(c.Memory, c.CPUShare) == nil {
+		return fmt.Errorf("Unknown resource set")
 	}
 	if c.NumSignatories <= 0 {
 		return fmt.Errorf("number of signatories cannot be less than 1")

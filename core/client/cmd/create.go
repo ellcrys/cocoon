@@ -29,9 +29,9 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 	var lang string
 	var version string
 	var buildParams string
-	var memory = "512m"
-	var cpuShare = "1x"
 	var link string
+	var resourceSet = "s1"
+	var selectedResourceSet map[string]int
 	var numSig = 1
 	var sigThreshold = 1
 	var firewall string
@@ -84,7 +84,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 			break
 		}
 	}
-	
+
 	// path is a url, download it
 	if govalidator.IsURL(path) {
 		var fileData []byte
@@ -133,8 +133,17 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 				}
 
 				if resources, ok := contract["resources"].([]map[string]interface{}); ok && len(resources) > 0 {
-					memory = toStringOr(resources[0]["memory"], memory)
-					cpuShare = toStringOr(resources[0]["cpuShare"], cpuShare)
+					resourceSet = toStringOr(resources[0]["resource_set"], resourceSet)
+					valid := false
+					for k, v := range common.SupportedResourceSets {
+						if k == resourceSet {
+							valid = true
+							selectedResourceSet = v
+						}
+					}
+					if !valid {
+						errs = append(errs, fmt.Errorf("resources: unknown resource_set value: %s", resourceSet))
+					}
 				}
 
 				if signatories, ok := contract["signatories"].([]map[string]interface{}); ok && len(signatories) > 0 {
@@ -183,8 +192,8 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					BuildParam:     buildParams,
 					Firewall:       validFirewallRules,
 					ACL:            aclMap,
-					Memory:         memory,
-					CPUShares:      cpuShare,
+					Memory:         selectedResourceSet["memory"],
+					CPUShare:       selectedResourceSet["cpuShare"],
 					Link:           link,
 					NumSignatories: numSig,
 					SigThreshold:   sigThreshold,

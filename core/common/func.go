@@ -148,3 +148,11 @@ func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 func RemoveASCIIColors(s []byte) []byte {
 	return regexp.MustCompile("\033\\[[0-9;]*m").ReplaceAll(s, []byte(""))
 }
+
+// Round rounds float values to the nearest integer
+func Round(val float64) int {
+	if val < 0 {
+		return int(val - 0.5)
+	}
+	return int(val + 0.5)
+}

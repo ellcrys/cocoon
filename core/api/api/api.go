@@ -8,6 +8,7 @@ import (
 
 	"os"
 
+	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
@@ -54,7 +55,11 @@ func (api *API) Start(addr string, endedCh chan bool) {
 	}
 
 	time.AfterFunc(2*time.Second, func() {
-		apiLog.Infof("Started server on port %s", strings.Split(addr, ":")[1])
+		apiLog.Info("Server has started")
+		apiLog.Infof("         RPC Port = %s", strings.Split(addr, ":")[1])
+		apiLog.Infof("      Environment = %s", util.Env("ENV", "development"))
+		apiLog.Infof("      API Version = %s", util.Env("API_VERSION", ""))
+		apiLog.Infof("Connector Version = %s", util.Env("CONNECTOR_VERSION", ""))
 		go api.ordererDiscovery.Discover()
 		time.Sleep(1 * time.Second)
 		if len(api.ordererDiscovery.GetAddrs()) == 0 {

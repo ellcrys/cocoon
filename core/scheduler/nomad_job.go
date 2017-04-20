@@ -37,7 +37,7 @@ type TaskGroup struct {
 	Count         int
 	Constraints   []string
 	Tasks         []Task
-	Resources     Resources
+	EphemeralDisk EphemeralDisk
 	RestartPolicy RestartPolicy
 	Meta          map[string]string
 }
@@ -150,6 +150,13 @@ type Config struct {
 	Command     string    `json:"command"`
 	Args        []string  `json:"args"`
 	Logging     []Logging `json:"logging"`
+}
+
+// EphemeralDisk is an ephemeral disk object
+type EphemeralDisk struct {
+	Sticky  bool
+	Migrate bool
+	SizeMB  int `mapstructure:"size"`
 }
 
 // NomadJob represents a nomad job
@@ -281,12 +288,10 @@ func NewJob(version, id string, count int) *NomadJob {
 							DispatchPayload: DispatchPayload{},
 						},
 					},
-					Resources: Resources{
-						CPU:      100,
-						MemoryMB: 512,
-						DiskMB:   800,
-						IOPS:     0,
-						Networks: []Network{},
+					EphemeralDisk: EphemeralDisk{
+						Sticky:  false,
+						SizeMB:  0,
+						Migrate: false,
 					},
 					RestartPolicy: RestartPolicy{
 						Interval: 300000000000,

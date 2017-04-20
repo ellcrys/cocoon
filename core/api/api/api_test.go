@@ -123,10 +123,10 @@ func TestOrderer(t *testing.T) {
 									ID:             id,
 									URL:            "https://github.com/ncodes/cocoon-example-01",
 									Language:       "go",
-									Memory:         "512m",
+									Memory:         512,
 									NumSignatories: 1,
 									SigThreshold:   1,
-									CPUShares:      "1x",
+									CPUShare:       100,
 								})
 								So(err, ShouldBeNil)
 								So(r.Status, ShouldEqual, 200)
@@ -137,8 +137,8 @@ func TestOrderer(t *testing.T) {
 										ID:             id,
 										URL:            "https://github.com/ncodes/cocoon-example-01",
 										Language:       "go",
-										Memory:         "512m",
-										CPUShares:      "1x",
+										Memory:         512,
+										CPUShare:       100,
 										NumSignatories: 1,
 										SigThreshold:   1,
 									})

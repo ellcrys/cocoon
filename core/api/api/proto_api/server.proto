@@ -66,8 +66,8 @@ message CocoonPayloadRequest {
     string buildParam = 5;
     repeated FirewallRule firewall = 6;
     bytes ACL = 7;
-    string memory = 8;
-    string CPUShares = 9;
+    int32 memory = 8;
+    int32 CPUShare = 9;
     string link = 10;
     int32 numSignatories = 11;
     int32 sigThreshold = 12;

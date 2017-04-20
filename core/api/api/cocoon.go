@@ -227,12 +227,12 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	// update new non-release specific fields that have been updated
 	cocoonUpdated := false
-	if len(cocoonUpd.Memory) > 0 && cocoonUpd.Memory != cocoon.Memory {
+	if cocoonUpd.Memory != cocoon.Memory {
 		cocoon.Memory = cocoonUpd.Memory
 		cocoonUpdated = true
 	}
-	if len(cocoonUpd.CPUShares) > 0 && cocoonUpd.CPUShares != cocoon.CPUShares {
-		cocoon.CPUShares = cocoonUpd.CPUShares
+	if cocoonUpd.CPUShare != cocoon.CPUShare {
+		cocoon.CPUShare = cocoonUpd.CPUShare
 		cocoonUpdated = true
 	}
 	if cocoonUpd.NumSignatories > 0 && cocoonUpd.NumSignatories != cocoon.NumSignatories {

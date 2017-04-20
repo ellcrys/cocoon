@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"fmt"
-	"strconv"
 
 	"os"
 
@@ -17,25 +16,6 @@ var log = config.MakeLogger("nomad", "nomad")
 
 // SupportedCocoonCodeLang defines the supported chaincode language
 var SupportedCocoonCodeLang = []string{"go"}
-
-// SupportedMemory represents the allowed cocoon memory choices
-var SupportedMemory = map[string]int{
-	"512m": 512,
-	"1g":   1024,
-	"2g":   2048,
-}
-
-// SupportedCPUShares represents the allowed cocoon cpu share choices
-var SupportedCPUShares = map[string]int{
-	"1x": 100,
-	"2x": 200,
-}
-
-// SupportedDiskSpace represents the allowed cocoon disk space
-var SupportedDiskSpace = map[string]int{
-	"1x": 1024,
-	"2x": 2048,
-}
 
 // Nomad defines a nomad scheduler that implements
 // scheduler.Scheduler interface. Every interaction with
@@ -92,7 +72,7 @@ func makeLinkToServiceTag(linkID string) string {
 }
 
 // Deploy a cocoon code to the scheduler
-func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, cpuShare string) (*DeploymentInfo, error) {
+func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, memory, cpuShare int) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -118,7 +98,12 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID, memory, 
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = strconv.Itoa(SupportedDiskSpace[cpuShare])
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.CPU = cpuShare
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.DiskMB = 1000
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = common.Round(0.3 * float64(memory))
+	job.GetSpec().TaskGroups[0].Tasks[1].Resources.MemoryMB = common.Round(0.7 * float64(memory))
+	job.GetSpec().TaskGroups[0].EphemeralDisk.SizeMB = 4000
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = "4000"
 
 	// set fluentd logger in production environment
 	if os.Getenv("ENV") == "production" {

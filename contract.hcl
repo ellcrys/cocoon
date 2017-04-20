@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "u5"
     
     # Contract source location and information
     repo {
@@ -27,10 +27,7 @@ contracts {
     
     # Resources to allocate to the contract's cocoon
     resources {
-        # The memory to allocate (512m, 1g or 2g)
-        memory = "512m" 
-        # The cpu share to allocate (1x or 2x)
-        cpuShare = "1x"
+       resource_set = "s1"
     }
     
     # Provide signatory information

@@ -63,36 +63,27 @@ func TestValidation(t *testing.T) {
 					ID:       util.UUID4(),
 					URL:      "https://github.com/ncodes/cocoon-example-01",
 					Language: "go",
-					Memory:   "-1x",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Memory value is not supported. Expects one of these values [512m 1g 2g]")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-					Memory:   "512m",
+					Memory:   512,
 				})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "CPU share is required")
 
 				err = ValidateCocoon(&types.Cocoon{
-					ID:        util.UUID4(),
-					URL:       "https://github.com/ncodes/cocoon-example-01",
-					Language:  "go",
-					Memory:    "512m",
-					CPUShares: "abc",
+					ID:       util.UUID4(),
+					URL:      "https://github.com/ncodes/cocoon-example-01",
+					Language: "go",
+					Memory:   100,
+					CPUShare: 122,
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "CPU share value is not supported. Expects one of these values [1x 2x]")
+				So(err.Error(), ShouldEqual, "Unknown resource set")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID:             util.UUID4(),
 					URL:            "https://github.com/ncodes/cocoon-example-01",
 					Language:       "go",
-					Memory:         "512m",
-					CPUShares:      "1x",
+					Memory:         512,
+					CPUShare:       100,
 					NumSignatories: 1,
 					SigThreshold:   1,
 					Signatories:    []string{"id1", "id2"},
