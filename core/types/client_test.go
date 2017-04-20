@@ -10,18 +10,18 @@ func TestAAA(t *testing.T) {
 	Convey("Firewall", t, func() {
 		Convey(".Eql", func() {
 			Convey("Should return false if compared firewall does not match", func() {
-				fw := Firewall([]*FirewallRule{
+				fw := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebool.com", DestinationPort: "80", Protocol: "tcp"},
 				})
-				fw2 := Firewall([]*FirewallRule{
+				fw2 := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
-				fw3 := Firewall([]*FirewallRule{
+				fw3 := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 				})
-				fw4 := Firewall([]*FirewallRule{
+				fw4 := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "udp"},
 				})
 				So(fw.Eql(fw2), ShouldEqual, false)
@@ -30,11 +30,11 @@ func TestAAA(t *testing.T) {
 			})
 
 			Convey("Should return true if compared firewall match", func() {
-				fw := Firewall([]*FirewallRule{
+				fw := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
-				fw2 := Firewall([]*FirewallRule{
+				fw2 := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
@@ -44,19 +44,19 @@ func TestAAA(t *testing.T) {
 
 		Convey(".DeDup", func() {
 			Convey("Should return a de-duplicated firewall", func() {
-				fw := Firewall([]*FirewallRule{
+				fw := Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 				})
 				expected := fw.DeDup()
-				So(len(*expected), ShouldEqual, 1)
+				So(len(expected), ShouldEqual, 1)
 
-				fw = Firewall([]*FirewallRule{
+				fw = Firewall([]FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "nairaland.com", DestinationPort: "80", Protocol: "tcp"},
 				})
 				expected = fw.DeDup()
-				So(len(*expected), ShouldEqual, 2)
+				So(len(expected), ShouldEqual, 2)
 			})
 		})
 	})

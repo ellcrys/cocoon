@@ -19,7 +19,7 @@ func TestTransaction(t *testing.T) {
 					Value:     "value",
 					CreatedAt: 123456789,
 				}
-				So(tx.MakeHash(), ShouldEqual, "cb984a6f2f6ff2addd46e875b87550653f1345ad61892b2af2d4892b3d8b9e60")
+				So(tx.MakeHash(), ShouldEqual, "25cea8016b574f5f68ca721976a53918cdd2d33724ea957c592413bf5ec4481a")
 			})
 		})
 	})

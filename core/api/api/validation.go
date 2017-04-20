@@ -139,7 +139,7 @@ func ValidateIdentity(i *types.Identity) error {
 // of map[string]strins. It will return a slice of map[string]string
 // values that represents valid firewall rules. Destination host addresses
 // are not resolved.
-func ValidateFirewall(firewall interface{}) ([]*types.FirewallRule, []error) {
+func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 
 	var errs []error
 	if firewall == nil {
@@ -166,7 +166,7 @@ func ValidateFirewall(firewall interface{}) ([]*types.FirewallRule, []error) {
 		return nil, errs
 	}
 
-	var firewallRules []*types.FirewallRule
+	var firewallRules []types.FirewallRule
 
 	for i, rule := range firewallMap {
 		if rule["destination"] == "" {
@@ -188,7 +188,7 @@ func ValidateFirewall(firewall interface{}) ([]*types.FirewallRule, []error) {
 			errs = append(errs, fmt.Errorf("rule %d: invalid protocol", i))
 		}
 
-		firewallRules = append(firewallRules, &types.FirewallRule{
+		firewallRules = append(firewallRules, types.FirewallRule{
 			Destination:     rule["destination"],
 			DestinationPort: port,
 			Protocol:        rule["protocol"],

@@ -172,7 +172,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 				}
 
 				// parse and validate firewall
-				var validFirewallRules []*types.FirewallRule
+				var validFirewallRules []types.FirewallRule
 				if len(firewall) > 0 {
 					var _errs []error
 					validFirewallRules, errs = api.ValidateFirewall(firewall)
@@ -184,6 +184,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					}
 				}
 
+				util.Printify(selectedResourceSet)
 				cocoons = append(cocoons, &types.Cocoon{
 					ID:             id,
 					URL:            url,
