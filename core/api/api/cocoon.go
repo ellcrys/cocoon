@@ -269,7 +269,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	// Create new release and set values if any of the release field changed
 	var releaseUpdated = false
 	if len(cocoonUpd.URL) > 0 && cocoonUpd.URL != release.URL {
-		apiLog.Info("Release changed 1")
 		release.URL = cocoonUpd.URL
 		releaseUpdated = true
 	}
