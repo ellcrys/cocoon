@@ -116,7 +116,7 @@ func IsValidACLTarget(target string) error {
 func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 	var newResolvedFirewall = types.Firewall{}
 	for i, rule := range rules {
-		if rule == nil {
+		if rule == (types.FirewallRule{}) {
 			continue
 		}
 		if !govalidator.IsIP(rule.Destination) {
@@ -129,7 +129,7 @@ func ResolveFirewall(rules types.Firewall) (types.Firewall, error) {
 			}
 			for _, ip := range IPs {
 				if govalidator.IsIPv4(ip) {
-					newResolvedFirewall = append(newResolvedFirewall, &types.FirewallRule{
+					newResolvedFirewall = append(newResolvedFirewall, types.FirewallRule{
 						Destination:     ip,
 						DestinationPort: rule.DestinationPort,
 						Protocol:        rule.Protocol,

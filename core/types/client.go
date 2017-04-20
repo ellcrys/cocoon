@@ -40,30 +40,30 @@ func MakeCocoonKey(id string) string {
 }
 
 // Firewall defines a collection of firewall rules
-type Firewall []*FirewallRule
+type Firewall []FirewallRule
 
 // ToMap returns a map[string]string version
-func (f *Firewall) ToMap() []map[string]string {
+func (f Firewall) ToMap() []map[string]string {
 	var sm []map[string]string
-	for _, m := range *f {
+	for _, m := range f {
 		sm = append(sm, map[string]string{
-			"destination":     (*m).Destination,
-			"destinationPort": (*m).DestinationPort,
-			"protocol":        (*m).Protocol,
+			"destination":     m.Destination,
+			"destinationPort": m.DestinationPort,
+			"protocol":        m.Protocol,
 		})
 	}
 	return sm
 }
 
-// Eql checks whether another firewall object is equal
-func (f *Firewall) Eql(o Firewall) bool {
-	l := len(*f)
+// Eql checks whether another firewall object is equal.
+func (f Firewall) Eql(o Firewall) bool {
+	l := len(f)
 	found := 0
 	if l != len(o) {
 		return false
 	}
 	for i := 0; i < l; i++ {
-		cur := (*f)[i]
+		cur := f[i]
 		for j := 0; j < l; j++ {
 			oCur := o[j]
 			if cur.Eql(oCur) {
@@ -75,9 +75,9 @@ func (f *Firewall) Eql(o Firewall) bool {
 }
 
 // DeDup removes duplicate firewall rules
-func (f *Firewall) DeDup() *Firewall {
+func (f Firewall) DeDup() Firewall {
 	newFirewall := Firewall{}
-	for _, x := range *f {
+	for _, x := range f {
 		isEql := false
 		for _, y := range newFirewall {
 			if x.Eql(y) {
@@ -89,7 +89,7 @@ func (f *Firewall) DeDup() *Firewall {
 			newFirewall = append(newFirewall, x)
 		}
 	}
-	return &newFirewall
+	return newFirewall
 }
 
 // FirewallRule represents information about a destination to allow connections to.
@@ -100,7 +100,7 @@ type FirewallRule struct {
 }
 
 // Eql returns true if another firewall rule is equal
-func (r FirewallRule) Eql(o *FirewallRule) bool {
+func (r FirewallRule) Eql(o FirewallRule) bool {
 	return r.Destination == o.Destination && r.DestinationPort == o.DestinationPort && r.Protocol == o.Protocol
 }
 
