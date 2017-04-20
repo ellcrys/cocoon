@@ -18,11 +18,11 @@ else
     fileName="orderer_${VERSION}.zip"
     rm -rf $fileName
     rm -rf $GOPATH/bin/orderer
-    printf "> Downloading pre-built binary [version: $VERSION]\n"
+    printf "> Downloading pre-built binary [version: $VERSION, date: $(date)]\n"
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv orderer $GOPATH/bin/orderer
-    printf "Binary Sha: $(shasum $GOPATH/bin/orderer)"
+    printf "Checksum: $(shasum $GOPATH/bin/orderer)"
 fi
 
 # start the orderer

@@ -25,11 +25,11 @@ else
     fileName="connector_${VERSION}.zip"
     rm -rf $fileName
     rm -rf $GOPATH/bin/connector
-    printf "> Downloading pre-built binary [version: $VERSION]\n"
+    printf "> Downloading pre-built binary [version: $VERSION, date: $(date)]\n"
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv connector $GOPATH/bin/connector
-    printf "Binary Sha: $(shasum $GOPATH/bin/connector)"
+    printf "Checksum: $(shasum $GOPATH/bin/connector)"
     
     # Give the cocoon container some time to start
     sleep 5

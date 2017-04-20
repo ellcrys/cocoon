@@ -18,11 +18,11 @@ else
     fileName="api_${VERSION}.zip"
     rm -rf $fileName
     rm -rf $GOPATH/bin/api
-    printf "> Downloading pre-built binary [version: $VERSION]\n"
+    printf "> Downloading pre-built binary [version: $VERSION, date: $(date)]\n"
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv api $GOPATH/bin/api
-    printf "Binary Sha: $(shasum $GOPATH/bin/api)"
+    printf "Checksum: $(shasum $GOPATH/bin/api)"
 fi
 
 # start the api
