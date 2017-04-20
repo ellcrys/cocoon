@@ -7,7 +7,6 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
@@ -102,7 +101,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	loggedInIdentity := claims["identity"].(string)
-	pretty.Println(req)
 	var cocoon types.Cocoon
 	cstructs.Copy(req, &cocoon)
 	apiLog.Infof("Req! %v %x %d", cocoon.Firewall, cocoon.Firewall == nil, len(cocoon.Firewall))

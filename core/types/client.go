@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 )
 
 // Cocoon represents a smart contract application
@@ -46,13 +45,11 @@ type Firewall []*FirewallRule
 // ToMap returns a map[string]string version
 func (f *Firewall) ToMap() []map[string]string {
 	var sm []map[string]string
-	pretty.Println(f)
-	pretty.Println(*f)
 	for _, m := range *f {
 		sm = append(sm, map[string]string{
-			"destination":     m.Destination,
-			"destinationPort": m.DestinationPort,
-			"protocol":        m.Protocol,
+			"destination":     (*m).Destination,
+			"destinationPort": (*m).DestinationPort,
+			"protocol":        (*m).Protocol,
 		})
 	}
 	return sm
