@@ -29,7 +29,7 @@ else
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv connector $GOPATH/bin/connector
-    printf "Checksum: $(shasum $GOPATH/bin/connector)"
+    printf "Checksum: $(shasum $GOPATH/bin/connector)\n"
     
     # Give the cocoon container some time to start
     sleep 5

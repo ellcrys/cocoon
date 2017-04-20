@@ -22,7 +22,7 @@ else
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv api $GOPATH/bin/api
-    printf "Checksum: $(shasum $GOPATH/bin/api)"
+    printf "Checksum: $(shasum $GOPATH/bin/api)\n"
 fi
 
 # start the api

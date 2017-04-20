@@ -22,7 +22,7 @@ else
     wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv orderer $GOPATH/bin/orderer
-    printf "Checksum: $(shasum $GOPATH/bin/orderer)"
+    printf "Checksum: $(shasum $GOPATH/bin/orderer)\n"
 fi
 
 # start the orderer
