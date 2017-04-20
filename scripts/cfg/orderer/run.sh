@@ -19,7 +19,7 @@ else
     rm -rf $fileName
     rm -rf $GOPATH/bin/orderer
     printf "> Downloading pre-built binary [version: $VERSION]\n"
-    wget "https://storage.googleapis.com/krogan/${fileName}"
+    wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv orderer $GOPATH/bin/orderer
 fi

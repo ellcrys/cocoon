@@ -19,7 +19,7 @@ else
     rm -rf $fileName
     rm -rf $GOPATH/bin/api
     printf "> Downloading pre-built binary [version: $VERSION]\n"
-    wget "https://storage.googleapis.com/krogan/${fileName}"
+    wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv api $GOPATH/bin/api
 fi

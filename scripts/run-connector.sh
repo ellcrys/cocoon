@@ -26,7 +26,7 @@ else
     rm -rf $fileName
     rm -rf $GOPATH/bin/connector
     printf "> Downloading pre-built binary [version: $VERSION]\n"
-    wget "https://storage.googleapis.com/krogan/${fileName}"
+    wget "https://storage.googleapis.com/hothot/${fileName}"
     unzip $fileName
     mv connector $GOPATH/bin/connector
     
