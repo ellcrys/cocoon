@@ -52,6 +52,7 @@ func TestFunc(t *testing.T) {
 			Convey("Should return error when trying to release a non-existent lock on a key", func() {
 				key := util.RandString(10)
 				l := NewConsulLock(key)
+				l.state["lock_session"] = util.UUID4()
 				err := l.Release()
 				t.Log(err)
 			})
