@@ -49,6 +49,9 @@ var (
 
 	// ErrInvalidResourceName represents an invalid name error
 	ErrInvalidResourceName = fmt.Errorf("invalid resource name")
+
+	// ErrLockAlreadyAcquired represents an error about an already acquired lock
+	ErrLockAlreadyAcquired = fmt.Errorf("lock already acquired by another process")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

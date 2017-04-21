@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/franela/goreq"
+	"github.com/ncodes/cocoon/core/types"
 )
 
 // LockTTL defines max time to live of a lock.
@@ -79,9 +80,8 @@ func (l *ConsulLock) acquire(key string) error {
 	}
 
 	status, _ := resp.Body.ToString()
-	fmt.Println("\n", status)
 	if strings.TrimSpace(status) == "false" {
-		return fmt.Errorf("lock already acquired by another process")
+		return types.ErrLockAlreadyAcquired
 	}
 
 	return nil
