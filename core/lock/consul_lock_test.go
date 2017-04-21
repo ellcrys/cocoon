@@ -3,6 +3,8 @@ package lock
 import (
 	"testing"
 
+	"fmt"
+
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
@@ -48,6 +50,13 @@ func TestFunc(t *testing.T) {
 		})
 
 		Convey(".IsAcquirer", func() {
+
+			Convey("Should return error if lock has no previously acquired key", func() {
+				l := NewConsulLock()
+				err := l.IsAcquirer()
+				So(err, ShouldResemble, fmt.Errorf("key is not set"))
+			})
+
 			Convey("Should return nil if lock is still the acquirer of a lock on it's key", func() {
 				key := util.RandString(10)
 				l := NewConsulLock()
