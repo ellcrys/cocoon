@@ -8,7 +8,6 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/go-datastructures/threadsafe/err"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -53,7 +52,7 @@ func TestFunc(t *testing.T) {
 			Convey("should return a `missing session` error when releasing a lock that has no lock session", func() {
 				key := util.RandString(10)
 				l := NewConsulLock(key)
-				err = l.Release()
+				err := l.Release()
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "missing session")
 			})
