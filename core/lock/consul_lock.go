@@ -93,14 +93,15 @@ func (l *ConsulLock) Acquire(key string) error {
 
 	var err error
 
-	l.lockSession, err = l.createSession(int(LockTTL.Seconds()))
-	if err != nil {
-		return fmt.Errorf("failed to get lock: %s", err)
+	// If lock object has got a session, get one.
+	if l.lockSession == "" {
+		l.lockSession, err = l.createSession(int(LockTTL.Seconds()))
+		if err != nil {
+			return fmt.Errorf("failed to get lock: %s", err)
+		}
 	}
 
-	err = l.acquire(key)
-
-	return err
+	return l.acquire(key)
 }
 
 // Release invalidates the lock previously acquired
