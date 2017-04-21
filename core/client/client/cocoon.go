@@ -55,7 +55,6 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	var prCreateCocoonReq proto_api.CocoonPayloadRequest
 	cstructs.Copy(cocoon, &prCreateCocoonReq)
 	prCreateCocoonReq.ACL = cocoon.ACL.ToJSON()
-
 	cocoonJSON, err := proto_api.NewAPIClient(conn).CreateCocoon(ctx, &prCreateCocoonReq)
 	if err != nil {
 		stopSpinner()

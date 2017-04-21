@@ -184,7 +184,6 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					}
 				}
 
-				util.Printify(selectedResourceSet)
 				cocoons = append(cocoons, &types.Cocoon{
 					ID:             id,
 					URL:            url,
