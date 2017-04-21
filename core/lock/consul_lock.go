@@ -3,6 +3,7 @@ package lock
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"strings"
@@ -37,12 +38,12 @@ func NewConsulLock() *ConsulLock {
 
 // createSession creates a consul session
 func (l *ConsulLock) createSession(ttl int) (string, error) {
-	var ttlStr string
-	if ttl > 0 {
-		ttlStr = fmt.Sprintf("%ds", ttl)
-	}
+	// var ttlStr string
+	// if ttl > 0 {
+	// 	ttlStr = fmt.Sprintf("%ds", ttl)
+	// }
 	item := url.Values{}
-	item.Set("ttl", ttlStr)
+	item.Set("TTL", strconv.Itoa(ttl))
 	item.Set("Behaviour", "delete")
 	item.Set("LockDelay", "5s")
 	resp, err := goreq.Request{
