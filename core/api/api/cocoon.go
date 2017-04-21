@@ -149,21 +149,12 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, fmt.Errorf("cocoon with matching ID already exists")
 	}
 
-	// If ACL is set, create an ACLMap, set the cocoon.ACL
-	if len(req.ACL) > 0 {
-		var aclMap map[string]interface{}
-		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
-			return nil, fmt.Errorf("acl: malformed json")
-		}
-		cocoon.ACL = types.NewACLMap(aclMap)
-	}
-
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
 
 	// Resolve firewall rules destination
-	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall)
+	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall.DeDup())
 	if err != nil {
 		return nil, fmt.Errorf("Firewall: %s", err)
 	}
