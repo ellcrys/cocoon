@@ -11,7 +11,7 @@ import (
 )
 
 // LockTTL defines max time to live of a lock.
-var LockTTL = time.Duration(20 * time.Second)
+var LockTTL = time.Duration(10 * time.Second)
 
 func init() {
 	goreq.SetConnectTimeout(time.Second * 10)

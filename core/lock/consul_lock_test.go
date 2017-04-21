@@ -69,15 +69,12 @@ func TestFunc(t *testing.T) {
 
 			Convey("Should return err if lock is no longer acquired due to TTL being reached", func() {
 				key := util.RandString(10)
-				curTTL := LockTTL
-				LockTTL = time.Second * 1
 				l := NewConsulLock()
 				err := l.Acquire(key)
 				So(err, ShouldBeNil)
-				time.Sleep(10 * time.Second)
+				time.Sleep(15 * time.Second)
 				err = l.IsAcquirer()
 				So(err, ShouldResemble, types.ErrLockNotAcquired)
-				LockTTL = curTTL
 			})
 		})
 	})
