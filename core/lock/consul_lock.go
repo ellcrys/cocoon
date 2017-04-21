@@ -87,7 +87,7 @@ func (l *ConsulLock) acquire(key string) error {
 		return types.ErrLockAlreadyAcquired
 	}
 
-	l.state["lock_key_prefix"] = key
+	l.state["key"] = key
 
 	return nil
 }
