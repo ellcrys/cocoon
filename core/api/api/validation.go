@@ -162,7 +162,7 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 	}
 
 	var firewallRules []types.FirewallRule
-	fmt.Println("Firewall validation")
+	fmt.Println("Firewall validation =")
 	util.Printify(firewallMap)
 
 	for i, rule := range firewallMap {
