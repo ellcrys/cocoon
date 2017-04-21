@@ -48,6 +48,13 @@ func TestFunc(t *testing.T) {
 					So(err, ShouldBeNil)
 				})
 			})
+
+			Convey("Should return error when trying to release a non-existent lock on a key", func() {
+				key := util.RandString(10)
+				l := NewConsulLock(key)
+				err := l.Release()
+				t.Log(err)
+			})
 		})
 
 		Convey(".IsAcquirer", func() {
