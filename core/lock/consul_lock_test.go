@@ -74,7 +74,7 @@ func TestFunc(t *testing.T) {
 				l := NewConsulLock()
 				err := l.Acquire(key)
 				So(err, ShouldBeNil)
-				time.Sleep(2 * time.Second)
+				time.Sleep(7 * time.Second)
 				err = l.IsAcquirer()
 				So(err, ShouldResemble, types.ErrLockNotAcquired)
 				LockTTL = curTTL
