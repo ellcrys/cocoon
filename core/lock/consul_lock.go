@@ -22,6 +22,7 @@ func init() {
 // The Lock interface.
 type ConsulLock struct {
 	consulAddr    string
+	key           string
 	lockKeyPrefix string
 	lockSession   string
 }
@@ -84,6 +85,8 @@ func (l *ConsulLock) acquire(key string) error {
 		return types.ErrLockAlreadyAcquired
 	}
 
+	l.key = key
+
 	return nil
 }
 
@@ -106,5 +109,18 @@ func (l *ConsulLock) Acquire(key string) error {
 
 // Release invalidates the lock previously acquired
 func (l *ConsulLock) Release() error {
+	resp, err := goreq.Request{
+		Method: "PUT",
+		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.lockKeyPrefix, l.key, l.lockSession),
+	}.Do()
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		b, _ := resp.Body.ToString()
+		return fmt.Errorf(b)
+	}
+
 	return nil
 }

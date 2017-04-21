@@ -18,7 +18,7 @@ func TestFunc(t *testing.T) {
 				err := l.Acquire(key)
 				So(err, ShouldBeNil)
 
-				Convey("Should have no problem calling re-acquiring a lock as long as TTL has not passed", func() {
+				Convey("Should have no problem re-acquiring a lock as long as TTL has not passed", func() {
 					err := l.Acquire(key)
 					So(err, ShouldBeNil)
 				})
@@ -27,6 +27,22 @@ func TestFunc(t *testing.T) {
 					l := NewConsulLock()
 					err := l.Acquire(key)
 					So(err, ShouldResemble, types.ErrLockAlreadyAcquired)
+				})
+			})
+		})
+
+		Convey(".ReleaseLock", func() {
+			Convey("Should successfully release an acquired lock", func() {
+				key := util.RandString(10)
+				l := NewConsulLock()
+				err := l.Acquire(key)
+				So(err, ShouldBeNil)
+				err = l.Release()
+				So(err, ShouldBeNil)
+
+				Convey("Should successfully acquire a released lock", func() {
+					err := l.Acquire(key)
+					So(err, ShouldBeNil)
 				})
 			})
 		})
