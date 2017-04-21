@@ -6,7 +6,6 @@ import (
 
 	"strings"
 
-	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/types"
 )
@@ -125,7 +124,6 @@ func (l *ConsulLock) Release() error {
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *ConsulLock) IsAcquirer() error {
-	fmt.Println(l.state["lock_session"].(string))
 	if len(l.state["key"].(string)) == 0 {
 		return fmt.Errorf("key is not set")
 	}
@@ -138,7 +136,6 @@ func (l *ConsulLock) IsAcquirer() error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		fmt.Println("Not 200", resp.StatusCode)
 		return types.ErrLockNotAcquired
 	}
 
@@ -147,7 +144,6 @@ func (l *ConsulLock) IsAcquirer() error {
 	if err != nil {
 		return err
 	}
-	util.Printify(sessions)
 
 	if len(sessions) > 0 {
 		session := sessions[0]["Session"]
