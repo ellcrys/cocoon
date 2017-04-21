@@ -44,7 +44,7 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 	// }
 	item := url.Values{}
 	item.Set("TTL", strconv.Itoa(ttl))
-	item.Set("Behaviour", "delete")
+	item.Set("behaviour", "delete")
 	item.Set("LockDelay", "5s")
 	resp, err := goreq.Request{
 		Method:      "PUT",
