@@ -124,3 +124,36 @@ func (l *ConsulLock) Release() error {
 
 	return nil
 }
+
+// IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
+func (l *ConsulLock) IsAcquirer() error {
+
+	if len(l.key) == 0 {
+		return fmt.Errorf("key is not set")
+	}
+
+	resp, err := goreq.Request{
+		Uri: l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s", l.lockKeyPrefix, l.key),
+	}.Do()
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return types.ErrLockNotAcquired
+	}
+
+	var sessions []map[string]interface{}
+	err = resp.Body.FromJsonTo(&sessions)
+	if err != nil {
+		return err
+	}
+
+	if len(sessions) == 0 {
+		if sessions[0]["Session"].(string) != l.lockSession {
+			return types.ErrLockNotAcquired
+		}
+	}
+
+	return nil
+}

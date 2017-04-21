@@ -52,6 +52,9 @@ var (
 
 	// ErrLockAlreadyAcquired represents an error about an already acquired lock
 	ErrLockAlreadyAcquired = fmt.Errorf("lock already acquired by another process")
+	
+	// ErrLockNotAcquired represents a lock on a key that is not acquired
+	ErrLockNotAcquired = fmt.Errorf("lock not acquired")
 )
 
 // IsDuplicatePrevBlockHashError checks whether an error is one created when an ttempts to

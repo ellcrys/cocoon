@@ -4,4 +4,5 @@ package types
 type Lock interface {
 	Acquire(key string) error
 	Release() error
+	IsAcquirer(key string) bool
 }
