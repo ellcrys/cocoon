@@ -128,7 +128,7 @@ func (l *ConsulLock) Release() error {
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *ConsulLock) IsAcquirer() error {
-
+	fmt.Println(l.lockSession)
 	if len(l.key) == 0 {
 		return fmt.Errorf("key is not set")
 	}
