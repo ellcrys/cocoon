@@ -101,8 +101,40 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	loggedInIdentity := claims["identity"].(string)
-	var cocoon types.Cocoon
-	cstructs.Copy(req, &cocoon)
+	var cocoon = types.Cocoon{
+		ID:             req.ID,
+		URL:            req.URL,
+		Version:        req.Version,
+		Language:       req.Language,
+		BuildParam:     req.BuildParam,
+		Memory:         int(req.Memory),
+		CPUShare:       int(req.CPUShare),
+		SigThreshold:   int(req.SigThreshold),
+		NumSignatories: int(req.NumSignatories),
+		Link:           req.Link,
+	}
+
+	// set acl map if provided
+	if len(req.ACL) > 0 {
+		var aclMap map[string]interface{}
+		err := util.FromJSON(req.ACL, &aclMap)
+		if err != nil {
+			return nil, fmt.Errorf("acl: malformed json")
+		}
+		cocoon.ACL = types.NewACLMap(aclMap)
+	}
+
+	// set firewall if provided
+	if len(req.Firewall) > 0 {
+		for _, f := range req.Firewall {
+			cocoon.Firewall = append(cocoon.Firewall, types.FirewallRule{
+				Destination:     f.Destination,
+				DestinationPort: f.DestinationPort,
+				Protocol:        f.Protocol,
+			})
+		}
+	}
+
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
 	cocoon.IdentityID = loggedInIdentity
@@ -125,8 +157,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		}
 		cocoon.ACL = types.NewACLMap(aclMap)
 	}
-
-	util.Printify(cocoon)
 
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
@@ -214,16 +244,38 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	var cocoonUpd types.Cocoon
-	cstructs.Copy(req, &cocoonUpd)
+	var cocoonUpd = types.Cocoon{
+		ID:             req.ID,
+		URL:            req.URL,
+		Version:        req.Version,
+		Language:       req.Language,
+		BuildParam:     req.BuildParam,
+		Memory:         int(req.Memory),
+		CPUShare:       int(req.CPUShare),
+		SigThreshold:   int(req.SigThreshold),
+		NumSignatories: int(req.NumSignatories),
+		Link:           req.Link,
+	}
 
 	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL
 	if len(req.ACL) > 0 {
 		var aclMap map[string]interface{}
-		if err := util.FromJSON(req.ACL, &aclMap); err != nil {
+		err := util.FromJSON(req.ACL, &aclMap)
+		if err != nil {
 			return nil, fmt.Errorf("acl: malformed json")
 		}
 		cocoonUpd.ACL = types.NewACLMap(aclMap)
+	}
+
+	// If Firewall is set, copy new firewall rules to cocoonUpd.Firewall
+	if len(req.Firewall) > 0 {
+		for _, f := range req.Firewall {
+			cocoonUpd.Firewall = append(cocoonUpd.Firewall, types.FirewallRule{
+				Destination:     f.Destination,
+				DestinationPort: f.DestinationPort,
+				Protocol:        f.Protocol,
+			})
+		}
 	}
 
 	// update new non-release specific fields that have been updated
