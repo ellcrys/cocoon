@@ -148,10 +148,12 @@ func (l *ConsulLock) IsAcquirer() error {
 		return err
 	}
 
-	if len(sessions) == 0 {
+	if len(sessions) > 0 {
 		if sessions[0]["Session"].(string) != l.lockSession {
 			return types.ErrLockNotAcquired
 		}
+	} else {
+		return types.ErrLockNotAcquired
 	}
 
 	return nil
