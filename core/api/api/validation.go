@@ -8,18 +8,8 @@ import (
 	cocoon_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/acl"
+	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
-)
-
-var (
-	// supportedLanguages list the languages supported
-	supportedLanguages = []string{"go"}
-
-	// supportedMemory list the memory values supported
-	supportedMemory = []string{"512m", "1g", "2g"}
-
-	// supportedCPUShare list the cpu share values supported
-	supportedCPUShare = []string{"1x", "2x"}
 )
 
 // ValidateCocoon validates a cocoon to be created
@@ -46,8 +36,8 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if len(c.Language) == 0 {
 		return fmt.Errorf("language is required")
 	}
-	if !util.InStringSlice(supportedLanguages, c.Language) {
-		return fmt.Errorf("language is not supported. Expects one of these values %s", supportedLanguages)
+	if !util.InStringSlice(scheduler.SupportedCocoonCodeLang, c.Language) {
+		return fmt.Errorf("language is not supported. Expects one of these values %s", scheduler.SupportedCocoonCodeLang)
 	}
 	if len(c.BuildParam) > 0 {
 		var _c map[string]interface{}
@@ -109,8 +99,8 @@ func ValidateRelease(r *types.Release) error {
 	if len(r.Language) == 0 {
 		return fmt.Errorf("language is required")
 	}
-	if !util.InStringSlice(supportedLanguages, r.Language) {
-		return fmt.Errorf("language is not supported. Expects one of these values %s", supportedLanguages)
+	if !util.InStringSlice(scheduler.SupportedCocoonCodeLang, r.Language) {
+		return fmt.Errorf("language is not supported. Expects one of these values %s", scheduler.SupportedCocoonCodeLang)
 	}
 	if len(r.BuildParam) > 0 {
 		var _r map[string]interface{}
