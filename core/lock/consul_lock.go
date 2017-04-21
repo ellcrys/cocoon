@@ -28,10 +28,10 @@ type ConsulLock struct {
 func NewConsulLock() *ConsulLock {
 	return &ConsulLock{
 		state: map[string]interface{}{
-			"consul_addr":  "http://localhost:8500",
-			"lock_Key":     "platform/lock",
-			"key":          "",
-			"lock_session": "",
+			"consul_addr":     "http://localhost:8500",
+			"lock_Key_prefix": "platform/lock",
+			"key":             "",
+			"lock_session":    "",
 		},
 	}
 }
@@ -87,7 +87,7 @@ func (l *ConsulLock) acquire(key string) error {
 		return types.ErrLockAlreadyAcquired
 	}
 
-	l.state["lock_key"] = key
+	l.state["lock_key_prefix"] = key
 
 	return nil
 }
@@ -111,7 +111,7 @@ func (l *ConsulLock) Acquire(key string) error {
 func (l *ConsulLock) Release() error {
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.state["lock_key_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
+		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.state["lock_key_prefix_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
 	}.Do()
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (l *ConsulLock) IsAcquirer() error {
 	}
 
 	resp, err := goreq.Request{
-		Uri: l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s", l.state["lock_key_prefix"].(string), l.state["key"].(string)),
+		Uri: l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s", l.state["lock_key_prefix_prefix"].(string), l.state["key"].(string)),
 	}.Do()
 	if err != nil {
 		return err
