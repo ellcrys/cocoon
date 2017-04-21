@@ -46,5 +46,16 @@ func TestFunc(t *testing.T) {
 				})
 			})
 		})
+
+		Convey(".IsAcquirer", func() {
+			Convey("Should return nil if lock is still the acquirer of a lock on it's key", func() {
+				key := util.RandString(10)
+				l := NewConsulLock()
+				err := l.Acquire(key)
+				So(err, ShouldBeNil)
+				err = l.IsAcquirer()
+				So(err, ShouldBeNil)
+			})
+		})
 	})
 }
