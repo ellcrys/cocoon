@@ -60,8 +60,9 @@ func TestFunc(t *testing.T) {
 			Convey("Should return error when trying to release a non-existent lock on a key", func() {
 				key := util.RandString(10)
 				l := NewConsulLock(key)
+				l2 := NewConsulLock(key)
 				err := l.Acquire()
-				err = l.Release()
+				err = l2.Release()
 				t.Log(err)
 			})
 		})
