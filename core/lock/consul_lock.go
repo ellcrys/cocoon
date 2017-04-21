@@ -20,6 +20,7 @@ func init() {
 type ConsulLock struct {
 	consulAddr    string
 	lockKeyPrefix string
+	lockSession   string
 }
 
 // NewConsulLock creates a consul lock instance
@@ -61,16 +62,37 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 	return result["ID"], nil
 }
 
+func (l *ConsulLock) acquire(key string) error {
+	resp, err := goreq.Request{
+		Method: "PUT",
+		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s?acquire=%s", l.lockKeyPrefix, l.lockSession),
+	}.Do()
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		b, _ := resp.Body.ToString()
+		return fmt.Errorf(b)
+	}
+
+	return nil
+}
+
 // Acquire acquires a lock on a key. A time-to-live time is set
 // on the lock to ensure the lock is invalidated after the time is passed.
 func (l *ConsulLock) Acquire(key string) error {
 
-	_, err := l.createSession(int(LockTTL.Seconds()))
+	var err error
+
+	l.lockSession, err = l.createSession(int(LockTTL.Seconds()))
 	if err != nil {
 		return fmt.Errorf("failed to get lock: %s", err)
 	}
 
-	return nil
+	err = l.acquire(key)
+
+	return err
 }
 
 // Release invalidates the lock previously acquired
