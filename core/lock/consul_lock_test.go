@@ -2,6 +2,7 @@ package lock
 
 import (
 	"testing"
+	"time"
 
 	"fmt"
 
@@ -64,6 +65,19 @@ func TestFunc(t *testing.T) {
 				So(err, ShouldBeNil)
 				err = l.IsAcquirer()
 				So(err, ShouldBeNil)
+			})
+
+			Convey("Should return err if lock is no longer acquired due to TTL being reached", func() {
+				key := util.RandString(10)
+				curTTL := LockTTL
+				LockTTL = time.Second * 1
+				l := NewConsulLock()
+				err := l.Acquire(key)
+				So(err, ShouldBeNil)
+				time.Sleep(2 * time.Second)
+				err = l.IsAcquirer()
+				So(err, ShouldResemble, types.ErrLockNotAcquired)
+				LockTTL = curTTL
 			})
 		})
 	})
