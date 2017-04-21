@@ -115,7 +115,6 @@ func (l *ConsulLock) Release() error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		fmt.Println("====")
 		b, _ := resp.Body.ToString()
 		return fmt.Errorf(b)
 	}
