@@ -57,14 +57,14 @@ func TestFunc(t *testing.T) {
 				So(err.Error(), ShouldEqual, "missing session")
 			})
 
-			Convey("Should return error when trying to release a non-existent lock on a key", func() {
+			Convey("Should return no error when trying to release a lock not held", func() {
 				key := util.RandString(10)
 				l := NewConsulLock(key)
 				l2 := NewConsulLock(key)
 				l2.state["lock_session"] = util.UUID4()
 				err := l.Acquire()
 				err = l2.Release()
-				t.Log(err)
+				So(err, ShouldBeNil)
 			})
 		})
 
