@@ -25,12 +25,12 @@ type ConsulLock struct {
 }
 
 // NewConsulLock creates a consul lock instance
-func NewConsulLock() *ConsulLock {
+func NewConsulLock(key string) *ConsulLock {
 	return &ConsulLock{
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
 			"lock_key_prefix": "platform/lock",
-			"key":             "",
+			"key":             key,
 			"lock_session":    "",
 		},
 	}
@@ -68,10 +68,10 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 	return result["ID"], nil
 }
 
-func (l *ConsulLock) acquire(key string) error {
+func (l *ConsulLock) acquire() error {
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.state["lock_key_prefix"].(string), key, l.state["lock_session"].(string)),
+		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.state["lock_key_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
 	}.Do()
 	if err != nil {
 		return err
@@ -87,14 +87,12 @@ func (l *ConsulLock) acquire(key string) error {
 		return types.ErrLockAlreadyAcquired
 	}
 
-	l.state["key"] = key
-
 	return nil
 }
 
-// Acquire acquires a lock on a key. A time-to-live time is set
+// Acquire acquires a lock. A time-to-live time is set
 // on the lock to ensure the lock is invalidated after the time is passed.
-func (l *ConsulLock) Acquire(key string) error {
+func (l *ConsulLock) Acquire() error {
 	var err error
 
 	// If lock object has got a session, get one.
@@ -104,7 +102,7 @@ func (l *ConsulLock) Acquire(key string) error {
 			return fmt.Errorf("failed to get lock: %s", err)
 		}
 	}
-	return l.acquire(key)
+	return l.acquire()
 }
 
 // Release invalidates the lock previously acquired
