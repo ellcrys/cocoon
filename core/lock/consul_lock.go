@@ -6,6 +6,7 @@ import (
 
 	"strings"
 
+	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/types"
 )
@@ -139,6 +140,7 @@ func (l *ConsulLock) IsAcquirer() error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		fmt.Println("Not 200", resp.StatusCode)
 		return types.ErrLockNotAcquired
 	}
 
@@ -147,6 +149,7 @@ func (l *ConsulLock) IsAcquirer() error {
 	if err != nil {
 		return err
 	}
+	util.Printify(sessions)
 
 	if len(sessions) > 0 {
 		if sessions[0]["Session"].(string) != l.lockSession {
