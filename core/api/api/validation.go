@@ -64,6 +64,8 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("max signatories already added. You can't add more")
 	}
 	if c.Firewall != nil {
+		fmt.Println("Firewall=")
+		util.Printify(c.Firewall.ToMap())
 		_, errs := ValidateFirewall(c.Firewall.ToMap())
 		if len(errs) != 0 {
 			return fmt.Errorf("firewall: %s, ", errs[0])
@@ -138,6 +140,9 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 	}
 
 	var firewallMap []map[string]string
+
+	// Coerce firewall value from either json encoded firewal to
+	// []map[string]string
 	switch fwData := firewall.(type) {
 	case string:
 		if len(fwData) == 0 {
@@ -157,6 +162,8 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 	}
 
 	var firewallRules []types.FirewallRule
+	fmt.Println("Firewall validation")
+	util.Printify(firewallMap)
 
 	for i, rule := range firewallMap {
 		if rule["destination"] == "" {

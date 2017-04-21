@@ -126,6 +126,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		cocoon.ACL = types.NewACLMap(aclMap)
 	}
 
+	util.Printify(cocoon)
+
 	if err := ValidateCocoon(&cocoon); err != nil {
 		return nil, err
 	}
