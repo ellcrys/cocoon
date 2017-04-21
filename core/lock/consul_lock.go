@@ -68,7 +68,7 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 func (l *ConsulLock) acquire(key string) error {
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s?acquire=%s", l.lockKeyPrefix, l.lockSession),
+		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.lockKeyPrefix, key, l.lockSession),
 	}.Do()
 	if err != nil {
 		return err
