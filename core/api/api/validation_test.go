@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -147,7 +148,7 @@ func TestValidation(t *testing.T) {
 				ID:         util.UUID4(),
 				CocoonID:   "cocoon-123",
 				URL:        "https://github.com/ncodes/cocoon-example-01",
-				Language:   supportedLanguages[0],
+				Language:   scheduler.SupportedCocoonCodeLang[0],
 				BuildParam: "non json",
 			})
 			So(err, ShouldNotBeNil)

@@ -178,7 +178,7 @@ func TestOrderer(t *testing.T) {
 									ID:       id,
 									CocoonID: "cocoon-123",
 									URL:      "https://github.com/ncodes/cocoon-example-01",
-									Language: supportedLanguages[0],
+									Language: scheduler.SupportedCocoonCodeLang[0],
 								})
 								So(err, ShouldBeNil)
 								So(r.Status, ShouldEqual, 200)
@@ -190,7 +190,7 @@ func TestOrderer(t *testing.T) {
 										ID:       id,
 										CocoonID: "cocoon-123",
 										URL:      "https://github.com/ncodes/cocoon-example-01",
-										Language: supportedLanguages[0],
+										Language: scheduler.SupportedCocoonCodeLang[0],
 									})
 									So(r, ShouldBeNil)
 									So(err, ShouldNotBeNil)
