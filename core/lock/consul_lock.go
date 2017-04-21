@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"time"
 
+	"strings"
+
 	"github.com/franela/goreq"
 )
 
@@ -78,7 +80,7 @@ func (l *ConsulLock) acquire(key string) error {
 
 	status, _ := resp.Body.ToString()
 	fmt.Println("\n", status)
-	if status == "false" {
+	if strings.TrimSpace(status) == "false" {
 		return fmt.Errorf("lock already acquired by another process")
 	}
 
