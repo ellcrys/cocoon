@@ -21,17 +21,18 @@ func init() {
 // ConsulLock provides lock functionalities based on consul sessions.It implements
 // The Lock interface.
 type ConsulLock struct {
-	consulAddr    string
-	key           string
-	lockKeyPrefix string
-	lockSession   string
+	state map[string]interface{}
 }
 
 // NewConsulLock creates a consul lock instance
 func NewConsulLock() *ConsulLock {
 	return &ConsulLock{
-		consulAddr:    "http://localhost:8500",
-		lockKeyPrefix: "platform/lock",
+		state: map[string]interface{}{
+			"consul_addr":  "http://localhost:8500",
+			"lock_Key":     "platform/lock",
+			"key":          "",
+			"lock_session": "",
+		},
 	}
 }
 
@@ -43,7 +44,7 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 	}
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.consulAddr + "/v1/session/create",
+		Uri:    l.state["consul_addr"].(string) + "/v1/session/create",
 		Body: map[string]string{
 			"TTL":       ttlStr,
 			"Behaviour": "delete",
@@ -70,7 +71,7 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 func (l *ConsulLock) acquire(key string) error {
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.lockKeyPrefix, key, l.lockSession),
+		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.state["lock_key_prefix"].(string), key, l.state["lock_session"].(string)),
 	}.Do()
 	if err != nil {
 		return err
@@ -86,7 +87,7 @@ func (l *ConsulLock) acquire(key string) error {
 		return types.ErrLockAlreadyAcquired
 	}
 
-	l.key = key
+	l.state["lock_key"] = key
 
 	return nil
 }
@@ -97,13 +98,12 @@ func (l *ConsulLock) Acquire(key string) error {
 	var err error
 
 	// If lock object has got a session, get one.
-	if l.lockSession == "" {
-		l.lockSession, err = l.createSession(int(LockTTL.Seconds()))
+	if l.state["lock_session"].(string) == "" {
+		l.state["lock_session"], err = l.createSession(int(LockTTL.Seconds()))
 		if err != nil {
 			return fmt.Errorf("failed to get lock: %s", err)
 		}
 	}
-
 	return l.acquire(key)
 }
 
@@ -111,7 +111,7 @@ func (l *ConsulLock) Acquire(key string) error {
 func (l *ConsulLock) Release() error {
 	resp, err := goreq.Request{
 		Method: "PUT",
-		Uri:    l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.lockKeyPrefix, l.key, l.lockSession),
+		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.state["lock_key_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
 	}.Do()
 	if err != nil {
 		return err
@@ -127,13 +127,13 @@ func (l *ConsulLock) Release() error {
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *ConsulLock) IsAcquirer() error {
-	fmt.Println(l.lockSession)
-	if len(l.key) == 0 {
+	fmt.Println(l.state["lock_session"].(string))
+	if len(l.state["key"].(string)) == 0 {
 		return fmt.Errorf("key is not set")
 	}
 
 	resp, err := goreq.Request{
-		Uri: l.consulAddr + "/v1/kv/" + fmt.Sprintf("%s.%s", l.lockKeyPrefix, l.key),
+		Uri: l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s", l.state["lock_key_prefix"].(string), l.state["key"].(string)),
 	}.Do()
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (l *ConsulLock) IsAcquirer() error {
 		if session == nil {
 			return types.ErrLockNotAcquired
 		}
-		if session.(string) != l.lockSession {
+		if session.(string) != l.state["lock_session"].(string) {
 			return types.ErrLockNotAcquired
 		}
 	} else {
@@ -164,4 +164,9 @@ func (l *ConsulLock) IsAcquirer() error {
 	}
 
 	return nil
+}
+
+// GetState returns the lock state
+func (l *ConsulLock) GetState() map[string]interface{} {
+	return l.state
 }

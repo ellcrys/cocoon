@@ -5,4 +5,5 @@ type Lock interface {
 	Acquire(key string) error
 	Release() error
 	IsAcquirer(key string) bool
+	GetState() map[string]interface{}
 }
