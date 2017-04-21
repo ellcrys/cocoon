@@ -25,7 +25,7 @@ type ConsulLock struct {
 // NewConsulLock creates a consul lock instance
 func NewConsulLock() *ConsulLock {
 	return &ConsulLock{
-		consulAddr:    "localhost:8500",
+		consulAddr:    "http://localhost:8500",
 		lockKeyPrefix: "platform/lock",
 	}
 }
