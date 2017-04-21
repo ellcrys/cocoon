@@ -1,8 +1,12 @@
 package lock
 
-import "time"
-import "github.com/franela/goreq"
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+	"time"
+
+	"github.com/franela/goreq"
+)
 
 // LockTTL defines max time to live of a lock.
 var LockTTL = time.Duration(20 * time.Second)
@@ -32,13 +36,13 @@ func (l *ConsulLock) createSession(ttl int) (string, error) {
 	if ttl > 0 {
 		ttlStr = fmt.Sprintf("%ds", ttl)
 	}
+	item := url.Values{}
+	item.Set("TTL", ttlStr)
+	item.Set("Behaviour", "delete")
 	resp, err := goreq.Request{
-		Method: "PUT",
-		Uri:    l.consulAddr + "/v1/session/create",
-		QueryString: map[string]string{
-			"TTL":       ttlStr,
-			"Behaviour": "delete",
-		},
+		Method:      "PUT",
+		Uri:         l.consulAddr + "/v1/session/create",
+		QueryString: item,
 	}.Do()
 	if err != nil {
 		return "", err
