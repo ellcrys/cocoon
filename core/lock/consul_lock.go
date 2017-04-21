@@ -29,7 +29,7 @@ func NewConsulLock() *ConsulLock {
 	return &ConsulLock{
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
-			"lock_Key_prefix": "platform/lock",
+			"lock_key_prefix": "platform/lock",
 			"key":             "",
 			"lock_session":    "",
 		},
