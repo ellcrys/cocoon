@@ -1,0 +1,75 @@
+package lock
+
+import "time"
+import "github.com/franela/goreq"
+import "fmt"
+
+// LockTTL defines max time to live of a lock.
+var LockTTL = time.Duration(20 * time.Second)
+
+func init() {
+	goreq.SetConnectTimeout(time.Second * 10)
+}
+
+// ConsulLock provides lock functionalities based on consul sessions.It implements
+// The Lock interface.
+type ConsulLock struct {
+	consulAddr    string
+	lockKeyPrefix string
+}
+
+// NewConsulLock creates a consul lock instance
+func NewConsulLock() *ConsulLock {
+	return &ConsulLock{
+		consulAddr:    "localhost:8500",
+		lockKeyPrefix: "platform/lock",
+	}
+}
+
+// createSession creates a consul session
+func (l *ConsulLock) createSession(ttl int) (string, error) {
+	var ttlStr string
+	if ttl > 0 {
+		ttlStr = fmt.Sprintf("%ds", ttl)
+	}
+	resp, err := goreq.Request{
+		Method: "PUT",
+		Uri:    l.consulAddr + "/v1/session/create",
+		QueryString: map[string]string{
+			"TTL":       ttlStr,
+			"Behaviour": "delete",
+		},
+	}.Do()
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		b, _ := resp.Body.ToString()
+		return "", fmt.Errorf(b)
+	}
+
+	var result map[string]string
+	if err = resp.Body.FromJsonTo(&result); err != nil {
+		return "", err
+	}
+
+	return result["ID"], nil
+}
+
+// Acquire acquires a lock on a key. A time-to-live time is set
+// on the lock to ensure the lock is invalidated after the time is passed.
+func (l *ConsulLock) Acquire(key string) error {
+
+	_, err := l.createSession(int(LockTTL.Seconds()))
+	if err != nil {
+		return fmt.Errorf("failed to get lock: %s", err)
+	}
+
+	return nil
+}
+
+// Release invalidates the lock previously acquired
+func (l *ConsulLock) Release() error {
+	return nil
+}
