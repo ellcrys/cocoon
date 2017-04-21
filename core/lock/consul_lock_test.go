@@ -61,6 +61,7 @@ func TestFunc(t *testing.T) {
 				key := util.RandString(10)
 				l := NewConsulLock(key)
 				l2 := NewConsulLock(key)
+				l2.state["lock_session"] = util.UUID4()
 				err := l.Acquire()
 				err = l2.Release()
 				t.Log(err)
