@@ -2,8 +2,6 @@ package lock
 
 import (
 	"fmt"
-	"net/url"
-	"strconv"
 	"time"
 
 	"strings"
@@ -38,18 +36,18 @@ func NewConsulLock() *ConsulLock {
 
 // createSession creates a consul session
 func (l *ConsulLock) createSession(ttl int) (string, error) {
-	// var ttlStr string
-	// if ttl > 0 {
-	// 	ttlStr = fmt.Sprintf("%ds", ttl)
-	// }
-	item := url.Values{}
-	item.Set("TTL", strconv.Itoa(ttl))
-	item.Set("behaviour", "delete")
-	item.Set("LockDelay", "5s")
+	var ttlStr string
+	if ttl > 0 {
+		ttlStr = fmt.Sprintf("%ds", ttl)
+	}
 	resp, err := goreq.Request{
-		Method:      "PUT",
-		Uri:         l.consulAddr + "/v1/session/create",
-		QueryString: item,
+		Method: "PUT",
+		Uri:    l.consulAddr + "/v1/session/create",
+		Body: map[string]string{
+			"TTL":       ttlStr,
+			"Behaviour": "delete",
+			"LockDelay": "5s",
+		},
 	}.Do()
 	if err != nil {
 		return "", err
@@ -129,7 +127,7 @@ func (l *ConsulLock) Release() error {
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *ConsulLock) IsAcquirer() error {
-	fmt.Println(l.lockSession)
+
 	if len(l.key) == 0 {
 		return fmt.Errorf("key is not set")
 	}
