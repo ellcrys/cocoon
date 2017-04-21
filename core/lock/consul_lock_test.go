@@ -72,6 +72,7 @@ func TestFunc(t *testing.T) {
 				l := NewConsulLock()
 				err := l.Acquire(key)
 				So(err, ShouldBeNil)
+				util.Println(l.GetState())
 				time.Sleep(20 * time.Second)
 				err = l.IsAcquirer()
 				So(err, ShouldResemble, types.ErrLockNotAcquired)
