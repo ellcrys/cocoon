@@ -93,7 +93,6 @@ func (l *ConsulLock) acquire(key string) error {
 // Acquire acquires a lock on a key. A time-to-live time is set
 // on the lock to ensure the lock is invalidated after the time is passed.
 func (l *ConsulLock) Acquire(key string) error {
-	fmt.Println(l.lockSession)
 	var err error
 
 	// If lock object has got a session, get one.
@@ -127,7 +126,7 @@ func (l *ConsulLock) Release() error {
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *ConsulLock) IsAcquirer() error {
-
+	fmt.Println(l.lockSession)
 	if len(l.key) == 0 {
 		return fmt.Errorf("key is not set")
 	}
