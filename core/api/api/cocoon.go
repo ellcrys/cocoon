@@ -159,7 +159,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, fmt.Errorf("Firewall: %s", err)
 	}
 
-	cocoon.Firewall = outputFirewall.DeDup()
+	cocoon.Firewall = outputFirewall
 
 	// if a link cocoon id is provided, check if the linked cocoon exists
 	// TODO: Provide a permission (ACL) mechanism
