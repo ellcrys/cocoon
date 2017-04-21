@@ -76,6 +76,11 @@ func (l *ConsulLock) acquire(key string) error {
 		return fmt.Errorf(b)
 	}
 
+	status, _ := resp.Body.ToString()
+	if status == "false" {
+		return fmt.Errorf("lock already acquired by another process")
+	}
+
 	return nil
 }
 
