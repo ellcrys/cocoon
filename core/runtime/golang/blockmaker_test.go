@@ -97,10 +97,10 @@ func TestBlockMaker(t *testing.T) {
 				ab := &Entry{Tx: &types.Transaction{Ledger: "ab"}, RespChan: ch1, LinkTo: "c4"}
 				a3 := &Entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1, LinkTo: "ab"}
 				entries = append(entries, a)
-				entries = append(entries, a2)
 				entries = append(entries, c)
 				entries = append(entries, b)
 				entries = append(entries, ab)
+				entries = append(entries, a2)
 				entries = append(entries, a3)
 				grp := bm.groupEntriesByLedgerAndLink(entries)
 				expected := [][]*Entry{
