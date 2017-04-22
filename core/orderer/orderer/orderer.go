@@ -201,7 +201,6 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	var createBlockFunc func() error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
-
 		createBlockFunc = func() error {
 			var err error
 			retryDelay := time.Duration(2) * time.Second

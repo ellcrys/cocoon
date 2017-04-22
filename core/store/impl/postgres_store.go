@@ -219,7 +219,7 @@ func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 	return &l, nil
 }
 
-// PutThen creates one or more transactions associated to a ledger.
+// PutThen adds transactions to the store.
 // Returns error if any of the transaction failed or nil if
 // all transactions were successful added. It accepts an additional operation (via the thenFunc) to be
 // executed before the transactions are committed. If the thenFunc returns an error, the
