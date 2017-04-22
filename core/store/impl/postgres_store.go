@@ -331,6 +331,7 @@ func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 }
 
 // GetRange fetches transactions with keys included in a specified range.
+// No lock is acquired in this operation.
 func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool, limit, offset int) ([]*types.Transaction, error) {
 
 	var err error
