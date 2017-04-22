@@ -100,7 +100,7 @@ func TestFunc(t *testing.T) {
 
 		Convey(".ResolveFirewall", func() {
 			Convey("Should return error if a rule's destination address could not be resolved", func() {
-				_, err := ResolveFirewall([]*types.FirewallRule{
+				_, err := ResolveFirewall([]types.FirewallRule{
 					{Destination: "googleasadsa.com", DestinationPort: "80", Protocol: "udp"},
 				})
 				So(err, ShouldNotBeNil)
@@ -108,23 +108,22 @@ func TestFunc(t *testing.T) {
 			})
 
 			Convey("Should successfully resolve rules destination", func() {
-				rules, err := ResolveFirewall([]*types.FirewallRule{
+				rules, err := ResolveFirewall([]types.FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
 				So(err, ShouldBeNil)
-				So(len(rules), ShouldEqual, 2)
+				So(len(rules), ShouldBeGreaterThan, 2)
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 				So(rules[1].Destination, ShouldNotEqual, "facebook.com")
 			})
 
 			Convey("Should handle nil rules by ignoring them", func() {
-				rules, err := ResolveFirewall([]*types.FirewallRule{
+				rules, err := ResolveFirewall([]types.FirewallRule{
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
-					nil,
 				})
 				So(err, ShouldBeNil)
-				So(len(rules), ShouldEqual, 1)
+				So(len(rules), ShouldBeGreaterThan, 1)
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 			})
 		})
