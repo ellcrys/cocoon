@@ -86,7 +86,7 @@ func TestBlockMaker(t *testing.T) {
 			})
 		})
 
-		Convey(".groupEntriesByLedgerName", func() {
+		Convey(".groupEntriesByLedgerAndLink", func() {
 			Convey("Should return expected entries in expected order", func() {
 				ch1 := make(chan interface{})
 				var entries Entries = []*Entry{}
@@ -102,7 +102,7 @@ func TestBlockMaker(t *testing.T) {
 				entries = append(entries, b)
 				entries = append(entries, ab)
 				entries = append(entries, a3)
-				grp := bm.groupEntriesByLedgerName(entries)
+				grp := bm.groupEntriesByLedgerAndLink(entries)
 				expected := [][]*Entry{
 					[]*Entry{a3},
 					[]*Entry{a, a2},

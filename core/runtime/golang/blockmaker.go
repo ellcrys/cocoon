@@ -106,7 +106,7 @@ func (b *BlockMaker) Begin(committerFunc func([]*Entry) interface{}) {
 			if len(entries) == 0 {
 				continue
 			}
-			entriesGrp := b.groupEntriesByLedgerName(entries)
+			entriesGrp := b.groupEntriesByLedgerAndLink(entries)
 			for _, grp := range entriesGrp {
 				_grp := grp
 				go func() {
@@ -126,20 +126,20 @@ func (b *BlockMaker) Stop() {
 	close(b.stop)
 }
 
-// groupEntriesByLedgerName creates a group of entries where all entries
-// in a group all have the same LedgerName and To value.
-func (b *BlockMaker) groupEntriesByLedgerName(entries Entries) [][]*Entry {
+// groupEntriesByLedgerAndLink creates a group of entries where all entries
+// in a group share the same ledger name and link
+func (b *BlockMaker) groupEntriesByLedgerAndLink(entries Entries) [][]*Entry {
 	sort.Sort(entries)
-	var grp = [][]*Entry{}
+	var entryGroups = [][]*Entry{}
 	var curLedgerName = ""
-	var curTo = ""
+	var curLink = ""
 	for _, entry := range entries {
-		if entry.Tx.Ledger != curLedgerName || entry.LinkTo != curTo {
+		if entry.Tx.Ledger != curLedgerName || entry.LinkTo != curLink {
 			curLedgerName = entry.Tx.Ledger
-			curTo = entry.LinkTo
-			grp = append(grp, []*Entry{})
+			curLink = entry.LinkTo
+			entryGroups = append(entryGroups, []*Entry{})
 		}
-		grp[len(grp)-1] = append(grp[len(grp)-1], entry)
+		entryGroups[len(entryGroups)-1] = append(entryGroups[len(entryGroups)-1], entry)
 	}
-	return grp
+	return entryGroups
 }
