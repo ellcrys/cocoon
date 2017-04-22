@@ -83,10 +83,27 @@ func (b *BlockMaker) getBlockEntries() []*Entry {
 }
 
 // sendToEntries sends a message to the channel of all entries
-// and closes the channel.
+// and closes the channel. If the message is a PutResult, it finds the
+// transaction receipt of the entry and sends an error to the channel if the
+// entry's transaction has an err. Otherwise, it sends the block.
 func (b *BlockMaker) sendToEntries(entries []*Entry, msg interface{}) {
 	for _, entry := range entries {
-		entry.RespChan <- msg
+		switch v := msg.(type) {
+		case error:
+			entry.RespChan <- v
+		case *types.PutResult:
+			isErr := false
+			for _, r := range v.TxReceipts {
+				if r.ID == entry.Tx.ID && len(r.Err) > 0 {
+					entry.RespChan <- fmt.Errorf(r.Err)
+					isErr = true
+					break
+				}
+			}
+			if !isErr {
+				entry.RespChan <- v.Block
+			}
+		}
 		close(entry.RespChan)
 	}
 }

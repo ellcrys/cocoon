@@ -158,17 +158,15 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // if succeed or error if otherwise.
 func blockCommitter(entries []*Entry) interface{} {
 
-	var block types.Block
-
+	var putResult types.PutResult
 	if len(entries) == 0 {
-		return block
+		return fmt.Errorf("empty entry list")
 	}
 
 	txs := make([]*types.Transaction, len(entries))
 	for i, e := range entries {
 		txs[i] = e.Tx
 	}
-
 	ledgerName := entries[0].Tx.Ledger
 	txsJSON, _ := util.ToJSON(txs)
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
@@ -183,11 +181,11 @@ func blockCommitter(entries []*Entry) interface{} {
 		return fmt.Errorf("failed to put block transaction: %s", err)
 	}
 
-	if err = util.FromJSON(result, &block); err != nil {
+	if err = util.FromJSON(result, &putResult); err != nil {
 		return fmt.Errorf("failed to unmarshal response data")
 	}
 
-	return &block
+	return &putResult
 }
 
 // sendLedgerOp sends a ledger transaction to the

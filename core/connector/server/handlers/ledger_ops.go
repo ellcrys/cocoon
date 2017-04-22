@@ -254,8 +254,7 @@ func (l *LedgerOperations) put(ctx context.Context, op *proto_connector.LedgerOp
 		return nil, err
 	}
 
-	body, _ := util.ToJSON(result.Block)
-
+	body, _ := util.ToJSON(result)
 	return &proto_connector.Response{
 		ID:     op.GetID(),
 		Status: 200,

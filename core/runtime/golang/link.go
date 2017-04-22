@@ -166,7 +166,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	}
 
 	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
-	_, err = sendLedgerOp(&proto_connector.LedgerOperation{
+	putTxResultBs, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
 		LinkTo: link.GetCocoonID(),
@@ -176,6 +176,18 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to put transaction: %s", err)
+	}
+
+	var putTxResult types.PutResult
+	if err := util.FromJSON(putTxResultBs, &putTxResult); err != nil {
+		return nil, common.JSONCoerceErr("putTxResult", err)
+	}
+
+	// ensure transaction was successful
+	for _, txResult := range putTxResult.TxReceipts {
+		if txResult.ID == tx.ID && len(txResult.Err) > 0 {
+			return nil, fmt.Errorf("failed to put transaction: %s", txResult.Err)
+		}
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))

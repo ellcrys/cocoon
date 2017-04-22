@@ -57,6 +57,12 @@ func GetActualKeyFromTxKey(key string) string {
 // TxReceipt defines a structure for representing transaction status
 // from endpoint that manipulate transactions
 type TxReceipt struct {
-	ID  string
-	Err string
+	ID  string `json:"ID,omitempty"`
+	Err string `json:"err,omitempty"`
+}
+
+// PutResult defines a structure for put operation ressult
+type PutResult struct {
+	TxReceipts []*TxReceipt `json:"txReceipts,omitempty"`
+	Block      *Block       `json:"block,omitempty"`
 }
