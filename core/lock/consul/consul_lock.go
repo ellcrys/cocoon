@@ -20,12 +20,27 @@ func init() {
 // Lock provides lock functionalities based on consul sessions.It implements
 // The Lock interface.
 type Lock struct {
-	state map[string]interface{}
+	lockTTL time.Duration
+	state   map[string]interface{}
 }
 
 // NewLock creates a consul lock instance
 func NewLock(key string) *Lock {
 	return &Lock{
+		lockTTl: LockTTL,
+		state: map[string]interface{}{
+			"consul_addr":     "http://localhost:8500",
+			"lock_key_prefix": "platform/lock",
+			"key":             key,
+			"lock_session":    "",
+		},
+	}
+}
+
+// NewLockWithTTL creates a consul lock instance
+func NewLockWithTTL(key string, ttl time.Duration) *Lock {
+	return &Lock{
+		lockTTl: ttl,
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
 			"lock_key_prefix": "platform/lock",
@@ -96,7 +111,7 @@ func (l *Lock) Acquire() error {
 
 	// If lock object has got a session, get one.
 	if l.state["lock_session"].(string) == "" {
-		l.state["lock_session"], err = l.createSession(int(LockTTL.Seconds()))
+		l.state["lock_session"], err = l.createSession(int(l.lockTTL.Seconds()))
 		if err != nil {
 			return fmt.Errorf("failed to get lock: %s", err)
 		}
