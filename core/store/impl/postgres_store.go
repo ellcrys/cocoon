@@ -223,9 +223,9 @@ func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 	return &l, nil
 }
 
-// makeTxLockKey constructs a lock key from a transaction
-func makeTxLockKey(tx *types.Transaction) string {
-	return fmt.Sprintf("tx;key;%s;%s", tx.LedgerInternal, tx.Key)
+// makeTxLockKey constructs a lock key using a transaction key and ledger name
+func makeTxLockKey(ledgerName, key string) string {
+	return fmt.Sprintf("tx;key;%s;%s", ledgerName, key)
 }
 
 // PutThen adds transactions to the store and returns a list of transaction receipts.
@@ -253,13 +253,13 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		var err error
 
 		// acquire lock on the transaction via its key
-		lock := common.NewLock(makeTxLockKey(tx))
+		lock := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
 		if err = lock.Acquire(); err != nil {
 			log.Error(err.Error())
 			if err == types.ErrLockAlreadyAcquired {
 				txReceipts = append(txReceipts, &types.TxReceipt{
 					ID:  tx.ID,
-					Err: "failed to acquire lock. transaction is being accessed by another process",
+					Err: "failed to acquire lock. object has been locked by another process",
 				})
 				continue
 			}
@@ -270,8 +270,6 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 			continue
 		}
 
-		log.Info("Lock acquired")
-
 		tx.Hash = tx.MakeHash()
 		tx.Ledger = ledgerName
 		txReceipt := &types.TxReceipt{ID: tx.ID}
@@ -280,17 +278,12 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 			txReceipt.Err = err.Error()
 		}
 
-		// if err = lock.Release(); err != nil {
-		// 	fmt.Println("Error releasing lock: ", err)
-		// }
+		if err = lock.Release(); err != nil {
+			fmt.Println("Error releasing lock: ", err)
+		}
 
-		// log.Info("Lock released")
-
+		storedTx = append(storedTx, tx)
 		txReceipts = append(txReceipts, txReceipt)
-	}
-
-	if len(storedTx) == 0 {
-		return txReceipts, err
 	}
 
 	// run the companion functions. Rollback
@@ -312,23 +305,20 @@ func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) ([]*typ
 	return s.PutThen(ledgerName, txs, nil)
 }
 
-// GetByID fetches a transaction by its transaction id
-func (s *PostgresStore) GetByID(ledgerName, txID string) (*types.Transaction, error) {
-	var tx types.Transaction
-
-	err := s.db.Where("ledger = ? AND  id = ?", ledgerName, txID).First(&tx).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, fmt.Errorf("failed to perform find op. %s", err)
-	} else if err == gorm.ErrRecordNotFound {
-		return nil, nil
-	}
-
-	return &tx, nil
-}
-
 // Get fetches a transaction by its ledger and key
 func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 	var tx types.Transaction
+
+	// acquire lock on the transaction via its key
+	lock := common.NewLock(makeTxLockKey(ledger, key))
+	if err := lock.Acquire(); err != nil {
+		if err == types.ErrLockAlreadyAcquired {
+			return nil, fmt.Errorf("failed to acquire lock. object has been locked by another process")
+		}
+		return nil, err
+	}
+
+	defer lock.Release()
 
 	err := s.db.Where("ledger = ? AND key = ?", ledger, key).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -340,7 +330,7 @@ func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 	return &tx, nil
 }
 
-// GetRange detches transactions with keys included in a specified range.
+// GetRange fetches transactions with keys included in a specified range.
 func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool, limit, offset int) ([]*types.Transaction, error) {
 
 	var err error

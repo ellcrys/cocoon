@@ -6,7 +6,6 @@ service Orderer {
     rpc GetLedger(GetLedgerParams) returns (Ledger);
     rpc Put(PutTransactionParams) returns (PutResult);
     rpc Get(GetParams) returns (Transaction);
-    rpc GetByID(GetParams) returns (Transaction);
     rpc GetBlockByID(GetBlockParams) returns (Block);
     rpc GetRange(GetRangeParams) returns (Transactions);
 }

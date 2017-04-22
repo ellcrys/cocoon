@@ -117,9 +117,7 @@ func (l *LedgerOperations) Handle(ctx context.Context, op *proto_connector.Ledge
 	case types.TxPut:
 		return l.put(ctx, op)
 	case types.TxGet:
-		return l.get(ctx, op, false)
-	case types.TxGetByID:
-		return l.get(ctx, op, true)
+		return l.get(ctx, op)
 	case types.TxGetBlockByID:
 		return l.getBlock(ctx, op)
 	case types.TxRangeGet:
@@ -264,7 +262,7 @@ func (l *LedgerOperations) put(ctx context.Context, op *proto_connector.LedgerOp
 
 // get gets a transaction by its key.
 // If byID is set, it will find the transaction by id specified in tx.Id.
-func (l *LedgerOperations) get(ctx context.Context, op *proto_connector.LedgerOperation, byID bool) (*proto_connector.Response, error) {
+func (l *LedgerOperations) get(ctx context.Context, op *proto_connector.LedgerOperation) (*proto_connector.Response, error) {
 
 	var result *proto_orderer.Transaction
 	var err error
@@ -281,20 +279,11 @@ func (l *LedgerOperations) get(ctx context.Context, op *proto_connector.LedgerOp
 	defer ordererConn.Close()
 
 	odc := proto_orderer.NewOrdererClient(ordererConn)
-
-	if !byID {
-		result, err = odc.Get(ctx, &proto_orderer.GetParams{
-			CocoonID: cocoonID,
-			Ledger:   op.GetParams()[0],
-			Key:      op.GetParams()[1],
-		})
-	} else {
-		result, err = odc.GetByID(ctx, &proto_orderer.GetParams{
-			CocoonID: cocoonID,
-			Ledger:   op.GetParams()[0],
-			Id:       op.GetParams()[1],
-		})
-	}
+	result, err = odc.Get(ctx, &proto_orderer.GetParams{
+		CocoonID: cocoonID,
+		Ledger:   op.GetParams()[0],
+		Key:      op.GetParams()[1],
+	})
 
 	if err != nil {
 		return nil, err

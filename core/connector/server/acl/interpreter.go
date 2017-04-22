@@ -135,9 +135,9 @@ func (i *Interpreter) isPermitted(privilege, operation string) int {
 	} else if privilege == PrivDenyCreateLedger && operation == types.TxCreateLedger {
 		return 0
 	}
-	if privilege == PrivAllowGet && util.InStringSlice([]string{types.TxGet, types.TxGetByID, types.TxGetLedger, types.TxGetBlockByID, types.TxRangeGet}, operation) {
+	if privilege == PrivAllowGet && util.InStringSlice([]string{types.TxGet, types.TxGetLedger, types.TxGetBlockByID, types.TxRangeGet}, operation) {
 		return 1
-	} else if privilege == PrivDenyGet && util.InStringSlice([]string{types.TxGet, types.TxGetByID, types.TxGetLedger, types.TxGetBlockByID, types.TxRangeGet}, operation) {
+	} else if privilege == PrivDenyGet && util.InStringSlice([]string{types.TxGet, types.TxGetLedger, types.TxGetBlockByID, types.TxRangeGet}, operation) {
 		return 0
 	}
 	if privilege == PrivAllowPut && operation == types.TxPut {

@@ -237,40 +237,6 @@ func (link *Link) Get(key string) (*types.Transaction, error) {
 	return link.GetFrom(link.GetDefaultLedger(), key)
 }
 
-// GetByIDFrom returns a transaction by its id and the ledger it belongs to
-func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
-
-	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
-		ID:     util.UUID4(),
-		Name:   types.TxGetByID,
-		LinkTo: link.GetCocoonID(),
-		Params: []string{ledgerName, id},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var tx types.Transaction
-	if err = util.FromJSON(result, &tx); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response data")
-	}
-
-	if tx.Block.ID == "" {
-		tx.Block = nil
-	}
-
-	return &tx, nil
-}
-
-// GetByID returns a transaction that belongs to the default legder by its id.
-func (link *Link) GetByID(id string) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.GetByIDFrom(link.GetDefaultLedger(), id)
-}
-
 // GetBlockFrom returns a block from a ledger by its block id
 func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 

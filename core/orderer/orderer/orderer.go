@@ -210,6 +210,12 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
 		createBlockFunc = func(storedTransactions []*types.Transaction) error {
+
+			// do nothing if not stored transactions
+			if len(storedTransactions) == 0 {
+				return nil
+			}
+
 			var err error
 			retryDelay := time.Duration(2) * time.Second
 			common.ReRunOnError(func() error {
@@ -272,7 +278,8 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	tx, err := od.store.Get(ledger.NameInternal, key)
 	if err != nil {
 		return nil, err
-	} else if tx == nil && err == nil {
+	}
+	if tx == nil && err == nil {
 		return nil, types.ErrTxNotFound
 	}
 
@@ -280,7 +287,6 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	tx.KeyInternal = key
 	tx.Ledger = params.GetLedger()
 	tx.LedgerInternal = ledger.NameInternal
-
 	if ledger.Chained {
 		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
 		if err != nil {
@@ -297,47 +303,6 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	cstructs.Copy(tx, &protoTx)
 
 	log.Debug("Get(): Time taken: ", time.Since(start))
-
-	return &protoTx, nil
-}
-
-// GetByID finds and returns a transaction with a matching id
-func (od *Orderer) GetByID(ctx context.Context, params *proto_orderer.GetParams) (*proto_orderer.Transaction, error) {
-
-	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
-		CocoonID: params.GetCocoonID(),
-		Name:     params.GetLedger(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := od.store.GetByID(ledger.NameInternal, params.GetId())
-	if err != nil {
-		return nil, err
-	} else if tx == nil && err == nil {
-		return nil, types.ErrTxNotFound
-	}
-
-	tx.KeyInternal = tx.Key
-	tx.Key = types.GetActualKeyFromTxKey(tx.Key)
-	tx.Ledger = params.GetLedger()
-	tx.LedgerInternal = ledger.NameInternal
-
-	if ledger.Chained {
-		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to populate block to transaction")
-		} else if block == nil && err == nil {
-			return nil, fmt.Errorf("orphaned transaction")
-		}
-
-		tx.Block = block
-		tx.BlockID = ""
-	}
-
-	var protoTx proto_orderer.Transaction
-	cstructs.Copy(tx, &protoTx)
 
 	return &protoTx, nil
 }

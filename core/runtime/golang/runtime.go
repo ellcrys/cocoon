@@ -199,7 +199,7 @@ func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 	defer client.Close()
 
 	ccClient := proto_connector.NewConnectorClient(client)
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
 	resp, err := ccClient.Transact(ctx, &proto_connector.Request{
 		OpType:   proto_connector.OpType_LedgerOp,
 		LedgerOp: op,

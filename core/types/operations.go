@@ -13,9 +13,6 @@ const (
 	// TxGet represents a message to get a transaction
 	TxGet = "GET"
 
-	// TxGetByID represents a message to get a transaction by id
-	TxGetByID = "GET_BY_ID"
-
 	// TxGetBlockByID represents a message to get ledger's block by id
 	TxGetBlockByID = "GET_BLOCK_BY_ID"
 

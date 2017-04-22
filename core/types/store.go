@@ -13,7 +13,6 @@ type Store interface {
 	Put(ledger string, txs []*Transaction) ([]*TxReceipt, error)
 	PutThen(ledger string, txs []*Transaction, then func(storedTxs []*Transaction) error) ([]*TxReceipt, error)
 	Get(ledger, key string) (*Transaction, error)
-	GetByID(ledger, txID string) (*Transaction, error)
 	GetRange(ledger, startKey, endKey string, inclusive bool, limit, lastNum int) ([]*Transaction, error)
 	Close() error
 }
