@@ -81,8 +81,13 @@ message Transactions {
 }
 
 message PutResult {
-    int32 added = 1;
+    repeated TxReceipt txReceipts = 1;
     Block block = 2;
+}
+
+message TxReceipt {
+    string ID = 1;
+    string err = 2;
 }
 
 message Block  {

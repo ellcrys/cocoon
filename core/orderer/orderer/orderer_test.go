@@ -162,16 +162,18 @@ func TestOrderer(t *testing.T) {
 							{Ledger: ledgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
 						}
 
-						tx, err := od.Put(context.Background(), &proto_orderer.PutTransactionParams{
+						result, err := od.Put(context.Background(), &proto_orderer.PutTransactionParams{
 							CocoonID:     "cocoon-abc",
 							LedgerName:   ledgerName,
 							Transactions: txs,
 						})
 
 						So(err, ShouldBeNil)
-						So(tx, ShouldNotBeNil)
-						So(tx.Added, ShouldEqual, 2)
-						So(tx.Block, ShouldBeNil)
+						So(result, ShouldNotBeNil)
+						So(len(result.TxReceipts), ShouldEqual, 2)
+						So(result.TxReceipts[0].ID, ShouldEqual, txs[0].Id)
+						So(result.TxReceipts[1].ID, ShouldEqual, txs[1].Id)
+						So(result.Block, ShouldBeNil)
 					})
 
 					Convey("Should successfully put transactions in a chained ledger and create a block", func() {
@@ -191,18 +193,20 @@ func TestOrderer(t *testing.T) {
 							{Ledger: chainedLedgerName, Id: util.Sha256(util.UUID4()), Key: util.Sha256(util.UUID4()), Value: util.Sha256(util.UUID4())},
 						}
 
-						tx, err := od.Put(context.Background(), &proto_orderer.PutTransactionParams{
+						result, err := od.Put(context.Background(), &proto_orderer.PutTransactionParams{
 							CocoonID:     "cocoon-abc",
 							LedgerName:   chainedLedger.Name,
 							Transactions: txs,
 						})
 
 						So(err, ShouldBeNil)
-						So(tx, ShouldNotBeNil)
-						So(tx.Added, ShouldEqual, 2)
-						So(tx.Block, ShouldNotBeNil)
-						So(tx.Block.PrevBlockHash, ShouldEqual, blkch_impl.MakeGenesisBlockHash(types.MakeLedgerName("cocoon-abc", chainedLedgerName)))
-						So(tx.Block.Number, ShouldEqual, 1)
+						So(result, ShouldNotBeNil)
+						So(len(result.TxReceipts), ShouldEqual, 2)
+						So(result.TxReceipts[0].ID, ShouldEqual, txs[0].Id)
+						So(result.TxReceipts[1].ID, ShouldEqual, txs[1].Id)
+						So(result.Block, ShouldNotBeNil)
+						So(result.Block.PrevBlockHash, ShouldEqual, blkch_impl.MakeGenesisBlockHash(types.MakeLedgerName("cocoon-abc", chainedLedgerName)))
+						So(result.Block.Number, ShouldEqual, 1)
 					})
 				})
 
@@ -312,7 +316,19 @@ func TestOrderer(t *testing.T) {
 					So(result, ShouldNotBeNil)
 					So(err, ShouldBeNil)
 					So(result.Block, ShouldNotBeNil)
-					So(result.Added, ShouldEqual, 1)
+					So(len(result.TxReceipts), ShouldEqual, 1)
+					So(result.TxReceipts[0].ID, ShouldEqual, txs[0].Id)
+
+					block, err := od.GetBlockByID(context.Background(), &proto_orderer.GetBlockParams{
+						CocoonID: "cocoon-abc",
+						Ledger:   ledgerName,
+						Id:       result.Block.Id,
+					})
+
+					So(err, ShouldBeNil)
+					So(block, ShouldNotBeNil)
+					So(block.Id, ShouldEqual, result.Block.Id)
+					So(block.Hash, ShouldEqual, result.Block.Hash)
 				})
 
 				Convey(".GetRange", func() {

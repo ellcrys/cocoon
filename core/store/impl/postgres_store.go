@@ -219,46 +219,53 @@ func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 	return &l, nil
 }
 
-// PutThen adds transactions to the store.
-// Returns error if any of the transaction failed or nil if
-// all transactions were successful added. It accepts an additional operation (via the thenFunc) to be
-// executed before the transactions are committed. If the thenFunc returns an error, the
-// transaction is rolled back and error is returned
-func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func() error) error {
+// PutThen adds transactions to the store and returns a list of transaction receipts.
+// Any transaction that failed to be created will result in an error receipt being created
+// and returned along with success receipts of they successfully added transactions.
+// However, all transactions will be rolled back if the `thenFunc` returns error. Future work may
+// allow the caller to determine the behaviour via an additional parameter.
+func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func() error) ([]*types.TxReceipt, error) {
+
+	txReceipts := []*types.TxReceipt{}
 
 	dbTx := s.db.Begin()
 	err := dbTx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
 	if err != nil {
 		dbTx.Rollback()
-		return fmt.Errorf("failed to set transaction isolation level. %s", err)
+		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
 
+	// create transactions and add transaction receipts for
+	// successfully added transactions
 	for _, tx := range txs {
 		tx.Hash = tx.MakeHash()
 		tx.Ledger = ledgerName
-		if err := dbTx.Create(tx).Error; err != nil {
-			dbTx.Rollback()
-			return err
+		err := dbTx.Create(tx).Error
+		if err == nil {
+			err = fmt.Errorf("")
 		}
+		txReceipts = append(txReceipts, &types.TxReceipt{
+			ID:  tx.ID,
+			Err: err.Error(),
+		})
 	}
 
-	// run the companion functions and Rollback
-	// the transaction if error was returned
+	// run the companion functions. Rollback
+	// the transactions only if error was returned
 	if thenFunc != nil {
 		if err = thenFunc(); err != nil {
 			dbTx.Rollback()
-			return err
+			return txReceipts, err
 		}
 	}
 
 	dbTx.Commit()
-	return nil
+	return txReceipts, nil
 }
 
 // Put creates one or more transactions associated to a ledger.
-// Returns error if ledger does not exists, if any of the transaction failed or nil if
-// all transactions were successful added.
-func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) error {
+// Returns a list of transaction receipts and a general error.
+func (s *PostgresStore) Put(ledgerName string, txs []*types.Transaction) ([]*types.TxReceipt, error) {
 	return s.PutThen(ledgerName, txs, nil)
 }
 

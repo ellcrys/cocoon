@@ -230,16 +230,21 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 		}
 	}
 
-	err = od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
+	txReceipts, err := od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
 	if err != nil {
 		return nil, err
+	}
+
+	var protoTxReceipts = make([]*proto_orderer.TxReceipt, len(txReceipts))
+	for i, r := range txReceipts {
+		protoTxReceipts[i] = &proto_orderer.TxReceipt{ID: r.ID, Err: r.Err}
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
 
 	return &proto_orderer.PutResult{
-		Added: int32(len(transactions)),
-		Block: block,
+		TxReceipts: protoTxReceipts,
+		Block:      block,
 	}, nil
 }
 

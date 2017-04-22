@@ -53,3 +53,10 @@ func MakeTxKey(namespace, name string) string {
 func GetActualKeyFromTxKey(key string) string {
 	return strings.Split(key, ";")[1]
 }
+
+// TxReceipt defines a structure for representing transaction status
+// from endpoint that manipulate transactions
+type TxReceipt struct {
+	ID  string
+	Err string
+}
