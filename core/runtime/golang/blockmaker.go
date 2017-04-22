@@ -31,6 +31,7 @@ func (e Entries) Len() int {
 
 // Less checks whether i is less than j
 func (e Entries) Less(i, j int) bool {
+	// Compare using a combination of the link and ledger name
 	return fmt.Sprintf("%s.%s", e[i].LinkTo, e[i].Tx.Ledger) < fmt.Sprintf("%s.%s", e[j].LinkTo, e[j].Tx.Ledger)
 }
 
