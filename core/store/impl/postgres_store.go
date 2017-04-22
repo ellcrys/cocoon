@@ -12,7 +12,10 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
+	logging "github.com/op/go-logging"
 )
+
+var log = logging.MustGetLogger("postgres.store")
 
 // ErrChainExist represents an error about an existing chain
 var ErrChainExist = errors.New("chain already exists")
@@ -30,6 +33,7 @@ const TransactionTableName = "transactions"
 type PostgresStore struct {
 	db         *gorm.DB
 	blockchain types.Blockchain
+	locker     types.Lock
 }
 
 // SetBlockchainImplementation sets sets a reference of the blockchain implementation
@@ -219,13 +223,20 @@ func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 	return &l, nil
 }
 
+// makeTxLockKey constructs a lock key from a transaction
+func makeTxLockKey(tx *types.Transaction) string {
+	return fmt.Sprintf("tx;key;%s;%s", tx.LedgerInternal, tx.Key)
+}
+
 // PutThen adds transactions to the store and returns a list of transaction receipts.
 // Any transaction that failed to be created will result in an error receipt being created
 // and returned along with success receipts of they successfully added transactions.
-// However, all transactions will be rolled back if the `thenFunc` returns error. Future work may
-// allow the caller to determine the behaviour via an additional parameter.
-func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func() error) ([]*types.TxReceipt, error) {
+// However, all transactions will be rolled back if the `thenFunc` returns error. Only the
+// transaction that are successfully added will be passed to the thenFunc.
+// Future work may allow the caller to determine the behaviour via an additional parameter.
+func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func(storedTxs []*types.Transaction) error) ([]*types.TxReceipt, error) {
 
+	var storedTx []*types.Transaction
 	txReceipts := []*types.TxReceipt{}
 
 	dbTx := s.db.Begin()
@@ -236,24 +247,56 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	}
 
 	// create transactions and add transaction receipts for
-	// successfully added transactions
+	// successfully stored transactions
 	for _, tx := range txs {
+
+		var err error
+
+		// acquire lock on the transaction via its key
+		lock := common.NewLock(makeTxLockKey(tx))
+		if err = lock.Acquire(); err != nil {
+			log.Error(err.Error())
+			if err == types.ErrLockAlreadyAcquired {
+				txReceipts = append(txReceipts, &types.TxReceipt{
+					ID:  tx.ID,
+					Err: "failed to acquire lock. transaction is being accessed by another process",
+				})
+				continue
+			}
+			txReceipts = append(txReceipts, &types.TxReceipt{
+				ID:  tx.ID,
+				Err: err.Error(),
+			})
+			continue
+		}
+
+		log.Info("Lock acquired")
+
 		tx.Hash = tx.MakeHash()
 		tx.Ledger = ledgerName
-		err := dbTx.Create(tx).Error
-		if err == nil {
-			err = fmt.Errorf("")
+		txReceipt := &types.TxReceipt{ID: tx.ID}
+		err = dbTx.Create(tx).Error
+		if err != nil {
+			txReceipt.Err = err.Error()
 		}
-		txReceipts = append(txReceipts, &types.TxReceipt{
-			ID:  tx.ID,
-			Err: err.Error(),
-		})
+
+		// if err = lock.Release(); err != nil {
+		// 	fmt.Println("Error releasing lock: ", err)
+		// }
+
+		// log.Info("Lock released")
+
+		txReceipts = append(txReceipts, txReceipt)
+	}
+
+	if len(storedTx) == 0 {
+		return txReceipts, err
 	}
 
 	// run the companion functions. Rollback
 	// the transactions only if error was returned
 	if thenFunc != nil {
-		if err = thenFunc(); err != nil {
+		if err = thenFunc(storedTx); err != nil {
 			dbTx.Rollback()
 			return txReceipts, err
 		}

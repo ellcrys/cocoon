@@ -9,7 +9,11 @@ import (
 
 	"net"
 
+	"os"
+
 	"github.com/asaskevich/govalidator"
+	"github.com/ncodes/cocoon/core/lock/consul"
+	"github.com/ncodes/cocoon/core/lock/memory"
 	"github.com/ncodes/cocoon/core/types"
 )
 
@@ -155,4 +159,13 @@ func Round(val float64) int {
 		return int(val - 0.5)
 	}
 	return int(val + 0.5)
+}
+
+// NewLock creates a lock. If `DEV_MEM_LOCK` is set, a
+// memory lock will be returned
+func NewLock(key string) types.Lock {
+	if os.Getenv("DEV_MEM_LOCK") != "" {
+		return memory.NewLock(key)
+	}
+	return consul.NewLock(key)
 }

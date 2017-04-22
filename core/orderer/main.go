@@ -9,6 +9,8 @@ import (
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/lock/consul"
+	"github.com/ncodes/cocoon/core/lock/memory"
 	"github.com/ncodes/cocoon/core/orderer/cmd"
 	logging "github.com/op/go-logging"
 )
@@ -16,6 +18,8 @@ import (
 var log *logging.Logger
 
 func init() {
+	consul.LockTTL = time.Second * 20
+	memory.LockTTL = time.Second * 20
 	config.ConfigureLogger()
 	log = logging.MustGetLogger("main")
 	goreq.SetConnectTimeout(5 * time.Second)

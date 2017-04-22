@@ -3,6 +3,7 @@ package orderer
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	context "golang.org/x/net/context"
@@ -78,6 +79,13 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
+		// initialize store
+		if od.store == nil {
+			log.Error("Store implementation not set")
+			od.Stop(1)
+			return
+		}
+
 		// establish connection to store backend
 		_, err := od.store.Connect(storeConStr)
 		if err != nil {
@@ -86,11 +94,8 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
-		// initialize store
-		if od.store == nil {
-			log.Error("Store implementation not set")
-			od.Stop(1)
-			return
+		if len(os.Getenv("DEV_MEM_LOCK")) != 0 {
+			log.Debug("Memory based lock is in use")
 		}
 
 		sysPubLedger := types.MakeLedgerName(types.SystemCocoonID, types.GetSystemPublicLedgerName())
@@ -197,15 +202,18 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 		}
 	}
 
+	// Create sub method to create a block that includes all the transactions
+	// that have been successfully stored in the database. This stored
+	// transaction will be passed to the function from the PutThen call
 	var block *proto_orderer.Block
-	var createBlockFunc func() error
+	var createBlockFunc func(storedTransactions []*types.Transaction) error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
-		createBlockFunc = func() error {
+		createBlockFunc = func(storedTransactions []*types.Transaction) error {
 			var err error
 			retryDelay := time.Duration(2) * time.Second
 			common.ReRunOnError(func() error {
-				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, transactions)
+				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, storedTransactions)
 				if b != nil {
 					block.Id = b.ID
 					block.ChainName = b.ChainName

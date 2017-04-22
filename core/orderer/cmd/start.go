@@ -4,6 +4,7 @@ import (
 	"github.com/ellcrys/util"
 	b_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/config"
+	"github.com/ncodes/cocoon/core/lock/memory"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/store/impl"
@@ -26,6 +27,8 @@ var ordererCmd = &cobra.Command{
 		newOrderer := orderer.NewOrderer()
 		newOrderer.SetStore(new(impl.PostgresStore))
 		newOrderer.SetBlockchain(new(b_impl.PostgresBlockchain))
+		c := memory.StartLockWatcher()
+		defer c()
 		go newOrderer.Start(bindAddr, storeConStr, endedCh)
 
 		<-endedCh
