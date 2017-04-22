@@ -56,7 +56,8 @@ func (hc *HealthChecker) Start() {
 // It will retry the health check for upto 5 times with
 // a 1 second wait duration if health check fails.
 func (hc *HealthChecker) check() error {
-	retryLimit := 5
+	maxRetry := 5
+	retryLimit := maxRetry
 	for retryLimit > 0 {
 		client, err := grpc.Dial(hc.cocoonCodeAddr, grpc.WithInsecure())
 		if err != nil {
@@ -69,8 +70,9 @@ func (hc *HealthChecker) check() error {
 		if err != nil {
 			retryLimit--
 			time.Sleep(1 * time.Second)
-			return err
+			continue
 		}
+		retryLimit = maxRetry
 		return nil
 	}
 	return nil
