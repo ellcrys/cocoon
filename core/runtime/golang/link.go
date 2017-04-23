@@ -10,12 +10,18 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// Link provides access to external services
-// like ledgers, cocoon codes, event and messaging services.
+// LockCB represents the type of function to pass to the Lock functions.
+// The callback will be passed the folling methods:
+// isAcquirer: Checks if the current lock session still has the lock.
+// release: Used to release the lock
+// refresh: Used to refresh the lock
+type LockCB func(isAcquirer func() bool, release, refresh func() error)
+
+// Link provides access to all platform services available to
+// the cocoon code.
 type Link struct {
-	cocoonID      string
-	defaultLedger string
-	native        bool
+	cocoonID string
+	native   bool
 }
 
 // NewLink creates a new link to a cocoon
@@ -38,30 +44,13 @@ func (link *Link) IsNative() bool {
 	return link.native
 }
 
-// SetDefaultLedger sets this link's default ledger
-func (link *Link) SetDefaultLedger(name string) *Link {
-	link.defaultLedger = name
-	return link
-}
-
-// GetDefaultLedger returns the link's default ledger
-func (link *Link) GetDefaultLedger() string {
-	return link.defaultLedger
-}
-
 // GetCocoonID returns the cocoon id attached to this link
 func (link *Link) GetCocoonID() string {
 	return link.cocoonID
 }
 
-// NewRangeGetter creates an instance of a RangeGetter bounded to the default ledger
-// and cocoon id of this link.
-func (link *Link) NewRangeGetter(start, end string, inclusive bool) *RangeGetter {
-	return NewRangeGetter(link.GetDefaultLedger(), link.GetCocoonID(), start, end, inclusive)
-}
-
-// NewRangeGetterFrom creates an instance of a RangeGetter for a specified ledger.
-func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bool) *RangeGetter {
+// NewRangeGetter creates an instance of a RangeGetter for a specified ledger.
+func (link *Link) NewRangeGetter(ledgerName, start, end string, inclusive bool) *RangeGetter {
 	return NewRangeGetter(ledgerName, link.GetCocoonID(), start, end, inclusive)
 }
 
@@ -117,8 +106,8 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 	return &ledger, nil
 }
 
-// PutIn adds a new transaction to a ledger
-func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
+// Put puts a transaction in a ledger
+func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
 
@@ -195,16 +184,8 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	return tx, nil
 }
 
-// Put adds a new transaction into the default ledger
-func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.PutIn(link.GetDefaultLedger(), key, value)
-}
-
-// GetFrom returns a transaction by its key and the ledger it belongs to
-func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
+// Get gets a transaction from a ledger
+func (link *Link) Get(ledgerName, key string) (*types.Transaction, error) {
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
@@ -229,16 +210,8 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	return &tx, nil
 }
 
-// Get returns a transaction that belongs to the default legder by its key.
-func (link *Link) Get(key string) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.GetFrom(link.GetDefaultLedger(), key)
-}
-
-// GetBlockFrom returns a block from a ledger by its block id
-func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
+// GetBlock gets a block from a ledger by a block id
+func (link *Link) GetBlock(ledgerName, id string) (*types.Block, error) {
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
@@ -259,10 +232,11 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	return &blk, nil
 }
 
-// GetBlock returns a block from the default ledger by its block id
-func (link *Link) GetBlock(id string) (*types.Block, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.GetBlockFrom(link.GetDefaultLedger(), id)
+// Lock acquires a lock on the specified key. The onAcquired method is called
+// when the lock has been acquired. Use the ttl to decide how long the lock
+// will be held for. Minimum ttl is 10 seconds and max is 30 minutes.
+// If the link is pointed to a external cocoon, the lock will also be enforced
+// in the associated cocoon.
+func (link *Link) Lock(key string, ttl int, onAcquired LockCB) {
+
 }
