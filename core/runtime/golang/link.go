@@ -102,8 +102,7 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 	return &ledger, nil
 }
 
-// Put puts a transaction in a ledger
-func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Transaction, error) {
+func (link *Link) put(revisionID, ledgerName, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
 
@@ -118,6 +117,7 @@ func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Trans
 
 	tx := &types.Transaction{
 		ID:             util.UUID4(),
+		RevisionTo:     revisionID,
 		Ledger:         ledger.Name,
 		LedgerInternal: types.MakeLedgerName(link.GetCocoonID(), ledger.Name),
 		Key:            key,
@@ -184,6 +184,20 @@ func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Trans
 	log.Debug("Put(): Time taken: ", time.Since(start))
 
 	return tx, nil
+}
+
+// Put puts a transaction in a ledger
+func (link *Link) Put(ledgerName, key string, value []byte) (*types.Transaction, error) {
+	return link.put("", ledgerName, key, value)
+}
+
+// PutSafe puts a transaction and also ensures that no previous transaction references the revision
+// id provided. If a previous transaction references the revision id, an ErrStateObject is returned.
+// This is useful for situations where CAS (check-an-set) procedure is a requirement. Use the ID of
+// previous transactions to ensure updates are not made based on records that may have been updated by
+// another process.
+func (link *Link) PutSafe(revisionID, ledgerName, key string, value []byte) (*types.Transaction, error) {
+	return link.put(revisionID, ledgerName, key, value)
 }
 
 // Get gets a transaction from a ledger

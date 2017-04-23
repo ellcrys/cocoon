@@ -22,6 +22,7 @@ type Transaction struct {
 	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	BlockID        string `json:"blockId,omitempty"`
 	Block          *Block `json:"block,omitempty" gorm:"-" sql:"-"`
+	RevisionTo     string `json:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
 	CreatedAt      int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
 }
 

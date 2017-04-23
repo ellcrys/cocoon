@@ -234,9 +234,9 @@ func makeTxLockKey(ledgerName, key string) string {
 // However, all transactions will be rolled back if the `thenFunc` returns error. Only the
 // transaction that are successfully added will be passed to the thenFunc.
 // Future work may allow the caller to determine the behaviour via an additional parameter.
-func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func(storedTxs []*types.Transaction) error) ([]*types.TxReceipt, error) {
+func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func(validTxss []*types.Transaction) error) ([]*types.TxReceipt, error) {
 
-	var storedTx []*types.Transaction
+	var validTxs []*types.Transaction
 	txReceipts := []*types.TxReceipt{}
 
 	dbTx := s.db.Begin()
@@ -255,18 +255,36 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		// acquire lock on the transaction via its key
 		lock := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
 		if err = lock.Acquire(); err != nil {
-			log.Error(err.Error())
 			if err == types.ErrLockAlreadyAcquired {
 				txReceipts = append(txReceipts, &types.TxReceipt{
 					ID:  tx.ID,
 					Err: "failed to acquire lock. object has been locked by another process",
 				})
-				continue
+			} else {
+				txReceipts = append(txReceipts, &types.TxReceipt{
+					ID:  tx.ID,
+					Err: err.Error(),
+				})
 			}
+			continue
+		}
+
+		// ensure the current transaction is not a stale transaction
+		// when checked with the valid transactions. If this is not done, before we call the tx.Create
+		// the entire transaction will not be committed by the postgres driver
+		isStale := false
+		for _, vTx := range validTxs {
+			if vTx.KeyInternal == tx.KeyInternal && vTx.RevisionTo == tx.RevisionTo {
+				isStale = true
+				break
+			}
+		}
+		if isStale {
 			txReceipts = append(txReceipts, &types.TxReceipt{
 				ID:  tx.ID,
-				Err: err.Error(),
+				Err: "stale object",
 			})
+			lock.Release()
 			continue
 		}
 
@@ -276,26 +294,33 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		err = dbTx.Create(tx).Error
 		if err != nil {
 			txReceipt.Err = err.Error()
+			if common.CompareErr(err, fmt.Errorf(`pq: duplicate key value violates unique constraint "idx_name_revision_to"`)) == 0 {
+				txReceipt.Err = "stale object"
+			}
+		} else {
+			validTxs = append(validTxs, tx)
 		}
 
 		if err = lock.Release(); err != nil {
 			fmt.Println("Error releasing lock: ", err)
 		}
 
-		storedTx = append(storedTx, tx)
 		txReceipts = append(txReceipts, txReceipt)
 	}
 
 	// run the companion functions. Rollback
 	// the transactions only if error was returned
 	if thenFunc != nil {
-		if err = thenFunc(storedTx); err != nil {
+		if err = thenFunc(validTxs); err != nil {
 			dbTx.Rollback()
 			return txReceipts, err
 		}
 	}
 
-	dbTx.Commit()
+	if err := dbTx.Commit().Error; err != nil {
+		return nil, err
+	}
+
 	return txReceipts, nil
 }
 

@@ -21,6 +21,7 @@ message PutTransactionParams {
     string cocoonID = 1;
     string ledgerName = 2;
     repeated Transaction transactions = 3;
+    string revisionID = 4;
 }
 
 message GetLedgerParams {
@@ -73,6 +74,7 @@ message Transaction {
     int64 createdAt = 9;
     string blockId = 10;
     Block block = 11;
+    string revisionTo = 12;
 }
 
 message Transactions {

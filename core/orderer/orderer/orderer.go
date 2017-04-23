@@ -206,20 +206,20 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	// that have been successfully stored in the database. This stored
 	// transaction will be passed to the function from the PutThen call
 	var block *proto_orderer.Block
-	var createBlockFunc func(storedTransactions []*types.Transaction) error
+	var createBlockFunc func(validTransactions []*types.Transaction) error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
-		createBlockFunc = func(storedTransactions []*types.Transaction) error {
+		createBlockFunc = func(validTransactions []*types.Transaction) error {
 
 			// do nothing if not stored transactions
-			if len(storedTransactions) == 0 {
+			if len(validTransactions) == 0 {
 				return nil
 			}
 
 			var err error
 			retryDelay := time.Duration(2) * time.Second
 			common.ReRunOnError(func() error {
-				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, storedTransactions)
+				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, validTransactions)
 				if b != nil {
 					block.Id = b.ID
 					block.ChainName = b.ChainName
