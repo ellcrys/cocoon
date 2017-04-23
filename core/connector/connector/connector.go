@@ -89,12 +89,13 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	go cn.ordererDiscovery.Discover()
 
 	// No need downloading, building and starting a cocoon code
-	// if DEV_COCOON_RPC_ADDR has been specified. This means a dev cocoon code
+	// if DEV_ADDR_COCOON_CODE_RPC has been specified. This means a dev cocoon code
 	// is running at that address.
-	if devCocoonCodeRPCAddr := os.Getenv("DEV_COCOON_RPC_ADDR"); len(devCocoonCodeRPCAddr) > 0 {
+	if devCocoonCodeRPCAddr := os.Getenv("DEV_ADDR_COCOON_CODE_RPC"); len(devCocoonCodeRPCAddr) > 0 {
 		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
 		log.Infof("[Dev] Will interact with cocoon code at %s", devCocoonCodeRPCAddr)
 		cn.healthCheck.Start()
+		fmt.Println("failed")
 		return
 	}
 
