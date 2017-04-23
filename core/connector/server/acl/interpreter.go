@@ -130,9 +130,9 @@ func (i *Interpreter) isPermitted(privilege, operation string) int {
 	} else if privilege == PrivDeny {
 		return 0
 	}
-	if privilege == PrivAllowCreateLedger && operation == types.TxCreateLedger {
+	if privilege == PrivAllowCreateLedger && operation == types.TxNewLedger {
 		return 1
-	} else if privilege == PrivDenyCreateLedger && operation == types.TxCreateLedger {
+	} else if privilege == PrivDenyCreateLedger && operation == types.TxNewLedger {
 		return 0
 	}
 	if privilege == PrivAllowGet && util.InStringSlice([]string{types.TxGet, types.TxGetLedger, types.TxGetBlockByID, types.TxRangeGet}, operation) {

@@ -50,12 +50,12 @@ func (link *Link) NewRangeGetter(ledgerName, start, end string, inclusive bool) 
 	return NewRangeGetter(ledgerName, link.GetCocoonID(), start, end, inclusive)
 }
 
-// CreateLedger creates a new ledger by sending an
-// invoke transaction (TxCreateLedger) to the connector.
+// NewLedger creates a new ledger by sending an
+// invoke transaction (TxNewLedger) to the connector.
 // If chained is set to true, a blockchain is created and subsequent
 // PUT operations to the ledger will be included in the types. Otherwise,
 // PUT operations will only be included in the types.
-func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
+func (link *Link) NewLedger(name string, chained, public bool) (*types.Ledger, error) {
 
 	if !common.IsValidResName(name) {
 		return nil, types.ErrInvalidResourceName
@@ -63,7 +63,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
-		Name:   types.TxCreateLedger,
+		Name:   types.TxNewLedger,
 		LinkTo: link.GetCocoonID(),
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	})

@@ -1,8 +1,8 @@
 package types
 
 const (
-	// TxCreateLedger represents a message to create a ledger
-	TxCreateLedger = "CREATE_LEDGER"
+	// TxNewLedger represents a message to create a ledger
+	TxNewLedger = "CREATE_LEDGER"
 
 	// TxPut represents a message to create a transaction
 	TxPut = "PUT"

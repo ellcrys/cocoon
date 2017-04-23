@@ -79,7 +79,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 		defaultACLPolicy := false
 
 		// get ledger and set the default ACL policy (the ledger visibility)
-		if op.Name != types.TxCreateLedger {
+		if op.Name != types.TxNewLedger {
 			ledger, err := l._getLedger(ctx, op.GetLinkTo(), ledgerName)
 			if err != nil {
 				if common.CompareErr(err, types.ErrLedgerNotFound) == 0 {
@@ -110,7 +110,7 @@ func (l *LedgerOperations) Handle(ctx context.Context, op *proto_connector.Ledge
 	}
 
 	switch op.GetName() {
-	case types.TxCreateLedger:
+	case types.TxNewLedger:
 		return l.createLedger(ctx, op)
 	case types.TxGetLedger:
 		return l.getLedger(ctx, op)
