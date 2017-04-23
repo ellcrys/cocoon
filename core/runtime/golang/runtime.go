@@ -125,8 +125,6 @@ func Run(cc CocoonCode) {
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
 
-	System.SetDefaultLedger(types.GetSystemPublicLedgerName())
-
 	ccode = cc
 
 	// run Init() after 1 second to give time for connector to connect
@@ -188,9 +186,8 @@ func blockCommitter(entries []*Entry) interface{} {
 	return &putResult
 }
 
-// sendLedgerOp sends a ledger transaction to the
-// connector.
-func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
+// sendOp sends out a request to the connector.
+func sendOp(req *proto_connector.Request) ([]byte, error) {
 
 	client, err := grpc.Dial(connectorRPCAddr, grpc.WithInsecure())
 	if err != nil {
@@ -200,11 +197,7 @@ func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 
 	ccClient := proto_connector.NewConnectorClient(client)
 	ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
-	resp, err := ccClient.Transact(ctx, &proto_connector.Request{
-		OpType:   proto_connector.OpType_LedgerOp,
-		LedgerOp: op,
-	})
-
+	resp, err := ccClient.Transact(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(err))
 	}
@@ -214,6 +207,22 @@ func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 	}
 
 	return resp.GetBody(), nil
+}
+
+// sendLedgerOp sends a ledger transaction to the connector
+func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
+	return sendOp(&proto_connector.Request{
+		OpType:   proto_connector.OpType_LedgerOp,
+		LedgerOp: op,
+	})
+}
+
+// sendLockOp sends a lock operation to the connector
+func sendLockOp(op *proto_connector.LockOperation) ([]byte, error) {
+	return sendOp(&proto_connector.Request{
+		OpType: proto_connector.OpType_LockOp,
+		LockOp: op,
+	})
 }
 
 // Stop stub and cocoon code

@@ -27,7 +27,7 @@ type Lock struct {
 // NewLock creates a consul lock instance
 func NewLock(key string) *Lock {
 	return &Lock{
-		lockTTl: LockTTL,
+		lockTTL: LockTTL,
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
 			"lock_key_prefix": "platform/lock",
@@ -40,7 +40,7 @@ func NewLock(key string) *Lock {
 // NewLockWithTTL creates a consul lock instance
 func NewLockWithTTL(key string, ttl time.Duration) *Lock {
 	return &Lock{
-		lockTTl: ttl,
+		lockTTL: ttl,
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
 			"lock_key_prefix": "platform/lock",
@@ -178,4 +178,11 @@ func (l *Lock) IsAcquirer() error {
 // GetState returns the lock state
 func (l *Lock) GetState() map[string]interface{} {
 	return l.state
+}
+
+// SetState sets the lock state
+func (l *Lock) SetState(state map[string]interface{}) {
+	for k, s := range state {
+		l.state[k] = s
+	}
 }

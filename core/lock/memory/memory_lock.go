@@ -135,3 +135,10 @@ func StartLockWatcher() func() {
 		stop = true
 	}
 }
+
+// SetState sets the lock state
+func (l *Lock) SetState(state map[string]interface{}) {
+	for k, s := range state {
+		l.state[k] = s
+	}
+}

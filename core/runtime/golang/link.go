@@ -10,12 +10,8 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// LockCB represents the type of function to pass to the Lock functions.
-// The callback will be passed the folling methods:
-// isAcquirer: Checks if the current lock session still has the lock.
-// release: Used to release the lock
-// refresh: Used to refresh the lock
-type LockCB func(isAcquirer func() bool, release, refresh func() error)
+// ErrObjectLocked reprents an error about an object or transaction locked by another process
+var ErrObjectLocked = fmt.Errorf("failed to acquire lock. object has been locked by another process")
 
 // Link provides access to all platform services available to
 // the cocoon code.
@@ -145,6 +141,9 @@ func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Trans
 
 		switch v := result.(type) {
 		case error:
+			if common.CompareErr(v, ErrObjectLocked) == 0 {
+				return nil, ErrObjectLocked
+			}
 			return nil, v
 		case *types.Block:
 			tx.Block = v
@@ -164,6 +163,9 @@ func (link *Link) Put(ledgerName string, key string, value []byte) (*types.Trans
 	})
 
 	if err != nil {
+		if common.CompareErr(err, ErrObjectLocked) == 0 {
+			return nil, ErrObjectLocked
+		}
 		return nil, fmt.Errorf("failed to put transaction: %s", err)
 	}
 
@@ -195,6 +197,9 @@ func (link *Link) Get(ledgerName, key string) (*types.Transaction, error) {
 	})
 
 	if err != nil {
+		if common.CompareErr(err, ErrObjectLocked) == 0 {
+			return nil, ErrObjectLocked
+		}
 		return nil, err
 	}
 
@@ -232,11 +237,15 @@ func (link *Link) GetBlock(ledgerName, id string) (*types.Block, error) {
 	return &blk, nil
 }
 
-// Lock acquires a lock on the specified key. The onAcquired method is called
-// when the lock has been acquired. Use the ttl to decide how long the lock
-// will be held for. Minimum ttl is 10 seconds and max is 30 minutes.
-// If the link is pointed to a external cocoon, the lock will also be enforced
-// in the associated cocoon.
-func (link *Link) Lock(key string, ttl int, onAcquired LockCB) {
-
+// Lock acquires a lock on the specified key within the scope of the
+// linked cocoon code. An error is returned if it failed to acquire the lock.
+func (link *Link) Lock(key string, ttl time.Duration) (*Lock, error) {
+	lock, err := newLock(link.cocoonID, key, ttl)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Acquire(); err != nil {
+		return nil, err
+	}
+	return lock, nil
 }

@@ -169,3 +169,12 @@ func NewLock(key string) types.Lock {
 	}
 	return consul.NewLock(key)
 }
+
+// NewLockWithTTL creates a lock with a custom ttl. If `DEV_MEM_LOCK` is set, a
+// memory lock will be returned
+func NewLockWithTTL(key string, ttl time.Duration) types.Lock {
+	if os.Getenv("DEV_MEM_LOCK") != "" {
+		return memory.NewLockWithTTL(key, ttl)
+	}
+	return consul.NewLockWithTTL(key, ttl)
+}

@@ -9,6 +9,7 @@ service Connector {
 enum OpType {
     LedgerOp = 0;
     CocoonCodeOp = 1;
+    LockOp = 2;
 }
 
 // Request represents a transaction request which can be
@@ -17,6 +18,13 @@ message Request {
     OpType opType = 1;
     LedgerOperation ledgerOp = 2;
     CocoonCodeOperation cocoonCodeOp = 3;
+    LockOperation lockOp = 4;
+}
+
+// LockOperation represents a key locking operation within a cocoon's scope.
+message LockOperation {
+    string name = 1;
+    repeated string params = 2;
 }
 
 // LedgerOperation represents an operation against the ledger

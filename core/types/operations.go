@@ -18,4 +18,13 @@ const (
 
 	// TxRangeGet represents a message to get a range of transactions
 	TxRangeGet = "RANGE_GET"
+
+	// OpLockAcquire represents a message to acquire a lock
+	OpLockAcquire = "LOCK_ACQUIRE"
+
+	// OpLockRelease represents a message to release a lock
+	OpLockRelease = "LOCK_RELEASE"
+
+	// OpLockCheckAcquire represents a message to check whether a session is still the acquirer of a lock
+	OpLockCheckAcquire = "LOCK_CHECK_ACQUIRE"
 )

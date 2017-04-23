@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

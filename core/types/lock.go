@@ -10,4 +10,6 @@ type Lock interface {
 	IsAcquirer() error
 	// GetState returns the state associated with the lock instance
 	GetState() map[string]interface{}
+	// SetState loads a lock state into the lock object
+	SetState(map[string]interface{})
 }
