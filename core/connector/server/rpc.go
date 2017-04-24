@@ -23,6 +23,7 @@ type RPCServer struct {
 	connector     *connector.Connector
 	ledgerOps     *handlers.LedgerOperations
 	cocoonCodeOps *handlers.CocoonCodeOperations
+	lockOps       *handlers.LockOperations
 }
 
 // NewRPCServer creates a new grpc API server
@@ -32,6 +33,7 @@ func NewRPCServer(connector *connector.Connector) *RPCServer {
 	server.connector = connector
 	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)
 	server.cocoonCodeOps = handlers.NewCocoonCodeHandler("127.0.0.1" + connector.GetCocoonCodeRPCAddr())
+	server.lockOps = handlers.NewLockOperationHandler(log, connector)
 	return server
 }
 
@@ -77,6 +79,8 @@ func (rpc *RPCServer) Transact(ctx context.Context, req *proto_connector.Request
 		return rpc.ledgerOps.Handle(ctx, req.LedgerOp)
 	case proto_connector.OpType_CocoonCodeOp:
 		return rpc.cocoonCodeOps.Handle(ctx, req.CocoonCodeOp)
+	case proto_connector.OpType_LockOp:
+		return rpc.lockOps.Handle(ctx, req.LockOp)
 	default:
 		return nil, fmt.Errorf("unsupported operation type")
 	}

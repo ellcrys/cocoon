@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/ellcrys/util"
@@ -19,8 +18,11 @@ import (
 var (
 	log = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
 
-	// connector RPC API
-	defaultConnectorRPCAPI = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
+	// default connector RPC Addr
+	defaultConnectorRPCAddr = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
+
+	// default cocoon code RPC ADDR
+	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", ":8004")
 
 	// Signals channel
 	sigs = make(chan os.Signal, 1)
@@ -42,8 +44,6 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
-	memoryMB, _ := strconv.Atoi(util.Env("ALLOC_MEMORY", "4"))
-	cpuShare, _ := strconv.Atoi(util.Env("ALLOC_CPU_SHARE", "100"))
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -61,8 +61,6 @@ func getRequest() (*connector.Request, error) {
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 		Link:        ccLink,
-		Memory:      int64(memoryMB),
-		CPUShare:   int64(cpuShare),
 	}, nil
 }
 
@@ -96,8 +94,8 @@ var startCmd = &cobra.Command{
 		}
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
-		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAPI)
-		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", ":8004")
+		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
+		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
 
 		cn := connector.NewConnector(req, waitCh)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)

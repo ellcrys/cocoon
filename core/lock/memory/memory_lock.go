@@ -25,12 +25,26 @@ type LockValue struct {
 
 // Lock provides lock functionalities backed by memory.
 type Lock struct {
-	state map[string]interface{}
+	lockTTL time.Duration
+	state   map[string]interface{}
 }
 
 // NewLock creates a consul lock instance
 func NewLock(key string) *Lock {
 	return &Lock{
+		lockTTL: LockTTL,
+		state: map[string]interface{}{
+			"lock_key_prefix": "platform/lock",
+			"key":             key,
+			"lock_session":    "",
+		},
+	}
+}
+
+// NewLockWithTTL creates a consul lock instance
+func NewLockWithTTL(key string, lockTTL time.Duration) *Lock {
+	return &Lock{
+		lockTTL: lockTTL,
 		state: map[string]interface{}{
 			"lock_key_prefix": "platform/lock",
 			"key":             key,
@@ -119,5 +133,12 @@ func StartLockWatcher() func() {
 	}()
 	return func() {
 		stop = true
+	}
+}
+
+// SetState sets the lock state
+func (l *Lock) SetState(state map[string]interface{}) {
+	for k, s := range state {
+		l.state[k] = s
 	}
 }

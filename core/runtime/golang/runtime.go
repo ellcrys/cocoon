@@ -89,11 +89,6 @@ func GetCocoonID() string {
 	return os.Getenv("COCOON_ID")
 }
 
-// GetSystemLink returns a readonly the system link
-func GetSystemLink() *Link {
-	return System
-}
-
 // GetSystemCocoonID returns the system cocoon id
 func GetSystemCocoonID() string {
 	return types.SystemCocoonID
@@ -124,8 +119,6 @@ func Run(cc CocoonCode) {
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
 	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
 	go blockMaker.Begin(blockCommitter)
-
-	System.SetDefaultLedger(types.GetSystemPublicLedgerName())
 
 	ccode = cc
 
@@ -158,17 +151,15 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // if succeed or error if otherwise.
 func blockCommitter(entries []*Entry) interface{} {
 
-	var block types.Block
-
+	var putResult types.PutResult
 	if len(entries) == 0 {
-		return block
+		return fmt.Errorf("empty entry list")
 	}
 
 	txs := make([]*types.Transaction, len(entries))
 	for i, e := range entries {
 		txs[i] = e.Tx
 	}
-
 	ledgerName := entries[0].Tx.Ledger
 	txsJSON, _ := util.ToJSON(txs)
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
@@ -183,16 +174,15 @@ func blockCommitter(entries []*Entry) interface{} {
 		return fmt.Errorf("failed to put block transaction: %s", err)
 	}
 
-	if err = util.FromJSON(result, &block); err != nil {
+	if err = util.FromJSON(result, &putResult); err != nil {
 		return fmt.Errorf("failed to unmarshal response data")
 	}
 
-	return &block
+	return &putResult
 }
 
-// sendLedgerOp sends a ledger transaction to the
-// connector.
-func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
+// sendOp sends out a request to the connector.
+func sendOp(req *proto_connector.Request) ([]byte, error) {
 
 	client, err := grpc.Dial(connectorRPCAddr, grpc.WithInsecure())
 	if err != nil {
@@ -201,12 +191,8 @@ func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 	defer client.Close()
 
 	ccClient := proto_connector.NewConnectorClient(client)
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	resp, err := ccClient.Transact(ctx, &proto_connector.Request{
-		OpType:   proto_connector.OpType_LedgerOp,
-		LedgerOp: op,
-	})
-
+	ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
+	resp, err := ccClient.Transact(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("%s", common.GetRPCErrDesc(err))
 	}
@@ -216,6 +202,22 @@ func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
 	}
 
 	return resp.GetBody(), nil
+}
+
+// sendLedgerOp sends a ledger transaction to the connector
+func sendLedgerOp(op *proto_connector.LedgerOperation) ([]byte, error) {
+	return sendOp(&proto_connector.Request{
+		OpType:   proto_connector.OpType_LedgerOp,
+		LedgerOp: op,
+	})
+}
+
+// sendLockOp sends a lock operation to the connector
+func sendLockOp(op *proto_connector.LockOperation) ([]byte, error) {
+	return sendOp(&proto_connector.Request{
+		OpType: proto_connector.OpType_LockOp,
+		LockOp: op,
+	})
 }
 
 // Stop stub and cocoon code

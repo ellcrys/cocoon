@@ -10,12 +10,14 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// Link provides access to external services
-// like ledgers, cocoon codes, event and messaging services.
+// ErrObjectLocked reprents an error about an object or transaction locked by another process
+var ErrObjectLocked = fmt.Errorf("failed to acquire lock. object has been locked by another process")
+
+// Link provides access to all platform services available to
+// the cocoon code.
 type Link struct {
-	cocoonID      string
-	defaultLedger string
-	native        bool
+	cocoonID string
+	native   bool
 }
 
 // NewLink creates a new link to a cocoon
@@ -38,39 +40,22 @@ func (link *Link) IsNative() bool {
 	return link.native
 }
 
-// SetDefaultLedger sets this link's default ledger
-func (link *Link) SetDefaultLedger(name string) *Link {
-	link.defaultLedger = name
-	return link
-}
-
-// GetDefaultLedger returns the link's default ledger
-func (link *Link) GetDefaultLedger() string {
-	return link.defaultLedger
-}
-
 // GetCocoonID returns the cocoon id attached to this link
 func (link *Link) GetCocoonID() string {
 	return link.cocoonID
 }
 
-// NewRangeGetter creates an instance of a RangeGetter bounded to the default ledger
-// and cocoon id of this link.
-func (link *Link) NewRangeGetter(start, end string, inclusive bool) *RangeGetter {
-	return NewRangeGetter(link.GetDefaultLedger(), link.GetCocoonID(), start, end, inclusive)
-}
-
-// NewRangeGetterFrom creates an instance of a RangeGetter for a specified ledger.
-func (link *Link) NewRangeGetterFrom(ledgerName, start, end string, inclusive bool) *RangeGetter {
+// NewRangeGetter creates an instance of a RangeGetter for a specified ledger.
+func (link *Link) NewRangeGetter(ledgerName, start, end string, inclusive bool) *RangeGetter {
 	return NewRangeGetter(ledgerName, link.GetCocoonID(), start, end, inclusive)
 }
 
-// CreateLedger creates a new ledger by sending an
-// invoke transaction (TxCreateLedger) to the connector.
+// NewLedger creates a new ledger by sending an
+// invoke transaction (TxNewLedger) to the connector.
 // If chained is set to true, a blockchain is created and subsequent
 // PUT operations to the ledger will be included in the types. Otherwise,
 // PUT operations will only be included in the types.
-func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
+func (link *Link) NewLedger(name string, chained, public bool) (*types.Ledger, error) {
 
 	if !common.IsValidResName(name) {
 		return nil, types.ErrInvalidResourceName
@@ -78,7 +63,7 @@ func (link *Link) CreateLedger(name string, chained, public bool) (*types.Ledger
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
-		Name:   types.TxCreateLedger,
+		Name:   types.TxNewLedger,
 		LinkTo: link.GetCocoonID(),
 		Params: []string{name, fmt.Sprintf("%t", chained), fmt.Sprintf("%t", public)},
 	})
@@ -117,8 +102,7 @@ func (link *Link) GetLedger(ledgerName string) (*types.Ledger, error) {
 	return &ledger, nil
 }
 
-// PutIn adds a new transaction to a ledger
-func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Transaction, error) {
+func (link *Link) put(revisionID, ledgerName, key string, value []byte) (*types.Transaction, error) {
 
 	start := time.Now()
 
@@ -133,6 +117,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 	tx := &types.Transaction{
 		ID:             util.UUID4(),
+		RevisionTo:     revisionID,
 		Ledger:         ledger.Name,
 		LedgerInternal: types.MakeLedgerName(link.GetCocoonID(), ledger.Name),
 		Key:            key,
@@ -156,6 +141,9 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 
 		switch v := result.(type) {
 		case error:
+			if common.CompareErr(v, ErrObjectLocked) == 0 {
+				return nil, ErrObjectLocked
+			}
 			return nil, v
 		case *types.Block:
 			tx.Block = v
@@ -166,7 +154,7 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	}
 
 	txJSON, _ := util.ToJSON([]*types.Transaction{tx})
-	_, err = sendLedgerOp(&proto_connector.LedgerOperation{
+	putTxResultBs, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
 		Name:   types.TxPut,
 		LinkTo: link.GetCocoonID(),
@@ -175,7 +163,22 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	})
 
 	if err != nil {
+		if common.CompareErr(err, ErrObjectLocked) == 0 {
+			return nil, ErrObjectLocked
+		}
 		return nil, fmt.Errorf("failed to put transaction: %s", err)
+	}
+
+	var putTxResult types.PutResult
+	if err := util.FromJSON(putTxResultBs, &putTxResult); err != nil {
+		return nil, common.JSONCoerceErr("putTxResult", err)
+	}
+
+	// ensure transaction was successful
+	for _, txResult := range putTxResult.TxReceipts {
+		if txResult.ID == tx.ID && len(txResult.Err) > 0 {
+			return nil, fmt.Errorf("failed to put transaction: %s", txResult.Err)
+		}
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
@@ -183,16 +186,22 @@ func (link *Link) PutIn(ledgerName string, key string, value []byte) (*types.Tra
 	return tx, nil
 }
 
-// Put adds a new transaction into the default ledger
-func (link *Link) Put(key string, value []byte) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.PutIn(link.GetDefaultLedger(), key, value)
+// Put puts a transaction in a ledger
+func (link *Link) Put(ledgerName, key string, value []byte) (*types.Transaction, error) {
+	return link.put("", ledgerName, key, value)
 }
 
-// GetFrom returns a transaction by its key and the ledger it belongs to
-func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
+// PutSafe puts a transaction and also ensures that no previous transaction references the revision
+// id provided. If a previous transaction references the revision id, an ErrStateObject is returned.
+// This is useful for situations where CAS (check-an-set) procedure is a requirement. Use the ID of
+// previous transactions to ensure updates are not made based on records that may have been updated by
+// another process.
+func (link *Link) PutSafe(revisionID, ledgerName, key string, value []byte) (*types.Transaction, error) {
+	return link.put(revisionID, ledgerName, key, value)
+}
+
+// Get gets a transaction from a ledger
+func (link *Link) Get(ledgerName, key string) (*types.Transaction, error) {
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
@@ -202,6 +211,9 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	})
 
 	if err != nil {
+		if common.CompareErr(err, ErrObjectLocked) == 0 {
+			return nil, ErrObjectLocked
+		}
 		return nil, err
 	}
 
@@ -217,50 +229,8 @@ func (link *Link) GetFrom(ledgerName, key string) (*types.Transaction, error) {
 	return &tx, nil
 }
 
-// Get returns a transaction that belongs to the default legder by its key.
-func (link *Link) Get(key string) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.GetFrom(link.GetDefaultLedger(), key)
-}
-
-// GetByIDFrom returns a transaction by its id and the ledger it belongs to
-func (link *Link) GetByIDFrom(ledgerName, id string) (*types.Transaction, error) {
-
-	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
-		ID:     util.UUID4(),
-		Name:   types.TxGetByID,
-		LinkTo: link.GetCocoonID(),
-		Params: []string{ledgerName, id},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var tx types.Transaction
-	if err = util.FromJSON(result, &tx); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response data")
-	}
-
-	if tx.Block.ID == "" {
-		tx.Block = nil
-	}
-
-	return &tx, nil
-}
-
-// GetByID returns a transaction that belongs to the default legder by its id.
-func (link *Link) GetByID(id string) (*types.Transaction, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
-	}
-	return link.GetByIDFrom(link.GetDefaultLedger(), id)
-}
-
-// GetBlockFrom returns a block from a ledger by its block id
-func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
+// GetBlock gets a block from a ledger by a block id
+func (link *Link) GetBlock(ledgerName, id string) (*types.Block, error) {
 
 	result, err := sendLedgerOp(&proto_connector.LedgerOperation{
 		ID:     util.UUID4(),
@@ -281,10 +251,15 @@ func (link *Link) GetBlockFrom(ledgerName, id string) (*types.Block, error) {
 	return &blk, nil
 }
 
-// GetBlock returns a block from the default ledger by its block id
-func (link *Link) GetBlock(id string) (*types.Block, error) {
-	if link.GetDefaultLedger() == "" {
-		return nil, fmt.Errorf("default ledger not set")
+// Lock acquires a lock on the specified key within the scope of the
+// linked cocoon code. An error is returned if it failed to acquire the lock.
+func (link *Link) Lock(key string, ttl time.Duration) (*Lock, error) {
+	lock, err := newLock(link.cocoonID, key, ttl)
+	if err != nil {
+		return nil, err
 	}
-	return link.GetBlockFrom(link.GetDefaultLedger(), id)
+	if err := lock.Acquire(); err != nil {
+		return nil, err
+	}
+	return lock, nil
 }

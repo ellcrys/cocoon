@@ -10,10 +10,9 @@ type Store interface {
 	CreateLedger(name string, chained, public bool) (*Ledger, error)
 	CreateLedgerThen(name string, chained, public bool, then func() error) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
-	Put(ledger string, txs []*Transaction) error
-	PutThen(ledger string, txs []*Transaction, then func() error) error
+	Put(ledger string, txs []*Transaction) ([]*TxReceipt, error)
+	PutThen(ledger string, txs []*Transaction, then func(validTxs []*Transaction) error) ([]*TxReceipt, error)
 	Get(ledger, key string) (*Transaction, error)
-	GetByID(ledger, txID string) (*Transaction, error)
 	GetRange(ledger, startKey, endKey string, inclusive bool, limit, lastNum int) ([]*Transaction, error)
 	Close() error
 }

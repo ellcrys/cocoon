@@ -3,6 +3,7 @@ package orderer
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	context "golang.org/x/net/context"
@@ -78,6 +79,13 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
+		// initialize store
+		if od.store == nil {
+			log.Error("Store implementation not set")
+			od.Stop(1)
+			return
+		}
+
 		// establish connection to store backend
 		_, err := od.store.Connect(storeConStr)
 		if err != nil {
@@ -86,11 +94,8 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			return
 		}
 
-		// initialize store
-		if od.store == nil {
-			log.Error("Store implementation not set")
-			od.Stop(1)
-			return
+		if len(os.Getenv("DEV_MEM_LOCK")) != 0 {
+			log.Debug("Memory based lock is in use")
 		}
 
 		sysPubLedger := types.MakeLedgerName(types.SystemCocoonID, types.GetSystemPublicLedgerName())
@@ -197,15 +202,24 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 		}
 	}
 
+	// Create sub method to create a block that includes all the transactions
+	// that have been successfully stored in the database. This stored
+	// transaction will be passed to the function from the PutThen call
 	var block *proto_orderer.Block
-	var createBlockFunc func() error
+	var createBlockFunc func(validTransactions []*types.Transaction) error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
-		createBlockFunc = func() error {
+		createBlockFunc = func(validTransactions []*types.Transaction) error {
+
+			// do nothing if not stored transactions
+			if len(validTransactions) == 0 {
+				return nil
+			}
+
 			var err error
 			retryDelay := time.Duration(2) * time.Second
 			common.ReRunOnError(func() error {
-				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, transactions)
+				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, validTransactions)
 				if b != nil {
 					block.Id = b.ID
 					block.ChainName = b.ChainName
@@ -230,16 +244,21 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 		}
 	}
 
-	err = od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
+	txReceipts, err := od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
 	if err != nil {
 		return nil, err
+	}
+
+	var protoTxReceipts = make([]*proto_orderer.TxReceipt, len(txReceipts))
+	for i, r := range txReceipts {
+		protoTxReceipts[i] = &proto_orderer.TxReceipt{ID: r.ID, Err: r.Err}
 	}
 
 	log.Debug("Put(): Time taken: ", time.Since(start))
 
 	return &proto_orderer.PutResult{
-		Added: int32(len(transactions)),
-		Block: block,
+		TxReceipts: protoTxReceipts,
+		Block:      block,
 	}, nil
 }
 
@@ -259,7 +278,8 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	tx, err := od.store.Get(ledger.NameInternal, key)
 	if err != nil {
 		return nil, err
-	} else if tx == nil && err == nil {
+	}
+	if tx == nil && err == nil {
 		return nil, types.ErrTxNotFound
 	}
 
@@ -267,7 +287,6 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	tx.KeyInternal = key
 	tx.Ledger = params.GetLedger()
 	tx.LedgerInternal = ledger.NameInternal
-
 	if ledger.Chained {
 		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
 		if err != nil {
@@ -284,47 +303,6 @@ func (od *Orderer) Get(ctx context.Context, params *proto_orderer.GetParams) (*p
 	cstructs.Copy(tx, &protoTx)
 
 	log.Debug("Get(): Time taken: ", time.Since(start))
-
-	return &protoTx, nil
-}
-
-// GetByID finds and returns a transaction with a matching id
-func (od *Orderer) GetByID(ctx context.Context, params *proto_orderer.GetParams) (*proto_orderer.Transaction, error) {
-
-	ledger, err := od.GetLedger(ctx, &proto_orderer.GetLedgerParams{
-		CocoonID: params.GetCocoonID(),
-		Name:     params.GetLedger(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := od.store.GetByID(ledger.NameInternal, params.GetId())
-	if err != nil {
-		return nil, err
-	} else if tx == nil && err == nil {
-		return nil, types.ErrTxNotFound
-	}
-
-	tx.KeyInternal = tx.Key
-	tx.Key = types.GetActualKeyFromTxKey(tx.Key)
-	tx.Ledger = params.GetLedger()
-	tx.LedgerInternal = ledger.NameInternal
-
-	if ledger.Chained {
-		block, err := od.blockchain.GetBlock(ledger.NameInternal, tx.BlockID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to populate block to transaction")
-		} else if block == nil && err == nil {
-			return nil, fmt.Errorf("orphaned transaction")
-		}
-
-		tx.Block = block
-		tx.BlockID = ""
-	}
-
-	var protoTx proto_orderer.Transaction
-	cstructs.Copy(tx, &protoTx)
 
 	return &protoTx, nil
 }

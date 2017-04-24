@@ -22,6 +22,7 @@ type Transaction struct {
 	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	BlockID        string `json:"blockId,omitempty"`
 	Block          *Block `json:"block,omitempty" gorm:"-" sql:"-"`
+	RevisionTo     string `json:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
 	CreatedAt      int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
 }
 
@@ -52,4 +53,17 @@ func MakeTxKey(namespace, name string) string {
 // GetActualKeyFromTxKey returns the real key name from a transaction key
 func GetActualKeyFromTxKey(key string) string {
 	return strings.Split(key, ";")[1]
+}
+
+// TxReceipt defines a structure for representing transaction status
+// from endpoint that manipulate transactions
+type TxReceipt struct {
+	ID  string `json:"ID,omitempty"`
+	Err string `json:"err,omitempty"`
+}
+
+// PutResult defines a structure for put operation ressult
+type PutResult struct {
+	TxReceipts []*TxReceipt `json:"txReceipts,omitempty"`
+	Block      *Block       `json:"block,omitempty"`
 }

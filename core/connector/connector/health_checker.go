@@ -5,6 +5,8 @@ import (
 
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 
+	"fmt"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -44,6 +46,7 @@ func (hc *HealthChecker) Start() {
 	hc.ticker = time.NewTicker(15 * time.Second)
 	for _ = range hc.ticker.C {
 		if hc.check() != nil {
+			logHealthChecker.Error("health check failed")
 			if hc.OnDeadFunc != nil {
 				hc.OnDeadFunc()
 			}
@@ -56,7 +59,8 @@ func (hc *HealthChecker) Start() {
 // It will retry the health check for upto 5 times with
 // a 1 second wait duration if health check fails.
 func (hc *HealthChecker) check() error {
-	retryLimit := 5
+	maxRetry := 5
+	retryLimit := maxRetry
 	for retryLimit > 0 {
 		client, err := grpc.Dial(hc.cocoonCodeAddr, grpc.WithInsecure())
 		if err != nil {
@@ -67,13 +71,14 @@ func (hc *HealthChecker) check() error {
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		_, err = stub.HealthCheck(ctx, &proto_runtime.Ok{})
 		if err != nil {
+			logHealthChecker.Warningf("health check not passed. Retry Remaining: %d", retryLimit)
 			retryLimit--
-			time.Sleep(1 * time.Second)
-			return err
+			time.Sleep(2 * time.Second)
+			continue
 		}
 		return nil
 	}
-	return nil
+	return fmt.Errorf("health check failed")
 }
 
 // Stop health check
