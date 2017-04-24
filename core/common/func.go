@@ -54,6 +54,13 @@ func IsValidResName(name string) bool {
 	return match
 }
 
+// IsValidCocoonID checks whether a name is a accepted
+// cocoon name
+func IsValidCocoonID(name string) bool {
+	match, _ := regexp.Match("(?i)^[a-z0-9_-]+$", []byte(name))
+	return match
+}
+
 // ReRunOnError runs a function multiple times till it returns a non-error (nil) value.
 // It accepts a limit on how many times to attempt a re-run and a delay duration.
 // If delay is nil, there is no delay. It returns the last error of the last

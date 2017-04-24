@@ -18,7 +18,7 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if len(c.ID) == 0 {
 		return fmt.Errorf("id is required")
 	}
-	if !common.IsValidResName(c.ID) {
+	if !common.IsValidCocoonID(c.ID) {
 		return fmt.Errorf("id is not a valid resource name")
 	}
 	if len(c.URL) == 0 {
