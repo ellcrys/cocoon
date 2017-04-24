@@ -25,6 +25,7 @@ message Request {
 message LockOperation {
     string name = 1;
     repeated string params = 2;
+    string linkTo = 3;
 }
 
 // LedgerOperation represents an operation against the ledger

@@ -89,11 +89,6 @@ func GetCocoonID() string {
 	return os.Getenv("COCOON_ID")
 }
 
-// GetSystemLink returns a readonly the system link
-func GetSystemLink() *Link {
-	return System
-}
-
 // GetSystemCocoonID returns the system cocoon id
 func GetSystemCocoonID() string {
 	return types.SystemCocoonID

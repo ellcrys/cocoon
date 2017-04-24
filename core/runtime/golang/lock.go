@@ -58,6 +58,7 @@ func (l *Lock) Acquire() error {
 	lockSessionID, err := sendLockOp(&proto_connector.LockOperation{
 		Name:   types.OpLockAcquire,
 		Params: []string{l.cocoonID, l.key, strconv.Itoa(l.ttl), l.lockSessionID},
+		LinkTo: l.cocoonID,
 	})
 	if err != nil {
 		if common.CompareErr(err, ErrLockAlreadyAcquired) == 0 {
@@ -80,6 +81,7 @@ func (l *Lock) IsAcquirer() error {
 	_, err := sendLockOp(&proto_connector.LockOperation{
 		Name:   types.OpLockCheckAcquire,
 		Params: []string{l.cocoonID, l.key, l.lockSessionID},
+		LinkTo: l.cocoonID,
 	})
 	if err != nil {
 		if common.CompareErr(err, ErrLockNotAcquired) == 0 {
@@ -102,6 +104,7 @@ func (l *Lock) Release() error {
 	_, err := sendLockOp(&proto_connector.LockOperation{
 		Name:   types.OpLockRelease,
 		Params: []string{l.cocoonID, l.key, l.lockSessionID},
+		LinkTo: l.cocoonID,
 	})
 	if err != nil {
 		if common.CompareErr(err, ErrLockNotAcquired) == 0 {

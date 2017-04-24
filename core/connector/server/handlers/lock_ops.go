@@ -5,7 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"strings"
+
 	"github.com/ncodes/cocoon/core/common"
+	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
@@ -14,18 +17,60 @@ import (
 
 // LockOperations defines a structure for handling lock operations from the cocoon code
 type LockOperations struct {
-	log *logging.Logger
+	log       *logging.Logger
+	connector *connector.Connector
 }
 
 // NewLockOperationHandler creates a new LockOperations instance
-func NewLockOperationHandler(log *logging.Logger) *LockOperations {
+func NewLockOperationHandler(log *logging.Logger, connector *connector.Connector) *LockOperations {
 	return &LockOperations{
-		log: log,
+		log:       log,
+		connector: connector,
 	}
+}
+
+// checkPermission checks whether the request has permission to permform lock operations
+// against a target cocoon. Current permission rules are:
+// 1. A lock request is allowed if the target cocoon is a system cocoon and the key does
+// not begin with an underscore (keys begining with an underscore are reservered as system specific keys).
+// 2. A lock request is allowed if the requesting cocoon is natively linked to the target cocoon.
+func (l *LockOperations) checkPermission(ctx context.Context, op *proto_connector.LockOperation) error {
+
+	// Target cocoon is the system cocoon
+	if op.LinkTo == types.SystemCocoonID {
+		if strings.HasPrefix(op.Params[1], "_") {
+			return fmt.Errorf("reserved key error: cannot create/access a lock with key starting with an underscore on system cocoon")
+		}
+		return nil
+	}
+
+	// Target cocoon is not the same as the current cocoon
+	if op.LinkTo != l.connector.GetRequest().ID {
+
+		// get the current calling/requesting cocoon
+		cocoon, err := l.connector.GetCocoon(ctx, l.connector.GetRequest().ID)
+		if err != nil {
+			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
+				return fmt.Errorf("calling cocoon not found")
+			}
+			return err
+		}
+
+		// If current cocoon is not natively linked to the target cocoon, disallow with an error
+		if cocoon.Link != op.LinkTo {
+			return fmt.Errorf("permission denied: current cocoon not natively linked to target cocoon")
+		}
+	}
+	return nil
 }
 
 // Handle handles cocoon operations
 func (l *LockOperations) Handle(ctx context.Context, op *proto_connector.LockOperation) (*proto_connector.Response, error) {
+
+	if err := l.checkPermission(ctx, op); err != nil {
+		return nil, err
+	}
+
 	switch op.Name {
 	case types.OpLockAcquire:
 		return l.acquire(op)
