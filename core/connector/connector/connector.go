@@ -14,6 +14,7 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
+	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -577,6 +578,8 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 // configureRouter sets up frontend and backend router configurations
 func (cn *Connector) configureRouter() error {
 
+	log.Info("Configuring router rules")
+
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
 	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
@@ -593,6 +596,8 @@ func (cn *Connector) configureRouter() error {
 			return nil
 		}
 	}
+
+	log.Info("Successfully configured router")
 
 	return nil
 }
@@ -626,6 +631,7 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 // getDefaultFirewall returns the default firewall rules
 // for a cocoon container.
 func (cn *Connector) getDefaultFirewall(cocoonFirewall types.Firewall) string {
+	pretty.Println(cocoonFirewall)
 	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
 
