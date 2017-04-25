@@ -131,6 +131,9 @@ func ValidateIdentity(i *types.Identity) error {
 // are not resolved.
 func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 
+	util.Printify(firewall)
+	fmt.Println("OK here")
+
 	var errs []error
 	if firewall == nil {
 		errs = append(errs, fmt.Errorf("function value is nil"))
@@ -162,8 +165,6 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 	var firewallRules []types.FirewallRule
 
 	for i, rule := range firewallMap {
-		fmt.Println("HHHHHH")
-		util.Printify(rule)
 		if rule["destination"] == "" {
 			errs = append(errs, fmt.Errorf("rule %d: destination is required", i))
 		} else if !govalidator.IsHost(rule["destination"]) {
