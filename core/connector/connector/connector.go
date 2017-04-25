@@ -664,6 +664,8 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 		return err
 	}
 
+	util.Printify(cocoon)
+
 	cmd := []string{"bash", "-c", cn.getDefaultFirewall(cocoon.Firewall)}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
 		switch state {
