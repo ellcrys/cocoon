@@ -312,8 +312,6 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	// the transactions only if error was returned
 	if thenFunc != nil {
 		if err = thenFunc(validTxs); err != nil {
-			fmt.Println("Rolled back: ", err)
-			dbTx.Rollback()
 			return txReceipts, err
 		}
 	}

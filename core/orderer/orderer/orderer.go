@@ -205,12 +205,16 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	// Create sub method to create a block that includes all the transactions
 	// that have been successfully stored in the database. This stored
 	// transaction will be passed to the function from the PutThen call
+	log.Info("Set to put: ")
+	util.Printify(params.GetTransactions())
 	var block *proto_orderer.Block
 	var createBlockFunc func(validTransactions []*types.Transaction) error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
 		createBlockFunc = func(validTransactions []*types.Transaction) error {
 
+			log.Info("Valid Tx: ", len(validTransactions))
+			util.Printify(validTransactions)
 			// do nothing if not stored transactions
 			if len(validTransactions) == 0 {
 				return nil
@@ -246,6 +250,7 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 
 	txReceipts, err := od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
 	if err != nil {
+		log.Error(err.Error())
 		return nil, err
 	}
 
