@@ -246,7 +246,6 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		dbTx.Rollback()
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
-	defer dbTx.Close()
 
 	// create transactions and add transaction receipts for
 	// successfully stored transactions
@@ -322,7 +321,7 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	}
 
 	if err := dbTx.Debug().Commit().Error; err != nil {
-		pretty.Println(err)
+		pretty.Println(dbTx.GetErrors())
 		return nil, err
 	}
 
