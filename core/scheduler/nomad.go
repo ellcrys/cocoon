@@ -8,6 +8,7 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
+	"github.com/hashicorp/consul/api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 )
@@ -21,17 +22,13 @@ var SupportedCocoonCodeLang = []string{"go"}
 // scheduler.Scheduler interface. Every interaction with
 // the scheduler is handled here.
 type Nomad struct {
-	schedulerAddr    string
-	API              string
-	ServiceDiscovery ServiceDiscovery
+	schedulerAddr string
+	API           string
 }
 
 // NewNomad creates a nomad scheduler object
 func NewNomad() *Nomad {
-	return &Nomad{
-		ServiceDiscovery: &NomadServiceDiscovery{
-		},
-	}
+	return &Nomad{}
 }
 
 // GetName returns the scheduler name
@@ -198,7 +195,17 @@ func Getenv(env, defaultVal string) string {
 	return util.Env("NOMAD_"+env, defaultVal)
 }
 
-// GetServiceDiscoverer returns the schedulers service discoverer
-func (sc *Nomad) GetServiceDiscoverer() ServiceDiscovery {
-	return sc.ServiceDiscovery
+// GetServiceDiscoverer returns an instance of the nomad service discovery
+func (sc *Nomad) GetServiceDiscoverer() (ServiceDiscovery, error) {
+	cfg := api.DefaultConfig()
+	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %s", err)
+	}
+	_, err = client.Status().Leader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %s", err)
+	}
+	return NewNomadServiceDiscovery(client), nil
 }

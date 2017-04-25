@@ -58,9 +58,13 @@ func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
 	<-endCh
 }
 
-func startAPIServer(startCB func(*API, chan bool)) {
+func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 	endCh := make(chan bool)
-	apiServer := NewAPI(scheduler.NewNomad())
+	apiServer, err := NewAPI(scheduler.NewNomad())
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	addr := util.Env("API_ADDRESS", "127.0.0.1:7004")
 	go apiServer.Start(addr, endCh)
 	time.Sleep(3 * time.Second)
@@ -78,7 +82,7 @@ func TestOrderer(t *testing.T) {
 	key := "secret"
 
 	startOrderer(func(od *orderer.Orderer, endCh chan bool) {
-		startAPIServer(func(api *API, apiEndCh chan bool) {
+		startAPIServer(t, func(api *API, apiEndCh chan bool) {
 			Convey("API", t, func() {
 
 				Convey(".CreateIdentity", func() {

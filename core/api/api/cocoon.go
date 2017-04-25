@@ -436,7 +436,12 @@ func (api *API) GetCocoon(ctx context.Context, req *proto_api.GetCocoonRequest) 
 // we check with the scheduler to know if the cocoon code was deployed successfully.
 func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 
-	s, err := api.scheduler.GetServiceDiscoverer().GetByID("cocoon", map[string]string{"tag": cocoonID})
+	sd, err := api.scheduler.GetServiceDiscoverer()
+	if err != nil {
+		return "", fmt.Errorf("failed to get service discovery from scheduler: %s", err)
+	}
+
+	s, err := sd.GetByID("cocoon", map[string]string{"tag": cocoonID})
 	if err != nil {
 		apiLog.Errorf("failed to query cocoon service status: %s", err.Error())
 		return "", fmt.Errorf("failed to query cocoon service status")
