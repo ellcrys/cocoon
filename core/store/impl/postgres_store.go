@@ -10,6 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
+	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
@@ -245,6 +246,7 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		dbTx.Rollback()
 		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
 	}
+	defer dbTx.Close()
 
 	// create transactions and add transaction receipts for
 	// successfully stored transactions
@@ -295,12 +297,12 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		err = dbTx.Create(tx).Error
 		if err != nil {
 			log.Errorf("Failed to create transaction (%s): %s", tx.ID, err)
-			util.Printify(err)
 			txReceipt.Err = err.Error()
 			if common.CompareErr(err, fmt.Errorf(`pq: duplicate key value violates unique constraint "idx_name_revision_to"`)) == 0 {
 				txReceipt.Err = "stale object"
 			}
 		} else {
+			fmt.Println("Added new valid transaction")
 			validTxs = append(validTxs, tx)
 		}
 
@@ -319,7 +321,8 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		}
 	}
 
-	if err := dbTx.Commit().Error; err != nil {
+	if err := dbTx.Debug().Commit().Error; err != nil {
+		pretty.Println(err)
 		return nil, err
 	}
 
