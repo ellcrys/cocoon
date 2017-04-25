@@ -18,6 +18,7 @@ import (
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/monitor"
+	"github.com/ncodes/cocoon/core/connector/router"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/types"
 	docker "github.com/ncodes/go-dockerclient"
@@ -48,6 +49,7 @@ type Connector struct {
 	languages         []Language
 	container         *docker.APIContainers
 	containerRunning  bool
+	routerHelper      *router.Helper
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
 	ordererDiscovery  *orderer.Discovery
@@ -137,6 +139,11 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 			return
 		}
 	}()
+}
+
+// SetRouterHelper sets the router helpder
+func (cn *Connector) SetRouterHelper(rh *router.Helper) {
+	cn.routerHelper = rh
 }
 
 // GetOrdererDiscoverer returns the orderer discovery instance
@@ -567,6 +574,29 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 	})
 }
 
+// configureRouter sets up frontend and backend router configurations
+func (cn *Connector) configureRouter() error {
+
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	if err != nil {
+		return err
+	}
+
+	// if cocoon is not linked, then add a frontend and backend routing rule
+	if len(cocoon.Link) == 0 {
+		if err := cn.routerHelper.AddFrontend(cocoon.ID); err != nil {
+			return nil
+		}
+		if err := cn.routerHelper.AddBackend(cocoon.ID); err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
 // Run the cocoon code. First it gets the IP address of the container and sets
 // the language environment.
 func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
@@ -577,6 +607,10 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 		case "after":
 			go cn.healthCheck.Start()
 			cn.setStatus(api.CocoonStatusRunning)
+			if err := cn.configureRouter(); err != nil {
+				log.Errorf("Failed to set frontend router configuration: %s", err)
+				cn.Stop(true)
+			}
 			return nil
 		case "end":
 			cn.setStatus(api.CocoonStatusStopped)

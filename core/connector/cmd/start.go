@@ -10,13 +10,15 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
+	"github.com/ncodes/cocoon/core/connector/router"
 	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/spf13/cobra"
 )
 
 var (
-	log = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
+	log       = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
+	routerLog = config.MakeLogger("connector.routerHelper", "routerHelper")
 
 	// default connector RPC Addr
 	defaultConnectorRPCAddr = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
@@ -92,6 +94,15 @@ var startCmd = &cobra.Command{
 			log.Error(err.Error())
 			return
 		}
+
+		// create router helper
+		log.Info("Creating router helper")
+		routerHelper, err := router.NewHelper(routerLog)
+		if err != nil {
+			log.Error(err.Error())
+			log.Fatal("Ensure consul is running at 127.0.0.1:8500. Use CONSUL_ADDR to set alternative consul address")
+		}
+
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
@@ -103,8 +114,10 @@ var startCmd = &cobra.Command{
 			return
 		}
 
+		cn.SetRouterHelper(routerHelper)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
 		cn.AddLanguage(connector.NewGo(req))
+
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
 			cn.Stop(false)

@@ -294,7 +294,6 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 				txReceipt.Err = "stale object"
 			}
 		} else {
-			fmt.Println("Added new valid transaction")
 			validTxs = append(validTxs, tx)
 		}
 
