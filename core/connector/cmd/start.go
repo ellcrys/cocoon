@@ -97,7 +97,12 @@ var startCmd = &cobra.Command{
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
 		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
 
-		cn := connector.NewConnector(req, waitCh)
+		cn, err := connector.NewConnector(req, waitCh)
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
+
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
 		cn.AddLanguage(connector.NewGo(req))
 		onTerminate(func(s os.Signal) {

@@ -55,13 +55,17 @@ type Connector struct {
 }
 
 // NewConnector creates a new connector
-func NewConnector(req *Request, waitCh chan bool) *Connector {
+func NewConnector(req *Request, waitCh chan bool) (*Connector, error) {
+	ordererDiscovery, err := orderer.NewDiscovery()
+	if err != nil {
+		return nil, err
+	}
 	return &Connector{
 		req:              req,
 		waitCh:           waitCh,
 		monitor:          monitor.NewMonitor(req.ID),
-		ordererDiscovery: orderer.NewDiscovery(),
-	}
+		ordererDiscovery: ordererDiscovery,
+	}, nil
 }
 
 // Launch starts a cocoon code
