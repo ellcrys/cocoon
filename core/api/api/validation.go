@@ -162,6 +162,8 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 	var firewallRules []types.FirewallRule
 
 	for i, rule := range firewallMap {
+		fmt.Println("HHHHHH")
+		util.Printify(rule)
 		if rule["destination"] == "" {
 			errs = append(errs, fmt.Errorf("rule %d: destination is required", i))
 		} else if !govalidator.IsHost(rule["destination"]) {
