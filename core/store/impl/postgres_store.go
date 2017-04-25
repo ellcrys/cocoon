@@ -237,6 +237,7 @@ func makeTxLockKey(ledgerName, key string) string {
 // Future work may allow the caller to determine the behaviour via an additional parameter.
 func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, thenFunc func(validTxss []*types.Transaction) error) ([]*types.TxReceipt, error) {
 
+	var err error
 	var validTxs []*types.Transaction
 	txReceipts := []*types.TxReceipt{}
 
@@ -250,12 +251,9 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	// create transactions and add transaction receipts for
 	// successfully stored transactions
 	for _, tx := range txs {
-
-		var err error
-
 		// acquire lock on the transaction via its key
 		lock := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
-		if err = lock.Acquire(); err != nil {
+		if err := lock.Acquire(); err != nil {
 			if err == types.ErrLockAlreadyAcquired {
 				txReceipts = append(txReceipts, &types.TxReceipt{
 					ID:  tx.ID,
