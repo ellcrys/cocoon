@@ -59,7 +59,10 @@ var apiStartCmd = &cobra.Command{
 		}
 
 		nomad.SetAddr(schedulerAddr, false)
-		api := api.NewAPI(nomad)
+		api, err := api.NewAPI(nomad)
+		if err != nil {
+			apiLog.Fatal(err.Error())
+		}
 
 		var endedCh = make(chan bool)
 		api.Start(bindAddr, endedCh)

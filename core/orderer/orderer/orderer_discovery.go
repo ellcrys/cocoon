@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/ellcrys/util"
+	"github.com/hashicorp/consul/api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/scheduler"
 )
@@ -19,14 +20,25 @@ var discoveryLog = config.MakeLogger("orderer.discovery", "orderer")
 // accessible in the cluster.
 type Discovery struct {
 	sync.Mutex
+	sd           scheduler.ServiceDiscovery
 	orderersAddr []string
 	ticker       *time.Ticker
 	OnUpdateFunc func(addrs []string)
 }
 
 // NewDiscovery creates a new discovery object.
-func NewDiscovery() *Discovery {
-	return &Discovery{}
+// Returns error if unable to connector to the service discovery.
+// Setting the env variable `CONSUL_ADDR` will override the default config address.
+func NewDiscovery() (*Discovery, error) {
+	cfg := api.DefaultConfig()
+	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %s", err)
+	}
+	return &Discovery{
+		sd: scheduler.NewNomadServiceDiscovery(client),
+	}, nil
 }
 
 // Discover fetches a list of orderer service addresses
@@ -42,12 +54,7 @@ func (od *Discovery) discover() error {
 		return nil
 	}
 
-	ds := scheduler.NomadServiceDiscovery{
-		ConsulAddr: util.Env("CONSUL_ADDR", "localhost:8500"),
-		Protocol:   "http",
-	}
-
-	_orderers, err := ds.GetByID("orderers", nil)
+	_orderers, err := od.sd.GetByID("orderers", nil)
 	if err != nil {
 		return err
 	}

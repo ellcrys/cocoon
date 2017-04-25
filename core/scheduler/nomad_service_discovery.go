@@ -3,81 +3,46 @@ package scheduler
 import (
 	"fmt"
 
-	"net/url"
-
-	"github.com/ellcrys/util"
-	"github.com/franela/goreq"
+	"github.com/hashicorp/consul/api"
 )
 
 // NomadServiceDiscovery provides service discovery to the nomad schedulerAddr
 // by querying a consul server
 type NomadServiceDiscovery struct {
-	ConsulAddr string
-	Protocol   string
+	consulClient *api.Client
 }
 
-func (nsd *NomadServiceDiscovery) getAddr() string {
-	addr := "http://" + nsd.ConsulAddr
-	if nsd.Protocol == "https" {
-		addr = "https://" + nsd.ConsulAddr
+// NewNomadServiceDiscovery creates a nomad service discovery instance
+func NewNomadServiceDiscovery(client *api.Client) *NomadServiceDiscovery {
+	return &NomadServiceDiscovery{
+		consulClient: client,
 	}
-	return addr
 }
 
-// GetByID fetches a services instances by the service id.
-func (nsd *NomadServiceDiscovery) GetByID(name string, query map[string]string) ([]*Service, error) {
+// GetByID fetches all the addresses of a service by name.
+func (d *NomadServiceDiscovery) GetByID(name string, query map[string]string) ([]*Service, error) {
 
-	item := url.Values{}
-	for key, val := range query {
-		item.Set(key, val)
-	}
+	catalog := d.consulClient.Catalog()
+	var tag = query["tag"]
+	var dc = query["dc"]
 
-	addr := nsd.getAddr()
-	req, err := goreq.Request{
-		Uri:         fmt.Sprintf("%s/%s", addr, "v1/catalog/service/"+name),
-		QueryString: item,
-	}.Do()
-
+	consulServices, _, err := catalog.Service(name, tag, &api.QueryOptions{Datacenter: dc})
 	if err != nil {
-		return nil, err
-	}
-
-	defer req.Body.Close()
-
-	body, _ := req.Body.ToString()
-	if req.StatusCode != 200 {
-		return nil, fmt.Errorf(body)
-	}
-
-	var _services []map[string]interface{}
-	err = util.FromJSON([]byte(body), &_services)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get service: %s", err)
 	}
 
 	var services []*Service
-	for _, srv := range _services {
-
-		serviceAddr := ""
-		if srv["ServiceAddress"] == nil {
-			serviceAddr = srv["Address"].(string)
-		} else {
-			serviceAddr = srv["ServiceAddress"].(string)
+	for _, srv := range consulServices {
+		serviceAddr := srv.ServiceAddress
+		if len(serviceAddr) == 0 {
+			serviceAddr = srv.Address
 		}
-
-		tags := []string{}
-		if srv["ServiceTags"] != nil {
-			for _, tag := range srv["ServiceTags"].([]interface{}) {
-				tags = append(tags, tag.(string))
-			}
-		}
-
 		services = append(services, &Service{
-			Name: srv["ServiceName"].(string),
-			ID:   srv["ID"].(string),
+			Name: srv.ServiceName,
+			ID:   srv.ServiceID,
 			IP:   serviceAddr,
-			Port: srv["ServicePort"].(float64),
-			Tags: tags,
+			Port: srv.ServicePort,
+			Tags: srv.ServiceTags,
 		})
 	}
 

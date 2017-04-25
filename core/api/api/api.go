@@ -31,12 +31,16 @@ type API struct {
 }
 
 // NewAPI creates a new GRPCAPI object
-func NewAPI(scheduler scheduler.Scheduler) *API {
+func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
+	ordererDiscovery, err := orderer.NewDiscovery()
+	if err != nil {
+		return nil, err
+	}
 	return &API{
 		scheduler:        scheduler,
-		ordererDiscovery: orderer.NewDiscovery(),
+		ordererDiscovery: ordererDiscovery,
 		logProvider:      &StackDriverLog{},
-	}
+	}, nil
 }
 
 // Start starts the server
