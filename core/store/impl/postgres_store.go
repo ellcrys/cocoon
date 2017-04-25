@@ -274,7 +274,7 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		// the entire transaction will not be committed by the postgres driver
 		isStale := false
 		for _, vTx := range validTxs {
-			if vTx.KeyInternal == tx.KeyInternal && vTx.RevisionTo == tx.RevisionTo {
+			if len(tx.RevisionTo) > 0 && tx.RevisionTo == vTx.RevisionTo && tx.KeyInternal == vTx.KeyInternal {
 				isStale = true
 				break
 			}
