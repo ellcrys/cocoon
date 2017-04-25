@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
@@ -248,7 +247,6 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	txReceipts, err := od.store.PutThen(internalLedgerName, transactions, createBlockFunc)
 	if err != nil {
 		log.Errorf("failed to PUT: %s", err.Error())
-		pretty.Println(transactions)
 		return nil, err
 	}
 
