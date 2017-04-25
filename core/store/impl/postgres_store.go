@@ -280,6 +280,7 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 			}
 		}
 		if isStale {
+			log.Info("Stale transaction (%s)", tx.ID)
 			txReceipts = append(txReceipts, &types.TxReceipt{
 				ID:  tx.ID,
 				Err: "stale object",
@@ -293,6 +294,8 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 		txReceipt := &types.TxReceipt{ID: tx.ID}
 		err = dbTx.Create(tx).Error
 		if err != nil {
+			log.Errorf("Failed to create transaction (%s): %s", tx.ID, err)
+			util.Printify(err)
 			txReceipt.Err = err.Error()
 			if common.CompareErr(err, fmt.Errorf(`pq: duplicate key value violates unique constraint "idx_name_revision_to"`)) == 0 {
 				txReceipt.Err = "stale object"
