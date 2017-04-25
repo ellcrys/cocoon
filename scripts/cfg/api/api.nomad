@@ -52,7 +52,7 @@ job "api" {
       }
       
       env {
-          ENV = "production"      
+          ENV = "production"    
           API_VERSION = "1.0.0-b5"            
           CONNECTOR_VERSION = "1.0.0-b4"
           GCP_PROJECT_ID = "visiontest-1281"

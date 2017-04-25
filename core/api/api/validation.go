@@ -64,8 +64,6 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("max signatories already added. You can't add more")
 	}
 	if c.Firewall != nil {
-		util.Printify(c.Firewall)
-		fmt.Println("Yet another marker")
 		_, errs := ValidateFirewall(c.Firewall.ToMap())
 		if len(errs) != 0 {
 			return fmt.Errorf("firewall: %s, ", errs[0])
