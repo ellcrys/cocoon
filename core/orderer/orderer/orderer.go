@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
@@ -230,9 +229,6 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 					block.Transactions = b.Transactions
 					block.CreatedAt = b.CreatedAt
 				}
-
-				fmt.Println("Block Err")
-				pretty.Println(err)
 
 				err = _err
 
