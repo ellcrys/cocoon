@@ -434,16 +434,16 @@
 			"revisionTime": "2014-12-01T06:53:30Z"
 		},
 		{
-			"checksumSHA1": "r5uWPEg9jEKraIma63DcmTXAElk=",
+			"checksumSHA1": "INn29nRtoEqjJdX5m4TlLJMztkc=",
 			"path": "github.com/jinzhu/gorm",
-			"revision": "02f6ae3c4ed211472b0492cee02ff3ddfdc1830d",
-			"revisionTime": "2016-09-07T13:54:19Z"
+			"revision": "717654b31c3d51348cb305684369c20a8387154b",
+			"revisionTime": "2017-04-19T07:35:50Z"
 		},
 		{
 			"checksumSHA1": "QmQW8snORAputB7/1jFXpsOZa8A=",
 			"path": "github.com/jinzhu/gorm/dialects/postgres",
-			"revision": "02f6ae3c4ed211472b0492cee02ff3ddfdc1830d",
-			"revisionTime": "2016-09-07T13:54:19Z"
+			"revision": "717654b31c3d51348cb305684369c20a8387154b",
+			"revisionTime": "2017-04-19T07:35:50Z"
 		},
 		{
 			"checksumSHA1": "ZtoqVjpOE8VF9n6Ebqyu4vTUYas=",
