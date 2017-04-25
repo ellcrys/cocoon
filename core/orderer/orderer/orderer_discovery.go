@@ -16,11 +16,15 @@ import (
 
 var discoveryLog = config.MakeLogger("orderer.discovery", "orderer")
 
+// DiscoveryInterval is the time between each discovery checks
+var DiscoveryInterval = time.Second * 15
+
 // Discovery defines a structure for fetching a list of addresses of orderers
 // accessible in the cluster.
 type Discovery struct {
 	sync.Mutex
 	sd           scheduler.ServiceDiscovery
+	consulClient *api.Client
 	orderersAddr []string
 	ticker       *time.Ticker
 	OnUpdateFunc func(addrs []string)
@@ -36,8 +40,13 @@ func NewDiscovery() (*Discovery, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %s", err)
 	}
+	_, err = client.Status().Leader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %s", err)
+	}
 	return &Discovery{
-		sd: scheduler.NewNomadServiceDiscovery(client),
+		sd:           scheduler.NewNomadServiceDiscovery(client),
+		consulClient: client,
 	}, nil
 }
 
@@ -82,7 +91,7 @@ func (od *Discovery) Discover() error {
 	}
 
 	// run on interval
-	od.ticker = time.NewTicker(15 * time.Second)
+	od.ticker = time.NewTicker(DiscoveryInterval)
 	for _ = range od.ticker.C {
 		err := od.discover()
 		if err != nil {
@@ -93,6 +102,21 @@ func (od *Discovery) Discover() error {
 		}
 	}
 	return nil
+}
+
+// addOrdererService adds an orderer service. This is meant to be used
+// testing and never accessible beyond this package.
+func (od *Discovery) addOrdererService(addr string, port int) error {
+	_, err := od.consulClient.Catalog().Register(&api.CatalogRegistration{
+		Address: "192.0.12.1",
+		Node:    "abc",
+		Service: &api.AgentService{
+			Service: "orderers",
+			Address: addr,
+			Port:    port,
+		},
+	}, nil)
+	return err
 }
 
 // GetAddrs returns the list of discovered addresses

@@ -25,6 +25,7 @@ var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+db
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+	os.Setenv("DEV_MEM_LOCK", "true") // If we don't do this, we must have consul running
 }
 
 func createDb(t *testing.T) error {
@@ -62,11 +63,8 @@ func TestOrderer(t *testing.T) {
 	}
 
 	startOrderer(func(od *Orderer, endCh chan bool) {
-
 		Convey("Orderer", t, func() {
-
 			Convey(".CreateLedger", func() {
-
 				Convey("Should create a ledger and chain", func() {
 					ledger, err := od.CreateLedger(context.Background(), &proto_orderer.CreateLedgerParams{
 						CocoonID: "cocoon-123",
@@ -330,11 +328,10 @@ func TestOrderer(t *testing.T) {
 						LedgerName:   ledgerName,
 						Transactions: txs,
 					})
-
 					So(result, ShouldNotBeNil)
 					So(err, ShouldBeNil)
 
-					Convey("Should return exepected transaction range with inclusive option disabled", func() {
+					Convey("Should return expected transaction range with inclusive option disabled", func() {
 						txs, err := od.GetRange(context.Background(), &proto_orderer.GetRangeParams{
 							CocoonID:  "cocoon-abc",
 							Ledger:    ledgerName,
