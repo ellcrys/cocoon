@@ -241,11 +241,11 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	txReceipts := []*types.TxReceipt{}
 
 	dbTx := s.db.Begin()
-	err := dbTx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
-	if err != nil {
-		dbTx.Rollback()
-		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
-	}
+	// err := dbTx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
+	// if err != nil {
+	// 	dbTx.Rollback()
+	// 	return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
+	// }
 
 	// create transactions and add transaction receipts for
 	// successfully stored transactions
