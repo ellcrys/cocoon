@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
@@ -34,9 +33,10 @@ func (l *CocoonCodeOperations) Handle(ctx context.Context, op *proto_connector.C
 
 	stub := proto_runtime.NewStubClient(client)
 	resp, err := stub.Invoke(ctx, &proto_runtime.InvokeParam{
-		ID:       util.UUID4(),
+		ID:       op.ID,
 		Function: op.GetFunction(),
 		Params:   op.GetParams(),
+		Header:   op.GetHeader(),
 	})
 
 	if err != nil {

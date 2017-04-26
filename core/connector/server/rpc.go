@@ -75,8 +75,6 @@ func (rpc *RPC) Transact(ctx context.Context, req *proto_connector.Request) (*pr
 	switch req.OpType {
 	case proto_connector.OpType_LedgerOp:
 		return rpc.ledgerOps.Handle(ctx, req.LedgerOp)
-	case proto_connector.OpType_CocoonCodeOp:
-		return rpc.cocoonCodeOps.Handle(ctx, req.CocoonCodeOp)
 	case proto_connector.OpType_LockOp:
 		return rpc.lockOps.Handle(ctx, req.LockOp)
 	default:

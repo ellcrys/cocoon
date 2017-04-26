@@ -1,9 +1,6 @@
 package golang
 
 import (
-	"fmt"
-
-	"github.com/ellcrys/util"
 	"github.com/go-errors/errors"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"golang.org/x/net/context"
@@ -40,22 +37,13 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 			}
 		}()
 
-		var result interface{}
-		var header = Metadata(map[string]string{"id": params.GetID()})
-		result, err = ccode.OnInvoke(header, params.GetFunction(), params.GetParams())
+		result, err := ccode.OnInvoke(params.GetHeader(), params.GetFunction(), params.GetParams())
 		if err != nil {
-			return
-		}
-
-		// coerce result to json
-		resultJSON, err := util.ToJSON(result)
-		if err != nil {
-			err = fmt.Errorf("failed to coerce cocoon code Invoke() result to json string. %s", err)
 			return
 		}
 
 		resp.Status = 200
-		resp.Body = resultJSON
+		resp.Body = result
 	}()
 
 	if err != nil {

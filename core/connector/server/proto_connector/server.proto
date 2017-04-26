@@ -42,6 +42,7 @@ message CocoonCodeOperation {
     string ID = 1;
     string function = 2;
     repeated string params = 3;
+    map<string,string> header = 4;
 }
 
 // Response represents the response
