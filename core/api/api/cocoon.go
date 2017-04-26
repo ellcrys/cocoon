@@ -266,22 +266,22 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// update new non-release specific fields that have been updated
-	cocoonToUpdated := false
+	cocoonUpdated := false
 	if cocoonToUpd.Memory != cocoon.Memory {
 		cocoon.Memory = cocoonToUpd.Memory
-		cocoonToUpdated = true
+		cocoonUpdated = true
 	}
 	if cocoonToUpd.CPUShare != cocoon.CPUShare {
 		cocoon.CPUShare = cocoonToUpd.CPUShare
-		cocoonToUpdated = true
+		cocoonUpdated = true
 	}
 	if cocoonToUpd.NumSignatories > 0 && cocoonToUpd.NumSignatories != cocoon.NumSignatories {
 		cocoon.NumSignatories = cocoonToUpd.NumSignatories
-		cocoonToUpdated = true
+		cocoonUpdated = true
 	}
 	if cocoonToUpd.SigThreshold > 0 && cocoonToUpd.SigThreshold != cocoon.SigThreshold {
 		cocoon.SigThreshold = cocoonToUpd.SigThreshold
-		cocoonToUpdated = true
+		cocoonUpdated = true
 	}
 
 	if err = ValidateCocoon(cocoon); err != nil {
@@ -339,8 +339,8 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	var finalResp = map[string]interface{}{
-		"newReleaseID":    "",
-		"cocoonToUpdated": cocoonToUpdated,
+		"newReleaseID":  "",
+		"cocoonUpdated": cocoonUpdated,
 	}
 
 	// create new release if a field was changed
@@ -369,7 +369,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// update cocoon if cocoon was changed or release was updated/created
-	if cocoonToUpdated || releaseUpdated {
+	if cocoonUpdated || releaseUpdated {
 		err = api.putCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
