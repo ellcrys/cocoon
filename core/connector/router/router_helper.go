@@ -25,6 +25,7 @@ type Helper struct {
 func NewHelper(l *logging.Logger) (*Helper, error) {
 	cfg := api.DefaultConfig()
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
+	fmt.Println(">>>> ", cfg.Address)
 	client, err := api.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %s", err)
