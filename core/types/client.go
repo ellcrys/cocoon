@@ -42,7 +42,7 @@ func MakeCocoonKey(id string) string {
 // Firewall defines a collection of firewall rules
 type Firewall []FirewallRule
 
-// ToMap returns a map[string]string version
+// ToMap returns a slice of map[string]string version
 func (f Firewall) ToMap() []map[string]string {
 	var sm []map[string]string
 	for _, m := range f {
