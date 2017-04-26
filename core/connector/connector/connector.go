@@ -595,9 +595,11 @@ func (cn *Connector) configureRouter() error {
 		if err := cn.routerHelper.AddBackend(cocoon.ID); err != nil {
 			return err
 		}
+		log.Info("Successfully configured router")
+		return nil
 	}
 
-	log.Info("Successfully configured router")
+	// TODO: cocoon is linked and therefore must become a backend server to the principal cocoon
 
 	return nil
 }

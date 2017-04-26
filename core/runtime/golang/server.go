@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
+	"github.com/go-errors/errors"
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"golang.org/x/net/context"
 )
@@ -33,19 +34,15 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 	func() {
 
 		defer func() {
-			if r := recover(); r != nil {
-				if e, ok := r.(error); ok {
-					err = e
-				} else {
-					err = fmt.Errorf("%s", r)
-				}
-				err = fmt.Errorf("Invoke() panicked: %s", err)
+			if rErr := recover(); rErr != nil {
+				err = errors.WrapPrefix(err, "Invoke() panicked", 2)
 				log.Errorf(err.Error())
 			}
 		}()
 
 		var result interface{}
-		result, err = ccode.OnInvoke(defaultLink, params.GetID(), params.GetFunction(), params.GetParams())
+		var header = Metadata(map[string]string{"id": params.GetID()})
+		result, err = ccode.OnInvoke(header, params.GetFunction(), params.GetParams())
 		if err != nil {
 			return
 		}

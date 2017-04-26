@@ -11,41 +11,41 @@ import (
 	"gopkg.in/oleiade/lane.v1"
 )
 
-var logBlockMaker = logging.MustGetLogger("ccode.stub.blockmaker")
+var logblockMaker = logging.MustGetLogger("ccode.stub.blockmaker")
 
-// Entry represents a transaction to be included in the blockchain
+// entry represents a transaction to be included in the blockchain
 // and a response channel to send the block information
-type Entry struct {
+type entry struct {
 	Tx       *types.Transaction
 	LinkTo   string
 	RespChan chan interface{}
 }
 
-// Entries represents a collection of entries
-type Entries []*Entry
+// entries represents a collection of entries
+type entries []*entry
 
 // Len returns the number of entries
-func (e Entries) Len() int {
+func (e entries) Len() int {
 	return len(e)
 }
 
 // Less checks whether i is less than j
-func (e Entries) Less(i, j int) bool {
+func (e entries) Less(i, j int) bool {
 	// Compare using a combination of the link and ledger name
 	return fmt.Sprintf("%s.%s", e[i].LinkTo, e[i].Tx.Ledger) < fmt.Sprintf("%s.%s", e[j].LinkTo, e[j].Tx.Ledger)
 }
 
 // Swap swaps i and j
-func (e Entries) Swap(i, j int) {
+func (e entries) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
 
-// BlockMaker defines functionality for a process
+// blockMaker defines functionality for a process
 // that collects transactions and periodically creates
 // groups of transactions (a.k.a block), calls a committer method
 // to send the block to the orderer and sends the new block to the transactions
 // response channel.
-type BlockMaker struct {
+type blockMaker struct {
 	entryQueue   *lane.Queue
 	blockMaxSize int
 	stop         chan struct{}
@@ -53,9 +53,9 @@ type BlockMaker struct {
 	interval     time.Duration
 }
 
-// NewBlockMaker creates a new block maker
-func NewBlockMaker(blockMaxSize int, i time.Duration) *BlockMaker {
-	return &BlockMaker{
+// newblockMaker creates a new block maker
+func newblockMaker(blockMaxSize int, i time.Duration) *blockMaker {
+	return &blockMaker{
 		entryQueue:   lane.NewQueue(),
 		blockMaxSize: blockMaxSize,
 		interval:     i,
@@ -64,20 +64,20 @@ func NewBlockMaker(blockMaxSize int, i time.Duration) *BlockMaker {
 }
 
 // Add adds a transaction entry
-func (b *BlockMaker) Add(entry *Entry) {
+func (b *blockMaker) Add(entry *entry) {
 	b.entryQueue.Enqueue(entry)
 }
 
-// GetBlockMaxSize returns the maximum number of transasctions per block
-func (b *BlockMaker) GetBlockMaxSize() int {
+// GetBlockMaxSize returns the maximum number of transactions per block
+func (b *blockMaker) GetBlockMaxSize() int {
 	return b.blockMaxSize
 }
 
-// GetBlockEntries creates a block of entries
-func (b *BlockMaker) getBlockEntries() []*Entry {
-	var entries []*Entry
+// GetBlockentries creates a block of entries
+func (b *blockMaker) getBlockentries() []*entry {
+	var entries []*entry
 	for len(entries) < b.GetBlockMaxSize() && !b.entryQueue.Empty() {
-		entries = append(entries, b.entryQueue.Dequeue().(*Entry))
+		entries = append(entries, b.entryQueue.Dequeue().(*entry))
 	}
 	return entries
 }
@@ -86,25 +86,25 @@ func (b *BlockMaker) getBlockEntries() []*Entry {
 // and closes the channel. If the message is a PutResult, it finds the
 // transaction receipt of the entry and sends an error to the channel if the
 // entry's transaction has an err. Otherwise, it sends the block.
-func (b *BlockMaker) sendToEntries(entries []*Entry, msg interface{}) {
-	for _, entry := range entries {
+func (b *blockMaker) sendToEntries(_entries []*entry, msg interface{}) {
+	for _, _entry := range _entries {
 		switch v := msg.(type) {
 		case error:
-			entry.RespChan <- v
+			_entry.RespChan <- v
 		case *types.PutResult:
 			isErr := false
 			for _, r := range v.TxReceipts {
-				if r.ID == entry.Tx.ID && len(r.Err) > 0 {
-					entry.RespChan <- fmt.Errorf(r.Err)
+				if r.ID == _entry.Tx.ID && len(r.Err) > 0 {
+					_entry.RespChan <- fmt.Errorf(r.Err)
 					isErr = true
 					break
 				}
 			}
 			if !isErr {
-				entry.RespChan <- v.Block
+				_entry.RespChan <- v.Block
 			}
 		}
-		close(entry.RespChan)
+		close(_entry.RespChan)
 	}
 }
 
@@ -115,16 +115,16 @@ func (b *BlockMaker) sendToEntries(entries []*Entry, msg interface{}) {
 // The commit function determines how the blocks of entries passed to it are included in the blockchain
 // The return value of the committer function is passed to all entry's/transaction's response channel
 // before the channel is closed.
-func (b *BlockMaker) Begin(committerFunc func([]*Entry) interface{}) {
+func (b *blockMaker) Begin(committerFunc func([]*entry) interface{}) {
 	b.t = time.NewTicker(b.interval)
 	for {
 		select {
 		case <-b.t.C:
-			entries := b.getBlockEntries()
+			entries := b.getBlockentries()
 			if len(entries) == 0 {
 				continue
 			}
-			entriesGrp := b.groupEntriesByLedgerAndLink(entries)
+			entriesGrp := b.groupentriesByLedgerAndLink(entries)
 			for _, grp := range entriesGrp {
 				_grp := grp
 				go func() {
@@ -139,25 +139,25 @@ func (b *BlockMaker) Begin(committerFunc func([]*Entry) interface{}) {
 }
 
 // Stop stops the block maker
-func (b *BlockMaker) Stop() {
+func (b *blockMaker) Stop() {
 	b.t.Stop()
 	close(b.stop)
 }
 
-// groupEntriesByLedgerAndLink creates a group of entries where all entries
+// groupentriesByLedgerAndLink creates a group of entries where all entries
 // in a group share the same ledger name and link
-func (b *BlockMaker) groupEntriesByLedgerAndLink(entries Entries) [][]*Entry {
-	sort.Sort(entries)
-	var entryGroups = [][]*Entry{}
+func (b *blockMaker) groupentriesByLedgerAndLink(_entries entries) [][]*entry {
+	sort.Sort(_entries)
+	var entryGroups = [][]*entry{}
 	var curLedgerName = ""
 	var curLink = ""
-	for _, entry := range entries {
-		if entry.Tx.Ledger != curLedgerName || entry.LinkTo != curLink {
-			curLedgerName = entry.Tx.Ledger
-			curLink = entry.LinkTo
-			entryGroups = append(entryGroups, []*Entry{})
+	for _, _entry := range _entries {
+		if _entry.Tx.Ledger != curLedgerName || _entry.LinkTo != curLink {
+			curLedgerName = _entry.Tx.Ledger
+			curLink = _entry.LinkTo
+			entryGroups = append(entryGroups, []*entry{})
 		}
-		entryGroups[len(entryGroups)-1] = append(entryGroups[len(entryGroups)-1], entry)
+		entryGroups[len(entryGroups)-1] = append(entryGroups[len(entryGroups)-1], _entry)
 	}
 	return entryGroups
 }

@@ -42,8 +42,14 @@ var (
 	// System link
 	System = NewLink(types.SystemCocoonID)
 
-	// Default runtime link
-	defaultLink = newNativeLink(GetID())
+	// Native link refers to a link that points
+	// to the resources of a natively linked cocoon. If the current cocoon
+	// has not native link to another cocoon, then the link points to its own resource
+	Native = newNativeLink(GetID())
+
+	// Me link refers to a link that points the resources of the current cocoon respective
+	// of whether the cocoon is natively linked to another cocoon.
+	Me = NewLink(GetCocoonID())
 
 	// Flag to help tell whether cocoon code is running
 	running = false
@@ -54,8 +60,8 @@ var (
 	// Time between block creation (seconds)
 	blockCreationInterval = util.Env("BLOCK_CREATION_INT", "5")
 
-	// blockMaker creates a collection of blockchain transactions at interval
-	blockMaker *BlockMaker
+	// defaultBlockMaker creates a collection of blockchain transactions at interval
+	defaultBlockMaker *blockMaker
 
 	// The cocoon code currently running
 	ccode CocoonCode
@@ -117,14 +123,14 @@ func Run(cc CocoonCode) {
 
 	intTxPerBlock, _ := strconv.Atoi(txPerBlock)
 	intBlkCreationInt, _ := strconv.Atoi(blockCreationInterval)
-	blockMaker = NewBlockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
-	go blockMaker.Begin(blockCommitter)
+	defaultBlockMaker = newblockMaker(intTxPerBlock, time.Duration(intBlkCreationInt)*time.Second)
+	go defaultBlockMaker.Begin(blockCommitter)
 
 	ccode = cc
 
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
-		if err = cc.OnInit(defaultLink); err != nil {
+		if err = cc.OnInit(); err != nil {
 			log.Errorf("cocoode OnInit() returned error: %s", err)
 			Stop(2)
 		} else {
@@ -149,7 +155,7 @@ func startServer(server *grpc.Server, lis net.Listener) {
 // blockCommit creates a PUT operation which adds one or many
 // transactions to the store and blockchain and returns the block if
 // if succeed or error if otherwise.
-func blockCommitter(entries []*Entry) interface{} {
+func blockCommitter(entries []*entry) interface{} {
 
 	var putResult types.PutResult
 	if len(entries) == 0 {
@@ -222,8 +228,8 @@ func sendLockOp(op *proto_connector.LockOperation) ([]byte, error) {
 
 // Stop stub and cocoon code
 func Stop(exitCode int) {
-	if blockMaker != nil {
-		blockMaker.Stop()
+	if defaultBlockMaker != nil {
+		defaultBlockMaker.Stop()
 	}
 
 	serverDone <- true

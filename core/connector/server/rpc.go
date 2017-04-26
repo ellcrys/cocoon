@@ -16,9 +16,9 @@ import (
 
 var log *logging.Logger
 
-// RPCServer defines a grpc server for
-// invoking operations against cocoon code
-type RPCServer struct {
+// RPC defines a grpc server for
+// invoking a cocoon code
+type RPC struct {
 	server        *grpc.Server
 	connector     *connector.Connector
 	ledgerOps     *handlers.LedgerOperations
@@ -26,10 +26,10 @@ type RPCServer struct {
 	lockOps       *handlers.LockOperations
 }
 
-// NewRPCServer creates a new grpc API server
-func NewRPCServer(connector *connector.Connector) *RPCServer {
-	log = config.MakeLogger("connector.rpc", fmt.Sprintf("cocoon.%s", connector.GetRequest().ID))
-	server := new(RPCServer)
+// NewRPC creates a new grpc API server
+func NewRPC(connector *connector.Connector) *RPC {
+	log = config.MakeLogger("connector.rpc", "")
+	server := new(RPC)
 	server.connector = connector
 	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)
 	server.cocoonCodeOps = handlers.NewCocoonCodeHandler("127.0.0.1" + connector.GetCocoonCodeRPCAddr())
@@ -38,12 +38,12 @@ func NewRPCServer(connector *connector.Connector) *RPCServer {
 }
 
 // GetConnector returns the connector
-func (rpc *RPCServer) GetConnector() *connector.Connector {
+func (rpc *RPC) GetConnector() *connector.Connector {
 	return rpc.connector
 }
 
 // Start starts the API service
-func (rpc *RPCServer) Start(addr string, startedCh chan bool) {
+func (rpc *RPC) Start(addr string, startedCh chan bool) {
 
 	_, port, _ := net.SplitHostPort(addr)
 
@@ -61,19 +61,17 @@ func (rpc *RPCServer) Start(addr string, startedCh chan bool) {
 	rpc.server = grpc.NewServer()
 	proto_connector.RegisterConnectorServer(rpc.server, rpc)
 	rpc.server.Serve(lis)
-	rpc.Stop(1)
 }
 
-// Stop stops the orderer and returns an exit code.
-func (rpc *RPCServer) Stop(exitCode int) int {
+// Stop stops the server
+func (rpc *RPC) Stop() {
 	if rpc.server != nil {
 		rpc.server.Stop()
 	}
-	return exitCode
 }
 
 // Transact handles cocoon code or ledger bound transactions.
-func (rpc *RPCServer) Transact(ctx context.Context, req *proto_connector.Request) (*proto_connector.Response, error) {
+func (rpc *RPC) Transact(ctx context.Context, req *proto_connector.Request) (*proto_connector.Response, error) {
 	switch req.OpType {
 	case proto_connector.OpType_LedgerOp:
 		return rpc.ledgerOps.Handle(ctx, req.LedgerOp)

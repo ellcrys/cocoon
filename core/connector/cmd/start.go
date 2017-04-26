@@ -82,61 +82,59 @@ var startCmd = &cobra.Command{
 	Long:  `Starts the connector and launch a cocoon code`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		waitCh := make(chan bool, 1)
-		serverStartedCh := make(chan bool)
-
 		log.Info("Connector has started")
 
-		// get request
+		// get deployment request from environment and validate it
 		log.Info("Collecting and validating launch request")
 		req, err := getRequest()
 		if err != nil {
 			log.Error(err.Error())
 			return
 		}
+		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
 		// create router helper
-		log.Info("Creating router helper")
 		routerHelper, err := router.NewHelper(routerLog)
 		if err != nil {
 			log.Error(err.Error())
 			log.Fatal("Ensure consul is running at 127.0.0.1:8500. Use CONSUL_ADDR to set alternative consul address")
 		}
 
-		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
-
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
 		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
-
+		waitCh := make(chan bool, 1)
 		cn, err := connector.NewConnector(req, waitCh)
 		if err != nil {
 			log.Fatal(err.Error())
 			return
 		}
-
 		cn.SetRouterHelper(routerHelper)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
 		cn.AddLanguage(connector.NewGo(req))
 
+		// start grpc API server
+		rpcServerStartedCh := make(chan bool)
+		rpcServer := server.NewRPC(cn)
+		go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
+		<-rpcServerStartedCh
+
+		// start http server
+		httpServerStartedCh := make(chan bool)
+		httpServer := server.NewHTTP(rpcServer)
+		go httpServer.Start("127.0.0.1:8900", httpServerStartedCh)
+		<-httpServerStartedCh
+
+		// listen to terminate request
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
 			cn.Stop(false)
+			rpcServer.Stop()
 		})
 
-		// start grpc API server
-		rpcServer := server.NewRPCServer(cn)
-		go rpcServer.Start(connectorRPCAddr, serverStartedCh)
-
-		// wait for rpc server to start then launch the cocoon code
-		<-serverStartedCh
+		// launch the deployed cocoon code
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
-
-		if <-waitCh {
-			rpcServer.Stop(1)
-		} else {
-			rpcServer.Stop(0)
-		}
-
+		<-waitCh
+		rpcServer.Stop()
 		log.Info("Connector stopped")
 	},
 }

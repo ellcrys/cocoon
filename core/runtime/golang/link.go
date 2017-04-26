@@ -13,17 +13,37 @@ import (
 // ErrObjectLocked reprents an error about an object or transaction locked by another process
 var ErrObjectLocked = fmt.Errorf("failed to acquire lock. object has been locked by another process")
 
+// Metadata defines a structure for storing link related header information
+type Metadata map[string]string
+
+// Set sets a key and its value
+func (m Metadata) Set(key, val string) {
+	m[key] = val
+}
+
+// Get returns the value of a key
+func (m Metadata) Get(key string) string {
+	return m[key]
+}
+
+// Has checks whether a key exists in the object
+func (m Metadata) Has(key string) bool {
+	return m[key] != ""
+}
+
 // Link provides access to all platform services available to
 // the cocoon code.
 type Link struct {
-	cocoonID string
-	native   bool
+	cocoonID   string
+	native     bool
+	InMetadata Metadata // incoming metadata
 }
 
 // NewLink creates a new link to a cocoon
 func NewLink(cocoonID string) *Link {
 	return &Link{
-		cocoonID: cocoonID,
+		cocoonID:   cocoonID,
+		InMetadata: make(Metadata),
 	}
 }
 
@@ -43,6 +63,17 @@ func (link *Link) IsNative() bool {
 // GetCocoonID returns the cocoon id attached to this link
 func (link *Link) GetCocoonID() string {
 	return link.cocoonID
+}
+
+// GetIncomingMeta returns the metadata included in the link.
+func (link *Link) GetIncomingMeta() Metadata {
+	return link.InMetadata
+}
+
+// GetInvokeID returns the transaction id of the invoke request.
+// Returns an empty string if link was not created as a result of an invoke request
+func (link *Link) GetInvokeID() string {
+	return link.InMetadata["txID"]
 }
 
 // NewRangeGetter creates an instance of a RangeGetter for a specified ledger.
@@ -130,7 +161,7 @@ func (link *Link) put(revisionID, ledgerName, key string, value []byte) (*types.
 
 	if ledger.Chained {
 		respChan := make(chan interface{})
-		blockMaker.Add(&Entry{
+		defaultBlockMaker.Add(&entry{
 			Tx:       tx,
 			RespChan: respChan,
 			LinkTo:   link.GetCocoonID(),
