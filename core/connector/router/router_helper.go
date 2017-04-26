@@ -3,8 +3,6 @@ package router
 import (
 	"fmt"
 
-	"os"
-
 	"github.com/ellcrys/util"
 	"github.com/hashicorp/consul/api"
 	logging "github.com/op/go-logging"
@@ -26,8 +24,6 @@ type Helper struct {
 // if unable to connector to consul
 func NewHelper(l *logging.Logger) (*Helper, error) {
 	cfg := api.DefaultConfig()
-	fmt.Println(">>>> ", cfg.Address)
-	fmt.Println(">2: ", util.Env("CONSUL_ADDR", cfg.Address), len(os.Getenv("CONSUL_ADDR")))
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	client, err := api.NewClient(cfg)
 	if err != nil {
@@ -45,7 +41,7 @@ func NewHelper(l *logging.Logger) (*Helper, error) {
 
 // AddFrontend adds a frontend to receive traffic from public internet
 func (h *Helper) AddFrontend(name string) error {
-	var frontend = fmt.Sprintf("/traefik/frontends/%s", name)
+	var frontend = fmt.Sprintf("traefik/frontends/%s", name)
 	var backendName = fmt.Sprintf("%s", name)
 	var keys = map[string]string{
 		frontend + "/backend":          backendName,
@@ -82,7 +78,7 @@ func (h *Helper) AddFrontend(name string) error {
 // will overwrite any backend rule matching the name
 // and include a server that is issued a random name.
 func (h *Helper) AddBackend(name string) error {
-	var backend = fmt.Sprintf("/traefik/backends/%s", name)
+	var backend = fmt.Sprintf("traefik/backends/%s", name)
 	var backendServer = fmt.Sprintf("%s/servers/%s_server", backend, name)
 	var keys = map[string]string{
 		backend + "/loadbalancer/method": "drr",
