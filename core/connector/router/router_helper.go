@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 
+	"os"
+
 	"github.com/ellcrys/util"
 	"github.com/hashicorp/consul/api"
 	logging "github.com/op/go-logging"
@@ -24,8 +26,9 @@ type Helper struct {
 // if unable to connector to consul
 func NewHelper(l *logging.Logger) (*Helper, error) {
 	cfg := api.DefaultConfig()
-	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	fmt.Println(">>>> ", cfg.Address)
+	fmt.Println(">2: ", util.Env("CONSUL_ADDR", cfg.Address), len(os.Getenv("CONSUL_ADDR")))
+	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	client, err := api.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %s", err)
