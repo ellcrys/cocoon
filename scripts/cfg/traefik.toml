@@ -3,7 +3,7 @@
   address = ":80"
 
 [web]
-  address=":8070"
+  address = ":8070"
 
 [consul]
   endpoint = "127.0.0.1:8500"
