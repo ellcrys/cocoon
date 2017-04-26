@@ -18,6 +18,17 @@ func NewACLMap(defValue map[string]interface{}) ACLMap {
 	return aclMap
 }
 
+// NewACLMapFromByte takes a byte slice representing a json encoded ACL data
+// and returns an ACLMap or error if unable to coerce to ACLMap.
+func NewACLMapFromByte(aclByte []byte) (ACLMap, error) {
+	var aclMap map[string]interface{}
+	err := util.FromJSON(aclByte, &aclMap)
+	if err != nil {
+		return nil, fmt.Errorf("malformed json")
+	}
+	return NewACLMap(aclMap), nil
+}
+
 // ToJSON returns a json encoded representation of the ACLMap
 func (m ACLMap) ToJSON() []byte {
 	b, _ := util.ToJSON(m)

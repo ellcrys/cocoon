@@ -116,12 +116,10 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	// set acl map if provided
 	if len(req.ACL) > 0 {
-		var aclMap map[string]interface{}
-		err := util.FromJSON(req.ACL, &aclMap)
+		cocoon.ACL, err = types.NewACLMapFromByte(req.ACL)
 		if err != nil {
-			return nil, fmt.Errorf("acl: malformed json")
+			return nil, fmt.Errorf("acl: %s", err)
 		}
-		cocoon.ACL = types.NewACLMap(aclMap)
 	}
 
 	// set firewall if provided
@@ -235,7 +233,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	var cocoonUpd = types.Cocoon{
+	var cocoonToUpd = types.Cocoon{
 		ID:             req.ID,
 		URL:            req.URL,
 		Version:        req.Version,
@@ -248,20 +246,18 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		Link:           req.Link,
 	}
 
-	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL
+	// If ACL is set, create an ACLMap, set the cocoonToUpd.ACL
 	if len(req.ACL) > 0 {
-		var aclMap map[string]interface{}
-		err := util.FromJSON(req.ACL, &aclMap)
+		cocoonToUpd.ACL, err = types.NewACLMapFromByte(req.ACL)
 		if err != nil {
-			return nil, fmt.Errorf("acl: malformed json")
+			return nil, fmt.Errorf("acl: %s", err)
 		}
-		cocoonUpd.ACL = types.NewACLMap(aclMap)
 	}
 
-	// If Firewall is set, copy new firewall rules to cocoonUpd.Firewall
+	// If Firewall is set, copy new firewall rules to cocoonToUpd.Firewall
 	if len(req.Firewall) > 0 {
 		for _, f := range req.Firewall {
-			cocoonUpd.Firewall = append(cocoonUpd.Firewall, types.FirewallRule{
+			cocoonToUpd.Firewall = append(cocoonToUpd.Firewall, types.FirewallRule{
 				Destination:     f.Destination,
 				DestinationPort: f.DestinationPort,
 				Protocol:        f.Protocol,
@@ -270,34 +266,34 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// update new non-release specific fields that have been updated
-	cocoonUpdated := false
-	if cocoonUpd.Memory != cocoon.Memory {
-		cocoon.Memory = cocoonUpd.Memory
-		cocoonUpdated = true
+	cocoonToUpdated := false
+	if cocoonToUpd.Memory != cocoon.Memory {
+		cocoon.Memory = cocoonToUpd.Memory
+		cocoonToUpdated = true
 	}
-	if cocoonUpd.CPUShare != cocoon.CPUShare {
-		cocoon.CPUShare = cocoonUpd.CPUShare
-		cocoonUpdated = true
+	if cocoonToUpd.CPUShare != cocoon.CPUShare {
+		cocoon.CPUShare = cocoonToUpd.CPUShare
+		cocoonToUpdated = true
 	}
-	if cocoonUpd.NumSignatories > 0 && cocoonUpd.NumSignatories != cocoon.NumSignatories {
-		cocoon.NumSignatories = cocoonUpd.NumSignatories
-		cocoonUpdated = true
+	if cocoonToUpd.NumSignatories > 0 && cocoonToUpd.NumSignatories != cocoon.NumSignatories {
+		cocoon.NumSignatories = cocoonToUpd.NumSignatories
+		cocoonToUpdated = true
 	}
-	if cocoonUpd.SigThreshold > 0 && cocoonUpd.SigThreshold != cocoon.SigThreshold {
-		cocoon.SigThreshold = cocoonUpd.SigThreshold
-		cocoonUpdated = true
+	if cocoonToUpd.SigThreshold > 0 && cocoonToUpd.SigThreshold != cocoon.SigThreshold {
+		cocoon.SigThreshold = cocoonToUpd.SigThreshold
+		cocoonToUpdated = true
 	}
 
 	if err = ValidateCocoon(cocoon); err != nil {
 		return nil, err
 	}
 
-	outputFirewall, err := common.ResolveFirewall(cocoonUpd.Firewall.DeDup())
+	outputFirewall, err := common.ResolveFirewall(cocoonToUpd.Firewall.DeDup())
 	if err != nil {
 		return nil, fmt.Errorf("Firewall: %s", err)
 	}
 
-	cocoonUpd.Firewall = outputFirewall
+	cocoonToUpd.Firewall = outputFirewall
 
 	// get the last deployed release. if no recently deployed release,
 	// get the most recent release
@@ -313,38 +309,38 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	// Create new release and set values if any of the release field changed
 	var releaseUpdated = false
-	if len(cocoonUpd.URL) > 0 && cocoonUpd.URL != release.URL {
-		release.URL = cocoonUpd.URL
+	if len(cocoonToUpd.URL) > 0 && cocoonToUpd.URL != release.URL {
+		release.URL = cocoonToUpd.URL
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.Version) > 0 && cocoonUpd.Version != release.Version {
-		release.Version = cocoonUpd.Version
+	if len(cocoonToUpd.Version) > 0 && cocoonToUpd.Version != release.Version {
+		release.Version = cocoonToUpd.Version
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.Language) > 0 && cocoonUpd.Language != release.Language {
-		release.Language = cocoonUpd.Language
+	if len(cocoonToUpd.Language) > 0 && cocoonToUpd.Language != release.Language {
+		release.Language = cocoonToUpd.Language
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.BuildParam) > 0 && cocoonUpd.BuildParam != release.BuildParam {
-		release.BuildParam = cocoonUpd.BuildParam
+	if len(cocoonToUpd.BuildParam) > 0 && cocoonToUpd.BuildParam != release.BuildParam {
+		release.BuildParam = cocoonToUpd.BuildParam
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.Link) > 0 && cocoonUpd.Link != release.Link {
-		release.Link = cocoonUpd.Link
+	if len(cocoonToUpd.Link) > 0 && cocoonToUpd.Link != release.Link {
+		release.Link = cocoonToUpd.Link
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.Firewall) > 0 && !cocoonUpd.Firewall.Eql(release.Firewall) {
-		release.Firewall = cocoonUpd.Firewall
+	if len(cocoonToUpd.Firewall) > 0 && !cocoonToUpd.Firewall.Eql(release.Firewall) {
+		release.Firewall = cocoonToUpd.Firewall
 		releaseUpdated = true
 	}
-	if len(cocoonUpd.ACL) > 0 && !cocoonUpd.ACL.Eql(release.ACL) {
-		release.ACL = cocoonUpd.ACL
+	if len(cocoonToUpd.ACL) > 0 && !cocoonToUpd.ACL.Eql(release.ACL) {
+		release.ACL = cocoonToUpd.ACL
 		releaseUpdated = true
 	}
 
 	var finalResp = map[string]interface{}{
-		"newReleaseID":  "",
-		"cocoonUpdated": cocoonUpdated,
+		"newReleaseID":    "",
+		"cocoonToUpdated": cocoonToUpdated,
 	}
 
 	// create new release if a field was changed
@@ -373,7 +369,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// update cocoon if cocoon was changed or release was updated/created
-	if cocoonUpdated || releaseUpdated {
+	if cocoonToUpdated || releaseUpdated {
 		err = api.putCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
