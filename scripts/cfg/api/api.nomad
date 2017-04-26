@@ -53,8 +53,8 @@ job "api" {
       
       env {
           ENV = "production"    
-          API_VERSION = "1.0.0-b10"            
-          CONNECTOR_VERSION = "1.0.0-b4"
+          API_VERSION = "1.0.0-b9"            
+          CONNECTOR_VERSION = "1.0.0-b5"
           GCP_PROJECT_ID = "visiontest-1281"
           CONSUL_ADDR = "localhost:8500"
           API_SIGN_KEY = "x/A%D*G-KaPdSgVkYp3s6v9y$B&E(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUjXn2r"
