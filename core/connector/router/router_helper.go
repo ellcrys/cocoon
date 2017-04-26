@@ -42,12 +42,15 @@ func NewHelper(l *logging.Logger) (*Helper, error) {
 // AddFrontend adds a frontend to receive traffic from public internet
 func (h *Helper) AddFrontend(name string) error {
 	var frontend = fmt.Sprintf("/traefik/frontends/%s", name)
-	var backendName = fmt.Sprintf("%s_be", name)
+	var backendName = fmt.Sprintf("%s", name)
 	var keys = map[string]string{
 		frontend + "/backend":          backendName,
 		frontend + "/entrypoints/0":    "http",
 		frontend + "/routes/main/rule": fmt.Sprintf("Host:%s.%s", name, RouterDomain),
 	}
+
+	fmt.Println("Keys To Add: ")
+	util.Printify(keys)
 
 	kv := h.client.KV()
 	var ops api.KVTxnOps
@@ -59,11 +62,12 @@ func (h *Helper) AddFrontend(name string) error {
 		})
 	}
 
-	ok, _, _, err := kv.Txn(ops, nil)
+	ok, txResp, _, err := kv.Txn(ops, nil)
 	if err != nil {
 		return fmt.Errorf("failed to add frontend: %s", err)
 	}
-
+	fmt.Println("OK? ", ok)
+	util.Printify(txResp)
 	if ok {
 		return nil
 	}
