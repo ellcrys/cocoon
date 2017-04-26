@@ -14,7 +14,6 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -589,11 +588,12 @@ func (cn *Connector) configureRouter() error {
 
 	// if cocoon is not linked, then add a frontend and backend routing rule
 	if len(cocoon.Link) == 0 {
+		log.Info("Cocoon is not natively linked to another cocoon, adding standalone routing rules")
 		if err := cn.routerHelper.AddFrontend(cocoon.ID); err != nil {
-			return nil
+			return err
 		}
 		if err := cn.routerHelper.AddBackend(cocoon.ID); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -628,16 +628,22 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 	})
 }
 
-// getDefaultFirewall returns the default firewall rules
-// for a cocoon container.
-func (cn *Connector) getDefaultFirewall(cocoonFirewall types.Firewall) string {
-	pretty.Println(cocoonFirewall)
+// getFirewallScript returns the firewall script to apply to the container.
+func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
 	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
 	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
 
 	var cocoonFirewallRules []string
 	for _, rule := range cocoonFirewall {
-		cocoonFirewallRules = append(cocoonFirewallRules, fmt.Sprintf("iptables -A OUTPUT -p %s -d %s --dport %s -j ACCEPT", rule.Protocol, rule.Destination, rule.DestinationPort))
+		ipTableVals := []string{}
+		if len(rule.Destination) > 0 {
+			ipTableVals = append(ipTableVals, fmt.Sprintf("-p %s", rule.Protocol))
+			ipTableVals = append(ipTableVals, fmt.Sprintf("-d %s", rule.Destination))
+			if len(rule.DestinationPort) > 0 {
+				ipTableVals = append(ipTableVals, fmt.Sprintf("--dport %s", rule.DestinationPort))
+			}
+			cocoonFirewallRules = append(cocoonFirewallRules, fmt.Sprintf("iptables -A OUTPUT %s -j ACCEPT", strings.Join(ipTableVals, " ")))
+		}
 	}
 
 	return strings.TrimSpace(`iptables -F && 
@@ -664,9 +670,7 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 		return err
 	}
 
-	util.Printify(cocoon)
-
-	cmd := []string{"bash", "-c", cn.getDefaultFirewall(cocoon.Firewall)}
+	cmd := []string{"bash", "-c", cn.getFirewallScript(cocoon.Firewall)}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":
