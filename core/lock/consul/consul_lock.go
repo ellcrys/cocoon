@@ -113,19 +113,18 @@ func (l *Lock) Acquire() error {
 	}
 
 	lock, err := l.client.LockOpts(&api.LockOptions{
-		Key:     l.makeLockKey(),
-		Session: l.state["lock_session"].(string),
+		Key:          l.makeLockKey(),
+		Session:      l.state["lock_session"].(string),
+		LockWaitTime: WaitForLock,
 	})
 	if err != nil {
 		return err
 	}
 
-	// stop lock attempt after 5 seconds
-	var aborted bool
-	stopCh := make(chan struct{})
+	// stop further lock retry attempt after WaitForLock seconds
+	stopCh := make(chan struct{}, 1)
 	time.AfterFunc(WaitForLock, func() {
-		aborted = true
-		stopCh <- struct{}{}
+		close(stopCh)
 	})
 
 	_, err = lock.Lock(stopCh)
@@ -133,8 +132,9 @@ func (l *Lock) Acquire() error {
 		return fmt.Errorf("failed to acquire lock: %s", err)
 	}
 
-	if aborted {
-		return types.ErrLockAlreadyAcquired
+	// check if lock is acquired
+	if err = l.IsAcquirer(); err != nil {
+		return err
 	}
 
 	l.lock = lock
@@ -148,14 +148,30 @@ func (l *Lock) makeLockKey() string {
 	return fmt.Sprintf("%s/%s", lockKeyPrefix, key)
 }
 
-// Release invalidates the lock previously acquired
+// Release invalidates the lock previously acquired.
+// Returns nil if when lock is not held
 func (l *Lock) Release() error {
+	var err error
+
 	if l.lock == nil {
-		return nil
+		// If lock session is set, we need to recreate the lock
+		// and attempt to acquire it. If we successfully acquired it, then we can proceed to releasing it.
+		if len(l.state["lock_session"].(string)) > 0 {
+			if err = l.Acquire(); err != nil {
+				return nil
+			}
+		} else {
+			return nil
+		}
 	}
-	if err := l.lock.Unlock(); err != nil {
+
+	if err = l.lock.Unlock(); err != nil {
+		if err.Error() == "Lock not held" {
+			return nil
+		}
 		return fmt.Errorf("failed to release lock: %s", err)
 	}
+
 	return l.lock.Destroy()
 }
 

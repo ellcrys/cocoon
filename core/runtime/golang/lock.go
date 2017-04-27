@@ -12,9 +12,6 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// ErrLockAlreadyAcquired defines an error about an already acquired lock by another process/link
-var ErrLockAlreadyAcquired = fmt.Errorf("lock already acquired by another process")
-
 // ErrLockNotAcquired defines an error about a lock not acquired
 var ErrLockNotAcquired = fmt.Errorf("lock not acquired")
 
@@ -61,8 +58,8 @@ func (l *Lock) Acquire() error {
 		LinkTo: l.cocoonID,
 	})
 	if err != nil {
-		if common.CompareErr(err, ErrLockAlreadyAcquired) == 0 {
-			return ErrLockAlreadyAcquired
+		if common.CompareErr(err, ErrLockNotAcquired) == 0 {
+			return ErrLockNotAcquired
 		}
 		return err
 	}

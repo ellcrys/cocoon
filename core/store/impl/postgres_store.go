@@ -247,7 +247,11 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	// successfully stored transactions
 	for _, tx := range txs {
 		// acquire lock on the transaction via its key
-		lock := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
+		lock, err := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
+		if err != nil {
+			dbTx.Rollback()
+			return nil, err
+		}
 		if err := lock.Acquire(); err != nil {
 			if err == types.ErrLockAlreadyAcquired {
 				txReceipts = append(txReceipts, &types.TxReceipt{
@@ -331,7 +335,10 @@ func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 	var tx types.Transaction
 
 	// acquire lock on the transaction via its key
-	lock := common.NewLock(makeTxLockKey(ledger, key))
+	lock, err := common.NewLock(makeTxLockKey(ledger, key))
+	if err != nil {
+		return nil, err
+	}
 	if err := lock.Acquire(); err != nil {
 		if err == types.ErrLockAlreadyAcquired {
 			return nil, fmt.Errorf("failed to acquire lock. object has been locked by another process")
@@ -341,7 +348,7 @@ func (s *PostgresStore) Get(ledger, key string) (*types.Transaction, error) {
 
 	defer lock.Release()
 
-	err := s.db.Where("ledger = ? AND key = ?", ledger, key).Last(&tx).Error
+	err = s.db.Where("ledger = ? AND key = ?", ledger, key).Last(&tx).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transaction. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
