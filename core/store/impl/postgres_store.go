@@ -226,7 +226,7 @@ func (s *PostgresStore) GetLedger(name string) (*types.Ledger, error) {
 
 // makeTxLockKey constructs a lock key using a transaction key and ledger name
 func makeTxLockKey(ledgerName, key string) string {
-	return fmt.Sprintf("tx;key;%s;%s", ledgerName, key)
+	return fmt.Sprintf("tx/key/%s/%s", ledgerName, key)
 }
 
 // PutThen adds transactions to the store and returns a list of transaction receipts.
