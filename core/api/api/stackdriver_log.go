@@ -42,18 +42,21 @@ func (s *StackDriverLog) Get(ctx context.Context, logName string, numEntries int
 		return nil, fmt.Errorf("client not initialized. Did you call Init()?")
 	}
 
-	opts := []logadmin.EntriesOption{
-		logadmin.Filter(fmt.Sprintf(`logName = "projects/%s/logs/%s"`, s.projectID, logName)),
-		logadmin.NewestFirst(),
-	}
+	filter := fmt.Sprintf(`logName = "projects/%s/logs/%s"`, s.projectID, logName)
 	if len(source) == 0 {
-		opts = append(opts, logadmin.Filter(`jsonPayload.source="stderr" OR "stdout"`))
+		filter = filter + ` AND (jsonPayload.source="stderr" OR "stdout")`
 	} else {
 		if source == "stderr" || source == "stdout" {
-			opts = append(opts, logadmin.Filter(fmt.Sprintf(`jsonPayload.source="%s"`, source)))
+			filter = filter + ` AND (jsonPayload.source="` + source + `")`
 		} else {
 			return nil, fmt.Errorf("invalid source: %s", source)
 		}
+	}
+
+	opts := []logadmin.EntriesOption{
+		logadmin.ProjectIDs([]string{s.projectID}),
+		logadmin.Filter(filter),
+		logadmin.NewestFirst(),
 	}
 
 	var messages []types.LogMessage
