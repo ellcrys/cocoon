@@ -257,6 +257,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	// If Firewall is set, copy new firewall rules to cocoonToUpd.Firewall
 	if len(req.Firewall) > 0 {
 		for _, f := range req.Firewall {
+			fmt.Println("Fw: ", f.String())
 			cocoonToUpd.Firewall = append(cocoonToUpd.Firewall, types.FirewallRule{
 				Destination:     f.Destination,
 				DestinationPort: f.DestinationPort,
@@ -284,6 +285,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		cocoonUpdated = true
 	}
 
+	fmt.Println("About Call ValidateC: ", cocoon.Firewall)
 	if err = ValidateCocoon(cocoon); err != nil {
 		return nil, err
 	}
