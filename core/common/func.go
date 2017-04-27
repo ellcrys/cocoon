@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"strings"
 
 	"net"
@@ -184,4 +186,17 @@ func NewLockWithTTL(key string, ttl time.Duration) types.Lock {
 		return memory.NewLockWithTTL(key, ttl)
 	}
 	return consul.NewLockWithTTL(key, ttl)
+}
+
+// SimpleGRPCError returns simplified, user-friendly grpc errors
+func SimpleGRPCError(serviceName string, err error) error {
+	if err == nil {
+		return nil
+	}
+	switch grpc.Code(err).String() {
+	case "Unavailable":
+		return fmt.Errorf("%s could not be reached", serviceName)
+	default:
+		return fmt.Errorf("rpc->%s: %s", serviceName, grpc.ErrorDesc(err))
+	}
 }

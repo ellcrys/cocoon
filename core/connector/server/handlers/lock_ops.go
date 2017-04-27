@@ -53,7 +53,7 @@ func (l *LockOperations) checkPermission(ctx context.Context, op *proto_connecto
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("calling cocoon not found")
 			}
-			return err
+			return common.SimpleGRPCError("orderer", err)
 		}
 
 		// If current cocoon is not natively linked to the target cocoon, disallow with an error

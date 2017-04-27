@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"time"
 
-	"strings"
-
+	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
+	"github.com/hashicorp/consul/api"
 	"github.com/ncodes/cocoon/core/types"
 )
 
 // LockTTL defines max time to live of a lock.
-var LockTTL = time.Duration(10 * time.Second)
+var LockTTL = 10 * time.Second
+
+// WaitForLock defines the about of time to wait to acquire a lock
+var WaitForLock = 5 * time.Second
 
 func init() {
 	goreq.SetConnectTimeout(time.Second * 10)
@@ -20,13 +23,26 @@ func init() {
 // Lock provides lock functionalities based on consul sessions.It implements
 // The Lock interface.
 type Lock struct {
+	client  *api.Client
+	lock    *api.Lock
 	lockTTL time.Duration
 	state   map[string]interface{}
 }
 
 // NewLock creates a consul lock instance
-func NewLock(key string) *Lock {
+func NewLock(key string) (*Lock, error) {
+	cfg := api.DefaultConfig()
+	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.Status().Leader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to reach consul server: %s", err)
+	}
 	return &Lock{
+		client:  client,
 		lockTTL: LockTTL,
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
@@ -34,12 +50,23 @@ func NewLock(key string) *Lock {
 			"key":             key,
 			"lock_session":    "",
 		},
-	}
+	}, nil
 }
 
 // NewLockWithTTL creates a consul lock instance
-func NewLockWithTTL(key string, ttl time.Duration) *Lock {
+func NewLockWithTTL(key string, ttl time.Duration) (*Lock, error) {
+	cfg := api.DefaultConfig()
+	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.Status().Leader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to reach consul server: %s", err)
+	}
 	return &Lock{
+		client:  client,
 		lockTTL: ttl,
 		state: map[string]interface{}{
 			"consul_addr":     "http://localhost:8500",
@@ -47,128 +74,104 @@ func NewLockWithTTL(key string, ttl time.Duration) *Lock {
 			"key":             key,
 			"lock_session":    "",
 		},
-	}
+	}, nil
 }
 
 // createSession creates a consul session
 func (l *Lock) createSession(ttl int) (string, error) {
+
 	var ttlStr string
 	if ttl > 0 {
 		ttlStr = fmt.Sprintf("%ds", ttl)
 	}
-	resp, err := goreq.Request{
-		Method: "PUT",
-		Uri:    l.state["consul_addr"].(string) + "/v1/session/create",
-		Body: map[string]string{
-			"TTL":       ttlStr,
-			"Behaviour": "delete",
-			"LockDelay": "5s",
-		},
-	}.Do()
+
+	session := l.client.Session()
+	id, _, err := session.Create(&api.SessionEntry{
+		TTL:       ttlStr,
+		Behavior:  "delete",
+		LockDelay: 5 * time.Second,
+	}, nil)
 	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		b, _ := resp.Body.ToString()
-		return "", fmt.Errorf(b)
+		return "", fmt.Errorf("failed to create error: %s", err)
 	}
 
-	var result map[string]string
-	if err = resp.Body.FromJsonTo(&result); err != nil {
-		return "", err
-	}
-
-	return result["ID"], nil
+	return id, nil
 }
 
-func (l *Lock) acquire() error {
-	resp, err := goreq.Request{
-		Method: "PUT",
-		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?acquire=%s", l.state["lock_key_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
-	}.Do()
+// Acquire acquires a lock. Returns error if it failed to acquire the lock.
+// If the lock object has a session that is still tired to the locked key,
+// nil is returned.
+func (l *Lock) Acquire() error {
+
+	// If lock object has got a session, get one.
+	if l.state["lock_session"].(string) == "" {
+		sessionID, err := l.createSession(int(l.lockTTL.Seconds()))
+		if err != nil {
+			return err
+		}
+		l.state["lock_session"] = sessionID
+	}
+
+	lock, err := l.client.LockOpts(&api.LockOptions{
+		Key:     l.makeLockKey(),
+		Session: l.state["lock_session"].(string),
+	})
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		b, _ := resp.Body.ToString()
-		return fmt.Errorf(b)
+
+	// stop lock attempt after 5 seconds
+	var aborted bool
+	stopCh := make(chan struct{})
+	time.AfterFunc(WaitForLock, func() {
+		aborted = true
+		stopCh <- struct{}{}
+	})
+
+	_, err = lock.Lock(stopCh)
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %s", err)
 	}
 
-	status, _ := resp.Body.ToString()
-	if strings.TrimSpace(status) == "false" {
+	if aborted {
 		return types.ErrLockAlreadyAcquired
 	}
+
+	l.lock = lock
 
 	return nil
 }
 
-// Acquire acquires a lock. A time-to-live time is set
-// on the lock to ensure the lock is invalidated after the time is passed.
-func (l *Lock) Acquire() error {
-	var err error
-
-	// If lock object has got a session, get one.
-	if l.state["lock_session"].(string) == "" {
-		l.state["lock_session"], err = l.createSession(int(l.lockTTL.Seconds()))
-		if err != nil {
-			return fmt.Errorf("failed to get lock: %s", err)
-		}
-	}
-	return l.acquire()
+func (l *Lock) makeLockKey() string {
+	lockKeyPrefix := l.state["lock_key_prefix"].(string)
+	key := l.state["key"].(string)
+	return fmt.Sprintf("%s/%s", lockKeyPrefix, key)
 }
 
 // Release invalidates the lock previously acquired
 func (l *Lock) Release() error {
-	resp, err := goreq.Request{
-		Method: "PUT",
-		Uri:    l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s?release=%s", l.state["lock_key_prefix"].(string), l.state["key"].(string), l.state["lock_session"].(string)),
-	}.Do()
-	if err != nil {
-		return err
+	if l.lock == nil {
+		return nil
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		b, _ := resp.Body.ToString()
-		return fmt.Errorf(b)
+	if err := l.lock.Unlock(); err != nil {
+		return fmt.Errorf("failed to release lock: %s", err)
 	}
-
-	return nil
+	return l.lock.Destroy()
 }
 
 // IsAcquirer checks whether this lock instance is the acquirer of the lock on a specific key
 func (l *Lock) IsAcquirer() error {
+
 	if len(l.state["key"].(string)) == 0 {
 		return fmt.Errorf("key is not set")
 	}
 
-	resp, err := goreq.Request{
-		Uri: l.state["consul_addr"].(string) + "/v1/kv/" + fmt.Sprintf("%s.%s", l.state["lock_key_prefix"].(string), l.state["key"].(string)),
-	}.Do()
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return types.ErrLockNotAcquired
-	}
-
-	var sessions []map[string]interface{}
-	err = resp.Body.FromJsonTo(&sessions)
+	key, _, err := l.client.KV().Get(l.makeLockKey(), nil)
 	if err != nil {
 		return err
 	}
 
-	if len(sessions) > 0 {
-		session := sessions[0]["Session"]
-		if session == nil {
-			return types.ErrLockNotAcquired
-		}
-		if session.(string) != l.state["lock_session"].(string) {
-			return types.ErrLockNotAcquired
-		}
-	} else {
+	if key == nil || key.Session != l.state["lock_session"].(string) {
 		return types.ErrLockNotAcquired
 	}
 
