@@ -51,7 +51,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 		defer conn.Close()
 
 		ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-		ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 		cl := proto_api.NewAPIClient(conn)
 		resp, err := cl.GetLogs(ctx, &proto_api.GetLogsRequest{
