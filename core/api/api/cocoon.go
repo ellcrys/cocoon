@@ -46,7 +46,7 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 	for !done {
 		status, err = api.GetCocoonStatus(cocoon.ID)
 		if err != nil {
-			return err
+			break
 		}
 		err = callback(status, func() {
 			done = true
@@ -257,7 +257,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	// If Firewall is set, copy new firewall rules to cocoonToUpd.Firewall
 	if len(req.Firewall) > 0 {
 		for _, f := range req.Firewall {
-			fmt.Println("Fw: ", f.String())
 			cocoonToUpd.Firewall = append(cocoonToUpd.Firewall, types.FirewallRule{
 				Destination:     f.Destination,
 				DestinationPort: f.DestinationPort,
@@ -285,7 +284,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		cocoonUpdated = true
 	}
 
-	fmt.Println("About Call ValidateC: ", cocoon.Firewall)
 	if err = ValidateCocoon(cocoon); err != nil {
 		return nil, err
 	}
@@ -465,6 +463,30 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 	return CocoonStatusRunning, nil
 }
 
+// stopCocoon stops a cocoon
+func (api *API) stopCocoon(ctx context.Context, id string) error {
+
+	cocoon, err := api.getCocoon(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = api.scheduler.Stop(id)
+	if err != nil {
+		apiLog.Error(err.Error())
+		return fmt.Errorf("failed to stop cocoon")
+	}
+
+	cocoon.Status = CocoonStatusStopped
+
+	if err = api.putCocoon(ctx, cocoon); err != nil {
+		apiLog.Error(err.Error())
+		return fmt.Errorf("failed to update cocoon status")
+	}
+
+	return nil
+}
+
 // StopCocoon stops a running cocoon and sets its status to `stopped`
 func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest) (*proto_api.Response, error) {
 
@@ -485,17 +507,8 @@ func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	err = api.scheduler.Stop(req.GetID())
-	if err != nil {
-		apiLog.Error(err.Error())
-		return nil, fmt.Errorf("failed to stop cocoon")
-	}
-
-	cocoon.Status = CocoonStatusStopped
-
-	if err = api.putCocoon(ctx, cocoon); err != nil {
-		apiLog.Error(err.Error())
-		return nil, fmt.Errorf("failed to update cocoon status")
+	if err = api.stopCocoon(ctx, req.GetID()); err != nil {
+		return nil, err
 	}
 
 	return &proto_api.Response{
