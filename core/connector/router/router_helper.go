@@ -35,8 +35,9 @@ func NewHelper(l *logging.Logger, httpServerAddr string) (*Helper, error) {
 		return nil, fmt.Errorf("failed to create client: %s", err)
 	}
 	return &Helper{
-		client: client,
-		l:      l,
+		client:         client,
+		l:              l,
+		httpServerAddr: "http://" + httpServerAddr,
 	}, nil
 }
 
