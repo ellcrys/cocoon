@@ -38,7 +38,6 @@ func (api *API) GetLogs(ctx context.Context, req *proto_api.GetLogsRequest) (*pr
 		req.NumLines = 5000
 	}
 
-	fmt.Println("About to get log")
 	messages, err := api.logProvider.Get(ctx, fmt.Sprintf("cocoon-%s", req.CocoonID), int(req.NumLines), req.Source)
 	if err != nil {
 		if common.CompareErr(err, fmt.Errorf("Invalid resource: id is empty")) == 0 {
