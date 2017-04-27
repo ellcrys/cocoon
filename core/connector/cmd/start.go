@@ -96,16 +96,17 @@ var startCmd = &cobra.Command{
 		}
 		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
 
+		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
+		connectorHTTPAddr := scheduler.Getenv("ADDR_HTTP", defaultConnectorHTTPAddr)
+		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
+
 		// create router helper
-		routerHelper, err := router.NewHelper(routerLog)
+		routerHelper, err := router.NewHelper(routerLog, connectorHTTPAddr)
 		if err != nil {
 			log.Error(err.Error())
 			log.Fatal("Ensure consul is running at 127.0.0.1:8500. Use CONSUL_ADDR to set alternative consul address")
 		}
 
-		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
-		connectorHTTPAddr := scheduler.Getenv("ADDR_HTTP", defaultConnectorHTTPAddr)
-		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
 		waitCh := make(chan bool, 1)
 		cn, err := connector.NewConnector(req, waitCh)
 		if err != nil {

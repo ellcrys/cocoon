@@ -16,13 +16,14 @@ var RouterDomain = util.Env("ROUTER_DOMAIN", "whatbay.co")
 // is designed to add frontend and backend entries in consul which is a
 // traefik backend
 type Helper struct {
-	client *api.Client
-	l      *logging.Logger
+	client         *api.Client
+	l              *logging.Logger
+	httpServerAddr string
 }
 
 // NewHelper creates a new router helper object. Returns error
 // if unable to connector to consul
-func NewHelper(l *logging.Logger) (*Helper, error) {
+func NewHelper(l *logging.Logger, httpServerAddr string) (*Helper, error) {
 	cfg := api.DefaultConfig()
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	client, err := api.NewClient(cfg)
@@ -49,9 +50,6 @@ func (h *Helper) AddFrontend(name string) error {
 		frontend + "/routes/main/rule": fmt.Sprintf("Host:%s.%s", name, RouterDomain),
 	}
 
-	fmt.Println("Keys To Add: ")
-	util.Printify(keys)
-
 	kv := h.client.KV()
 	var ops api.KVTxnOps
 	for key, value := range keys {
@@ -66,23 +64,19 @@ func (h *Helper) AddFrontend(name string) error {
 	if err != nil {
 		return fmt.Errorf("failed to add frontend: %s", err)
 	}
-	fmt.Println("OK? ", ok)
-	util.Printify(txResp)
 	if ok {
 		return nil
 	}
 	return fmt.Errorf("failed to add frontend")
 }
 
-// AddBackend adds a backend server. This method
-// will overwrite any backend rule matching the name
-// and include a server that is issued a random name.
+// AddBackend adds the connector's http server as a backend server.
 func (h *Helper) AddBackend(name string) error {
 	var backend = fmt.Sprintf("traefik/backends/%s", name)
 	var backendServer = fmt.Sprintf("%s/servers/%s_server", backend, name)
 	var keys = map[string]string{
 		backend + "/loadbalancer/method": "drr",
-		backendServer + "/url":           "http://localhost:3000",
+		backendServer + "/url":           h.httpServerAddr,
 		backendServer + "/weight":        "10",
 	}
 
