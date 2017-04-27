@@ -246,6 +246,7 @@ func NewJob(version, id string, count int) *NomadJob {
 										MBits: 1,
 										DynamicPorts: []DynamicPort{
 											DynamicPort{Label: "RPC"},
+											DynamicPort{Label: "HTTP"},
 										},
 									},
 								},
@@ -281,7 +282,6 @@ func NewJob(version, id string, count int) *NomadJob {
 										MBits: 1,
 										DynamicPorts: []DynamicPort{
 											DynamicPort{Label: "RPC"},
-											DynamicPort{Label: "HTTP"},
 										},
 									},
 								},
