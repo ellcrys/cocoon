@@ -23,6 +23,9 @@ var (
 	// default connector RPC Addr
 	defaultConnectorRPCAddr = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
 
+	// default connector HTTP Addr
+	defaultConnectorHTTPAddr = util.Env("DEV_ADDR_CONNECTOR_HTTP", ":8900")
+
 	// default cocoon code RPC ADDR
 	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", ":8004")
 
@@ -101,6 +104,7 @@ var startCmd = &cobra.Command{
 		}
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
+		connectorHTTPAddr := scheduler.Getenv("ADDR_HTTP", defaultConnectorHTTPAddr)
 		cocoonCodeRPCAddr := scheduler.Getenv("ADDR_code_RPC", defaultCocoonCodeRPCAddr)
 		waitCh := make(chan bool, 1)
 		cn, err := connector.NewConnector(req, waitCh)
@@ -121,7 +125,7 @@ var startCmd = &cobra.Command{
 		// start http server
 		httpServerStartedCh := make(chan bool)
 		httpServer := server.NewHTTP(rpcServer)
-		go httpServer.Start("127.0.0.1:8900", httpServerStartedCh)
+		go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
 		<-httpServerStartedCh
 
 		// listen to terminate request
