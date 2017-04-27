@@ -10,7 +10,7 @@ contracts {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "90725d83e77a0a618549487d8e731c8e9ec6515f"
+        version = "8bca6c55e4e4236f1ef6226146791e74cf5a4105"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.

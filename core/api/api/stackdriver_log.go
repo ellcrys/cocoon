@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/logging/logadmin"
+	"github.com/ellcrys/util"
 	ptype "github.com/golang/protobuf/ptypes/struct"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
@@ -47,6 +48,7 @@ func (s *StackDriverLog) Get(ctx context.Context, logName string, numEntries int
 		logadmin.Filter(fmt.Sprintf(`logName = "projects/%s/logs/%s"`, s.projectID, logName)),
 		logadmin.NewestFirst(),
 	}
+	util.Printify(opts)
 	if len(source) == 0 {
 		opts = append(opts, logadmin.Filter(`jsonPayload.source="stderr" OR "stdout"`))
 	} else {
