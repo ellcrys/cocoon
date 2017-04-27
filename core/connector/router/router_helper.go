@@ -60,7 +60,7 @@ func (h *Helper) AddFrontend(name string) error {
 		})
 	}
 
-	ok, txResp, _, err := kv.Txn(ops, nil)
+	ok, _, _, err := kv.Txn(ops, nil)
 	if err != nil {
 		return fmt.Errorf("failed to add frontend: %s", err)
 	}
