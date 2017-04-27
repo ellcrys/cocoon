@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/ellcrys/util"
 	ptype "github.com/golang/protobuf/ptypes/struct"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
@@ -39,7 +38,7 @@ func (s *StackDriverLog) Init(config map[string]interface{}) error {
 // Get returns a slice of log messages. It will return the a maximum of recent
 // numEntries entries. If source is not set, both stderr and stdout errors will be returned
 func (s *StackDriverLog) Get(ctx context.Context, logName string, numEntries int, source string) ([]types.LogMessage, error) {
-
+	fmt.Println(">> ", logName, numEntries, source)
 	if s.client == nil {
 		return nil, fmt.Errorf("client not initialized. Did you call Init()?")
 	}
@@ -48,7 +47,6 @@ func (s *StackDriverLog) Get(ctx context.Context, logName string, numEntries int
 		logadmin.Filter(fmt.Sprintf(`logName = "projects/%s/logs/%s"`, s.projectID, logName)),
 		logadmin.NewestFirst(),
 	}
-	util.Printify(opts)
 	if len(source) == 0 {
 		opts = append(opts, logadmin.Filter(`jsonPayload.source="stderr" OR "stdout"`))
 	} else {
