@@ -172,18 +172,18 @@ func Round(val float64) int {
 
 // NewLock creates a lock. If `DEV_MEM_LOCK` is set, a
 // memory lock will be returned
-func NewLock(key string) types.Lock {
+func NewLock(key string) (types.Lock, error) {
 	if os.Getenv("DEV_MEM_LOCK") != "" {
-		return memory.NewLock(key)
+		return memory.NewLock(key), nil
 	}
 	return consul.NewLock(key)
 }
 
 // NewLockWithTTL creates a lock with a custom ttl. If `DEV_MEM_LOCK` is set, a
 // memory lock will be returned
-func NewLockWithTTL(key string, ttl time.Duration) types.Lock {
+func NewLockWithTTL(key string, ttl time.Duration) (types.Lock, error) {
 	if os.Getenv("DEV_MEM_LOCK") != "" {
-		return memory.NewLockWithTTL(key, ttl)
+		return memory.NewLockWithTTL(key, ttl), nil
 	}
 	return consul.NewLockWithTTL(key, ttl)
 }

@@ -105,7 +105,10 @@ func (l *LockOperations) acquire(op *proto_connector.LockOperation) (*proto_conn
 	ttlDur := time.Duration(ttl) * time.Second
 
 	// create lock and set default state
-	lock := common.NewLockWithTTL(op.Params[1], ttlDur)
+	lock, err := common.NewLockWithTTL(op.Params[1], ttlDur)
+	if err != nil {
+		return nil, err
+	}
 	lock.SetState(map[string]interface{}{
 		"lock_key_prefix": fmt.Sprintf("platform/lock/%s", op.Params[0]),
 		"lock_session":    op.Params[3],
@@ -142,7 +145,10 @@ func (l *LockOperations) isAcquirer(op *proto_connector.LockOperation) (*proto_c
 	}
 
 	// create lock and set default state
-	lock := common.NewLock(op.Params[1])
+	lock, err := common.NewLock(op.Params[1])
+	if err != nil {
+		return nil, err
+	}
 	lock.SetState(map[string]interface{}{
 		"lock_key_prefix": fmt.Sprintf("platform/lock/%s", op.Params[0]),
 		"lock_session":    op.Params[2],
@@ -177,7 +183,10 @@ func (l *LockOperations) release(op *proto_connector.LockOperation) (*proto_conn
 	}
 
 	// create lock and set default state
-	lock := common.NewLock(op.Params[1])
+	lock, err := common.NewLock(op.Params[1])
+	if err != nil {
+		return nil, err
+	}
 	lock.SetState(map[string]interface{}{
 		"lock_key_prefix": fmt.Sprintf("platform/lock/%s", op.Params[0]),
 		"lock_session":    op.Params[2],
