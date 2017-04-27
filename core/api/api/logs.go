@@ -14,8 +14,6 @@ import (
 
 // GetLogs fetches logs
 func (api *API) GetLogs(ctx context.Context, req *proto_api.GetLogsRequest) (*proto_api.Response, error) {
-	apiLog.Info("Getting logs")
-	util.Printify(req)
 	var err error
 	var claims jwt.MapClaims
 
