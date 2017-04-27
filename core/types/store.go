@@ -7,8 +7,8 @@ type Store interface {
 	Init(systemPublicLedgerName, systemPrivateLedgerName string) error
 	SetBlockchainImplementation(b Blockchain)
 	GetImplementationName() string
-	CreateLedger(name string, chained, public bool) (*Ledger, error)
-	CreateLedgerThen(name string, chained, public bool, then func() error) (*Ledger, error)
+	CreateLedger(cocoonID, name string, chained, public bool) (*Ledger, error)
+	CreateLedgerThen(cocoonID, name string, chained, public bool, then func() error) (*Ledger, error)
 	GetLedger(name string) (*Ledger, error)
 	Put(ledger string, txs []*Transaction) ([]*TxReceipt, error)
 	PutThen(ledger string, txs []*Transaction, then func(validTxs []*Transaction) error) ([]*TxReceipt, error)

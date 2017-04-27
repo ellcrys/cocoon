@@ -97,7 +97,7 @@ func (s *PostgresStore) Init(systemPublicLedgerName, systemPrivateLedgerName str
 			return fmt.Errorf("failed to check existence of ledger named %s: %s", ledger[0].(string), err)
 		}
 		if c == 0 {
-			_, err := s.CreateLedger(ledger[0].(string), true, ledger[1].(bool))
+			_, err := s.CreateLedger(types.SystemCocoonID, ledger[0].(string), true, ledger[1].(bool))
 			if err != nil {
 				return err
 			}
@@ -152,24 +152,17 @@ func Clear(dbAddr string) error {
 // CreateLedgerThen creates a new ledger and accepts an additional operation (via the thenFunc) to be
 // executed before the ledger creation transaction is committed. If the thenFunc returns an error, the
 // transaction is rolled back and error returned
-func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, thenFunc func() error) (*types.Ledger, error) {
+func (s *PostgresStore) CreateLedgerThen(cocoonID, name string, chained, public bool, thenFunc func() error) (*types.Ledger, error) {
 
 	tx := s.db.Begin()
-
-	err := tx.Exec(`SET TRANSACTION isolation level repeatable read`).Error
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to set transaction isolation level. %s", err)
-	}
 
 	newLedger := &types.Ledger{
 		Name:      name,
 		Public:    public,
 		Chained:   chained,
+		CocoonID:  cocoonID,
 		CreatedAt: time.Now().Unix(),
 	}
-
-	newLedger.Hash = s.MakeLegderHash(newLedger)
 
 	if err := tx.Create(newLedger).Error; err != nil {
 		tx.Rollback()
@@ -193,7 +186,7 @@ func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, then
 	// run the companion functions and Rollback
 	// the transaction if error was returned
 	if thenFunc != nil {
-		if err = thenFunc(); err != nil {
+		if err := thenFunc(); err != nil {
 			tx.Rollback()
 			return nil, err
 		}
@@ -205,8 +198,8 @@ func (s *PostgresStore) CreateLedgerThen(name string, chained, public bool, then
 }
 
 // CreateLedger creates a new ledger.
-func (s *PostgresStore) CreateLedger(name string, chained, public bool) (*types.Ledger, error) {
-	return s.CreateLedgerThen(name, chained, public, nil)
+func (s *PostgresStore) CreateLedger(cocoonID, name string, chained, public bool) (*types.Ledger, error) {
+	return s.CreateLedgerThen(cocoonID, name, chained, public, nil)
 }
 
 // GetLedger fetches a ledger meta information

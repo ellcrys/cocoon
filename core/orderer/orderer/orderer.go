@@ -140,7 +140,7 @@ func (od *Orderer) SetBlockchain(b types.Blockchain) {
 func (od *Orderer) CreateLedger(ctx context.Context, params *proto_orderer.CreateLedgerParams) (*proto_orderer.Ledger, error) {
 
 	internalName := types.MakeLedgerName(params.GetCocoonID(), params.GetName())
-	ledger, err := od.store.CreateLedger(internalName, params.GetChained(), params.GetPublic())
+	ledger, err := od.store.CreateLedger(params.CocoonID, internalName, params.GetChained(), params.GetPublic())
 	if err != nil {
 		return nil, err
 	}
