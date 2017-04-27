@@ -129,6 +129,7 @@ func (l *Lock) Acquire() error {
 
 	_, err = lock.Lock(stopCh)
 	if err != nil {
+		fmt.Println(">>>> ", err)
 		return fmt.Errorf("failed to acquire lock: %s", err)
 	}
 

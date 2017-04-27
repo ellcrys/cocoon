@@ -239,30 +239,25 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 	// create transactions and add transaction receipts for
 	// successfully stored transactions
 	for _, tx := range txs {
+
 		// acquire lock on the transaction via its key
-		lock, err := common.NewLock(makeTxLockKey(tx.LedgerInternal, tx.Key))
+		lock, err := common.NewLock(makeTxLockKey(ledgerName, tx.Key))
 		if err != nil {
 			dbTx.Rollback()
 			return nil, err
 		}
 		if err := lock.Acquire(); err != nil {
 			if err == types.ErrLockAlreadyAcquired {
-				txReceipts = append(txReceipts, &types.TxReceipt{
-					ID:  tx.ID,
-					Err: "failed to acquire lock. object has been locked by another process",
-				})
+				txReceipts = append(txReceipts, &types.TxReceipt{ID: tx.ID, Err: "failed to acquire lock. object has been locked by another process"})
 			} else {
-				txReceipts = append(txReceipts, &types.TxReceipt{
-					ID:  tx.ID,
-					Err: err.Error(),
-				})
+				txReceipts = append(txReceipts, &types.TxReceipt{ID: tx.ID, Err: err.Error()})
 			}
 			continue
 		}
 
-		// ensure the current transaction is not a stale transaction
-		// when checked with the valid transactions. If this is not done, before we call the tx.Create
-		// the entire transaction will not be committed by the postgres driver
+		// For transactions requiring explit pessimistic locking, ensure the current transaction is not stale
+		// when checked with the already processed transactions. If this is not done, before we call the tx.Create
+		// the entire transaction be considered failed when we call tx.Commit
 		isStale := false
 		for _, vTx := range validTxs {
 			if len(tx.RevisionTo) > 0 && tx.RevisionTo == vTx.RevisionTo && tx.KeyInternal == vTx.KeyInternal {
@@ -270,12 +265,9 @@ func (s *PostgresStore) PutThen(ledgerName string, txs []*types.Transaction, the
 				break
 			}
 		}
+
 		if isStale {
-			log.Info("Stale transaction (%s)", tx.ID)
-			txReceipts = append(txReceipts, &types.TxReceipt{
-				ID:  tx.ID,
-				Err: "stale object",
-			})
+			txReceipts = append(txReceipts, &types.TxReceipt{ID: tx.ID, Err: "stale object"})
 			lock.Release()
 			continue
 		}

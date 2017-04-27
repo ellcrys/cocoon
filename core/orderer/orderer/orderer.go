@@ -193,33 +193,38 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 	blockID := util.Sha256(util.UUID4())
 	var transactions = make([]*types.Transaction, len(params.GetTransactions()))
 	for i, protoTx := range params.GetTransactions() {
-		var tx = types.Transaction{}
-		cstructs.Copy(protoTx, &tx)
-		tx.Key = types.MakeTxKey(params.GetCocoonID(), tx.Key)
-		transactions[i] = &tx
+		transactions[i] = &types.Transaction{
+			Ledger:     protoTx.Ledger,
+			ID:         protoTx.Id,
+			Key:        types.MakeTxKey(params.GetCocoonID(), protoTx.Key),
+			Value:      protoTx.Value,
+			RevisionTo: protoTx.RevisionTo,
+			CreatedAt:  protoTx.CreatedAt,
+		}
 		if ledger.Chained {
-			tx.BlockID = blockID
+			transactions[i].BlockID = blockID
 		}
 	}
 
-	// Create sub method to create a block that includes all the transactions
-	// that have been successfully stored in the database. This stored
-	// transaction will be passed to the function from the PutThen call
+	// Create sub routine for PutThen() to create a block that includes all the transactions
+	// that have been successfully stored in transaction created by PutThen().
+	// If an empty transaction list is returned, this means they failed to be included in
+	// the native postgres transactions and as such, we simply return an error which will cause
+	// the PutThen() method to rollback the native Postgres transaction
 	var block *proto_orderer.Block
 	var createBlockFunc func(validTransactions []*types.Transaction) error
 	if ledger.Chained {
 		block = &proto_orderer.Block{}
 		createBlockFunc = func(validTransactions []*types.Transaction) error {
 
-			// do nothing if not stored transactions
+			var err error
+
 			if len(validTransactions) == 0 {
-				return nil
+				return fmt.Errorf("no valid transaction to add to block")
 			}
 
-			var err error
-			retryDelay := time.Duration(2) * time.Second
 			common.ReRunOnError(func() error {
-				b, _err := od.blockchain.CreateBlock(blockID, internalLedgerName, validTransactions)
+				b, err := od.blockchain.CreateBlock(blockID, internalLedgerName, validTransactions)
 				if b != nil {
 					block.Id = b.ID
 					block.ChainName = b.ChainName
@@ -229,17 +234,13 @@ func (od *Orderer) Put(ctx context.Context, params *proto_orderer.PutTransaction
 					block.Transactions = b.Transactions
 					block.CreatedAt = b.CreatedAt
 				}
-
-				err = _err
-
 				// If error is not a duplicate previous block hash error, don't re-run.
 				// return nil to end the re-run routine
-				if _err != nil && !types.IsDuplicatePrevBlockHashError(_err) {
+				if err != nil && !types.IsDuplicatePrevBlockHashError(err) {
 					return nil
 				}
-
-				return _err
-			}, 5, &retryDelay)
+				return err
+			}, 5, time.Duration(2)*time.Second)
 			return err
 		}
 	}

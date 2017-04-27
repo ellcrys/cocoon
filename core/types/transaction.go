@@ -14,16 +14,16 @@ import (
 type Transaction struct {
 	Number         uint   `json:"number,omitempty" gorm:"primary_key"`
 	Ledger         string `json:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name"`
-	LedgerInternal string `json:"ledgerInternal" gorm:"-" sql:"-"`
 	ID             string `json:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
 	Key            string `json:"key" gorm:"type:varchar(128);index:idx_name_key"`
-	KeyInternal    string `json:"keyInternal" gorm:"-" sql:"-"`
 	Value          string `json:"value" gorm:"type:text"`
 	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
 	BlockID        string `json:"blockId,omitempty"`
-	Block          *Block `json:"block,omitempty" gorm:"-" sql:"-"`
 	RevisionTo     string `json:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
 	CreatedAt      int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
+	LedgerInternal string `json:"ledgerInternal" gorm:"-" sql:"-"`
+	KeyInternal    string `json:"keyInternal" gorm:"-" sql:"-"`
+	Block          *Block `json:"block,omitempty" gorm:"-" sql:"-"`
 }
 
 // MakeHash creates a hash of a transaction

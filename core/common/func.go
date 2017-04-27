@@ -67,15 +67,15 @@ func IsValidCocoonID(name string) bool {
 // It accepts a limit on how many times to attempt a re-run and a delay duration.
 // If delay is nil, there is no delay. It returns the last error of the last
 // re-run attempt if the function did not succeed.
-func ReRunOnError(f func() error, times int, delay *time.Duration) error {
+func ReRunOnError(f func() error, times int, delay time.Duration) error {
 	var err error
 	for i := 0; i < times; i++ {
 		err = f()
 		if err == nil {
 			return nil
 		}
-		if times-1 > 1 && delay != nil {
-			time.Sleep(*delay)
+		if times-1 > 1 {
+			time.Sleep(delay)
 		}
 	}
 	return err

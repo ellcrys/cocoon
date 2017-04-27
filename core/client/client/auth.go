@@ -22,7 +22,6 @@ func Login(email, password string) error {
 	if err != nil {
 		return fmt.Errorf("unable to connect to cluster. please try again")
 	}
-
 	stopSpinner := util.Spinner("Please wait")
 
 	client := proto_api.NewAPIClient(conn)

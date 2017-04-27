@@ -29,7 +29,7 @@ func TestConsulLock(t *testing.T) {
 						l, err := NewLock(key)
 						So(err, ShouldBeNil)
 						err = l.Acquire()
-						So(err, ShouldResemble, types.ErrLockAlreadyAcquired)
+						So(err, ShouldResemble, types.ErrLockNotAcquired)
 					})
 				})
 			})
