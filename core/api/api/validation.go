@@ -16,52 +16,55 @@ import (
 func ValidateCocoon(c *types.Cocoon) error {
 
 	if len(c.ID) == 0 {
-		return fmt.Errorf("id is required")
+		return fmt.Errorf("id: id is required")
 	}
 	if !common.IsValidCocoonID(c.ID) {
-		return fmt.Errorf("id is not a valid resource name")
+		return fmt.Errorf("id: id is not a valid resource name")
 	}
 	if len(c.URL) == 0 {
-		return fmt.Errorf("url is required")
+		return fmt.Errorf("repo.url: url is required")
 	}
 	if !cocoon_util.IsGithubRepoURL(c.URL) {
-		return fmt.Errorf("url is not a valid github repo url")
+		return fmt.Errorf("repo.url: url is not a valid github repo url")
 	}
 	if !cocoon_util.IsExistingGithubRepo(c.URL) {
-		return fmt.Errorf("repository url could not be reached")
+		return fmt.Errorf("repo.url: repository url could not be reached")
 	}
 	if cocoon_util.IsGithubCommitID(c.Version) && !cocoon_util.IsValidGithubCommitID(c.URL, c.Version) {
-		return fmt.Errorf("repository version appears to be a commit id but it does not exist")
+		return fmt.Errorf("repo.version: repository version appears to be a commit id but it does not exist")
 	}
 	if len(c.Language) == 0 {
-		return fmt.Errorf("language is required")
+		return fmt.Errorf("repo.language: language is required")
 	}
 	if !util.InStringSlice(scheduler.SupportedCocoonCodeLang, c.Language) {
-		return fmt.Errorf("language is not supported. Expects one of these values %s", scheduler.SupportedCocoonCodeLang)
+		return fmt.Errorf("repo.language: language is not supported. Expects one of these values %s", scheduler.SupportedCocoonCodeLang)
 	}
 	if len(c.BuildParam) > 0 {
 		var _c map[string]interface{}
 		if util.FromJSON([]byte(c.BuildParam), &_c) != nil {
-			return fmt.Errorf("build parameter is not valid json")
+			return fmt.Errorf("build: build parameter is not valid json")
 		}
 	}
 	if c.Memory == 0 {
-		return fmt.Errorf("memory is required")
+		return fmt.Errorf("resources.memory: memory is required")
 	}
 	if c.CPUShare == 0 {
-		return fmt.Errorf("CPU share is required")
+		return fmt.Errorf("resources.cpuShare: CPU share is required")
 	}
 	if common.GetResourceSet(c.Memory, c.CPUShare) == nil {
-		return fmt.Errorf("Unknown resource set")
+		return fmt.Errorf("resources: Unknown resource set")
+	}
+	if len(c.Link) > 0 && c.Link == c.ID {
+		return fmt.Errorf("link: Cocoon cannot link to itself")
 	}
 	if c.NumSignatories <= 0 {
-		return fmt.Errorf("number of signatories cannot be less than 1")
+		return fmt.Errorf("signatories.max: number of signatories cannot be less than 1")
 	}
 	if c.SigThreshold <= 0 {
-		return fmt.Errorf("signatory threshold cannot be less than 1")
+		return fmt.Errorf("signatories.threshold: signatory threshold cannot be less than 1")
 	}
 	if c.NumSignatories < len(c.Signatories) {
-		return fmt.Errorf("max signatories already added. You can't add more")
+		return fmt.Errorf("signatories: max signatories already added. You can't add more")
 	}
 	if c.Firewall != nil {
 		_, errs := ValidateFirewall(c.Firewall.ToMap())

@@ -68,7 +68,6 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 		return nil, fmt.Errorf("this cocoon does not have a recently approved and deployed release yet")
 	}
 
-	util.Printify(cocoon)
 	apiLog.Debugf("Deploying release = %s", releaseToDeploy)
 
 	// get the release

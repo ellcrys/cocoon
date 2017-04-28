@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/ellcrys/util"
+	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
@@ -40,13 +41,20 @@ var updateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		stopSpinner()
-
 		for i, cocoon := range cocoons {
+
+			err := api.ValidateCocoon(cocoon)
+			if err != nil {
+				stopSpinner()
+				log.Fatalf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
+			}
+
+			stopSpinner()
+
 			var protoCreatePayloadReq proto_api.CocoonPayloadRequest
 			cstructs.Copy(cocoon, &protoCreatePayloadReq)
 			protoCreatePayloadReq.ACL = cocoon.ACL.ToJSON()
-			err := client.UpdateCocoon(protoCreatePayloadReq.ID, &protoCreatePayloadReq)
+			err = client.UpdateCocoon(protoCreatePayloadReq.ID, &protoCreatePayloadReq)
 			if err != nil {
 				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
 			}
