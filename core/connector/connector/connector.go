@@ -559,15 +559,17 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 func (cn *Connector) build(container *docker.APIContainers, lang Language) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript()}
 	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, exitCode interface{}) error {
-		switch state {
-		case "before":
-			log.Info("Building cocoon code")
-			cn.setStatus(api.CocoonStatusBuilding)
-		case "end":
-			if exitCode.(int) == 0 {
-				log.Info("Build succeeded!")
-			} else {
-				return fmt.Errorf("Build has failed with exit code=%d", exitCode.(int))
+		if cn.containerRunning {
+			switch state {
+			case "before":
+				log.Info("Building cocoon code")
+				cn.setStatus(api.CocoonStatusBuilding)
+			case "end":
+				if exitCode.(int) == 0 {
+					log.Info("Build succeeded!")
+				} else {
+					return fmt.Errorf("Build has failed with exit code=%d", exitCode.(int))
+				}
 			}
 		}
 		return nil
@@ -694,8 +696,8 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 func (cn *Connector) Stop(failed bool) error {
 
 	defer func() {
-		cn.setStatus(api.CocoonStatusStopped)
 		cn.containerRunning = false
+		cn.setStatus(api.CocoonStatusStopped)
 		cn.waitCh <- failed
 	}()
 
