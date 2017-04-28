@@ -9,6 +9,8 @@ import (
 
 	"net/url"
 
+	"io/ioutil"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/gorilla/mux"
@@ -95,9 +97,9 @@ func valuesToMap(values url.Values) map[string]string {
 	return newMap
 }
 
-// prepareHeader collects and sets values to be included in the header
+// prepareInvokeHeader collects and sets values to be included in the header
 // that will be sent to the cocoon code.
-func prepareHeader(w http.ResponseWriter, r *http.Request) http.Header {
+func prepareInvokeHeader(w http.ResponseWriter, r *http.Request) http.Header {
 	header := r.Header
 	header.Set("Method", r.Method)
 	header.Set("Host", r.Host)
@@ -125,26 +127,49 @@ func prepareHeader(w http.ResponseWriter, r *http.Request) http.Header {
 
 func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 
+	var err error
 	var resp *proto_connector.Response
+	var invokeRequest InvokeRequest
+	var body []byte
+	var ctx context.Context
+	var cc context.CancelFunc
+
+	defer r.Body.Close()
 
 	// prepare header
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBytesRead)
-	preparedHeader := prepareHeader(w, r)
+	preparedHeader := prepareInvokeHeader(w, r)
+
+	// set response content type
 	w.Header().Set("Content-Type", "application/json")
 
-	ctx, cc := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cc()
+	// get request are considered as unstructured
+	if r.Method == "GET" {
+		goto UNSTRUCTURED
+	}
 
-	// attempt to decode body to json
-	decoder := json.NewDecoder(r.Body)
-	var invokeRequest InvokeRequest
-	err := decoder.Decode(&invokeRequest)
-
-	// not json? consider as unstructured only if content type is not application/json
-	if err != nil {
-		if r.Header.Get("Content-Type") != "application/json" {
-			goto unstructured
+	// get body
+	if r.Method == "POST" {
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(500)
+			json.NewEncoder(w).Encode(InvokeError{
+				Error: true,
+				Code:  "server_error",
+				Msg:   "Invalid invoke body structure",
+			})
+			return
 		}
+	}
+
+	// non-json content type are considered as unstructured request
+	if r.Header.Get("Content-Type") != "application/json" {
+		goto UNSTRUCTURED
+	}
+
+	// attempt to decode json body to an invoke request structure
+	err = util.FromJSON(body, &invokeRequest)
+	if err != nil {
 		w.WriteHeader(400)
 		json.NewEncoder(w).Encode(InvokeError{
 			Error: true,
@@ -152,12 +177,6 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 			Msg:   "Invalid invoke body structure",
 		})
 		return
-	}
-	defer r.Body.Close()
-
-	// no function, consider as unstructured
-	if len(strings.TrimSpace(invokeRequest.Function)) == 0 {
-		goto unstructured
 	}
 
 	// expect ID, if set to be a UUIDv4 string
@@ -171,6 +190,17 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// return error if request function is not set
+	if len(strings.TrimSpace(invokeRequest.Function)) == 0 {
+		w.WriteHeader(400)
+		json.NewEncoder(w).Encode(InvokeError{
+			Error: true,
+			Code:  "3",
+			Msg:   "Function is required",
+		})
+		return
+	}
+
 	// set ID of not set
 	if len(invokeRequest.ID) == 0 {
 		invokeRequest.ID = util.UUID4()
@@ -179,6 +209,8 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 	preparedHeader.Set("Transaction-Id", invokeRequest.ID)
 	preparedHeader.Set("Structured", "yes")
 
+	ctx, cc = context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cc()
 	resp, err = s.rpc.cocoonCodeOps.Handle(ctx, &proto_connector.CocoonCodeOperation{
 		ID:       invokeRequest.ID,
 		Function: invokeRequest.Function,
@@ -201,9 +233,16 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 	})
 	return
 
-unstructured:
+UNSTRUCTURED:
+
 	preparedHeader.Set("Structured", "no")
 
+	if r.Method != "GET" {
+		preparedHeader.Set("Raw-Body", string(body))
+	}
+
+	ctx, cc = context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cc()
 	resp, err = s.rpc.cocoonCodeOps.Handle(ctx, &proto_connector.CocoonCodeOperation{
 		Header: headerToMap(preparedHeader),
 	})
