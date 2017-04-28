@@ -72,9 +72,9 @@ func (h *Helper) AddFrontend(name string) error {
 }
 
 // AddBackend adds the connector's http server as a backend server.
-func (h *Helper) AddBackend(name string) error {
-	var backend = fmt.Sprintf("traefik/backends/%s", name)
-	var backendServer = fmt.Sprintf("%s/servers/%s_server", backend, name)
+func (h *Helper) AddBackend(backendName, serverName string) error {
+	var backend = fmt.Sprintf("traefik/backends/%s", backendName)
+	var backendServer = fmt.Sprintf("%s/servers/%s_server", backend, serverName)
 	var keys = map[string]string{
 		backend + "/loadbalancer/method": "drr",
 		backendServer + "/url":           h.httpServerAddr,

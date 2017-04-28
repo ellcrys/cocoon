@@ -588,19 +588,23 @@ func (cn *Connector) configureRouter() error {
 
 	// if cocoon is not linked, then add a frontend and backend routing rule
 	if len(cocoon.Link) == 0 {
-		log.Info("Cocoon is not natively linked to another cocoon, adding standalone routing rules")
+		log.Info("Cocoon is not linked to another cocoon, adding new frontend and backend")
 		if err := cn.routerHelper.AddFrontend(cocoon.ID); err != nil {
 			return err
 		}
-		if err := cn.routerHelper.AddBackend(cocoon.ID); err != nil {
+		if err := cn.routerHelper.AddBackend(cocoon.ID, cocoon.ID); err != nil {
 			return err
 		}
 		log.Info("Successfully configured router")
 		return nil
 	}
 
-	// TODO: cocoon is linked and therefore must become a backend server to the principal cocoon
-
+	// cocoon is linked and therefore must become a backend server to the linked cocoon
+	log.Infof("Cocoon is linked to another cocoon (%s), adding http server to linked cocoon backend", cocoon.Link)
+	if err = cn.routerHelper.AddBackend(cocoon.Link, cocoon.ID); err != nil {
+		return err
+	}
+	log.Info("Successfully configured router")
 	return nil
 }
 
