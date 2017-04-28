@@ -125,6 +125,7 @@ func prepareInvokeHeader(w http.ResponseWriter, r *http.Request) http.Header {
 	return header
 }
 
+// invokeCocoonCode handles cocoon code invocation
 func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 
 	var err error
