@@ -121,12 +121,13 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 				return err
 			}
 			done()
-		} else if status == CocoonStatusDead {
-			// cocoon is dead. We need to set the status to 'dead' and ask the scheduler
-			// to delete (stop it - according to nomad).
+		}
 
+		// cocoon is dead. We need to set the status to 'dead' and ask the scheduler
+		// to delete (stop it - according to nomad).
+		if status == CocoonStatusDead {
 			apiLog.Debugf("Cocoon [%s] is dead", cocoon.ID)
-			err = api.stopCocoon(ctx, cocoon.ID)
+			err := api.stopCocoon(ctx, cocoon.ID)
 			if err != nil {
 				return fmt.Errorf("failed to stop dead cocoon: %s", err)
 			}
@@ -134,10 +135,15 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 			cocoon.Status = CocoonStatusDead
 			api.putCocoon(ctx, cocoon)
 			return fmt.Errorf("cocoon died :(")
-		} else {
-			apiLog.Debug("Status: ", status)
+		}
+
+		// Non-pending status should force the watch process to exit
+		if status != "pending" {
+			apiLog.Debug("Unrecognised Status: ", status)
 			done()
 		}
+
+		// return nil to keep watching.
 		return nil
 	})
 	if err != nil {
