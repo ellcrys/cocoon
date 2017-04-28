@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u3"
+    id = "u1"
     
     # Contract source location and information
     repo {
@@ -14,9 +14,11 @@ contracts {
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
-        # The contract will have the same privileges of the linked contract.
-        # Both contracts must be owned by same identity
-        link = ""
+        # The contract will have the same privileges of the linked contract
+        # and will become participate in load balancing requests coming into 
+        # the linked cocoon code. 
+        # Both contracts must be owned by same identity.
+        link = "u1"
     }
     
     # Provide build information if the contract code requires it
@@ -48,7 +50,7 @@ contracts {
     # Firewall stanza determines the addresses the contract
     # can make outbound connections to.
     firewall {
-        destination = "facebook.com"
+        destination = "google.com"
         destinationPort = "80"
         protocol = "tcp"
     }
