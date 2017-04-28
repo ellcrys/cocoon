@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Short: "Show the API version information",
 	Long:  `Show the API version information`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(`Cocoon version`, version)
+		fmt.Println(`API version`, version)
 	},
 }
 

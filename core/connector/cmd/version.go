@@ -28,7 +28,7 @@ var versionCmd = &cobra.Command{
 	Short: "Show the Connector version information",
 	Long:  `Show the Connector version information`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(`Cocoon version`, version)
+		fmt.Println(`Connector version`, version)
 	},
 }
 
