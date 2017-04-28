@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u2"
+    id = "u3"
     
     # Contract source location and information
     repo {
@@ -48,7 +48,7 @@ contracts {
     # Firewall stanza determines the addresses the contract
     # can make outbound connections to.
     firewall {
-        destination = "google.com"
+        destination = "facebook.com"
         destinationPort = "80"
         protocol = "tcp"
     }

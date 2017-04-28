@@ -11,7 +11,6 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cstructs"
 	context "golang.org/x/net/context"
 )
 
@@ -91,6 +90,7 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
 func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
+
 	var err error
 	var claims jwt.MapClaims
 	var releaseID = util.UUID4()
@@ -182,12 +182,18 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// create new release
-	var releaseReq proto_api.CreateReleaseRequest
-	cstructs.Copy(cocoon, &releaseReq)
-	releaseReq.ID = releaseID
-	releaseReq.CocoonID = cocoon.ID
-	releaseReq.ACL = cocoon.ACL.ToJSON()
-	_, err = api.CreateRelease(ctx, &releaseReq)
+	var release = &types.Release{
+		ID:         releaseID,
+		CocoonID:   cocoon.ID,
+		URL:        cocoon.URL,
+		Version:    cocoon.Version,
+		Language:   cocoon.Language,
+		BuildParam: cocoon.BuildParam,
+		Link:       cocoon.Link,
+		ACL:        cocoon.ACL,
+		Firewall:   cocoon.Firewall,
+	}
+	err = api.putRelease(ctx, release)
 	if err != nil {
 		return nil, err
 	}
