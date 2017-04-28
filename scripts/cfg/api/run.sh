@@ -26,4 +26,4 @@ else
 fi
 
 # start the api
-$GOPATH/bin/api start
+exec $GOPATH/bin/api start

@@ -26,4 +26,4 @@ else
 fi
 
 # start the orderer
-$GOPATH/bin/orderer start
+exec $GOPATH/bin/orderer start
