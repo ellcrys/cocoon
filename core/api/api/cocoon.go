@@ -477,6 +477,7 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 		return err
 	}
 
+	apiLog.Info("Calling scheduler to stop cocoon = ", id)
 	err = api.scheduler.Stop(id)
 	if err != nil {
 		apiLog.Error(err.Error())
@@ -495,6 +496,8 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 
 // StopCocoon stops a running cocoon and sets its status to `stopped`
 func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest) (*proto_api.Response, error) {
+
+	apiLog.Infof("Received request to stop cocoon = ", req.ID)
 
 	var claims jwt.MapClaims
 	var err error
