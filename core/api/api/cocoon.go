@@ -497,7 +497,7 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 // StopCocoon stops a running cocoon and sets its status to `stopped`
 func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest) (*proto_api.Response, error) {
 
-	apiLog.Infof("Received request to stop cocoon = ", req.ID)
+	apiLog.Infof("Received request to stop cocoon = %s", req.ID)
 
 	var claims jwt.MapClaims
 	var err error

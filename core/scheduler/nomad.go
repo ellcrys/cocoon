@@ -186,6 +186,7 @@ func (sc *Nomad) Stop(jobID string) error {
 		return fmt.Errorf(respStr)
 	}
 	res.Body.Close()
+	log.Infof("Successfully stopped cocoon = %s", jobID)
 	return nil
 }
 
