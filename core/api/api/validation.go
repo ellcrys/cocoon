@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 
+	"strings"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	cocoon_util "github.com/ncodes/cocoon-util"
@@ -64,7 +66,7 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("signatories.threshold: signatory threshold cannot be less than 1")
 	}
 	if c.NumSignatories < len(c.Signatories) {
-		return fmt.Errorf("signatories: max signatories already added. You can't add more")
+		return fmt.Errorf("signatories.signatories: max signatories already added. You can't add more")
 	}
 	if c.Firewall != nil {
 		_, errs := ValidateFirewall(c.Firewall.ToMap())
@@ -75,6 +77,11 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if len(c.ACL) > 0 {
 		if errs := acl.NewInterpreterFromACLMap(c.ACL, false).Validate(); len(errs) > 0 {
 			return fmt.Errorf("acl: %s", errs[0])
+		}
+	}
+	if len(c.Env) > 0 {
+		if errs := ValidateEnvVariables(c.Env); len(errs) > 0 {
+			return fmt.Errorf("env: %s", errs[0])
 		}
 	}
 
@@ -127,6 +134,38 @@ func ValidateIdentity(i *types.Identity) error {
 	return nil
 }
 
+// ValidateEnvVariables validates the keys of a map containing environment variable data
+func ValidateEnvVariables(envs map[string]string) []error {
+	var errs []error
+	var validFlags = []string{
+		"private",
+		"genRand16",
+		"genRand24",
+		"genRand32",
+		"genRand64",
+		"genRand128",
+		"genRand256",
+		"genRand512",
+	}
+	for k := range envs {
+		if !govalidator.Matches(k, "(?i)^[a-z_0-9@,]+$") {
+			errs = append(errs, fmt.Errorf("'%s': invalid key. Only alphanumeric characters and underscores are allowed", k))
+		}
+		if strings.Index(k, ",") != -1 && strings.Index(k, "@") == -1 {
+			errs = append(errs, fmt.Errorf("'%s': invalid key. Comma (,) is only allowed when using multiple flags", k))
+		}
+		if strings.Index(k, "@") != -1 {
+			flags := types.GetFlags(k)
+			for _, f := range flags {
+				if !util.InStringSlice(validFlags, f) {
+					errs = append(errs, fmt.Errorf("'%s': variable has invalid flag = '%s'", k, f))
+				}
+			}
+		}
+	}
+	return errs
+}
+
 // ValidateFirewall parses and validates the content of
 // a firewall ruleset. It expects a json string or a slice
 // of map[string]strins. It will return a slice of map[string]string
@@ -168,8 +207,6 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 		if rule["destination"] == "" {
 			errs = append(errs, fmt.Errorf("rule %d: destination is required", i))
 		} else if !govalidator.IsHost(rule["destination"]) {
-			util.Printify(rule)
-			util.Printify(firewallMap)
 			errs = append(errs, fmt.Errorf("rule %d: destination is not a valid IP or host", i))
 		}
 

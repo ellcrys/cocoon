@@ -71,6 +71,7 @@ message CocoonPayloadRequest {
     string link = 10;
     int32 numSignatories = 11;
     int32 sigThreshold = 12;
+    map<string,string> env = 13;
 }
 
 message GetCocoonRequest {

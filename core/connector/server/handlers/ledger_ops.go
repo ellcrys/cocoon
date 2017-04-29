@@ -42,13 +42,14 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 
 	// Handle link to system cocoon
 	if op.LinkTo == types.SystemCocoonID {
-		i := acl.NewInterpreter(acl.SystemACL, ledgerName == "public")
+		i := acl.NewInterpreter(acl.SystemACL, ledgerName == types.GetSystemPublicLedgerName())
 		if errs := i.Validate(); len(errs) != 0 {
 			return fmt.Errorf("system ACL is not valid")
 		}
 		if !i.IsAllowed(ledgerName, l.CocoonID, op.Name) {
 			return fmt.Errorf("permission denied: %s operation not allowed", op.Name)
 		}
+		return nil
 	}
 
 	// Handle links to other cocoon code

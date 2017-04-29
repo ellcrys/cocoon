@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "u10"
     
     # Contract source location and information
     repo {
@@ -18,7 +18,7 @@ contracts {
         # and will become participate in load balancing requests coming into 
         # the linked cocoon code. 
         # Both contracts must be owned by same identity.
-        link = "u1"
+        link = ""
     }
     
     # Provide build information if the contract code requires it
@@ -49,9 +49,19 @@ contracts {
     
     # Firewall stanza determines the addresses the contract
     # can make outbound connections to.
-    firewall {
+    firewall-rule {
         destination = "google.com"
         destinationPort = "80"
         protocol = "tcp"
+    }
+    
+    # Set environment variable. Use flags to 
+    # enable special directives for individual variables.
+    # @private flag will cause the value to never show up in any publicly accessible channel
+    # @gen32 generates a 32 byte random string 
+    env {
+        "VAR_A"           = "some value"
+        "VAR_B@private,genRand32"    = ""
+        "VAR_C@genRand32"  = ""
     }
 }

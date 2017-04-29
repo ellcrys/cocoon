@@ -24,22 +24,22 @@ import (
 	context "golang.org/x/net/context"
 )
 
-var dbname = "test_db_" + util.RandString(5)
-var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbname+" sslmode=disable password=")
+var dbName = "test_db_" + util.RandString(5)
+var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbName+" sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
 }
 
 func createDb(t *testing.T) error {
-	if err := exec.Command("createdb", dbname).Start(); err != nil {
+	if err := exec.Command("createdb", dbName).Start(); err != nil {
 		return fmt.Errorf("failed to create test db")
 	}
 	return nil
 }
 
 func dropDB(t *testing.T) error {
-	if err := exec.Command("dropdb", dbname).Start(); err != nil {
+	if err := exec.Command("dropdb", dbName).Start(); err != nil {
 		return fmt.Errorf("failed to drop test db")
 	}
 	return impl.Destroy(storeConStr)
@@ -300,6 +300,10 @@ func TestOrderer(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(err.Error(), ShouldEqual, "email or password are invalid")
 					})
+				})
+
+				Convey(".CreateCocoon", func() {
+
 				})
 			})
 

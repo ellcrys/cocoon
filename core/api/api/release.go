@@ -22,6 +22,8 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 		return err
 	}
 	defer ordererConn.Close()
+	pubEnv, privEnv := release.Env.Process()
+	release.Env = pubEnv
 
 	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
 	odc := proto_orderer.NewOrdererClient(ordererConn)
@@ -33,6 +35,19 @@ func (api *API) putRelease(ctx context.Context, release *types.Release) error {
 				Id:        util.UUID4(),
 				Key:       types.MakeReleaseKey(release.ID),
 				Value:     string(release.ToJSON()),
+				CreatedAt: createdAt.Unix(),
+			},
+		},
+	})
+
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
+		CocoonID:   types.SystemCocoonID,
+		LedgerName: types.GetSystemPrivateLedgerName(),
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
+				Id:        util.UUID4(),
+				Key:       types.MakeReleaseEnvKey(release.ID),
+				Value:     string(privEnv.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
 		},
@@ -63,7 +78,7 @@ func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseR
 		return nil, err
 	}
 
-	_, err := api.getRelease(ctx, release.ID)
+	_, err := api.getRelease(ctx, release.ID, false)
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, err
 	} else if err == nil {
@@ -81,8 +96,10 @@ func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseR
 	}, nil
 }
 
-// getRelease gets an existing release and returns a release object
-func (api *API) getRelease(ctx context.Context, id string) (*types.Release, error) {
+// getRelease gets an existing release and returns a release object.
+// Passing true to addPrivateFields will fetch other field values stored
+// on the private system ledger.
+func (api *API) getRelease(ctx context.Context, id string, addPrivateFields bool) (*types.Release, error) {
 
 	ordererConn, err := api.ordererDiscovery.GetGRPConn()
 	if err != nil {
@@ -103,13 +120,35 @@ func (api *API) getRelease(ctx context.Context, id string) (*types.Release, erro
 	var release types.Release
 	util.FromJSON([]byte(tx.GetValue()), &release)
 
+	if addPrivateFields {
+
+		// get private environment variables
+		privEnvTx, err := odc.Get(ctx, &proto_orderer.GetParams{
+			CocoonID: types.SystemCocoonID,
+			Key:      types.MakeReleaseEnvKey(id),
+			Ledger:   types.GetSystemPrivateLedgerName(),
+		})
+		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+			return nil, err
+		}
+
+		// include private environment variables with public variables in the release
+		if privEnvTx != nil {
+			var privEnvs map[string]string
+			util.FromJSON([]byte(privEnvTx.Value), &privEnvs)
+			for k, v := range privEnvs {
+				release.Env[k] = v
+			}
+		}
+	}
+
 	return &release, nil
 }
 
 // GetRelease returns a release
 func (api *API) GetRelease(ctx context.Context, req *proto_api.GetReleaseRequest) (*proto_api.Response, error) {
 
-	release, err := api.getRelease(ctx, req.ID)
+	release, err := api.getRelease(ctx, req.ID, false)
 	if err != nil {
 		return nil, err
 	}

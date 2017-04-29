@@ -39,3 +39,8 @@ func (i *Identity) ToJSON() []byte {
 func MakeIdentityKey(id string) string {
 	return fmt.Sprintf("identity;%s", id)
 }
+
+// MakeIdentityPasswordKey returns a key for storing an identities password
+func MakeIdentityPasswordKey(identityID string) string {
+	return fmt.Sprintf("identity_password;%s", identityID)
+}

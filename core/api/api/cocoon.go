@@ -69,6 +69,9 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 	}
 	defer ordererConn.Close()
 
+	pubEnv, privEnv := cocoon.Env.Process()
+	cocoon.Env = pubEnv
+
 	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
 	odc := proto_orderer.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
@@ -79,6 +82,19 @@ func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 				Id:        util.UUID4(),
 				Key:       types.MakeCocoonKey(cocoon.ID),
 				Value:     string(cocoon.ToJSON()),
+				CreatedAt: createdAt.Unix(),
+			},
+		},
+	})
+
+	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
+		CocoonID:   types.SystemCocoonID,
+		LedgerName: types.GetSystemPrivateLedgerName(),
+		Transactions: []*proto_orderer.Transaction{
+			&proto_orderer.Transaction{
+				Id:        util.UUID4(),
+				Key:       types.MakeCocoonEnvKey(cocoon.ID),
+				Value:     string(privEnv.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
 		},
@@ -112,6 +128,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		SigThreshold:   int(req.SigThreshold),
 		NumSignatories: int(req.NumSignatories),
 		Link:           req.Link,
+		Env:            req.Env,
 	}
 
 	// set acl map if provided
@@ -159,8 +176,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	cocoon.Firewall = outputFirewall
 
-	// if a link cocoon id is provided, check if the linked cocoon exists
-	// TODO: Provide a permission (ACL) mechanism
+	// if a link cocoon id is provided, ensure the linked cocoon exists
+	// and is owned by the currently logged in identity
 	if len(cocoon.Link) > 0 {
 		cocoonToLinkTo, err := api.getCocoon(ctx, cocoon.Link)
 		if err != nil {
@@ -192,6 +209,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		Link:       cocoon.Link,
 		ACL:        cocoon.ACL,
 		Firewall:   cocoon.Firewall,
+		Env:        req.Env,
+		CreatedAt:  now.UTC().Format(time.RFC3339Nano),
 	}
 	err = api.putRelease(ctx, release)
 	if err != nil {
@@ -250,6 +269,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		SigThreshold:   int(req.SigThreshold),
 		NumSignatories: int(req.NumSignatories),
 		Link:           req.Link,
+		Env:            req.Env,
 	}
 
 	// If ACL is set, create an ACLMap, set the cocoonToUpd.ACL
@@ -308,7 +328,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
-	release, err := api.getRelease(ctx, recentReleaseID)
+	release, err := api.getRelease(ctx, recentReleaseID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -341,6 +361,10 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 	if len(cocoonToUpd.ACL) > 0 && !cocoonToUpd.ACL.Eql(release.ACL) {
 		release.ACL = cocoonToUpd.ACL
+		releaseUpdated = true
+	}
+	if len(cocoonToUpd.Env) > 0 && !cocoonToUpd.Env.Eql(release.Env) {
+		release.Env = cocoonToUpd.Env
 		releaseUpdated = true
 	}
 
@@ -616,7 +640,7 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	release, err := api.getRelease(ctx, req.ReleaseID)
+	release, err := api.getRelease(ctx, req.ReleaseID, false)
 	if err != nil {
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
 			return nil, fmt.Errorf("release not found")

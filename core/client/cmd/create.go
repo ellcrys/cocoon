@@ -38,6 +38,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 	var configFileData map[string]interface{}
 	var aclMap map[string]interface{}
 	var cocoons []*types.Cocoon
+	var env map[string]interface{}
 	var errs []error
 
 	// path is a local file path
@@ -155,9 +156,13 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					aclMap = acls[0]
 				}
 
-				if firewalls, ok := contract["firewall"].([]map[string]interface{}); ok && len(firewalls) > 0 {
-					bs, _ := util.ToJSON(firewalls)
+				if firewallRules, ok := contract["firewall-rule"].([]map[string]interface{}); ok && len(firewallRules) > 0 {
+					bs, _ := util.ToJSON(firewallRules)
 					firewall = string(bs)
+				}
+
+				if envs, ok := contract["env"].([]map[string]interface{}); ok && len(envs) > 0 {
+					env = envs[0]
 				}
 
 				// validate ACLMap
@@ -192,6 +197,7 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					BuildParam:     buildParams,
 					Firewall:       validFirewallRules,
 					ACL:            aclMap,
+					Env:            types.NewEnv(env),
 					Memory:         selectedResourceSet["memory"],
 					CPUShare:       selectedResourceSet["cpuShare"],
 					Link:           link,
@@ -235,7 +241,6 @@ var createCmd = &cobra.Command{
 		}
 
 		stopSpinner()
-
 		for i, cocoon := range cocoons {
 			err := client.CreateCocoon(cocoon)
 			if err != nil {

@@ -71,7 +71,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	apiLog.Debugf("Deploying release = %s", releaseToDeploy)
 
 	// get the release
-	release, err := api.getRelease(ctx, releaseToDeploy)
+	release, err := api.getRelease(ctx, releaseToDeploy, true)
 	if err != nil && err != types.ErrTxNotFound {
 		return nil, fmt.Errorf("failed to get release. %s", err)
 	} else if err == types.ErrTxNotFound {
@@ -99,6 +99,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	cocoon.LastDeployedRelease = release.ID
 	cocoon.Firewall = release.Firewall
 	cocoon.ACL = release.ACL
+	cocoon.Env = release.Env
 
 	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.Version, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShare)
 	if err != nil {

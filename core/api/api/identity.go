@@ -51,7 +51,7 @@ func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error
 		Transactions: []*proto_orderer.Transaction{
 			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
-				Key:       types.MakeIdentityKey(identity.GetID()),
+				Key:       types.MakeIdentityPasswordKey(identity.GetID()),
 				Value:     password,
 				CreatedAt: createdAt.Unix(),
 			},
@@ -130,7 +130,7 @@ func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, er
 
 	passwordTx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeIdentityKey(id),
+		Key:      types.MakeIdentityPasswordKey(id),
 		Ledger:   types.GetSystemPrivateLedgerName(),
 	})
 	if err != nil {
