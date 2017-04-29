@@ -2,31 +2,43 @@ package types
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/ellcrys/util"
+	"github.com/fatih/structs"
 )
 
 // Cocoon represents a smart contract application
 type Cocoon struct {
-	IdentityID          string   `structs:"identity_id" mapstructure:"identity_id"`
-	ID                  string   `structs:"ID" mapstructure:"ID"`
-	URL                 string   `structs:"URL" mapstructure:"URL"`
-	Version             string   `structs:"version" mapstructure:"version"`
-	Language            string   `structs:"language" mapstructure:"language"`
-	BuildParam          string   `structs:"buildParam" mapstructure:"buildParam"`
-	Memory              int      `structs:"memory" mapstructure:"memory"`
-	CPUShare            int      `structs:"CPUShare" mapstructure:"CPUShare"`
-	NumSignatories      int      `structs:"numSignatories" mapstructure:"numSignatories"`
-	SigThreshold        int      `structs:"sigThreshold" mapstructure:"sigThreshold"`
-	Link                string   `structs:"link" mapstructure:"link"`
-	Releases            []string `structs:"releases" mapstructure:"releases"`
-	Signatories         []string `structs:"signatories" mapstructure:"signatories"`
-	Status              string   `structs:"status" mapstructure:"status"`
-	LastDeployedRelease string   `structs:"lastDeployedRelease" mapstructure:"lastDeployedRelease"`
-	ACL                 ACLMap   `structs:"ACL" mapstructure:"ACL"`
-	Firewall            Firewall `structs:"firewall" mapstructure:"firewall"`
-	Env                 Env      `structs:"env" mapstructure:"env"`
-	CreatedAt           string   `structs:"createdAt" mapstructure:"createdAt"`
+	IdentityID            string   `structs:"identity_id,omitempty" mapstructure:"identity_id"`
+	ID                    string   `structs:"ID,omitempty" mapstructure:"ID"`
+	Memory                int      `structs:"memory,omitempty" mapstructure:"memory"`
+	CPUShare              int      `structs:"CPUShare,omitempty" mapstructure:"CPUShare"`
+	NumSignatories        int      `structs:"numSignatories,omitempty" mapstructure:"numSignatories"`
+	SigThreshold          int      `structs:"sigThreshold,omitempty" mapstructure:"sigThreshold"`
+	Releases              []string `structs:"releases,omitempty" mapstructure:"releases"`
+	Signatories           []string `structs:"signatories,omitempty" mapstructure:"signatories"`
+	Status                string   `structs:"status,omitempty" mapstructure:"status"`
+	LastDeployedReleaseID string   `structs:"lastDeployedReleaseID,omitempty" mapstructure:"lastDeployedReleaseID"`
+	LastDeployedRelease   *Release `structs:"lastDeployedRelease,omitempty" mapstructure:"lastDeployedRelease" json:"-"`
+	CreatedAt             string   `structs:"createdAt,omitempty" mapstructure:"createdAt"`
+}
+
+// HasFieldsChanged takes a set of fields and checks whether they have the same
+// values as those of same fields on the object. It returns false as soon as it finds
+// the first element that exists in the object and has a different value.
+func (c *Cocoon) HasFieldsChanged(fields map[string]interface{}) bool {
+	changed := false
+	cMap := structs.New(c).Map()
+	for oKey, oVal := range fields {
+		if cVal, ok := cMap[oKey]; ok {
+			if !reflect.DeepEqual(cVal, oVal) {
+				changed = true
+				break
+			}
+		}
+	}
+	return changed
 }
 
 // ToJSON returns the json equivalent of this object

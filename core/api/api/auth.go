@@ -64,7 +64,7 @@ func makeAuthToken(id, identity, _type string, exp int64, secret string) (string
 // Login authenticates a user and returns a JWT token
 func (api *API) Login(ctx context.Context, req *proto_api.LoginRequest) (*proto_api.Response, error) {
 
-	identity, err := api.getIdentity(ctx, types.NewIdentity(req.GetEmail(), "").GetID())
+	identity, err := api.platform.GetIdentity(ctx, types.NewIdentity(req.GetEmail(), "").GetID())
 	if err != nil {
 		if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
 			return nil, fmt.Errorf("email or password are invalid")
@@ -85,7 +85,7 @@ func (api *API) Login(ctx context.Context, req *proto_api.LoginRequest) (*proto_
 		return nil, fmt.Errorf("failed to create session")
 	}
 
-	err = api.putIdentity(ctx, identity)
+	err = api.platform.PutIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
 	}

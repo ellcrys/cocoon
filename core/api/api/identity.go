@@ -3,63 +3,12 @@ package api
 import (
 	"time"
 
-	"fmt"
-
-	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	"golang.org/x/crypto/bcrypt"
 	context "golang.org/x/net/context"
 )
-
-// putIdentity adds a new identity. If another identity with a matching key
-// exists, it is effectively shadowed. The identity password is not saved to the
-// systems public ledger but on the system private ledger.
-func (api *API) putIdentity(ctx context.Context, identity *types.Identity) error {
-
-	var password = identity.Password
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return err
-	}
-	defer ordererConn.Close()
-
-	identity.Password = ""
-	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeIdentityKey(identity.GetID()),
-				Value:     string(identity.ToJSON()),
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	// save identity password alone in the system private ledger
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPrivateLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeIdentityPasswordKey(identity.GetID()),
-				Value:     password,
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	return err
-}
 
 // CreateIdentity creates a new identity. It returns error if identity
 // already exists.
@@ -74,14 +23,8 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto_api.CreateIdentit
 		return nil, err
 	}
 
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return nil, err
-	}
-	defer ordererConn.Close()
-
 	// check if identity already exists
-	_, err = api.getIdentity(ctx, identity.GetID())
+	_, err := api.platform.GetIdentity(ctx, identity.GetID())
 	if err != nil && err != types.ErrIdentityNotFound {
 		return nil, err
 	} else if err == nil {
@@ -91,7 +34,7 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto_api.CreateIdentit
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(identity.Password), bcrypt.DefaultCost)
 	identity.Password = string(hashedPassword)
 
-	err = api.putIdentity(ctx, &identity)
+	err = api.platform.PutIdentity(ctx, &identity)
 	if err != nil {
 		return nil, err
 	}
@@ -100,51 +43,6 @@ func (api *API) CreateIdentity(ctx context.Context, req *proto_api.CreateIdentit
 		Status: 200,
 		Body:   identity.ToJSON(),
 	}, nil
-}
-
-// getIdentity gets an existing identity and returns an identity object.
-// Since an identity password is never saved along side the rest of the other identity
-// field on the system public ledger, it is retrieved from the private system ledger where
-// it is stored separately.
-func (api *API) getIdentity(ctx context.Context, id string) (*types.Identity, error) {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return nil, err
-	}
-	defer ordererConn.Close()
-
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
-		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeIdentityKey(id),
-		Ledger:   types.GetSystemPublicLedgerName(),
-	})
-
-	if err != nil {
-		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
-			return nil, types.ErrIdentityNotFound
-		}
-		return nil, err
-	}
-
-	passwordTx, err := odc.Get(ctx, &proto_orderer.GetParams{
-		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeIdentityPasswordKey(id),
-		Ledger:   types.GetSystemPrivateLedgerName(),
-	})
-	if err != nil {
-		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
-			return nil, fmt.Errorf("identity password transaction not found")
-		}
-		return nil, err
-	}
-
-	var identity types.Identity
-	util.FromJSON([]byte(tx.GetValue()), &identity)
-	identity.Password = passwordTx.GetValue()
-
-	return &identity, nil
 }
 
 // GetIdentity fetches an identity by email or id. If Email field is set in the request,
@@ -157,7 +55,7 @@ func (api *API) GetIdentity(ctx context.Context, req *proto_api.GetIdentityReque
 		key = (&types.Identity{Email: req.Email}).GetID()
 	}
 
-	identity, err := api.getIdentity(ctx, key)
+	identity, err := api.platform.GetIdentity(ctx, key)
 	if err != nil {
 		return nil, err
 	}

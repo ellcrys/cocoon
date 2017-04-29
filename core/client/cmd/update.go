@@ -4,12 +4,9 @@ import (
 	"os"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cstructs"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +29,7 @@ var updateCmd = &cobra.Command{
 
 		stopSpinner := util.Spinner("Please wait...")
 
-		cocoons, errs := parseContract(args[0], v)
+		contracts, errs := parseContract(args[0], v)
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
@@ -41,20 +38,9 @@ var updateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		for i, cocoon := range cocoons {
-
-			err := api.ValidateCocoon(cocoon)
-			if err != nil {
-				stopSpinner()
-				log.Fatalf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
-			}
-
-			stopSpinner()
-
-			var protoCreatePayloadReq proto_api.CocoonPayloadRequest
-			cstructs.Copy(cocoon, &protoCreatePayloadReq)
-			protoCreatePayloadReq.ACL = cocoon.ACL.ToJSON()
-			err = client.UpdateCocoon(protoCreatePayloadReq.ID, &protoCreatePayloadReq)
+		stopSpinner()
+		for i, contract := range contracts {
+			err := client.UpdateCocoon(contract.ID, contract)
 			if err != nil {
 				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
 			}

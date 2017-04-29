@@ -55,7 +55,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 	// Handle links to other cocoon code
 	if op.LinkTo != l.CocoonID {
 
-		cocoon, err := l.connector.GetCocoon(ctx, l.CocoonID)
+		_, callingCocoonRelease, err := l.connector.Platform.GetCocoonAndLastRelease(ctx, l.CocoonID, true, false)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("calling cocoon not found")
@@ -63,7 +63,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 			return err
 		}
 
-		linkedCocoon, err := l.connector.GetCocoon(ctx, op.GetLinkTo())
+		_, linkedCocoonRelease, err := l.connector.Platform.GetCocoonAndLastRelease(ctx, op.LinkTo, false, false)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("linked cocoon not found")
@@ -72,7 +72,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 		}
 
 		// Handle natively linked cocoon
-		if cocoon.Link == op.LinkTo {
+		if callingCocoonRelease.Link == op.LinkTo {
 			// natively linked cocoon currently have same privilege as the linked cocoon
 			return nil
 		}
@@ -91,7 +91,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 			defaultACLPolicy = ledger.Public
 		}
 
-		i := acl.NewInterpreterFromACLMap(linkedCocoon.ACL, defaultACLPolicy)
+		i := acl.NewInterpreterFromACLMap(linkedCocoonRelease.ACL, defaultACLPolicy)
 		if errs := i.Validate(); len(errs) != 0 {
 			return fmt.Errorf("linked cocoon ACL is not valid")
 		}

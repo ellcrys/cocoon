@@ -7,9 +7,9 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
+	"github.com/fatih/structs"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
@@ -59,50 +59,6 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 	return err
 }
 
-// putCocoon adds a new cocoon. If another cocoon with a matching key
-// exists, it is effectively shadowed
-func (api *API) putCocoon(ctx context.Context, cocoon *types.Cocoon) error {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return err
-	}
-	defer ordererConn.Close()
-
-	pubEnv, privEnv := cocoon.Env.Process()
-	cocoon.Env = pubEnv
-
-	createdAt, _ := time.Parse(time.RFC3339Nano, cocoon.CreatedAt)
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeCocoonKey(cocoon.ID),
-				Value:     string(cocoon.ToJSON()),
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPrivateLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeCocoonEnvKey(cocoon.ID),
-				Value:     string(privEnv.ToJSON()),
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	return err
-}
-
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
 func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
@@ -119,35 +75,10 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	loggedInIdentity := claims["identity"].(string)
 	var cocoon = types.Cocoon{
 		ID:             req.ID,
-		URL:            req.URL,
-		Version:        req.Version,
-		Language:       req.Language,
-		BuildParam:     req.BuildParam,
 		Memory:         int(req.Memory),
 		CPUShare:       int(req.CPUShare),
 		SigThreshold:   int(req.SigThreshold),
 		NumSignatories: int(req.NumSignatories),
-		Link:           req.Link,
-		Env:            req.Env,
-	}
-
-	// set acl map if provided
-	if len(req.ACL) > 0 {
-		cocoon.ACL, err = types.NewACLMapFromByte(req.ACL)
-		if err != nil {
-			return nil, fmt.Errorf("acl: %s", err)
-		}
-	}
-
-	// set firewall if provided
-	if len(req.Firewall) > 0 {
-		for _, f := range req.Firewall {
-			cocoon.Firewall = append(cocoon.Firewall, types.FirewallRule{
-				Destination:     f.Destination,
-				DestinationPort: f.DestinationPort,
-				Protocol:        f.Protocol,
-			})
-		}
 	}
 
 	cocoon.Status = CocoonStatusCreated
@@ -157,7 +88,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
 	// ensure a similar cocoon does not exist
-	_, err = api.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: cocoon.ID})
+	_, err = api.platform.GetCocoon(ctx, cocoon.ID)
 	if err != nil && err != types.ErrCocoonNotFound {
 		return nil, err
 	} else if err == nil {
@@ -168,23 +99,20 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, err
 	}
 
-	// Resolve firewall rules destination
-	outputFirewall, err := common.ResolveFirewall(cocoon.Firewall.DeDup())
+	err = api.platform.PutCocoon(ctx, &cocoon)
 	if err != nil {
-		return nil, fmt.Errorf("Firewall: %s", err)
+		return nil, err
 	}
-
-	cocoon.Firewall = outputFirewall
 
 	// if a link cocoon id is provided, ensure the linked cocoon exists
 	// and is owned by the currently logged in identity
-	if len(cocoon.Link) > 0 {
-		cocoonToLinkTo, err := api.getCocoon(ctx, cocoon.Link)
+	if len(req.Link) > 0 {
+		cocoonToLinkTo, err := api.platform.GetCocoon(ctx, req.Link)
 		if err != nil {
 			if err != types.ErrCocoonNotFound {
 				return nil, err
 			} else if err == types.ErrCocoonNotFound {
-				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", cocoon.Link)
+				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", req.Link)
 			}
 		}
 		// ensure logged in user owns the cocoon being linked
@@ -193,37 +121,63 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		}
 	}
 
-	err = api.putCocoon(ctx, &cocoon)
-	if err != nil {
-		return nil, err
-	}
-
 	// create new release
 	var release = &types.Release{
 		ID:         releaseID,
 		CocoonID:   cocoon.ID,
-		URL:        cocoon.URL,
-		Version:    cocoon.Version,
-		Language:   cocoon.Language,
-		BuildParam: cocoon.BuildParam,
-		Link:       cocoon.Link,
-		ACL:        cocoon.ACL,
-		Firewall:   cocoon.Firewall,
+		URL:        req.URL,
+		Version:    req.Version,
+		Language:   req.Language,
+		BuildParam: req.BuildParam,
+		Link:       req.Link,
 		Env:        req.Env,
 		CreatedAt:  now.UTC().Format(time.RFC3339Nano),
 	}
-	err = api.putRelease(ctx, release)
+
+	// Resolve firewall rules destination
+	if len(req.Firewall) > 0 {
+		var firewall types.Firewall
+		for _, f := range req.Firewall {
+			firewall = append(firewall, types.FirewallRule{Destination: f.Destination, DestinationPort: f.DestinationPort, Protocol: f.Protocol})
+		}
+		resolvedFirewall, err := common.ResolveFirewall(firewall)
+		if err != nil {
+			return nil, fmt.Errorf("Firewall: %s", err)
+		}
+		release.Firewall = resolvedFirewall
+	}
+
+	// set acl map if provided
+	if len(req.ACL) > 0 {
+		release.ACL, err = types.NewACLMapFromByte(req.ACL)
+		if err != nil {
+			return nil, fmt.Errorf("acl: %s", err)
+		}
+	}
+
+	// set firewall if provided
+	if len(req.Firewall) > 0 {
+		for _, f := range req.Firewall {
+			release.Firewall = append(release.Firewall, types.FirewallRule{
+				Destination:     f.Destination,
+				DestinationPort: f.DestinationPort,
+				Protocol:        f.Protocol,
+			})
+		}
+	}
+
+	err = api.platform.PutRelease(ctx, release)
 	if err != nil {
 		return nil, err
 	}
 
 	// Include new cocoon id in the logged in user's cocoon list
-	identity, err := api.getIdentity(ctx, cocoon.IdentityID)
+	identity, err := api.platform.GetIdentity(ctx, cocoon.IdentityID)
 	if err != nil {
 		return nil, err
 	}
 	identity.Cocoons = append(identity.Cocoons, cocoon.ID)
-	err = api.putIdentity(ctx, identity)
+	err = api.platform.PutIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
@@ -241,131 +195,101 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	var err error
 	var claims jwt.MapClaims
+	var cocoonUpdated bool
 
 	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.ID)
+	cocoon, err := api.platform.GetCocoon(ctx, req.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	loggedInIdentity := claims["identity"].(string)
-
 	// Ensure the cocoon identity matches the logged in user
+	loggedInIdentity := claims["identity"].(string)
 	if cocoon.IdentityID != loggedInIdentity {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	var cocoonToUpd = types.Cocoon{
+	var cocoonUpd = types.Cocoon{
 		ID:             req.ID,
-		URL:            req.URL,
-		Version:        req.Version,
-		Language:       req.Language,
-		BuildParam:     req.BuildParam,
 		Memory:         int(req.Memory),
 		CPUShare:       int(req.CPUShare),
 		SigThreshold:   int(req.SigThreshold),
 		NumSignatories: int(req.NumSignatories),
-		Link:           req.Link,
-		Env:            req.Env,
 	}
 
-	// If ACL is set, create an ACLMap, set the cocoonToUpd.ACL
+	// check if the updates defer from the existing cocoon fields values.
+	// validate cocoon changes
+	if cocoon.HasFieldsChanged(structs.New(cocoonUpd).Map()) {
+		cocoonUpdated = true
+		cocoon.Memory = cocoonUpd.Memory
+		cocoon.CPUShare = cocoonUpd.CPUShare
+		cocoon.SigThreshold = cocoonUpd.SigThreshold
+		cocoon.NumSignatories = cocoonUpd.NumSignatories
+
+		if err = ValidateCocoon(cocoon); err != nil {
+			return nil, err
+		}
+	}
+
+	// get the last deployed release. if no recently deployed release, get the most recent release
+	var recentReleaseID = cocoon.LastDeployedReleaseID
+	if len(recentReleaseID) == 0 {
+		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
+	}
+
+	release, err := api.platform.GetRelease(ctx, recentReleaseID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var releaseUpdated bool
+	releaseUpd := types.Release{
+		URL:        req.URL,
+		Version:    req.Version,
+		Language:   req.Language,
+		BuildParam: req.BuildParam,
+		Link:       req.Link,
+		Env:        req.Env,
+	}
+
+	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL
 	if len(req.ACL) > 0 {
-		cocoonToUpd.ACL, err = types.NewACLMapFromByte(req.ACL)
+		releaseUpd.ACL, err = types.NewACLMapFromByte(req.ACL)
 		if err != nil {
 			return nil, fmt.Errorf("acl: %s", err)
 		}
 	}
 
-	// If Firewall is set, copy new firewall rules to cocoonToUpd.Firewall
 	if len(req.Firewall) > 0 {
 		for _, f := range req.Firewall {
-			cocoonToUpd.Firewall = append(cocoonToUpd.Firewall, types.FirewallRule{
-				Destination:     f.Destination,
-				DestinationPort: f.DestinationPort,
-				Protocol:        f.Protocol,
-			})
+			releaseUpd.Firewall = append(releaseUpd.Firewall, types.FirewallRule{Destination: f.Destination, DestinationPort: f.DestinationPort, Protocol: f.Protocol})
 		}
+		outputFirewall, err := common.ResolveFirewall(releaseUpd.Firewall.DeDup())
+		if err != nil {
+			return nil, fmt.Errorf("Firewall: %s", err)
+		}
+		releaseUpd.Firewall = outputFirewall
 	}
 
-	// update new non-release specific fields that have been updated
-	cocoonUpdated := false
-	if cocoonToUpd.Memory != cocoon.Memory {
-		cocoon.Memory = cocoonToUpd.Memory
-		cocoonUpdated = true
-	}
-	if cocoonToUpd.CPUShare != cocoon.CPUShare {
-		cocoon.CPUShare = cocoonToUpd.CPUShare
-		cocoonUpdated = true
-	}
-	if cocoonToUpd.NumSignatories > 0 && cocoonToUpd.NumSignatories != cocoon.NumSignatories {
-		cocoon.NumSignatories = cocoonToUpd.NumSignatories
-		cocoonUpdated = true
-	}
-	if cocoonToUpd.SigThreshold > 0 && cocoonToUpd.SigThreshold != cocoon.SigThreshold {
-		cocoon.SigThreshold = cocoonToUpd.SigThreshold
-		cocoonUpdated = true
-	}
+	// check if the updates defer from the existing last deployed or created fields values.
+	// validate cocoon changes
+	if release.HasFieldsChanged(structs.New(releaseUpd).Map()) {
+		releaseUpdated = true
+		release.URL = releaseUpd.URL
+		release.Version = releaseUpd.Version
+		release.Language = releaseUpd.Language
+		release.BuildParam = releaseUpd.BuildParam
+		release.Link = releaseUpd.Link
+		release.Env = releaseUpd.Env
+		release.ACL = releaseUpd.ACL
+		release.Firewall = releaseUpd.Firewall
 
-	if err = ValidateCocoon(cocoon); err != nil {
-		return nil, err
-	}
-
-	outputFirewall, err := common.ResolveFirewall(cocoonToUpd.Firewall.DeDup())
-	if err != nil {
-		return nil, fmt.Errorf("Firewall: %s", err)
-	}
-
-	cocoonToUpd.Firewall = outputFirewall
-
-	// get the last deployed release. if no recently deployed release,
-	// get the most recent release
-	var recentReleaseID = cocoon.LastDeployedRelease
-	if len(recentReleaseID) == 0 {
-		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
-	}
-
-	release, err := api.getRelease(ctx, recentReleaseID, false)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create new release and set values if any of the release field changed
-	var releaseUpdated = false
-	if len(cocoonToUpd.URL) > 0 && cocoonToUpd.URL != release.URL {
-		release.URL = cocoonToUpd.URL
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.Version) > 0 && cocoonToUpd.Version != release.Version {
-		release.Version = cocoonToUpd.Version
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.Language) > 0 && cocoonToUpd.Language != release.Language {
-		release.Language = cocoonToUpd.Language
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.BuildParam) > 0 && cocoonToUpd.BuildParam != release.BuildParam {
-		release.BuildParam = cocoonToUpd.BuildParam
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.Link) > 0 && cocoonToUpd.Link != release.Link {
-		release.Link = cocoonToUpd.Link
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.Firewall) > 0 && !cocoonToUpd.Firewall.Eql(release.Firewall) {
-		release.Firewall = cocoonToUpd.Firewall
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.ACL) > 0 && !cocoonToUpd.ACL.Eql(release.ACL) {
-		release.ACL = cocoonToUpd.ACL
-		releaseUpdated = true
-	}
-	if len(cocoonToUpd.Env) > 0 && !cocoonToUpd.Env.Eql(release.Env) {
-		release.Env = cocoonToUpd.Env
-		releaseUpdated = true
+		if err = ValidateCocoon(cocoon); err != nil {
+			return nil, err
+		}
 	}
 
 	var finalResp = map[string]interface{}{
@@ -390,7 +314,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		}
 
 		// persist release
-		err = api.putRelease(ctx, release)
+		err = api.platform.PutRelease(ctx, release)
 		if err != nil {
 			return nil, err
 		}
@@ -400,7 +324,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	// update cocoon if cocoon was changed or release was updated/created
 	if cocoonUpdated || releaseUpdated {
-		err = api.putCocoon(ctx, cocoon)
+		err = api.platform.PutCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
 		}
@@ -414,38 +338,10 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}, nil
 }
 
-// getCocoon gets a cocoon with a matching id.
-func (api *API) getCocoon(ctx context.Context, id string) (*types.Cocoon, error) {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return nil, err
-	}
-	defer ordererConn.Close()
-
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
-		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeCocoonKey(id),
-		Ledger:   types.GetSystemPublicLedgerName(),
-	})
-	if err != nil {
-		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
-			return nil, types.ErrCocoonNotFound
-		}
-		return nil, err
-	}
-
-	var cocoon types.Cocoon
-	util.FromJSON([]byte(tx.Value), &cocoon)
-
-	return &cocoon, nil
-}
-
 // GetCocoon fetches a cocoon
 func (api *API) GetCocoon(ctx context.Context, req *proto_api.GetCocoonRequest) (*proto_api.Response, error) {
 
-	cocoon, err := api.getCocoon(ctx, req.GetID())
+	cocoon, err := api.platform.GetCocoon(ctx, req.GetID())
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +392,7 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 // stopCocoon stops a cocoon
 func (api *API) stopCocoon(ctx context.Context, id string) error {
 
-	cocoon, err := api.getCocoon(ctx, id)
+	cocoon, err := api.platform.GetCocoon(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -510,7 +406,7 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 
 	cocoon.Status = CocoonStatusStopped
 
-	if err = api.putCocoon(ctx, cocoon); err != nil {
+	if err = api.platform.PutCocoon(ctx, cocoon); err != nil {
 		apiLog.Error(err.Error())
 		return fmt.Errorf("failed to update cocoon status")
 	}
@@ -530,7 +426,7 @@ func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.GetID())
+	cocoon, err := api.platform.GetCocoon(ctx, req.GetID())
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +459,7 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +492,7 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 
 	for i, id := range req.IDs {
 
-		identity, err := api.getIdentity(ctx, id)
+		identity, err := api.platform.GetIdentity(ctx, id)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("%s: identity not found", common.GetShortID(_id[i])))
 			continue
@@ -613,7 +509,7 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 	}
 
 	if len(added) > 0 {
-		err := api.putCocoon(ctx, cocoon)
+		err := api.platform.PutCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
 		}
@@ -640,7 +536,7 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	release, err := api.getRelease(ctx, req.ReleaseID, false)
+	release, err := api.platform.GetRelease(ctx, req.ReleaseID, false)
 	if err != nil {
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
 			return nil, fmt.Errorf("release not found")
@@ -648,7 +544,7 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, err
 	}
 
-	cocoon, err := api.getCocoon(ctx, release.CocoonID)
+	cocoon, err := api.platform.GetCocoon(ctx, release.CocoonID)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +574,7 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		release.VotersID = append(release.VotersID, loggedInUserIdentity)
 	}
 
-	err = api.putRelease(ctx, release)
+	err = api.platform.PutRelease(ctx, release)
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +595,7 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSign
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
 	}
@@ -726,7 +622,7 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSign
 	}
 
 	cocoon.Signatories = newSignatories
-	err = api.putCocoon(ctx, cocoon)
+	err = api.platform.PutCocoon(ctx, cocoon)
 	if err != nil {
 		return nil, err
 	}

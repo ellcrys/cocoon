@@ -7,54 +7,10 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	context "golang.org/x/net/context"
 )
-
-// putRelease adds a new release. If another release with a matching key
-// exists, it is effectively shadowed
-func (api *API) putRelease(ctx context.Context, release *types.Release) error {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return err
-	}
-	defer ordererConn.Close()
-	pubEnv, privEnv := release.Env.Process()
-	release.Env = pubEnv
-
-	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPublicLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeReleaseKey(release.ID),
-				Value:     string(release.ToJSON()),
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
-		CocoonID:   types.SystemCocoonID,
-		LedgerName: types.GetSystemPrivateLedgerName(),
-		Transactions: []*proto_orderer.Transaction{
-			&proto_orderer.Transaction{
-				Id:        util.UUID4(),
-				Key:       types.MakeReleaseEnvKey(release.ID),
-				Value:     string(privEnv.ToJSON()),
-				CreatedAt: createdAt.Unix(),
-			},
-		},
-	})
-
-	return err
-}
 
 // CreateRelease creates a release
 func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseRequest) (*proto_api.Response, error) {
@@ -78,14 +34,14 @@ func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseR
 		return nil, err
 	}
 
-	_, err := api.getRelease(ctx, release.ID, false)
+	_, err := api.platform.GetRelease(ctx, release.ID, false)
 	if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
 		return nil, err
 	} else if err == nil {
 		return nil, fmt.Errorf("a release with matching id already exists")
 	}
 
-	err = api.putRelease(ctx, &release)
+	err = api.platform.PutRelease(ctx, &release)
 	if err != nil {
 		return nil, err
 	}
@@ -96,59 +52,10 @@ func (api *API) CreateRelease(ctx context.Context, req *proto_api.CreateReleaseR
 	}, nil
 }
 
-// getRelease gets an existing release and returns a release object.
-// Passing true to addPrivateFields will fetch other field values stored
-// on the private system ledger.
-func (api *API) getRelease(ctx context.Context, id string, addPrivateFields bool) (*types.Release, error) {
-
-	ordererConn, err := api.ordererDiscovery.GetGRPConn()
-	if err != nil {
-		return nil, err
-	}
-	defer ordererConn.Close()
-
-	odc := proto_orderer.NewOrdererClient(ordererConn)
-	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
-		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeReleaseKey(id),
-		Ledger:   types.GetSystemPublicLedgerName(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var release types.Release
-	util.FromJSON([]byte(tx.GetValue()), &release)
-
-	if addPrivateFields {
-
-		// get private environment variables
-		privEnvTx, err := odc.Get(ctx, &proto_orderer.GetParams{
-			CocoonID: types.SystemCocoonID,
-			Key:      types.MakeReleaseEnvKey(id),
-			Ledger:   types.GetSystemPrivateLedgerName(),
-		})
-		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
-			return nil, err
-		}
-
-		// include private environment variables with public variables in the release
-		if privEnvTx != nil {
-			var privEnvs map[string]string
-			util.FromJSON([]byte(privEnvTx.Value), &privEnvs)
-			for k, v := range privEnvs {
-				release.Env[k] = v
-			}
-		}
-	}
-
-	return &release, nil
-}
-
 // GetRelease returns a release
 func (api *API) GetRelease(ctx context.Context, req *proto_api.GetReleaseRequest) (*proto_api.Response, error) {
 
-	release, err := api.getRelease(ctx, req.ID, false)
+	release, err := api.platform.GetRelease(ctx, req.ID, false)
 	if err != nil {
 		return nil, err
 	}

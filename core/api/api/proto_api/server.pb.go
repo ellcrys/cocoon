@@ -498,7 +498,7 @@ func (m *GetReleaseRequest) GetID() string {
 
 type DeployRequest struct {
 	CocoonID               string `protobuf:"bytes,1,opt,name=cocoonID" json:"cocoonID,omitempty"`
-	UseLastDeployedRelease bool   `protobuf:"varint,2,opt,name=useLastDeployedRelease" json:"useLastDeployedRelease,omitempty"`
+	UseLastDeployedReleaseID bool   `protobuf:"varint,2,opt,name=useLastDeployedReleaseID" json:"useLastDeployedReleaseID,omitempty"`
 }
 
 func (m *DeployRequest) Reset()                    { *m = DeployRequest{} }
@@ -513,9 +513,9 @@ func (m *DeployRequest) GetCocoonID() string {
 	return ""
 }
 
-func (m *DeployRequest) GetUseLastDeployedRelease() bool {
+func (m *DeployRequest) GetUseLastDeployedReleaseID() bool {
 	if m != nil {
-		return m.UseLastDeployedRelease
+		return m.UseLastDeployedReleaseID
 	}
 	return false
 }

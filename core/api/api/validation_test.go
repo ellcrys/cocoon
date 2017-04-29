@@ -28,51 +28,17 @@ func TestValidation(t *testing.T) {
 					ID: util.UUID4(),
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "repo.url: url is required")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:  util.UUID4(),
-					URL: "http://google.com",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "repo.url: url is not a valid github repo url")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:  util.UUID4(),
-					URL: "https://github.com/ncodes/cocoon-example-01",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "repo.language: language is required")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "c#",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "repo.language: language is not supported. Expects one of these values [go]")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-				})
-				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "resources.memory: memory is required")
 
 				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-					Memory:   512,
+					ID:     util.UUID4(),
+					Memory: 512,
 				})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "resources.cpuShare: CPU share is required")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
 					Memory:   100,
 					CPUShare: 122,
 				})
@@ -81,8 +47,6 @@ func TestValidation(t *testing.T) {
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID:             util.UUID4(),
-					URL:            "https://github.com/ncodes/cocoon-example-01",
-					Language:       "go",
 					Memory:         512,
 					CPUShare:       100,
 					NumSignatories: 1,
@@ -206,14 +170,14 @@ func TestValidation(t *testing.T) {
 				"VAR-B":    "value",
 				"VAR@Flag": "value",
 			})
-			So(len(errs), ShouldEqual, 1)
+			So(len(errs), ShouldEqual, 2)
 
 			errs = ValidateEnvVariables(map[string]string{
 				"VAR B":    "value",
 				"VAR-B":    "value",
 				"VAR@Flag": "value",
 			})
-			So(len(errs), ShouldEqual, 2)
+			So(len(errs), ShouldEqual, 3)
 		})
 	})
 }

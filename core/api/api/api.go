@@ -11,7 +11,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/orderer/orderer"
+	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	"google.golang.org/grpc"
@@ -23,23 +23,23 @@ var apiLog = config.MakeLogger("api.rpc", "api")
 // cocoon operations such as cocoon orchestration, resource
 // allocation etc
 type API struct {
-	server           *grpc.Server
-	endedCh          chan bool
-	ordererDiscovery *orderer.Discovery
-	scheduler        scheduler.Scheduler
-	logProvider      types.LogProvider
+	server      *grpc.Server
+	endedCh     chan bool
+	platform    *platform.Transactions
+	scheduler   scheduler.Scheduler
+	logProvider types.LogProvider
 }
 
 // NewAPI creates a new GRPCAPI object
 func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
-	ordererDiscovery, err := orderer.NewDiscovery()
+	platform, err := platform.NewTransactions()
 	if err != nil {
 		return nil, err
 	}
 	return &API{
-		scheduler:        scheduler,
-		ordererDiscovery: ordererDiscovery,
-		logProvider:      &StackDriverLog{},
+		scheduler:   scheduler,
+		logProvider: &StackDriverLog{},
+		platform:    platform,
 	}, nil
 }
 
@@ -64,11 +64,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 		apiLog.Infof("      Environment = %s", util.Env("ENV", "development"))
 		apiLog.Infof("      API Version = %s", util.Env("API_VERSION", ""))
 		apiLog.Infof("Connector Version = %s", util.Env("CONNECTOR_VERSION", ""))
-		go api.ordererDiscovery.Discover()
 		time.Sleep(1 * time.Second)
-		if len(api.ordererDiscovery.GetAddrs()) == 0 {
-			apiLog.Warning("No orderer address was found. We won't be able to reach the orderer. ")
-		}
 	})
 
 	api.server = grpc.NewServer()
@@ -79,6 +75,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 // Stop stops the api and returns an exit code.
 func (api *API) Stop(exitCode int) int {
 	api.server.Stop()
+	api.platform.Stop()
 	close(api.endedCh)
 	return exitCode
 }
