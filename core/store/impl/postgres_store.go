@@ -50,7 +50,6 @@ func (s *PostgresStore) GetImplementationName() string {
 // Connect connects to a postgres server and returns a client
 // or error if connection failed.
 func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
-
 	var err error
 	s.db, err = gorm.Open("postgres", dbAddr)
 	if err != nil {
@@ -117,7 +116,7 @@ func Destroy(dbAddr string) error {
 
 	db, err := gorm.Open("postgres", dbAddr)
 	if err != nil {
-		return fmt.Errorf("failed to connect to store backend")
+		return fmt.Errorf("failed to connect to store backend. %s", err)
 	}
 
 	return db.DropTable(types.Ledger{}, types.Transaction{}).Error

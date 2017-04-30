@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,9 +9,9 @@ import (
 
 	"os"
 
-	"os/exec"
-
 	"fmt"
+
+	"database/sql"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
@@ -20,29 +21,36 @@ import (
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
+
+	"strings"
+
+	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
-	context "golang.org/x/net/context"
 )
 
-var dbName = "test_db_" + util.RandString(5)
+var db *sql.DB
+var dbName = "test_" + strings.ToLower(util.RandString(5))
 var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbName+" sslmode=disable password=")
+var storeConStrWithDB = util.Env("STORE_CON_STR", "host=localhost user=ned sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+
+	var err error
+	db, err = sql.Open("postgres", storeConStrWithDB)
+	if err != nil {
+		panic(fmt.Errorf("failed to connector to datatabase: %s", err))
+	}
 }
 
 func createDb(t *testing.T) error {
-	if err := exec.Command("createdb", dbName).Start(); err != nil {
-		return fmt.Errorf("failed to create test db")
-	}
-	return nil
+	_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s;", dbName))
+	return err
 }
 
 func dropDB(t *testing.T) error {
-	if err := exec.Command("dropdb", dbName).Start(); err != nil {
-		return fmt.Errorf("failed to drop test db")
-	}
-	return impl.Destroy(storeConStr)
+	_, err := db.Query(fmt.Sprintf("DROP DATABASE %s;", dbName))
+	return err
 }
 
 func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
@@ -54,7 +62,9 @@ func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
 	newOrderer.SetStore(new(impl.PostgresStore))
 	newOrderer.SetBlockchain(new((blkch_impl.PostgresBlockchain)))
 	go newOrderer.Start(addr, storeConStr, endCh)
-	startCB(newOrderer, endCh)
+	newOrderer.EventEmitter.AddListener("started", func() {
+		startCB(newOrderer, endCh)
+	})
 	<-endCh
 }
 
@@ -66,14 +76,17 @@ func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 		t.Fail()
 	}
 	addr := util.Env("API_ADDRESS", "127.0.0.1:7004")
+	SetLogLevel(logging.CRITICAL)
 	go apiServer.Start(addr, endCh)
-	time.Sleep(3 * time.Second)
-	startCB(apiServer, endCh)
+	apiServer.EventEmitter.AddListener("started", func() {
+		startCB(apiServer, endCh)
+	})
 	<-endCh
 }
 
 func TestOrderer(t *testing.T) {
 
+	defer db.Close()
 	err := createDb(t)
 	if err != nil {
 		t.Fatal(err)
@@ -306,14 +319,8 @@ func TestOrderer(t *testing.T) {
 
 				})
 			})
-
 			close(apiEndCh)
 		})
-
 		close(endCh)
-		err := dropDB(t)
-		if err != nil {
-			t.Fail()
-		}
 	})
 }

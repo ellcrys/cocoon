@@ -8,26 +8,34 @@ import (
 
 	"os"
 
+	"github.com/chuckpreslar/emission"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
+	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )
 
 var apiLog = config.MakeLogger("api.rpc", "api")
 
+// SetLogLevel sets the log level of the logger
+func SetLogLevel(l logging.Level) {
+	logging.SetLevel(l, apiLog.Module)
+}
+
 // API defines a GRPC api for performing various
 // cocoon operations such as cocoon orchestration, resource
 // allocation etc
 type API struct {
-	server      *grpc.Server
-	endedCh     chan bool
-	platform    *platform.Transactions
-	scheduler   scheduler.Scheduler
-	logProvider types.LogProvider
+	server       *grpc.Server
+	endedCh      chan bool
+	platform     *platform.Transactions
+	scheduler    scheduler.Scheduler
+	logProvider  types.LogProvider
+	EventEmitter *emission.Emitter
 }
 
 // NewAPI creates a new GRPCAPI object
@@ -36,10 +44,13 @@ func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
 	if err != nil {
 		return nil, err
 	}
+	eventEmitter := emission.NewEmitter()
+	eventEmitter.SetMaxListeners(20)
 	return &API{
-		scheduler:   scheduler,
-		logProvider: &StackDriverLog{},
-		platform:    platform,
+		scheduler:    scheduler,
+		logProvider:  &StackDriverLog{},
+		platform:     platform,
+		EventEmitter: eventEmitter,
 	}, nil
 }
 
@@ -58,13 +69,13 @@ func (api *API) Start(addr string, endedCh chan bool) {
 		apiLog.Fatalf("failed to initialize log provider: %v", err)
 	}
 
-	time.AfterFunc(2*time.Second, func() {
+	time.AfterFunc(1*time.Second, func() {
 		apiLog.Info("Server has started")
 		apiLog.Infof("         RPC Port = %s", strings.Split(addr, ":")[1])
 		apiLog.Infof("      Environment = %s", util.Env("ENV", "development"))
 		apiLog.Infof("      API Version = %s", util.Env("API_VERSION", ""))
 		apiLog.Infof("Connector Version = %s", util.Env("CONNECTOR_VERSION", ""))
-		time.Sleep(1 * time.Second)
+		api.EventEmitter.Emit("started")
 	})
 
 	api.server = grpc.NewServer()

@@ -34,7 +34,7 @@ func (b *PostgresBlockchain) Connect(dbAddr string) (interface{}, error) {
 	var err error
 	b.db, err = gorm.Open("postgres", dbAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to blockchain backend")
+		return nil, fmt.Errorf("failed to connect to blockchain backend. %s", err)
 	}
 
 	b.db.LogMode(false)
