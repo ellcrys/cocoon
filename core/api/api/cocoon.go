@@ -182,10 +182,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	var cocoonUpd = cocoon.Clone()
-	cocoonUpd.Memory = int(req.Memory)
-	cocoonUpd.CPUShare = int(req.CPUShare)
-	cocoonUpd.SigThreshold = int(req.SigThreshold)
-	cocoonUpd.NumSignatories = int(req.NumSignatories)
+	copier.Copy(&cocoonUpd, req)
 
 	// check if the existing cocoon differ from the updated cocoon
 	// if so, apply the new update
@@ -209,11 +206,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	releaseUpd := release.Clone()
-	releaseUpd.URL = req.URL
-	releaseUpd.Version = req.Version
-	releaseUpd.Language = req.Language
-	releaseUpd.BuildParam = req.BuildParam
-	releaseUpd.Link = req.Link
+	copier.Copy(&releaseUpd, release)
 	releaseUpd.Env = types.NewEnv(req.Env).ProcessAsOne(true)
 	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
 	releaseUpd.Firewall = types.CopyFirewall(req.Firewall)
