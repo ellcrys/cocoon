@@ -14,7 +14,6 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -133,7 +132,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
+	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, true)
 	if err != nil {
 		log.Errorf("Failed to fetch cocoon [%s] information", cn.req.ID)
 		return
@@ -150,9 +149,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	}
 
 	// include the environment variable of the release
-	pretty.Println(cn.release.Env)
 	cocoonEnv := cn.release.Env.ProcessAsOne(false)
-	pretty.Println(cocoonEnv)
 	for k, v := range cocoonEnv {
 		env[k] = v
 	}
