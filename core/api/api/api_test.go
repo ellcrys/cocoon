@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,9 +9,9 @@ import (
 
 	"os"
 
-	"os/exec"
-
 	"fmt"
+
+	"database/sql"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
@@ -20,29 +21,36 @@ import (
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
+
+	"strings"
+
+	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey" // convey needs this
-	context "golang.org/x/net/context"
 )
 
-var dbname = "test_db_" + util.RandString(5)
-var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbname+" sslmode=disable password=")
+var db *sql.DB
+var dbName = "test_" + strings.ToLower(util.RandString(5))
+var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbName+" sslmode=disable password=")
+var storeConStrWithDB = util.Env("STORE_CON_STR", "host=localhost user=ned sslmode=disable password=")
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+
+	var err error
+	db, err = sql.Open("postgres", storeConStrWithDB)
+	if err != nil {
+		panic(fmt.Errorf("failed to connector to datatabase: %s", err))
+	}
 }
 
 func createDb(t *testing.T) error {
-	if err := exec.Command("createdb", dbname).Start(); err != nil {
-		return fmt.Errorf("failed to create test db")
-	}
-	return nil
+	_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s;", dbName))
+	return err
 }
 
 func dropDB(t *testing.T) error {
-	if err := exec.Command("dropdb", dbname).Start(); err != nil {
-		return fmt.Errorf("failed to drop test db")
-	}
-	return impl.Destroy(storeConStr)
+	_, err := db.Query(fmt.Sprintf("DROP DATABASE %s;", dbName))
+	return err
 }
 
 func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
@@ -54,7 +62,9 @@ func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
 	newOrderer.SetStore(new(impl.PostgresStore))
 	newOrderer.SetBlockchain(new((blkch_impl.PostgresBlockchain)))
 	go newOrderer.Start(addr, storeConStr, endCh)
-	startCB(newOrderer, endCh)
+	newOrderer.EventEmitter.AddListener("started", func() {
+		startCB(newOrderer, endCh)
+	})
 	<-endCh
 }
 
@@ -64,20 +74,25 @@ func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 	if err != nil {
 		t.Error(err)
 		t.Fail()
+		return
 	}
 	addr := util.Env("API_ADDRESS", "127.0.0.1:7004")
+	SetLogLevel(logging.CRITICAL)
 	go apiServer.Start(addr, endCh)
-	time.Sleep(3 * time.Second)
-	startCB(apiServer, endCh)
+	apiServer.EventEmitter.AddListener("started", func() {
+		startCB(apiServer, endCh)
+	})
 	<-endCh
 }
 
 func TestOrderer(t *testing.T) {
 
+	defer db.Close()
 	err := createDb(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer dropDB(t)
 
 	key := "secret"
 
@@ -148,7 +163,7 @@ func TestOrderer(t *testing.T) {
 									})
 									So(r, ShouldBeNil)
 									So(err, ShouldNotBeNil)
-									So(err.Error(), ShouldEqual, "cocoon with matching ID already exists")
+									So(err.Error(), ShouldEqual, "cocoon with the same id already exists")
 								})
 
 								Convey(".GetCocoon", func() {
@@ -173,55 +188,46 @@ func TestOrderer(t *testing.T) {
 							})
 						})
 
-						Convey(".CreateRelease", func() {
+						Convey(".UpdateCocoon", func() {
 
-							Convey("Should successfully create a release", func() {
-								id := util.UUID4()
-								r, err := api.CreateRelease(context.Background(), &proto_api.
-									CreateReleaseRequest{
-									ID:       id,
-									CocoonID: "cocoon-123",
-									URL:      "https://github.com/ncodes/cocoon-example-01",
-									Language: scheduler.SupportedCocoonCodeLang[0],
-								})
+							ss, err := makeAuthToken(util.UUID4(), identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
+							So(err, ShouldBeNil)
+							md := metadata.Pairs("access_token", ss)
+							ctx := context.Background()
+							ctx = metadata.NewIncomingContext(ctx, md)
+
+							id := util.UUID4()
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+								ID:             id,
+								URL:            "https://github.com/ncodes/cocoon-example-01",
+								Language:       "go",
+								Memory:         512,
+								NumSignatories: 1,
+								SigThreshold:   1,
+								CPUShare:       100,
+							})
+							So(err, ShouldBeNil)
+							So(r.Status, ShouldEqual, 200)
+
+							Convey("Should return error if logged in identity does not own the cocoon", func() {
+								ss, err := makeAuthToken(util.UUID4(), "some_identity", "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 								So(err, ShouldBeNil)
-								So(r.Status, ShouldEqual, 200)
-								So(len(r.Body), ShouldNotEqual, 0)
-
-								Convey("Should fail to create release with an already used id", func() {
-									r, err := api.CreateRelease(context.Background(), &proto_api.
-										CreateReleaseRequest{
-										ID:       id,
-										CocoonID: "cocoon-123",
-										URL:      "https://github.com/ncodes/cocoon-example-01",
-										Language: scheduler.SupportedCocoonCodeLang[0],
-									})
-									So(r, ShouldBeNil)
-									So(err, ShouldNotBeNil)
-									So(err.Error(), ShouldEqual, "a release with matching id already exists")
+								md := metadata.Pairs("access_token", ss)
+								ctx := context.Background()
+								ctx = metadata.NewIncomingContext(ctx, md)
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+									ID: id,
 								})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "Permission denied: You do not have permission to perform this operation")
+							})
 
-								Convey(".GetRelease", func() {
-									Convey("Should successfully get an existing release", func() {
-										r, err := api.GetRelease(context.Background(), &proto_api.
-											GetReleaseRequest{
-											ID: id,
-										})
-										So(err, ShouldBeNil)
-										So(r.Status, ShouldEqual, 200)
-										So(len(r.Body), ShouldNotEqual, 0)
-									})
-
-									Convey("Should return error if release is not found", func() {
-										r, err := api.GetRelease(context.Background(), &proto_api.
-											GetReleaseRequest{
-											ID: id,
-										})
-										So(err, ShouldBeNil)
-										So(r.Status, ShouldEqual, 200)
-										So(len(r.Body), ShouldNotEqual, 0)
-									})
+							Convey("Should return error if a field is missing", func() {
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+									ID: id,
 								})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "resources.memory: memory is required")
 							})
 						})
 					})
@@ -301,15 +307,13 @@ func TestOrderer(t *testing.T) {
 						So(err.Error(), ShouldEqual, "email or password are invalid")
 					})
 				})
-			})
 
+				Convey(".CreateCocoon", func() {
+
+				})
+			})
 			close(apiEndCh)
 		})
-
 		close(endCh)
-		err := dropDB(t)
-		if err != nil {
-			t.Fail()
-		}
 	})
 }

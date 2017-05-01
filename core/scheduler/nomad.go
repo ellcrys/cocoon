@@ -75,10 +75,6 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, m
 		return nil, fmt.Errorf("job id is required")
 	}
 
-	if err = common.ValidateDeployment(url, lang, buildParams); err != nil {
-		return nil, err
-	}
-
 	log.Debugf("Deploying cocoon code with language=%s, url=%s, version=%s", lang, url, version)
 
 	if len(buildParams) > 0 {

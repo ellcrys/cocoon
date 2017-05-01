@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 
+	"strings"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	cocoon_util "github.com/ncodes/cocoon-util"
@@ -21,30 +23,6 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if !common.IsValidCocoonID(c.ID) {
 		return fmt.Errorf("id: id is not a valid resource name")
 	}
-	if len(c.URL) == 0 {
-		return fmt.Errorf("repo.url: url is required")
-	}
-	if !cocoon_util.IsGithubRepoURL(c.URL) {
-		return fmt.Errorf("repo.url: url is not a valid github repo url")
-	}
-	if !cocoon_util.IsExistingGithubRepo(c.URL) {
-		return fmt.Errorf("repo.url: repository url could not be reached")
-	}
-	if cocoon_util.IsGithubCommitID(c.Version) && !cocoon_util.IsValidGithubCommitID(c.URL, c.Version) {
-		return fmt.Errorf("repo.version: repository version appears to be a commit id but it does not exist")
-	}
-	if len(c.Language) == 0 {
-		return fmt.Errorf("repo.language: language is required")
-	}
-	if !util.InStringSlice(scheduler.SupportedCocoonCodeLang, c.Language) {
-		return fmt.Errorf("repo.language: language is not supported. Expects one of these values %s", scheduler.SupportedCocoonCodeLang)
-	}
-	if len(c.BuildParam) > 0 {
-		var _c map[string]interface{}
-		if util.FromJSON([]byte(c.BuildParam), &_c) != nil {
-			return fmt.Errorf("build: build parameter is not valid json")
-		}
-	}
 	if c.Memory == 0 {
 		return fmt.Errorf("resources.memory: memory is required")
 	}
@@ -54,9 +32,6 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if common.GetResourceSet(c.Memory, c.CPUShare) == nil {
 		return fmt.Errorf("resources: Unknown resource set")
 	}
-	if len(c.Link) > 0 && c.Link == c.ID {
-		return fmt.Errorf("link: Cocoon cannot link to itself")
-	}
 	if c.NumSignatories <= 0 {
 		return fmt.Errorf("signatories.max: number of signatories cannot be less than 1")
 	}
@@ -64,18 +39,7 @@ func ValidateCocoon(c *types.Cocoon) error {
 		return fmt.Errorf("signatories.threshold: signatory threshold cannot be less than 1")
 	}
 	if c.NumSignatories < len(c.Signatories) {
-		return fmt.Errorf("signatories: max signatories already added. You can't add more")
-	}
-	if c.Firewall != nil {
-		_, errs := ValidateFirewall(c.Firewall.ToMap())
-		if len(errs) != 0 {
-			return fmt.Errorf("firewall: %s, ", errs[0])
-		}
-	}
-	if len(c.ACL) > 0 {
-		if errs := acl.NewInterpreterFromACLMap(c.ACL, false).Validate(); len(errs) > 0 {
-			return fmt.Errorf("acl: %s", errs[0])
-		}
+		return fmt.Errorf("signatories.signatories: max signatories already added. You can't add more")
 	}
 
 	return nil
@@ -111,6 +75,22 @@ func ValidateRelease(r *types.Release) error {
 			return fmt.Errorf("build parameter is not valid json")
 		}
 	}
+	if r.Firewall != nil {
+		_, errs := ValidateFirewall(r.Firewall.ToMap())
+		if len(errs) != 0 {
+			return fmt.Errorf("firewall: %s, ", errs[0])
+		}
+	}
+	if len(r.ACL) > 0 {
+		if errs := acl.NewInterpreterFromACLMap(r.ACL, false).Validate(); len(errs) > 0 {
+			return fmt.Errorf("acl: %s", errs[0])
+		}
+	}
+	if len(r.Env) > 0 {
+		if errs := ValidateEnvVariables(r.Env); len(errs) > 0 {
+			return fmt.Errorf("env: %s", errs[0])
+		}
+	}
 	return nil
 }
 
@@ -125,6 +105,38 @@ func ValidateIdentity(i *types.Identity) error {
 		return fmt.Errorf("password is too short. Minimum of 8 characters required")
 	}
 	return nil
+}
+
+// ValidateEnvVariables validates the keys of a map containing environment variable data
+func ValidateEnvVariables(envs map[string]string) []error {
+	var errs []error
+	var validFlags = []string{
+		"private",
+		"genRand16",
+		"genRand24",
+		"genRand32",
+		"genRand64",
+		"genRand128",
+		"genRand256",
+		"genRand512",
+	}
+	for k := range envs {
+		if !govalidator.Matches(k, "(?i)^[a-z_0-9@,]+$") {
+			errs = append(errs, fmt.Errorf("'%s': invalid key. Only alphanumeric characters and underscores are allowed", k))
+		}
+		if strings.Index(k, ",") != -1 && strings.Index(k, "@") == -1 {
+			errs = append(errs, fmt.Errorf("'%s': invalid key. Comma (,) is only allowed when using multiple flags", k))
+		}
+		if strings.Index(k, "@") != -1 {
+			flags := types.GetFlags(k)
+			for _, f := range flags {
+				if !util.InStringSlice(validFlags, f) {
+					errs = append(errs, fmt.Errorf("'%s': variable has invalid flag = '%s'", k, f))
+				}
+			}
+		}
+	}
+	return errs
 }
 
 // ValidateFirewall parses and validates the content of
@@ -168,8 +180,6 @@ func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
 		if rule["destination"] == "" {
 			errs = append(errs, fmt.Errorf("rule %d: destination is required", i))
 		} else if !govalidator.IsHost(rule["destination"]) {
-			util.Printify(rule)
-			util.Printify(firewallMap)
 			errs = append(errs, fmt.Errorf("rule %d: destination is not a valid IP or host", i))
 		}
 

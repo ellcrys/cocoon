@@ -87,6 +87,12 @@
 			"revisionTime": "2016-10-20T19:33:16Z"
 		},
 		{
+			"checksumSHA1": "Wa9bNxyxEaIqdjLxoQQAU9sURNs=",
+			"path": "github.com/chuckpreslar/emission",
+			"revision": "a7ddd980baf9ec8ad3f2e6826ef9eacfe55b3f02",
+			"revisionTime": "2017-02-06T19:48:24Z"
+		},
+		{
 			"checksumSHA1": "2Fy1Y6Z3lRRX1891WF/+HT4XS2I=",
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "9ed569b5d1ac936e6494082958d63a6aa4fff99a",
@@ -242,7 +248,7 @@
 			"revisionTime": "2017-01-28T16:01:50Z"
 		},
 		{
-			"checksumSHA1": "qhABYgug88WRV9s/EQvlFy+1XYc=",
+			"checksumSHA1": "3icx+kFlW7nJxQC0pINJADVJXF8=",
 			"path": "github.com/ellcrys/util",
 			"revision": "4f0a2d2b43350cec9c9003959779b8b24190b641",
 			"revisionTime": "2017-04-16T08:21:50Z"
@@ -450,6 +456,18 @@
 			"path": "github.com/hokaccha/go-prettyjson",
 			"revision": "f75235bd99dad4e98ff360db8372d5c0ef1d054a",
 			"revisionTime": "2014-12-01T06:53:30Z"
+		},
+		{
+			"checksumSHA1": "VBXGouqOkPe3OkeJnyUBkx3aZXA=",
+			"path": "github.com/imdario/mergo",
+			"revision": "d806ba8c21777d504a2090a2ca4913c750dd3a33",
+			"revisionTime": "2017-03-26T20:45:27Z"
+		},
+		{
+			"checksumSHA1": "q3t055syUJgQ0+SEKfHLg2680LI=",
+			"path": "github.com/jinzhu/copier",
+			"revision": "8bfca8a02a0ce12119cdc4974143c834ca589257",
+			"revisionTime": "2017-02-05T15:16:47Z"
 		},
 		{
 			"checksumSHA1": "INn29nRtoEqjJdX5m4TlLJMztkc=",

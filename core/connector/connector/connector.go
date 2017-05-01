@@ -20,6 +20,7 @@ import (
 	"github.com/ncodes/cocoon/core/connector/monitor"
 	"github.com/ncodes/cocoon/core/connector/router"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
+	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/types"
 	docker "github.com/ncodes/go-dockerclient"
 	logging "github.com/op/go-logging"
@@ -54,6 +55,8 @@ type Connector struct {
 	healthCheck       *HealthChecker
 	ordererDiscovery  *orderer.Discovery
 	cocoon            *types.Cocoon
+	release           *types.Release
+	Platform          *platform.Transactions
 }
 
 // NewConnector creates a new connector
@@ -62,11 +65,16 @@ func NewConnector(req *Request, waitCh chan bool) (*Connector, error) {
 	if err != nil {
 		return nil, err
 	}
+	platform, err := platform.NewTransactions()
+	if err != nil {
+		return nil, err
+	}
 	return &Connector{
 		req:              req,
 		waitCh:           waitCh,
 		monitor:          monitor.NewMonitor(req.ID),
 		ordererDiscovery: ordererDiscovery,
+		Platform:         platform,
 	}, nil
 }
 
@@ -122,14 +130,31 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		return
 	}
 
-	lang.SetRunEnv(map[string]string{
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
+	if err != nil {
+		log.Errorf("Failed to fetch cocoon [%s] information", cn.req.ID)
+		return
+	}
+
+	log.Info("Preparing cocoon code environment variables")
+
+	var env = map[string]string{
 		"COCOON_ID":           cn.req.ID,
 		"CONNECTOR_RPC_ADDR":  cn.connectorRPCAddr,
-		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
+		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this addråess
 		"COCOON_LINK":         cn.req.Link,          // the cocoon code id to link to natively
 		"COCOON_CODE_VERSION": cn.req.Version,
-	})
+	}
 
+	// include the environment variable of the release
+	cocoonEnv := cn.release.Env.ProcessAsOne(false)
+	for k, v := range cocoonEnv {
+		env[k] = v
+	}
+
+	lang.SetRunEnv(env)
 	go cn.monitor.Monitor()
 
 	go func() {
@@ -253,13 +278,13 @@ func (cn *Connector) setStatus(status string) error {
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
 
-	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	cocoon, err := cn.Platform.GetCocoon(ctx, cn.req.ID)
 	if err != nil {
 		return err
 	}
 
 	cocoon.Status = status
-	err = cn.PutCocoon(ctx, cocoon)
+	err = cn.Platform.PutCocoon(ctx, cocoon)
 	if err != nil {
 		return err
 	}
@@ -583,13 +608,13 @@ func (cn *Connector) configureRouter() error {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	cocoon, release, err := cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
 	if err != nil {
 		return err
 	}
 
-	// if cocoon is not linked, then add a frontend and backend routing rule
-	if len(cocoon.Link) == 0 {
+	// if cocoon's release is not linked, then add a frontend and backend routing rule
+	if len(release.Link) == 0 {
 		log.Info("Cocoon is not linked to another cocoon, adding new frontend and backend")
 		if err := cn.routerHelper.AddFrontend(cocoon.ID); err != nil {
 			return err
@@ -601,9 +626,9 @@ func (cn *Connector) configureRouter() error {
 		return nil
 	}
 
-	// cocoon is linked and therefore must become a backend server to the linked cocoon
-	log.Infof("Cocoon is linked to another cocoon (%s), adding http server to linked cocoon backend", cocoon.Link)
-	if err = cn.routerHelper.AddBackend(cocoon.Link, cocoon.ID); err != nil {
+	// cocoon's release is linked and therefore must become a backend server to the linked cocoon
+	log.Infof("Cocoon is linked to another cocoon (%s), adding http server to linked cocoon backend", release.Link)
+	if err = cn.routerHelper.AddBackend(release.Link, cocoon.ID); err != nil {
 		return err
 	}
 	log.Info("Successfully configured router")
@@ -673,12 +698,12 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 	// get cocoon object
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cocoon, err := cn.GetCocoon(ctx, cn.req.ID)
+	_, release, err := cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
 	if err != nil {
 		return err
 	}
 
-	cmd := []string{"bash", "-c", cn.getFirewallScript(cocoon.Firewall)}
+	cmd := []string{"bash", "-c", cn.getFirewallScript(release.Firewall)}
 	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
 		switch state {
 		case "before":

@@ -21,7 +21,7 @@ func (api *API) GetLogs(ctx context.Context, req *proto_api.GetLogsRequest) (*pr
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.CocoonID)
+	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
 	}

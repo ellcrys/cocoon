@@ -3,7 +3,6 @@ package cmd
 import (
 	"io/ioutil"
 	"os"
-	"time"
 
 	"fmt"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl"
 	c_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
+	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -23,7 +23,7 @@ import (
 )
 
 // parseContract passes a contract files
-func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
+func parseContract(path, repoVersion string) ([]*proto_api.CocoonPayloadRequest, []error) {
 	var id string
 	var url string
 	var lang string
@@ -37,7 +37,8 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 	var firewall string
 	var configFileData map[string]interface{}
 	var aclMap map[string]interface{}
-	var cocoons []*types.Cocoon
+	var cocoons []*proto_api.CocoonPayloadRequest
+	var env map[string]interface{}
 	var errs []error
 
 	// path is a local file path
@@ -155,9 +156,13 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 					aclMap = acls[0]
 				}
 
-				if firewalls, ok := contract["firewall"].([]map[string]interface{}); ok && len(firewalls) > 0 {
-					bs, _ := util.ToJSON(firewalls)
+				if firewallRules, ok := contract["firewall-rule"].([]map[string]interface{}); ok && len(firewallRules) > 0 {
+					bs, _ := util.ToJSON(firewallRules)
 					firewall = string(bs)
+				}
+
+				if envs, ok := contract["env"].([]map[string]interface{}); ok && len(envs) > 0 {
+					env = envs[0]
 				}
 
 				// validate ACLMap
@@ -172,32 +177,39 @@ func parseContract(path, repoVersion string) ([]*types.Cocoon, []error) {
 				}
 
 				// parse and validate firewall
-				var validFirewallRules []types.FirewallRule
+				var payloadFirewallRules []*proto_api.FirewallRule
 				if len(firewall) > 0 {
 					var _errs []error
-					validFirewallRules, errs = api.ValidateFirewall(firewall)
-					if _errs != nil && len(_errs) > 0 {
+					validFirewallRules, _errs := api.ValidateFirewall(firewall)
+					if len(_errs) > 0 {
 						for _, err := range errs {
 							errs = append(errs, fmt.Errorf("firewall: %s", err))
 						}
 						return nil, errs
 					}
+					for _, rule := range validFirewallRules {
+						payloadFirewallRules = append(payloadFirewallRules, &proto_api.FirewallRule{
+							Destination:     rule.Destination,
+							DestinationPort: rule.DestinationPort,
+							Protocol:        rule.Protocol,
+						})
+					}
 				}
 
-				cocoons = append(cocoons, &types.Cocoon{
+				cocoons = append(cocoons, &proto_api.CocoonPayloadRequest{
 					ID:             id,
 					URL:            url,
 					Language:       lang,
 					Version:        version,
 					BuildParam:     buildParams,
-					Firewall:       validFirewallRules,
-					ACL:            aclMap,
-					Memory:         selectedResourceSet["memory"],
-					CPUShare:       selectedResourceSet["cpuShare"],
+					Firewall:       payloadFirewallRules,
+					ACL:            types.NewACLMap(aclMap).ToJSON(),
+					Env:            types.NewEnv(env),
+					Memory:         int32(selectedResourceSet["memory"]),
+					CPUShare:       int32(selectedResourceSet["cpuShare"]),
 					Link:           link,
-					NumSignatories: numSig,
-					SigThreshold:   sigThreshold,
-					CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
+					NumSignatories: int32(numSig),
+					SigThreshold:   int32(sigThreshold),
 				})
 			}
 		}
@@ -235,7 +247,6 @@ var createCmd = &cobra.Command{
 		}
 
 		stopSpinner()
-
 		for i, cocoon := range cocoons {
 			err := client.CreateCocoon(cocoon)
 			if err != nil {

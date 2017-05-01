@@ -3,14 +3,14 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "u12"
     
     # Contract source location and information
     repo {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "8bca6c55e4e4236f1ef6226146791e74cf5a4105"
+        version = "cd7a929af41fa92b7e0a45c59fd37d4983dcd56b"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -18,7 +18,7 @@ contracts {
         # and will become participate in load balancing requests coming into 
         # the linked cocoon code. 
         # Both contracts must be owned by same identity.
-        link = "u1"
+        link = ""
     }
     
     # Provide build information if the contract code requires it
@@ -44,14 +44,23 @@ contracts {
     # to allow or deny access to perform specific operations by other contracts.
     acl {
         # Allow all operations but deny the ability to create ledgers
-        "*" = "allow deny-create-ledger"
+        "*" = "allow deny-create-ledger deny"
     }
     
     # Firewall stanza determines the addresses the contract
     # can make outbound connections to.
-    firewall {
+    firewall-rule {
         destination = "google.com"
         destinationPort = "80"
         protocol = "tcp"
+    }
+    
+    # Set environment variable. Use flags to 
+    # enable special directives for individual variables.
+    # @private flag will cause the value to never show up in any publicly accessible channel
+    # @gen32 generates a 32 byte random string 
+    env {
+        "MY_VAR"  = "some value"
+        "MY_VAR2" = "holla"
     }
 }

@@ -45,7 +45,7 @@ func TestFunc(t *testing.T) {
 						return fmt.Errorf("error")
 					}
 					return nil
-				}, 3, nil)
+				}, 3, 0)
 				So(err, ShouldBeNil)
 				So(runCount, ShouldEqual, 3)
 			})
@@ -55,7 +55,7 @@ func TestFunc(t *testing.T) {
 				err := ReRunOnError(func() error {
 					runCount++
 					return fmt.Errorf("error")
-				}, 3, nil)
+				}, 3, 0)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "error")
 				So(runCount, ShouldEqual, 3)
@@ -63,14 +63,13 @@ func TestFunc(t *testing.T) {
 
 			Convey("Should successfully rerun function with delay", func() {
 				runCount := 0
-				delay := time.Millisecond * 100
 				err := ReRunOnError(func() error {
 					runCount++
 					if runCount != 3 {
 						return fmt.Errorf("error")
 					}
 					return nil
-				}, 3, &delay)
+				}, 3, time.Millisecond*100)
 				So(err, ShouldBeNil)
 				So(runCount, ShouldEqual, 3)
 			})
@@ -113,7 +112,7 @@ func TestFunc(t *testing.T) {
 					{Destination: "facebook.com", DestinationPort: "80", Protocol: "tcp"},
 				})
 				So(err, ShouldBeNil)
-				So(len(rules), ShouldBeGreaterThan, 2)
+				So(len(rules), ShouldBeGreaterThanOrEqualTo, 2)
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 				So(rules[1].Destination, ShouldNotEqual, "facebook.com")
 			})
@@ -123,7 +122,7 @@ func TestFunc(t *testing.T) {
 					{Destination: "google.com", DestinationPort: "80", Protocol: "tcp"},
 				})
 				So(err, ShouldBeNil)
-				So(len(rules), ShouldBeGreaterThan, 1)
+				So(len(rules), ShouldBeGreaterThanOrEqualTo, 1)
 				So(rules[0].Destination, ShouldNotEqual, "google.com")
 			})
 		})
@@ -132,6 +131,20 @@ func TestFunc(t *testing.T) {
 			Convey("Should successfully remove color", func() {
 				So(RemoveASCIIColors([]byte("\033[1mHello Bold World!\033[0m")), ShouldResemble, []byte("Hello Bold World!"))
 			})
+		})
+
+		Convey(".ReturnFirstIfDiffInt", func() {
+			So(ReturnFirstIfDiffInt(1, 2), ShouldEqual, 1)
+			So(ReturnFirstIfDiffInt(1, 1), ShouldEqual, 1)
+			So(ReturnFirstIfDiffInt(0, 2), ShouldEqual, 2)
+		})
+
+		Convey(".ReturnFirstIfDiffString", func() {
+			So(ReturnFirstIfDiffString("a", "xyz", false), ShouldEqual, "a")
+			So(ReturnFirstIfDiffString("a", "a", false), ShouldEqual, "a")
+			So(ReturnFirstIfDiffString("abc", "a", false), ShouldEqual, "abc")
+			So(ReturnFirstIfDiffString("", "xyz", false), ShouldEqual, "")
+			So(ReturnFirstIfDiffString("", "xyz", true), ShouldEqual, "xyz")
 		})
 	})
 }

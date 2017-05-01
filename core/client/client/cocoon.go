@@ -18,7 +18,6 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
-	"github.com/ncodes/cstructs"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeonx/timeago"
 )
@@ -27,7 +26,7 @@ import (
 var MaxBulkObjCount = 25
 
 // CreateCocoon a new cocoon
-func CreateCocoon(cocoon *types.Cocoon) error {
+func CreateCocoon(cocoonPayload *proto_api.CocoonPayloadRequest) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -36,11 +35,11 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 
 	stopSpinner := util.Spinner("Please wait")
 
-	err = api.ValidateCocoon(cocoon)
-	if err != nil {
-		stopSpinner()
-		return err
-	}
+	// err = api.ValidateCocoon(cocoon)
+	// if err != nil {
+	// 	stopSpinner()
+	// 	return err
+	// }
 
 	defer stopSpinner()
 
@@ -52,16 +51,14 @@ func CreateCocoon(cocoon *types.Cocoon) error {
 	defer conn.Close()
 
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-	var prCreateCocoonReq proto_api.CocoonPayloadRequest
-	cstructs.Copy(cocoon, &prCreateCocoonReq)
-	prCreateCocoonReq.ACL = cocoon.ACL.ToJSON()
-	cocoonJSON, err := proto_api.NewAPIClient(conn).CreateCocoon(ctx, &prCreateCocoonReq)
+	cocoonJSON, err := proto_api.NewAPIClient(conn).CreateCocoon(ctx, cocoonPayload)
 	if err != nil {
 		stopSpinner()
 		return err
 	}
 
-	util.FromJSON(cocoonJSON.Body, cocoon)
+	var cocoon types.Cocoon
+	util.FromJSON(cocoonJSON.Body, &cocoon)
 
 	stopSpinner()
 	log.Info(`==> New cocoon created`)
@@ -183,7 +180,7 @@ func GetCocoons(ids []string) error {
 }
 
 // Deploy creates and sends a deploy request to the server
-func deploy(ctx context.Context, cocoonID string, useLastDeployedRelease bool) error {
+func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool) error {
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
@@ -193,8 +190,8 @@ func deploy(ctx context.Context, cocoonID string, useLastDeployedRelease bool) e
 
 	client := proto_api.NewAPIClient(conn)
 	resp, err := client.Deploy(ctx, &proto_api.DeployRequest{
-		CocoonID:               cocoonID,
-		UseLastDeployedRelease: useLastDeployedRelease,
+		CocoonID:                 cocoonID,
+		UseLastDeployedReleaseID: useLastDeployedReleaseID,
 	})
 	if err != nil {
 		return err
@@ -347,10 +344,10 @@ func StopCocoon(ids []string) error {
 }
 
 // Start starts one or more new or stopped cocoon code.
-// If useLastDeployedRelease is set to true, the scheduler will use the
+// If useLastDeployedReleaseID is set to true, the scheduler will use the
 // most recently approved and deployed release, otherwise it will
 // try to deploy the latest release.
-func Start(ids []string, useLastDeployedRelease bool) error {
+func Start(ids []string, useLastDeployedReleaseID bool) error {
 
 	if len(ids) > MaxBulkObjCount {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
@@ -379,7 +376,7 @@ func Start(ids []string, useLastDeployedRelease bool) error {
 		go func() {
 			ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
 			defer cc()
-			if err = deploy(ctx, id, useLastDeployedRelease); err != nil {
+			if err = deploy(ctx, id, useLastDeployedReleaseID); err != nil {
 				muErr.Lock()
 				errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), common.GetRPCErrDesc(err)))
 				muErr.Unlock()

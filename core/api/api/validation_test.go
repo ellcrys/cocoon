@@ -16,73 +16,37 @@ func TestValidation(t *testing.T) {
 
 				err := ValidateCocoon(&types.Cocoon{})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "id is required")
+				So(err.Error(), ShouldEqual, "id: id is required")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID: "some id",
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "id is not a valid resource name")
+				So(err.Error(), ShouldEqual, "id: id is not a valid resource name")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID: util.UUID4(),
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "url is required")
+				So(err.Error(), ShouldEqual, "resources.memory: memory is required")
 
 				err = ValidateCocoon(&types.Cocoon{
-					ID:  util.UUID4(),
-					URL: "http://google.com",
+					ID:     util.UUID4(),
+					Memory: 512,
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "url is not a valid github repo url")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:  util.UUID4(),
-					URL: "https://github.com/ncodes/cocoon-example-01",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "language is required")
+				So(err.Error(), ShouldEqual, "resources.cpuShare: CPU share is required")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "c#",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "language is not supported. Expects one of these values [go]")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "memory is required")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
-					Memory:   512,
-				})
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "CPU share is required")
-
-				err = ValidateCocoon(&types.Cocoon{
-					ID:       util.UUID4(),
-					URL:      "https://github.com/ncodes/cocoon-example-01",
-					Language: "go",
 					Memory:   100,
 					CPUShare: 122,
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Unknown resource set")
+				So(err.Error(), ShouldEqual, "resources: Unknown resource set")
 
 				err = ValidateCocoon(&types.Cocoon{
 					ID:             util.UUID4(),
-					URL:            "https://github.com/ncodes/cocoon-example-01",
-					Language:       "go",
 					Memory:         512,
 					CPUShare:       100,
 					NumSignatories: 1,
@@ -90,7 +54,7 @@ func TestValidation(t *testing.T) {
 					Signatories:    []string{"id1", "id2"},
 				})
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "max signatories already added. You can't add more")
+				So(err.Error(), ShouldEqual, "signatories.signatories: max signatories already added. You can't add more")
 			})
 		})
 
@@ -194,6 +158,26 @@ func TestValidation(t *testing.T) {
 
 			_, errs = ValidateFirewall(`[{ "destination": "0.0.0.0", "port": "3000" }]`)
 			So(len(errs), ShouldEqual, 0)
+		})
+
+		Convey(".ValidateEnvVariables", func() {
+			errs := ValidateEnvVariables(map[string]string{
+				"VAR$A": "value",
+			})
+			So(len(errs), ShouldEqual, 1)
+
+			errs = ValidateEnvVariables(map[string]string{
+				"VAR-B":    "value",
+				"VAR@Flag": "value",
+			})
+			So(len(errs), ShouldEqual, 2)
+
+			errs = ValidateEnvVariables(map[string]string{
+				"VAR B":    "value",
+				"VAR-B":    "value",
+				"VAR@Flag": "value",
+			})
+			So(len(errs), ShouldEqual, 3)
 		})
 	})
 }

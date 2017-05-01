@@ -26,13 +26,13 @@ func GetSystemPrivateLedgerName() string {
 
 // Ledger represents a group of transactions
 type Ledger struct {
-	Number       uint   `gorm:"primary_key"`
-	Name         string `json:"name" gorm:"type:varchar(128);unique_index:idx_name_name"`
-	NameInternal string `json:"nameInternal" gorm:"-" sql:"-"`
-	CocoonID     string `json:"cocoonID,omitempty" gorm:"index:idx_name_cocoon_id"`
-	Public       bool   `json:"public"`
-	Chained      bool   `json:"chained"`
-	CreatedAt    int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
+	Number       uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" gorm:"primary_key"`
+	Name         string `json:"name,omitempty" structs:"name,omitempty" mapstructure:"name" gorm:"type:varchar(128);unique_index:idx_name_name"`
+	NameInternal string `json:"-" structs:"nameInternal,omitempty" mapstructure:"nameInternal" gorm:"-" sql:"-"`
+	CocoonID     string `json:"cocoonId,omitempty" structs:"cocoonId,omitempty" mapstructure:"cocoonId" gorm:"index:idx_name_cocoon_id"`
+	Public       bool   `json:"public,omitempty" structs:"public,omitempty" mapstructure:"public" json:"public"`
+	Chained      bool   `json:"chained,omitempty" structs:"chained,omitempty" mapstructure:"chained"`
+	CreatedAt    int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at"`
 }
 
 // ToJSON returns the json equivalent of this object

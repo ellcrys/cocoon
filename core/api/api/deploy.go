@@ -16,16 +16,16 @@ import (
 // are available, the cocoon is updated with the release value and also executed.
 func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*proto_api.Response, error) {
 
-	apiLog.Infof("New deploy request for cocoon with ID = %s", req.CocoonID)
-
 	var err error
 	var claims jwt.MapClaims
+
+	apiLog.Infof("New deploy request for cocoon with ID = %s", req.CocoonID)
 
 	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.getCocoon(ctx, req.GetCocoonID())
+	cocoon, err := api.platform.GetCocoon(ctx, req.GetCocoonID())
 	if err != nil {
 		return nil, err
 	}
@@ -39,39 +39,40 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	// don't continue if cocoon's status is in one of these statuses
 	statuses := []string{CocoonStatusStarted, CocoonStatusRunning, CocoonStatusBuilding, CocoonStatusDead}
 	if util.InStringSlice(statuses, cocoon.Status) {
-		if cocoon.Status == CocoonStatusStarted {
+		switch cocoon.Status {
+		case CocoonStatusStarted:
 			return nil, fmt.Errorf("cocoon has already been started")
-		} else if cocoon.Status == CocoonStatusRunning {
+		case CocoonStatusBuilding:
+			return nil, fmt.Errorf("cocoon is being built")
+		case CocoonStatusRunning:
 			return nil, fmt.Errorf("Cocoon is already running")
-		} else if cocoon.Status == CocoonStatusDead {
+		case CocoonStatusDead:
 			if err := api.stopCocoon(ctx, cocoon.ID); err != nil {
 				return nil, fmt.Errorf("failed to stop dead cocoon")
 			}
-		} else {
-			return nil, fmt.Errorf("Cocoon is in build stage")
 		}
 	}
 
 	// don't continue if cocoon has no release (this should never happen)
 	if len(cocoon.Releases) == 0 {
-		return nil, fmt.Errorf("No release to run")
+		return nil, fmt.Errorf("No release to run. Wierd")
 	}
 
 	var releaseToDeploy = cocoon.Releases[len(cocoon.Releases)-1]
 
 	// if user wants to use the last deployed release, set the release request id to the last deployed release id
 	// otherwise, if the cocoon does not have a last deployed release, return error
-	if req.UseLastDeployedRelease && len(cocoon.LastDeployedRelease) != 0 {
+	if req.UseLastDeployedReleaseID && len(cocoon.LastDeployedReleaseID) != 0 {
 		apiLog.Infof("Using last deployed release for cocoon = [%s]", cocoon.ID)
-		releaseToDeploy = cocoon.LastDeployedRelease
-	} else if req.UseLastDeployedRelease {
+		releaseToDeploy = cocoon.LastDeployedReleaseID
+	} else if req.UseLastDeployedReleaseID {
 		return nil, fmt.Errorf("this cocoon does not have a recently approved and deployed release yet")
 	}
 
 	apiLog.Debugf("Deploying release = %s", releaseToDeploy)
 
 	// get the release
-	release, err := api.getRelease(ctx, releaseToDeploy)
+	release, err := api.platform.GetRelease(ctx, releaseToDeploy, true)
 	if err != nil && err != types.ErrTxNotFound {
 		return nil, fmt.Errorf("failed to get release. %s", err)
 	} else if err == types.ErrTxNotFound {
@@ -91,16 +92,9 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	}
 
 	// update the cocoon values to match the release we are about to start
-	cocoon.Language = release.Language
-	cocoon.URL = release.URL
-	cocoon.Version = release.Version
-	cocoon.BuildParam = string(release.BuildParam)
-	cocoon.Link = release.Link
-	cocoon.LastDeployedRelease = release.ID
-	cocoon.Firewall = release.Firewall
-	cocoon.ACL = release.ACL
+	cocoon.LastDeployedReleaseID = release.ID
 
-	depInfo, err := api.scheduler.Deploy(cocoon.ID, cocoon.Language, cocoon.URL, cocoon.Version, cocoon.BuildParam, cocoon.Link, cocoon.Memory, cocoon.CPUShare)
+	depInfo, err := api.scheduler.Deploy(cocoon.ID, release.Language, release.URL, release.Version, release.BuildParam, release.Link, cocoon.Memory, cocoon.CPUShare)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			apiLog.Error(err.Error())
@@ -115,7 +109,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 		// cocoon is started, update status
 		if status == CocoonStatusRunning {
 			cocoon.Status = CocoonStatusRunning
-			err := api.putCocoon(ctx, cocoon)
+			err := api.platform.PutCocoon(ctx, cocoon)
 			if err != nil {
 				return err
 			}
@@ -132,7 +126,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 			}
 			apiLog.Debugf("Stopped dead cocoon [%s]", cocoon.ID)
 			cocoon.Status = CocoonStatusDead
-			api.putCocoon(ctx, cocoon)
+			api.platform.PutCocoon(ctx, cocoon)
 			return fmt.Errorf("cocoon died :(")
 		}
 

@@ -49,7 +49,8 @@ func TestLauncher(t *testing.T) {
 	Convey("Connector", t, func() {
 
 		Convey("AddLanguage", func() {
-			lc := NewConnector(&Request{}, make(chan bool))
+			lc, err := NewConnector(&Request{}, make(chan bool))
+			So(err, ShouldBeNil)
 			Convey("should successfully add new language and return nil", func() {
 				err := lc.AddLanguage(&MyLang{})
 				So(err, ShouldBeNil)
@@ -63,9 +64,10 @@ func TestLauncher(t *testing.T) {
 		})
 
 		Convey("GetLanguage", func() {
-			lc := NewConnector(&Request{}, make(chan bool))
+			lc, err := NewConnector(&Request{}, make(chan bool))
+			So(err, ShouldBeNil)
 			l := new(MyLang)
-			err := lc.AddLanguage(l)
+			err = lc.AddLanguage(l)
 			So(err, ShouldBeNil)
 
 			Convey("should return 1 language", func() {

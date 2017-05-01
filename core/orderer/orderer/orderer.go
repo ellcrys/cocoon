@@ -10,6 +10,7 @@ import (
 
 	"time"
 
+	"github.com/chuckpreslar/emission"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -30,15 +31,19 @@ func SetLogLevel(l logging.Level) {
 // Orderer defines a transaction ordering, block creation
 // and inclusion module
 type Orderer struct {
-	server     *grpc.Server
-	store      types.Store
-	blockchain types.Blockchain
-	endedCh    chan bool
+	server       *grpc.Server
+	store        types.Store
+	blockchain   types.Blockchain
+	endedCh      chan bool
+	EventEmitter *emission.Emitter
 }
 
 // NewOrderer creates a new Orderer object
 func NewOrderer() *Orderer {
-	return new(Orderer)
+	o := new(Orderer)
+	o.EventEmitter = emission.NewEmitter()
+	o.EventEmitter.SetMaxListeners(20)
+	return o
 }
 
 // Start starts the order service
@@ -51,7 +56,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		log.Fatalf("failed to listen on port=%s. Err: %s", strings.Split(addr, ":")[1], err)
 	}
 
-	time.AfterFunc(2*time.Second, func() {
+	time.AfterFunc(1*time.Second, func() {
 
 		log.Infof("Started orderer GRPC server on port %s", strings.Split(addr, ":")[1])
 
@@ -65,7 +70,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		if od.blockchain != nil {
 			_, err = od.blockchain.Connect(storeConStr)
 			if err != nil {
-				log.Info(err.Error())
+				log.Info(err.Error(), storeConStr)
 				od.Stop(1)
 				return
 			}
@@ -109,6 +114,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		}
 
 		log.Info("Backend successfully connected")
+		od.EventEmitter.Emit("started")
 	})
 
 	od.server = grpc.NewServer()

@@ -12,18 +12,18 @@ import (
 // All transaction entries must reference the hash of the immediate transaction
 // sharing the same ledger name.
 type Transaction struct {
-	Number         uint   `json:"number,omitempty" gorm:"primary_key"`
-	Ledger         string `json:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name"`
-	ID             string `json:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
-	Key            string `json:"key" gorm:"type:varchar(128);index:idx_name_key"`
-	Value          string `json:"value" gorm:"type:text"`
-	Hash           string `json:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
-	BlockID        string `json:"blockId,omitempty"`
-	RevisionTo     string `json:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
-	CreatedAt      int64  `json:"createdAt" gorm:"index:idx_name_created_at"`
-	LedgerInternal string `json:"ledgerInternal" gorm:"-" sql:"-"`
-	KeyInternal    string `json:"keyInternal" gorm:"-" sql:"-"`
-	Block          *Block `json:"block,omitempty" gorm:"-" sql:"-"`
+	Number         uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" gorm:"primary_key"`
+	Ledger         string `json:"ledger,omitempty" structs:"ledger,omitempty" mapstructure:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name"`
+	ID             string `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
+	Key            string `json:"key,omitempty" structs:"key,omitempty" mapstructure:"key" gorm:"type:varchar(128);index:idx_name_key"`
+	Value          string `json:"value,omitempty" structs:"value,omitempty" mapstructure:"value" gorm:"type:text"`
+	Hash           string `json:"hash,omitempty" structs:"hash,omitempty" mapstructure:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
+	BlockID        string `json:"blockId,omitempty" structs:"blockId,omitempty" mapstructure:"blockId"`
+	RevisionTo     string `json:"revisionTo,omitempty" structs:"revisionTo,omitempty" mapstructure:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
+	CreatedAt      int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at"`
+	LedgerInternal string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-"`
+	KeyInternal    string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-"`
+	Block          *Block `json:"block" structs:"block" mapstructure:"block" gorm:"-" sql:"-"`
 }
 
 // MakeHash creates a hash of a transaction
@@ -58,7 +58,7 @@ func GetActualKeyFromTxKey(key string) string {
 // TxReceipt defines a structure for representing transaction status
 // from endpoint that manipulate transactions
 type TxReceipt struct {
-	ID  string `json:"ID,omitempty"`
+	ID  string `json:"id,omitempty"`
 	Err string `json:"err,omitempty"`
 }
 

@@ -48,7 +48,7 @@ func (l *LockOperations) checkPermission(ctx context.Context, op *proto_connecto
 	if op.LinkTo != l.connector.GetRequest().ID {
 
 		// get the current calling/requesting cocoon
-		cocoon, err := l.connector.GetCocoon(ctx, l.connector.GetRequest().ID)
+		_, release, err := l.connector.Platform.GetCocoonAndLastRelease(ctx, l.connector.GetRequest().ID, true, false)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("calling cocoon not found")
@@ -57,7 +57,7 @@ func (l *LockOperations) checkPermission(ctx context.Context, op *proto_connecto
 		}
 
 		// If current cocoon is not natively linked to the target cocoon, disallow with an error
-		if cocoon.Link != op.LinkTo {
+		if release.Link != op.LinkTo {
 			return fmt.Errorf("permission denied: current cocoon not natively linked to target cocoon")
 		}
 	}
