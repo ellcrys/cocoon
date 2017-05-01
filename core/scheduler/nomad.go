@@ -203,7 +203,7 @@ func (sc *Nomad) GetServiceDiscoverer() (ServiceDiscovery, error) {
 		return nil, fmt.Errorf("failed to create client: %s", err)
 	}
 	fmt.Println("3")
-	_, err = client.Status().Leader()
+	_, err = client.Catalog().Datacenters()
 	if err != nil {
 		fmt.Println("errrrr")
 		return nil, fmt.Errorf("failed to create client: %s", err)
