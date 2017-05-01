@@ -55,6 +55,7 @@ type Connector struct {
 	healthCheck       *HealthChecker
 	ordererDiscovery  *orderer.Discovery
 	cocoon            *types.Cocoon
+	release           *types.Release
 	Platform          *platform.Transactions
 }
 
@@ -129,14 +130,31 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		return
 	}
 
-	lang.SetRunEnv(map[string]string{
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
+	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
+	if err != nil {
+		log.Errorf("Failed to fetch cocoon [%s] information", cn.req.ID)
+		return
+	}
+
+	log.Info("Preparing cocoon code environment variables")
+
+	var env = map[string]string{
 		"COCOON_ID":           cn.req.ID,
 		"CONNECTOR_RPC_ADDR":  cn.connectorRPCAddr,
-		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this address
+		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this addråess
 		"COCOON_LINK":         cn.req.Link,          // the cocoon code id to link to natively
 		"COCOON_CODE_VERSION": cn.req.Version,
-	})
+	}
 
+	// include the environment variable of the release
+	cocoonEnv := cn.release.Env.ProcessAsOne(false)
+	for k, v := range cocoonEnv {
+		env[k] = v
+	}
+
+	lang.SetRunEnv(env)
 	go cn.monitor.Monitor()
 
 	go func() {

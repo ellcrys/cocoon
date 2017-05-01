@@ -10,7 +10,7 @@ contracts {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "8bca6c55e4e4236f1ef6226146791e74cf5a4105"
+        version = "cd7a929af41fa92b7e0a45c59fd37d4983dcd56b"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -60,9 +60,7 @@ contracts {
     # @private flag will cause the value to never show up in any publicly accessible channel
     # @gen32 generates a 32 byte random string 
     env {
-        "VAR_A"           = "some value"
-        "VAR_D" = "holla"
-        "VAR_B@private"    = "don't set private variable here"
-        // "VAR_C@genRand32"  = ""
+        "MY_VAR"  = "some value"
+        "MY_VAR2" = "holla"
     }
 }
