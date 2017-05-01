@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u12"
+    id = "u1"
     
     # Contract source location and information
     repo {
@@ -61,6 +61,6 @@ contracts {
     # @gen32 generates a 32 byte random string 
     env {
         "MY_VAR"  = "some value"
-        "MY_VAR2" = "holla"
+        "MY_VAR2@private,genRand32" = ""
     }
 }
