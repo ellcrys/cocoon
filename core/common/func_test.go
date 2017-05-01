@@ -132,5 +132,19 @@ func TestFunc(t *testing.T) {
 				So(RemoveASCIIColors([]byte("\033[1mHello Bold World!\033[0m")), ShouldResemble, []byte("Hello Bold World!"))
 			})
 		})
+
+		Convey(".ReturnFirstIfDiffInt", func() {
+			So(ReturnFirstIfDiffInt(1, 2), ShouldEqual, 1)
+			So(ReturnFirstIfDiffInt(1, 1), ShouldEqual, 1)
+			So(ReturnFirstIfDiffInt(0, 2), ShouldEqual, 2)
+		})
+
+		Convey(".ReturnFirstIfDiffString", func() {
+			So(ReturnFirstIfDiffString("a", "xyz", false), ShouldEqual, "a")
+			So(ReturnFirstIfDiffString("a", "a", false), ShouldEqual, "a")
+			So(ReturnFirstIfDiffString("abc", "a", false), ShouldEqual, "abc")
+			So(ReturnFirstIfDiffString("", "xyz", false), ShouldEqual, "")
+			So(ReturnFirstIfDiffString("", "xyz", true), ShouldEqual, "xyz")
+		})
 	})
 }

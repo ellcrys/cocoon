@@ -5,18 +5,26 @@ import (
 	"strings"
 
 	"github.com/ellcrys/util"
+	"github.com/imdario/mergo"
 )
 
 // Env represents a collection of environment variables
 type Env map[string]string
 
 // NewEnv creates a new Env type from values in map[string]interface{}.
-// Non-string values are omitted.
-func NewEnv(env map[string]interface{}) Env {
+// and map[string]string Non-string values are omitted.
+func NewEnv(val interface{}) Env {
 	_env := Env{}
-	for k, v := range env {
-		if valStr, ok := v.(string); ok {
-			_env[k] = valStr
+	switch env := val.(type) {
+	case map[string]interface{}:
+		for k, v := range env {
+			if valStr, ok := v.(string); ok {
+				_env[k] = valStr
+			}
+		}
+	case map[string]string:
+		for k, v := range env {
+			_env[k] = v
 		}
 	}
 	return _env
@@ -33,6 +41,11 @@ func (e Env) ToJSON() []byte {
 	return b
 }
 
+// ToMap returns the object as a map type
+func (e Env) ToMap() map[string]string {
+	return e
+}
+
 // GetFlags returns the flags from an environment variable
 func GetFlags(v string) []string {
 	var varParts = strings.Split(v, "@")
@@ -47,8 +60,10 @@ func GetFlags(v string) []string {
 }
 
 // Process applies the flags and returns both public
-// environment variables and private variables
-func (e Env) Process() (Env, Env) {
+// environment variables and private variables.
+// If keepFlag is set to true, the flags will not be removed
+// in the result returned.
+func (e Env) Process(keepFlags bool) (Env, Env) {
 	var public = make(Env)
 	var private = make(Env)
 
@@ -74,11 +89,26 @@ func (e Env) Process() (Env, Env) {
 			}
 		}
 		if isPrivate {
-			private[strings.Split(k, "@")[0]] = v
+			if !keepFlags {
+				private[strings.Split(k, "@")[0]] = v
+			} else {
+				private[k] = v
+			}
 		} else {
-			public[strings.Split(k, "@")[0]] = v
+			if !keepFlags {
+				public[strings.Split(k, "@")[0]] = v
+			} else {
+				public[k] = v
+			}
 		}
 	}
 
 	return public, private
+}
+
+// ProcessAsOne is like Process but returns the public and private environments merged as one Env
+func (e Env) ProcessAsOne(keepFlags bool) Env {
+	pub, priv := e.Process(keepFlags)
+	mergo.Merge(&pub, priv)
+	return pub
 }

@@ -458,6 +458,18 @@
 			"revisionTime": "2014-12-01T06:53:30Z"
 		},
 		{
+			"checksumSHA1": "VBXGouqOkPe3OkeJnyUBkx3aZXA=",
+			"path": "github.com/imdario/mergo",
+			"revision": "d806ba8c21777d504a2090a2ca4913c750dd3a33",
+			"revisionTime": "2017-03-26T20:45:27Z"
+		},
+		{
+			"checksumSHA1": "q3t055syUJgQ0+SEKfHLg2680LI=",
+			"path": "github.com/jinzhu/copier",
+			"revision": "8bfca8a02a0ce12119cdc4974143c834ca589257",
+			"revisionTime": "2017-02-05T15:16:47Z"
+		},
+		{
 			"checksumSHA1": "INn29nRtoEqjJdX5m4TlLJMztkc=",
 			"path": "github.com/jinzhu/gorm",
 			"revision": "717654b31c3d51348cb305684369c20a8387154b",

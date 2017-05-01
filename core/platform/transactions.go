@@ -7,6 +7,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ellcrys/util"
+	"github.com/imdario/mergo"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
@@ -221,7 +222,7 @@ func (t *Transactions) PutRelease(ctx context.Context, release *types.Release) e
 		return err
 	}
 	defer ordererConn.Close()
-	pubEnv, privEnv := release.Env.Process()
+	pubEnv, privEnv := release.Env.Process(true)
 	release.Env = pubEnv
 
 	createdAt, _ := time.Parse(time.RFC3339Nano, release.CreatedAt)
@@ -295,9 +296,8 @@ func (t *Transactions) GetRelease(ctx context.Context, id string, includePrivate
 		if privEnvTx != nil {
 			var privEnvs map[string]string
 			util.FromJSON([]byte(privEnvTx.Value), &privEnvs)
-			for k, v := range privEnvs {
-				release.Env[k] = v
-			}
+			releaseEnvAsMap := release.Env.ToMap()
+			mergo.MergeWithOverwrite(&releaseEnvAsMap, privEnvs)
 		}
 	}
 

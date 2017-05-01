@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/jinzhu/copier"
+)
+
 // Firewall defines a collection of firewall rules
 type Firewall []FirewallRule
 
@@ -63,4 +67,13 @@ type FirewallRule struct {
 // Eql returns true if another firewall rule is equal
 func (r FirewallRule) Eql(o FirewallRule) bool {
 	return r.Destination == o.Destination && r.DestinationPort == o.DestinationPort && r.Protocol == o.Protocol
+}
+
+// CopyFirewall  takes a object that is similar to a Firewall object,
+// copies the items/fields that are similar into a new Firewall object.
+// This method does not return any error.
+func CopyFirewall(o interface{}) Firewall {
+	var fw Firewall
+	copier.Copy(&fw, o)
+	return fw
 }

@@ -9,11 +9,11 @@ import (
 
 // Identity defines a user
 type Identity struct {
-	Email          string
-	Password       string
-	Cocoons        []string
-	ClientSessions []string
-	CreatedAt      string
+	Email          string   `json:"email,omitempty" structs:"email,omitempty" mapstructure:"email"`
+	Password       string   `json:"password,omitempty" structs:"password,omitempty" mapstructure:"password"`
+	Cocoons        []string `json:"cocoons,omitempty" structs:"cocoons,omitempty" mapstructure:"cocoons"`
+	ClientSessions []string `json:"clientSessions,omitempty" structs:"clientSessions,omitempty" mapstructure:"clientSessions"`
+	CreatedAt      string   `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt"`
 }
 
 // NewIdentity creates a new Identity

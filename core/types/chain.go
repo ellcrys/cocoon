@@ -4,10 +4,10 @@ import "github.com/ellcrys/util"
 
 // Chain represents a table of chains
 type Chain struct {
-	Number    uint   `gorm:"primary_key"`
-	Name      string `json:"name" gorm:"type:varchar(128);unique_index:idx_name_chain_name"`
-	Public    bool   `json:"public"`
-	CreatedAt int64  `json:"createdAt"`
+	Number    uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" gorm:"primary_key"`
+	Name      string `json:"name,omitempty" structs:"name,omitempty" mapstructure:"name" gorm:"type:varchar(128);unique_index:idx_name_chain_name"`
+	Public    bool   `json:"public,omitempty" structs:"public,omitempty" mapstructure:"public"`
+	CreatedAt int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt"`
 }
 
 // ToJSON returns the json equivalent of this object

@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u10"
+    id = "u12"
     
     # Contract source location and information
     repo {
@@ -44,7 +44,7 @@ contracts {
     # to allow or deny access to perform specific operations by other contracts.
     acl {
         # Allow all operations but deny the ability to create ledgers
-        "*" = "allow deny-create-ledger"
+        "*" = "allow deny-create-ledger deny"
     }
     
     # Firewall stanza determines the addresses the contract
@@ -61,7 +61,8 @@ contracts {
     # @gen32 generates a 32 byte random string 
     env {
         "VAR_A"           = "some value"
-        "VAR_B@private,genRand32"    = ""
-        "VAR_C@genRand32"  = ""
+        "VAR_D" = "holla"
+        "VAR_B@private"    = "don't set private variable here"
+        // "VAR_C@genRand32"  = ""
     }
 }

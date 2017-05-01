@@ -74,6 +74,7 @@ func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 	if err != nil {
 		t.Error(err)
 		t.Fail()
+		return
 	}
 	addr := util.Env("API_ADDRESS", "127.0.0.1:7004")
 	SetLogLevel(logging.CRITICAL)
@@ -91,6 +92,7 @@ func TestOrderer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer dropDB(t)
 
 	key := "secret"
 
@@ -161,7 +163,7 @@ func TestOrderer(t *testing.T) {
 									})
 									So(r, ShouldBeNil)
 									So(err, ShouldNotBeNil)
-									So(err.Error(), ShouldEqual, "cocoon with matching ID already exists")
+									So(err.Error(), ShouldEqual, "cocoon with the same id already exists")
 								})
 
 								Convey(".GetCocoon", func() {
@@ -183,6 +185,50 @@ func TestOrderer(t *testing.T) {
 										So(err.Error(), ShouldEqual, "cocoon not found")
 									})
 								})
+							})
+						})
+
+						Convey(".UpdateCocoon", func() {
+
+							ss, err := makeAuthToken(util.UUID4(), identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
+							So(err, ShouldBeNil)
+							md := metadata.Pairs("access_token", ss)
+							ctx := context.Background()
+							ctx = metadata.NewIncomingContext(ctx, md)
+
+							id := util.UUID4()
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+								ID:             id,
+								URL:            "https://github.com/ncodes/cocoon-example-01",
+								Language:       "go",
+								Memory:         512,
+								NumSignatories: 1,
+								SigThreshold:   1,
+								CPUShare:       100,
+							})
+							So(err, ShouldBeNil)
+							So(r.Status, ShouldEqual, 200)
+
+							Convey("Should return error if logged in identity does not own the cocoon", func() {
+								ss, err := makeAuthToken(util.UUID4(), "some_identity", "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
+								So(err, ShouldBeNil)
+								md := metadata.Pairs("access_token", ss)
+								ctx := context.Background()
+								ctx = metadata.NewIncomingContext(ctx, md)
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+									ID: id,
+								})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "Permission denied: You do not have permission to perform this operation")
+							})
+
+							Convey("Should return error if validation error failed (not all fields are tested)", func() {
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+									ID:       id,
+									CPUShare: 1000,
+								})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "resources: Unknown resource set")
 							})
 						})
 

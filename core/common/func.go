@@ -200,3 +200,39 @@ func SimpleGRPCError(serviceName string, err error) error {
 		return fmt.Errorf("rpc->%s: %s", serviceName, grpc.ErrorDesc(err))
 	}
 }
+
+// ReturnFirstIfDiffInt returns the first param (a) if it
+// is different from the (b) and not zero, otherwise b is returned
+func ReturnFirstIfDiffInt(a, b int) int {
+	if a != b && a > 0 {
+		return a
+	}
+	return b
+}
+
+// ReturnFirstIfDiffString returns the first param (a) if it
+// is different from the (b), otherwise b is returned
+func ReturnFirstIfDiffString(a, b string, secondIfEmpty bool) string {
+	if a != b && !(secondIfEmpty && len(a) == 0) {
+		return a
+	}
+	return b
+}
+
+// ReturnFirstIfDiffEnv returns the first param (a) if it
+// is different from the (b), otherwise b is returned
+func ReturnFirstIfDiffEnv(a, b types.Env) types.Env {
+	if !a.Eql(b) {
+		return a
+	}
+	return b
+}
+
+// ReturnFirstIfDiffACLMap returns the first param (a) if it
+// is different from the (b), otherwise b is returned
+func ReturnFirstIfDiffACLMap(a, b types.ACLMap) types.ACLMap {
+	if !a.Eql(b) {
+		return a
+	}
+	return b
+}

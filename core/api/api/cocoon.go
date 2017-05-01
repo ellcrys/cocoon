@@ -7,7 +7,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
-	"github.com/fatih/structs"
+	"github.com/jinzhu/copier"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
@@ -73,14 +73,9 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	loggedInIdentity := claims["identity"].(string)
-	var cocoon = types.Cocoon{
-		ID:             req.ID,
-		Memory:         int(req.Memory),
-		CPUShare:       int(req.CPUShare),
-		SigThreshold:   int(req.SigThreshold),
-		NumSignatories: int(req.NumSignatories),
-	}
 
+	var cocoon types.Cocoon
+	copier.Copy(&cocoon, req)
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
 	cocoon.IdentityID = loggedInIdentity
@@ -92,7 +87,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	if err != nil && err != types.ErrCocoonNotFound {
 		return nil, err
 	} else if err == nil {
-		return nil, fmt.Errorf("cocoon with matching ID already exists")
+		return nil, fmt.Errorf("cocoon with the same id already exists")
 	}
 
 	if err := ValidateCocoon(&cocoon); err != nil {
@@ -122,51 +117,24 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	// create new release
-	var release = &types.Release{
-		ID:         releaseID,
-		CocoonID:   cocoon.ID,
-		URL:        req.URL,
-		Version:    req.Version,
-		Language:   req.Language,
-		BuildParam: req.BuildParam,
-		Link:       req.Link,
-		Env:        req.Env,
-		CreatedAt:  now.UTC().Format(time.RFC3339Nano),
-	}
+	var release types.Release
+	copier.Copy(&release, req)
+	release.ID = releaseID
+	release.CocoonID = cocoon.ID
+	release.ACL = types.NewACLMapFromByte(req.ACL)
+	release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
+	release.Firewall = types.CopyFirewall(req.Firewall)
 
 	// Resolve firewall rules destination
-	if len(req.Firewall) > 0 {
-		var firewall types.Firewall
-		for _, f := range req.Firewall {
-			firewall = append(firewall, types.FirewallRule{Destination: f.Destination, DestinationPort: f.DestinationPort, Protocol: f.Protocol})
-		}
-		resolvedFirewall, err := common.ResolveFirewall(firewall)
+	if len(release.Firewall) > 0 {
+		resolvedFirewall, err := common.ResolveFirewall(release.Firewall)
 		if err != nil {
-			return nil, fmt.Errorf("Firewall: %s", err)
+			return nil, fmt.Errorf("firewall: %s", err)
 		}
 		release.Firewall = resolvedFirewall
 	}
 
-	// set acl map if provided
-	if len(req.ACL) > 0 {
-		release.ACL, err = types.NewACLMapFromByte(req.ACL)
-		if err != nil {
-			return nil, fmt.Errorf("acl: %s", err)
-		}
-	}
-
-	// set firewall if provided
-	if len(req.Firewall) > 0 {
-		for _, f := range req.Firewall {
-			release.Firewall = append(release.Firewall, types.FirewallRule{
-				Destination:     f.Destination,
-				DestinationPort: f.DestinationPort,
-				Protocol:        f.Protocol,
-			})
-		}
-	}
-
-	err = api.platform.PutRelease(ctx, release)
+	err = api.platform.PutRelease(ctx, &release)
 	if err != nil {
 		return nil, err
 	}
@@ -196,6 +164,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	var err error
 	var claims jwt.MapClaims
 	var cocoonUpdated bool
+	var releaseUpdated bool
 
 	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
@@ -212,84 +181,63 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	var cocoonUpd = types.Cocoon{
-		ID:             req.ID,
-		Memory:         int(req.Memory),
-		CPUShare:       int(req.CPUShare),
-		SigThreshold:   int(req.SigThreshold),
-		NumSignatories: int(req.NumSignatories),
-	}
+	var cocoonUpd = cocoon.Clone()
+	cocoonUpd.Memory = int(req.Memory)
+	cocoonUpd.CPUShare = int(req.CPUShare)
+	cocoonUpd.SigThreshold = int(req.SigThreshold)
+	cocoonUpd.NumSignatories = int(req.NumSignatories)
 
-	// check if the updates defer from the existing cocoon fields values.
-	// validate cocoon changes
-	if cocoon.HasFieldsChanged(structs.New(cocoonUpd).Map()) {
+	// check if the existing cocoon differ from the updated cocoon
+	// if so, apply the new update
+	if diffs := cocoon.Difference(cocoonUpd); diffs[0] != nil {
 		cocoonUpdated = true
-		cocoon.Memory = cocoonUpd.Memory
-		cocoon.CPUShare = cocoonUpd.CPUShare
-		cocoon.SigThreshold = cocoonUpd.SigThreshold
-		cocoon.NumSignatories = cocoonUpd.NumSignatories
-
+		cocoon = &cocoonUpd
 		if err = ValidateCocoon(cocoon); err != nil {
 			return nil, err
 		}
 	}
 
-	// get the last deployed release. if no recently deployed release, get the most recent release
+	// Get the most recent deployed release. if no recent deployed release, get the last created release.
 	var recentReleaseID = cocoon.LastDeployedReleaseID
 	if len(recentReleaseID) == 0 {
 		recentReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
-	release, err := api.platform.GetRelease(ctx, recentReleaseID, false)
+	release, err := api.platform.GetRelease(ctx, recentReleaseID, true)
 	if err != nil {
 		return nil, err
 	}
 
-	var releaseUpdated bool
-	releaseUpd := types.Release{
-		URL:        req.URL,
-		Version:    req.Version,
-		Language:   req.Language,
-		BuildParam: req.BuildParam,
-		Link:       req.Link,
-		Env:        req.Env,
-	}
+	releaseUpd := release.Clone()
+	releaseUpd.URL = req.URL
+	releaseUpd.Version = req.Version
+	releaseUpd.Language = req.Language
+	releaseUpd.BuildParam = req.BuildParam
+	releaseUpd.Link = req.Link
+	releaseUpd.Env = types.NewEnv(req.Env).ProcessAsOne(true)
+	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
+	releaseUpd.Firewall = types.CopyFirewall(req.Firewall)
 
-	// If ACL is set, create an ACLMap, set the cocoonUpd.ACL
-	if len(req.ACL) > 0 {
-		releaseUpd.ACL, err = types.NewACLMapFromByte(req.ACL)
-		if err != nil {
-			return nil, fmt.Errorf("acl: %s", err)
-		}
-	}
-
-	if len(req.Firewall) > 0 {
-		for _, f := range req.Firewall {
-			releaseUpd.Firewall = append(releaseUpd.Firewall, types.FirewallRule{Destination: f.Destination, DestinationPort: f.DestinationPort, Protocol: f.Protocol})
-		}
+	if len(releaseUpd.Firewall) > 0 {
 		outputFirewall, err := common.ResolveFirewall(releaseUpd.Firewall.DeDup())
 		if err != nil {
-			return nil, fmt.Errorf("Firewall: %s", err)
+			return nil, fmt.Errorf("firewall: %s", err)
 		}
 		releaseUpd.Firewall = outputFirewall
 	}
 
-	// check if the updates defer from the existing last deployed or created fields values.
-	// validate cocoon changes
-	if release.HasFieldsChanged(structs.New(releaseUpd).Map()) {
+	// check if the existing release differ from the updated release
+	// if so, apply the new update
+	if diffs := release.Difference(releaseUpd); diffs[0] != nil {
 		releaseUpdated = true
-		release.URL = releaseUpd.URL
-		release.Version = releaseUpd.Version
-		release.Language = releaseUpd.Language
-		release.BuildParam = releaseUpd.BuildParam
-		release.Link = releaseUpd.Link
-		release.Env = releaseUpd.Env
-		release.ACL = releaseUpd.ACL
-		release.Firewall = releaseUpd.Firewall
-
-		if err = ValidateCocoon(cocoon); err != nil {
+		release = &releaseUpd
+		release.ID = util.UUID4()
+		if err = ValidateRelease(release); err != nil {
 			return nil, err
 		}
+
+		// add new id to cocoon's releases
+		cocoon.Releases = append(cocoon.Releases, release.ID)
 	}
 
 	var finalResp = map[string]interface{}{
@@ -300,20 +248,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	// create new release if a field was changed
 	if releaseUpdated {
 
-		// reset
-		release.ID = util.UUID4()
-		release.VotersID = []string{}
-		release.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-
-		// add id to cocoon's releases
-		cocoon.Releases = append(cocoon.Releases, release.ID)
-
-		// validate release
-		if err = ValidateRelease(release); err != nil {
-			return nil, err
-		}
-
-		// persist release
 		err = api.platform.PutRelease(ctx, release)
 		if err != nil {
 			return nil, err
