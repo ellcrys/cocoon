@@ -14,6 +14,7 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
+	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -149,7 +150,9 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	}
 
 	// include the environment variable of the release
+	pretty.Println(cn.release.Env)
 	cocoonEnv := cn.release.Env.ProcessAsOne(false)
+	pretty.Println(cocoonEnv)
 	for k, v := range cocoonEnv {
 		env[k] = v
 	}
