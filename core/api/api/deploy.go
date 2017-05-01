@@ -114,6 +114,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 				return err
 			}
 			done()
+			return nil
 		}
 
 		// cocoon is dead. We need to set the status to 'dead' and ask the scheduler
@@ -134,6 +135,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 		if status != "pending" {
 			apiLog.Debug("Unrecognised Status: ", status)
 			done()
+			return nil
 		}
 
 		// return nil to keep watching.
