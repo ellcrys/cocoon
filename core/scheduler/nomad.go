@@ -194,20 +194,16 @@ func Getenv(env, defaultVal string) string {
 
 // GetServiceDiscoverer returns an instance of the nomad service discovery
 func (sc *Nomad) GetServiceDiscoverer() (ServiceDiscovery, error) {
-	fmt.Println("1")
+	log.Debug("Getting service discoverer")
 	cfg := api.DefaultConfig()
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
-	fmt.Println("2", cfg.Address)
 	client, err := api.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %s", err)
 	}
-	fmt.Println("3")
-	_, err = client.Catalog().Datacenters()
+	_, err = client.Status().Leader()
 	if err != nil {
-		fmt.Println("errrrr")
 		return nil, fmt.Errorf("failed to create client: %s", err)
 	}
-	fmt.Println("4")
 	return NewNomadServiceDiscovery(client), nil
 }

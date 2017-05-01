@@ -353,19 +353,16 @@ func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	fmt.Println("Fetch 1")
 	cocoon, err := api.platform.GetCocoon(ctx, req.GetID())
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Fetch 2")
 
 	// ensure session identity matches cocoon identity
 	if claims["identity"].(string) != cocoon.IdentityID {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
-	fmt.Println("About to stop")
 	if err = api.stopCocoon(ctx, req.GetID()); err != nil {
 		return nil, err
 	}

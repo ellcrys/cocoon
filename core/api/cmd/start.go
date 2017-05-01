@@ -29,7 +29,6 @@ var apiStartCmd = &cobra.Command{
 	Long:  "Start the Platform API server",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		fmt.Println("Start called")
 		nomad := scheduler.NewNomad()
 		bindAddr, _ := cmd.Flags().GetString("bind-addr")
 		schedulerAddr, _ := cmd.Flags().GetString("scheduler-addr")
@@ -54,7 +53,6 @@ var apiStartCmd = &cobra.Command{
 				apiLog.Fatalf("failed get scheduler address(es): %s", err)
 			}
 			if len(services) > 0 {
-				apiLog.Info("Scheduler discovered")
 				schedulerAddr = fmt.Sprintf("%s:%d", services[0].IP, int(services[0].Port))
 			}
 		}
@@ -68,16 +66,14 @@ var apiStartCmd = &cobra.Command{
 			bindAddr = scheduler.Getenv("ADDR_API_RPC", "127.0.0.1:8005")
 		}
 
-		fmt.Println("READY TO START")
 		nomad.SetAddr(schedulerAddr, false)
 		api, err := api.NewAPI(nomad)
 		if err != nil {
 			apiLog.Fatal(err.Error())
 		}
-		fmt.Println("Created API instance")
+
 		var endedCh = make(chan bool)
 		api.Start(bindAddr, endedCh)
-		fmt.Println("ENDED")
 		<-endedCh
 	},
 }
