@@ -5,7 +5,6 @@ service API {
     rpc Login(LoginRequest) returns (Response);
     rpc CreateCocoon(CocoonPayloadRequest) returns (Response);
     rpc UpdateCocoon(CocoonPayloadRequest) returns (Response);
-    rpc CreateRelease(CreateReleaseRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
@@ -81,18 +80,6 @@ message GetCocoonRequest {
 message GetIdentityRequest {
     string email = 1;
     string ID = 2;
-}
-
-message CreateReleaseRequest {
-    string ID = 1;
-    string cocoonID = 2;
-    string URL = 3;
-    string language = 4;
-    string version = 5;
-    string buildParam = 6;
-    string link = 7;
-    repeated FirewallRule firewall = 8;
-    bytes ACL = 9;
 }
 
 message GetReleaseRequest {

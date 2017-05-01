@@ -230,58 +230,6 @@ func TestOrderer(t *testing.T) {
 								So(err.Error(), ShouldEqual, "resources.memory: memory is required")
 							})
 						})
-
-						Convey(".CreateRelease", func() {
-
-							Convey("Should successfully create a release", func() {
-								id := util.UUID4()
-								r, err := api.CreateRelease(context.Background(), &proto_api.
-									CreateReleaseRequest{
-									ID:       id,
-									CocoonID: "cocoon-123",
-									URL:      "https://github.com/ncodes/cocoon-example-01",
-									Language: scheduler.SupportedCocoonCodeLang[0],
-								})
-								So(err, ShouldBeNil)
-								So(r.Status, ShouldEqual, 200)
-								So(len(r.Body), ShouldNotEqual, 0)
-
-								Convey("Should fail to create release with an already used id", func() {
-									r, err := api.CreateRelease(context.Background(), &proto_api.
-										CreateReleaseRequest{
-										ID:       id,
-										CocoonID: "cocoon-123",
-										URL:      "https://github.com/ncodes/cocoon-example-01",
-										Language: scheduler.SupportedCocoonCodeLang[0],
-									})
-									So(r, ShouldBeNil)
-									So(err, ShouldNotBeNil)
-									So(err.Error(), ShouldEqual, "a release with matching id already exists")
-								})
-
-								Convey(".GetRelease", func() {
-									Convey("Should successfully get an existing release", func() {
-										r, err := api.GetRelease(context.Background(), &proto_api.
-											GetReleaseRequest{
-											ID: id,
-										})
-										So(err, ShouldBeNil)
-										So(r.Status, ShouldEqual, 200)
-										So(len(r.Body), ShouldNotEqual, 0)
-									})
-
-									Convey("Should return error if release is not found", func() {
-										r, err := api.GetRelease(context.Background(), &proto_api.
-											GetReleaseRequest{
-											ID: id,
-										})
-										So(err, ShouldBeNil)
-										So(r.Status, ShouldEqual, 200)
-										So(len(r.Body), ShouldNotEqual, 0)
-									})
-								})
-							})
-						})
 					})
 				})
 
