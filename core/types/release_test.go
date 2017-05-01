@@ -103,5 +103,19 @@ func TestRelease(t *testing.T) {
 			So(len(diff3), ShouldEqual, 1)
 			So(len(diff3[0]), ShouldEqual, 2)
 		})
+
+		Convey(".Merge", func() {
+			a := Release{CocoonID: "abc"}
+			b := Release{CocoonID: "xyz"}
+			err := a.Merge(b)
+			So(err, ShouldBeNil)
+			So(a.CocoonID, ShouldEqual, "xyz")
+
+			a = Release{CocoonID: "abc"}
+			b = Release{CocoonID: ""}
+			err = a.Merge(b)
+			So(err, ShouldBeNil)
+			So(a.CocoonID, ShouldEqual, "abc")
+		})
 	})
 }

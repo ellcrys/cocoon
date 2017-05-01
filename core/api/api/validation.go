@@ -38,6 +38,9 @@ func ValidateCocoon(c *types.Cocoon) error {
 	if c.SigThreshold <= 0 {
 		return fmt.Errorf("signatories.threshold: signatory threshold cannot be less than 1")
 	}
+	if c.SigThreshold > c.NumSignatories {
+		return fmt.Errorf("signatories.threshold: signatory threshold cannot be greater than maximum number of signatories")
+	}
 	if c.NumSignatories < len(c.Signatories) {
 		return fmt.Errorf("signatories.signatories: max signatories already added. You can't add more")
 	}

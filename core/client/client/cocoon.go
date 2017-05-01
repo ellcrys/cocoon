@@ -26,7 +26,7 @@ import (
 var MaxBulkObjCount = 25
 
 // CreateCocoon a new cocoon
-func CreateCocoon(cocoonPayload *proto_api.CocoonPayloadRequest) error {
+func CreateCocoon(cocoonPayload *proto_api.CocoonReleasePayloadRequest) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -72,7 +72,7 @@ func CreateCocoon(cocoonPayload *proto_api.CocoonPayloadRequest) error {
 // release. A new release is created when Release fields are
 // set/defined. No release is created if updated release fields match
 // existing fields.
-func UpdateCocoon(id string, upd *proto_api.CocoonPayloadRequest) error {
+func UpdateCocoon(id string, upd *proto_api.CocoonReleasePayloadRequest) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {

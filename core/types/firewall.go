@@ -59,9 +59,9 @@ func (f Firewall) DeDup() Firewall {
 
 // FirewallRule represents information about a destination to allow connections to.
 type FirewallRule struct {
-	Destination     string `structs:"destination" mapstructure:"destination"`
-	DestinationPort string `structs:"destinationPort" mapstructure:"destinationPort"`
-	Protocol        string `structs:"protocol" mapstructure:"protocol"`
+	Destination     string `structs:"destination" mapstructure:"destination,omitempty"`
+	DestinationPort string `structs:"destinationPort" mapstructure:"destinationPort,omitempty"`
+	Protocol        string `structs:"protocol" mapstructure:"protocol,omitempty"`
 }
 
 // Eql returns true if another firewall rule is equal

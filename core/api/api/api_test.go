@@ -138,7 +138,7 @@ func TestOrderer(t *testing.T) {
 							Convey("Should successfully create a cocoon", func() {
 
 								id := util.UUID4()
-								r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+								r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 									ID:             id,
 									URL:            "https://github.com/ncodes/cocoon-example-01",
 									Language:       "go",
@@ -152,7 +152,7 @@ func TestOrderer(t *testing.T) {
 								So(len(r.Body), ShouldNotEqual, 0)
 
 								Convey("Should fail to create cocoon with an already used id", func() {
-									r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+									r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 										ID:             id,
 										URL:            "https://github.com/ncodes/cocoon-example-01",
 										Language:       "go",
@@ -197,7 +197,7 @@ func TestOrderer(t *testing.T) {
 							ctx = metadata.NewIncomingContext(ctx, md)
 
 							id := util.UUID4()
-							r, err := api.CreateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 								ID:             id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",
@@ -215,7 +215,7 @@ func TestOrderer(t *testing.T) {
 								md := metadata.Pairs("access_token", ss)
 								ctx := context.Background()
 								ctx = metadata.NewIncomingContext(ctx, md)
-								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 									ID: id,
 								})
 								So(err, ShouldNotBeNil)
@@ -223,7 +223,7 @@ func TestOrderer(t *testing.T) {
 							})
 
 							Convey("Should return error if a field is missing", func() {
-								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 									ID: id,
 								})
 								So(err, ShouldNotBeNil)

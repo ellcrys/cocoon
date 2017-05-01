@@ -12,18 +12,18 @@ import (
 // All transaction entries must reference the hash of the immediate transaction
 // sharing the same ledger name.
 type Transaction struct {
-	Number         uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" gorm:"primary_key"`
-	Ledger         string `json:"ledger,omitempty" structs:"ledger,omitempty" mapstructure:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name"`
-	ID             string `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
-	Key            string `json:"key,omitempty" structs:"key,omitempty" mapstructure:"key" gorm:"type:varchar(128);index:idx_name_key"`
-	Value          string `json:"value,omitempty" structs:"value,omitempty" mapstructure:"value" gorm:"type:text"`
-	Hash           string `json:"hash,omitempty" structs:"hash,omitempty" mapstructure:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
-	BlockID        string `json:"blockId,omitempty" structs:"blockId,omitempty" mapstructure:"blockId"`
-	RevisionTo     string `json:"revisionTo,omitempty" structs:"revisionTo,omitempty" mapstructure:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL"`
-	CreatedAt      int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at"`
-	LedgerInternal string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-"`
-	KeyInternal    string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-"`
-	Block          *Block `json:"block" structs:"block" mapstructure:"block" gorm:"-" sql:"-"`
+	Number         uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" gorm:"primary_key,omitempty"`
+	Ledger         string `json:"ledger,omitempty" structs:"ledger,omitempty" mapstructure:"ledger" gorm:"type:varchar(128);index:idx_name_ledger_name,omitempty"`
+	ID             string `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id" gorm:"type:varchar(64);unique_index:idx_name_id,omitempty"`
+	Key            string `json:"key,omitempty" structs:"key,omitempty" mapstructure:"key" gorm:"type:varchar(128);index:idx_name_key,omitempty"`
+	Value          string `json:"value,omitempty" structs:"value,omitempty" mapstructure:"value" gorm:"type:text,omitempty"`
+	Hash           string `json:"hash,omitempty" structs:"hash,omitempty" mapstructure:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash,omitempty"`
+	BlockID        string `json:"blockId,omitempty" structs:"blockId,omitempty" mapstructure:"blockId,omitempty"`
+	RevisionTo     string `json:"revisionTo,omitempty" structs:"revisionTo,omitempty" mapstructure:"revisionTo" gorm:"type:varchar(64);unique_index:idx_name_revision_to" sql:"DEFAULT:NULL,omitempty"`
+	CreatedAt      int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at,omitempty"`
+	LedgerInternal string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-,omitempty"`
+	KeyInternal    string `json:"-" structs:"-" mapstructure:"-" gorm:"-" sql:"-,omitempty"`
+	Block          *Block `json:"block" structs:"block" mapstructure:"block" gorm:"-" sql:"-,omitempty"`
 }
 
 // MakeHash creates a hash of a transaction

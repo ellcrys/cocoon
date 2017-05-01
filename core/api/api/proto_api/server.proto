@@ -1,10 +1,12 @@
 syntax = "proto3";
 package proto_api;
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
 
 service API {
     rpc Login(LoginRequest) returns (Response);
-    rpc CreateCocoon(CocoonPayloadRequest) returns (Response);
-    rpc UpdateCocoon(CocoonPayloadRequest) returns (Response);
+    rpc CreateCocoon(CocoonReleasePayloadRequest) returns (Response);
+    rpc UpdateCocoon(CocoonReleasePayloadRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
@@ -57,29 +59,29 @@ message AddVoteRequest {
     string vote = 2;    
 }
 
-message CocoonPayloadRequest {
-    string ID = 1;
-    string URL = 2;
-    string language = 3;
-    string version = 4;
-    string buildParam = 5;
-    repeated FirewallRule firewall = 6;
-    bytes ACL = 7;
-    int32 memory = 8;
-    int32 CPUShare = 9;
-    string link = 10;
-    int32 numSignatories = 11;
-    int32 sigThreshold = 12;
-    map<string,string> env = 13;
+message CocoonReleasePayloadRequest {
+    string cocoonID = 1                     [(gogoproto.jsontag) = "cocoonID,omitempty", (gogoproto.moretags) = 'structs:"cocoonID,omitempty" mapstructure:"cocoonID,omitempty"']; 
+    string URL = 2                          [(gogoproto.jsontag) = "url,omitempty", (gogoproto.moretags) = 'structs:"url,omitempty" mapstructure:"url,omitempty"'];
+    string language = 3                     [(gogoproto.jsontag) = "language,omitempty", (gogoproto.moretags) = 'structs:"language,omitempty" mapstructure:"language,omitempty"'];
+    string version = 4                      [(gogoproto.jsontag) = "version,omitempty", (gogoproto.moretags) = 'structs:"version,omitempty" mapstructure:"version,omitempty"'];
+    string buildParam = 5                   [(gogoproto.jsontag) = "buildParam,omitempty", (gogoproto.moretags) = 'structs:"buildParam,omitempty" mapstructure:"buildParam,omitempty"'];
+    repeated FirewallRule firewall = 6      [(gogoproto.jsontag) = "firewall,omitempty", (gogoproto.moretags) = 'structs:"firewall,omitempty" mapstructure:"firewall,omitempty"'];
+    bytes ACL = 7                           [(gogoproto.jsontag) = "acl,omitempty", (gogoproto.moretags) = 'structs:"acl,omitempty" mapstructure:"acl,omitempty"'];
+    int32 memory = 8                        [(gogoproto.jsontag) = "memory,omitempty", (gogoproto.moretags) = 'structs:"memory,omitempty" mapstructure:"memory,omitempty"'];
+    int32 CPUShare = 9                      [(gogoproto.jsontag) = "CPUShare,omitempty", (gogoproto.moretags) = 'structs:"CPUShare,omitempty" mapstructure:"CPUShare,omitempty"'];
+    string link = 10                        [(gogoproto.jsontag) = "link,omitempty", (gogoproto.moretags) = 'structs:"link,omitempty" mapstructure:"link,omitempty"'];
+    int32 numSignatories = 11               [(gogoproto.jsontag) = "numSignatories,omitempty", (gogoproto.moretags) = 'structs:"numSignatories,omitempty" mapstructure:"numSignatories,omitempty"'];
+    int32 sigThreshold = 12                 [(gogoproto.jsontag) = "sigThreshold,omitempty", (gogoproto.moretags) = 'structs:"sigThreshold,omitempty" mapstructure:"sigThreshold,omitempty"'];
+    map<string,string> env = 13             [(gogoproto.jsontag) = "env,omitempty", (gogoproto.moretags) = 'structs:"env,omitempty" mapstructure:"env,omitempty"'];
 }
 
 message GetCocoonRequest {
-    string ID = 1;
+    string ID = 1   [(gogoproto.jsontag) = "id", (gogoproto.moretags) = 'structs:"id,omitempty" mapstructure:"id,omitempty"'];
 }
 
 message GetIdentityRequest {
     string email = 1;
-    string ID = 2;
+    string ID = 2 [(gogoproto.jsontag) = "id", (gogoproto.moretags) = 'structs:"id,omitempty" mapstructure:"id,omitempty"'];
 }
 
 message GetReleaseRequest {
@@ -88,7 +90,7 @@ message GetReleaseRequest {
 
 message DeployRequest {
     string cocoonID = 1;
-    bool useLastDeployedReleaseID = 2;
+    bool useLastDeployedReleaseID = 2; 
 }
 
 message CreateIdentityRequest {
@@ -97,7 +99,7 @@ message CreateIdentityRequest {
 }
 
 message StopCocoonRequest {
-    string ID = 1;
+    string ID = 1          [(gogoproto.jsontag) = "id", (gogoproto.moretags) = 'structs:"id,omitempty" mapstructure:"id,omitempty"'];
 }
 
 message Response {

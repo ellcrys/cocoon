@@ -40,7 +40,7 @@ var updateCmd = &cobra.Command{
 
 		stopSpinner()
 		for i, contract := range contracts {
-			err := client.UpdateCocoon(contract.ID, contract)
+			err := client.UpdateCocoon(contract.CocoonID, contract)
 			if err != nil {
 				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
 			}

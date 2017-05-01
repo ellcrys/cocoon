@@ -284,6 +284,12 @@
 			"revisionTime": "2016-12-05T22:32:45Z"
 		},
 		{
+			"checksumSHA1": "HVgmVrMTR24UZC16fLr/eLvK3Ng=",
+			"path": "github.com/gogo/protobuf/gogoproto",
+			"revision": "9c5b7bafbfccf2b40d274e0496f3a09418a87af4",
+			"revisionTime": "2017-02-07T10:23:50Z"
+		},
+		{
 			"checksumSHA1": "HmbftipkadrLlCfzzVQ+iFHbl6g=",
 			"path": "github.com/golang/glog",
 			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",

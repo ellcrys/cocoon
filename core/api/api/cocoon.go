@@ -7,6 +7,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
+	"github.com/fatih/structs"
 	"github.com/jinzhu/copier"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
@@ -61,7 +62,7 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
-func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
+func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
@@ -159,18 +160,19 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release related fields are
 // changed.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRequest) (*proto_api.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
 
 	var err error
 	var claims jwt.MapClaims
 	var cocoonUpdated bool
 	var releaseUpdated bool
+	var now = time.Now()
 
 	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
 		return nil, types.ErrInvalidOrExpiredToken
 	}
 
-	cocoon, err := api.platform.GetCocoon(ctx, req.ID)
+	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +184,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	var cocoonUpd = cocoon.Clone()
-	copier.Copy(&cocoonUpd, req)
+	cocoonUpd.Merge(structs.New(req).Map())
 
 	// check if the existing cocoon differ from the updated cocoon
 	// if so, apply the new update
@@ -206,17 +208,16 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	}
 
 	releaseUpd := release.Clone()
-	copier.Copy(&releaseUpd, release)
-	releaseUpd.Env = types.NewEnv(req.Env).ProcessAsOne(true)
+	releaseUpd.Merge(structs.New(req).Map())
+	releaseUpd.BuildParam = req.BuildParam
+	releaseUpd.Link = req.Link
 	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
-	releaseUpd.Firewall = types.CopyFirewall(req.Firewall)
 
 	if len(releaseUpd.Firewall) > 0 {
-		outputFirewall, err := common.ResolveFirewall(releaseUpd.Firewall.DeDup())
+		releaseUpd.Firewall, err = common.ResolveFirewall(releaseUpd.Firewall.DeDup())
 		if err != nil {
 			return nil, fmt.Errorf("firewall: %s", err)
 		}
-		releaseUpd.Firewall = outputFirewall
 	}
 
 	// check if the existing release differ from the updated release
@@ -224,6 +225,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 	if diffs := release.Difference(releaseUpd); diffs[0] != nil {
 		releaseUpdated = true
 		release = &releaseUpd
+		release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 		release.ID = util.UUID4()
 		if err = ValidateRelease(release); err != nil {
 			return nil, err
@@ -240,7 +242,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonPayloadRe
 
 	// create new release if a field was changed
 	if releaseUpdated {
-
 		err = api.platform.PutRelease(ctx, release)
 		if err != nil {
 			return nil, err

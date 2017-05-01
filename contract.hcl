@@ -24,7 +24,7 @@ contracts {
     # Provide build information if the contract code requires it
     build {
         # The package manager to use (supported: glide, govendor)
-        pkgMgr = "govendor"
+        // pkgMgr = "govendor"
     }
     
     # Resources to allocate to the contract's cocoon
@@ -44,7 +44,7 @@ contracts {
     # to allow or deny access to perform specific operations by other contracts.
     acl {
         # Allow all operations but deny the ability to create ledgers
-        "*" = "allow deny-create-ledger deny"
+        "*" = "allow deny-create-ledger deny-get"
     }
     
     # Firewall stanza determines the addresses the contract
@@ -60,7 +60,7 @@ contracts {
     # @private flag will cause the value to never show up in any publicly accessible channel
     # @gen32 generates a 32 byte random string 
     env {
-        "MY_VAR"  = "some value"
-        "MY_VAR2@private,genRand32" = ""
+        "MY_VAR"  = "some value here"
+        // "MY_VAR2@private,genRand32" = ""
     }
 }

@@ -156,7 +156,7 @@ type Config struct {
 type EphemeralDisk struct {
 	Sticky  bool
 	Migrate bool
-	SizeMB  int `mapstructure:"size"`
+	SizeMB  int `mapstructure:"size,omitempty"`
 }
 
 // NomadJob represents a nomad job

@@ -5,27 +5,28 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
-	"github.com/jinzhu/copier"
+	"github.com/imdario/mergo"
 	"github.com/ncodes/cocoon/core/common/mapdiff"
+	"github.com/ncodes/mapstructure"
 )
 
 // Release represents a new update to a cocoon's
 // configuration
 type Release struct {
-	ID          string   `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id"`
-	CocoonID    string   `json:"cocoonID,omitempty" structs:"cocoonID,omitempty" mapstructure:"cocoonID"`
-	URL         string   `json:"URL,omitempty" structs:"URL,omitempty" mapstructure:"URL"`
-	Version     string   `json:"version,omitempty" structs:"version,omitempty" mapstructure:"version"`
-	Language    string   `json:"language,omitempty" structs:"language,omitempty" mapstructure:"language"`
-	BuildParam  string   `json:"buildParam,omitempty" structs:"buildParam,omitempty" mapstructure:"buildParam"`
-	Link        string   `json:"link,omitempty" structs:"link,omitempty" mapstructure:"link"`
-	SigApproved int      `json:"sigApproved,omitempty" structs:"sigApproved,omitempty" mapstructure:"sigApproved"`
-	SigDenied   int      `json:"sigDenied,omitempty" structs:"sigDenied,omitempty" mapstructure:"sigDenied"`
-	VotersID    []string `json:"votersID,omitempty" structs:"votersID,omitempty" mapstructure:"votersID"`
-	Firewall    Firewall `json:"firewall,omitempty" structs:"firewall,omitempty" mapstructure:"firewall"`
-	ACL         ACLMap   `json:"acl,omitempty" structs:"acl,omitempty" mapstructure:"acl"`
-	Env         Env      `json:"env,omitempty" structs:"env,omitempty" mapstructure:"env"`
-	CreatedAt   string   `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt"`
+	ID          string   `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id,omitempty"`
+	CocoonID    string   `json:"cocoonID,omitempty" structs:"cocoonID,omitempty" mapstructure:"cocoonID,omitempty"`
+	URL         string   `json:"URL,omitempty" structs:"URL,omitempty" mapstructure:"URL,omitempty"`
+	Version     string   `json:"version,omitempty" structs:"version,omitempty" mapstructure:"version,omitempty"`
+	Language    string   `json:"language,omitempty" structs:"language,omitempty" mapstructure:"language,omitempty"`
+	BuildParam  string   `json:"buildParam,omitempty" structs:"buildParam,omitempty" mapstructure:"buildParam,omitempty"`
+	Link        string   `json:"link,omitempty" structs:"link,omitempty" mapstructure:"link,omitempty"`
+	SigApproved int      `json:"sigApproved,omitempty" structs:"sigApproved,omitempty" mapstructure:"sigApproved,omitempty"`
+	SigDenied   int      `json:"sigDenied,omitempty" structs:"sigDenied,omitempty" mapstructure:"sigDenied,omitempty"`
+	VotersID    []string `json:"votersID,omitempty" structs:"votersID,omitempty" mapstructure:"votersID,omitempty"`
+	Firewall    Firewall `json:"firewall,omitempty" structs:"firewall,omitempty" mapstructure:"firewall,omitempty"`
+	ACL         ACLMap   `json:"acl,omitempty" structs:"acl,omitempty" mapstructure:"acl,omitempty"`
+	Env         Env      `json:"env,omitempty" structs:"env,omitempty" mapstructure:"env,omitempty"`
+	CreatedAt   string   `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt,omitempty"`
 }
 
 // Difference returns the difference between the current release and another release
@@ -44,10 +45,35 @@ func (r *Release) ToMap() map[string]interface{} {
 	return structs.New(r).Map()
 }
 
+// ToMapPtr same as ToMap but returns a pointer
+func (r *Release) ToMapPtr() *map[string]interface{} {
+	ptr := structs.New(r).Map()
+	return &ptr
+}
+
+// Merge merges another release or map with current object replacing every
+// non-empty value with non-empty values of the passed object.
+func (r *Release) Merge(o interface{}) error {
+	switch obj := o.(type) {
+	case Release:
+		m := r.ToMapPtr()
+		mergo.MergeWithOverwrite(m, obj.ToMap())
+		mapstructure.Decode(m, r)
+	case map[string]interface{}:
+		m := r.ToMapPtr()
+		mergo.MergeWithOverwrite(m, obj)
+		mapstructure.Decode(m, r)
+	default:
+		return fmt.Errorf("unsupported type")
+	}
+	return nil
+}
+
 // Clone creates a clone of this object
 func (r *Release) Clone() Release {
 	var clone Release
-	copier.Copy(&clone, r)
+	m := r.ToMap()
+	mapstructure.Decode(m, &clone)
 	return clone
 }
 

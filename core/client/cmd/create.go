@@ -23,7 +23,7 @@ import (
 )
 
 // parseContract passes a contract files
-func parseContract(path, repoVersion string) ([]*proto_api.CocoonPayloadRequest, []error) {
+func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadRequest, []error) {
 	var id string
 	var url string
 	var lang string
@@ -37,7 +37,7 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonPayloadRequest,
 	var firewall string
 	var configFileData map[string]interface{}
 	var aclMap map[string]interface{}
-	var cocoons []*proto_api.CocoonPayloadRequest
+	var cocoons []*proto_api.CocoonReleasePayloadRequest
 	var env map[string]interface{}
 	var errs []error
 
@@ -196,8 +196,8 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonPayloadRequest,
 					}
 				}
 
-				cocoons = append(cocoons, &proto_api.CocoonPayloadRequest{
-					ID:             id,
+				cocoons = append(cocoons, &proto_api.CocoonReleasePayloadRequest{
+					CocoonID:       id,
 					URL:            url,
 					Language:       lang,
 					Version:        version,

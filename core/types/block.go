@@ -6,13 +6,13 @@ import "fmt"
 // Block represents a table of chains
 type Block struct {
 	PK            uint   `json:"-" gorm:"primary_key"`
-	ID            string `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id" gorm:"type:varchar(64);unique_index:idx_name_id"`
-	Number        uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" sql:"DEFAULT:0"`
-	ChainName     string `json:"chainName,omitempty" structs:"chainName,omitempty" mapstructure:"chainName" gorm:"index:idx_name_chain_name"`
-	PrevBlockHash string `json:"prevBlockHash,omitempty" structs:"prevBlockHash,omitempty" mapstructure:"prevBlockHash" gorm:"type:varchar(64);unique_index:idx_name_prev_block_hash"`
-	Hash          string `json:"hash,omitempty" structs:"hash,omitempty" mapstructure:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash"`
-	Transactions  []byte `json:"transactions,omitempty" structs:"transactions,omitempty" mapstructure:"transactions"`
-	CreatedAt     int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at"`
+	ID            string `json:"id,omitempty" structs:"id,omitempty" mapstructure:"id" gorm:"type:varchar(64);unique_index:idx_name_id,omitempty"`
+	Number        uint   `json:"number,omitempty" structs:"number,omitempty" mapstructure:"number" sql:"DEFAULT:0,omitempty"`
+	ChainName     string `json:"chainName,omitempty" structs:"chainName,omitempty" mapstructure:"chainName" gorm:"index:idx_name_chain_name,omitempty"`
+	PrevBlockHash string `json:"prevBlockHash,omitempty" structs:"prevBlockHash,omitempty" mapstructure:"prevBlockHash" gorm:"type:varchar(64);unique_index:idx_name_prev_block_hash,omitempty"`
+	Hash          string `json:"hash,omitempty" structs:"hash,omitempty" mapstructure:"hash" gorm:"type:varchar(64);unique_index:idx_name_hash,omitempty"`
+	Transactions  []byte `json:"transactions,omitempty" structs:"transactions,omitempty" mapstructure:"transactions,omitempty"`
+	CreatedAt     int64  `json:"createdAt,omitempty" structs:"createdAt,omitempty" mapstructure:"createdAt" gorm:"index:idx_name_created_at,omitempty"`
 }
 
 // GetTransactions returns a slice of transactions in the block.
