@@ -222,13 +222,12 @@ func TestOrderer(t *testing.T) {
 								So(err.Error(), ShouldEqual, "Permission denied: You do not have permission to perform this operation")
 							})
 
-							Convey("Should return error if validation error failed (not all fields are tested)", func() {
+							Convey("Should return error if a field is missing", func() {
 								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonPayloadRequest{
-									ID:       id,
-									CPUShare: 1000,
+									ID: id,
 								})
 								So(err, ShouldNotBeNil)
-								So(err.Error(), ShouldEqual, "resources: Unknown resource set")
+								So(err.Error(), ShouldEqual, "resources.memory: memory is required")
 							})
 						})
 
