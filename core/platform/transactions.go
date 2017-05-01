@@ -159,12 +159,14 @@ func (t *Transactions) PutCocoon(ctx context.Context, cocoon *types.Cocoon) erro
 // GetCocoon gets a cocoon with a matching id.
 func (t *Transactions) GetCocoon(ctx context.Context, id string) (*types.Cocoon, error) {
 
+	fmt.Println("Get connection")
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
 		return nil, err
 	}
 	defer ordererConn.Close()
 
+	fmt.Println("Get orderer client")
 	odc := proto_orderer.NewOrdererClient(ordererConn)
 	tx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
@@ -172,12 +174,13 @@ func (t *Transactions) GetCocoon(ctx context.Context, id string) (*types.Cocoon,
 		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
+		fmt.Println("Errrr", err)
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
 			return nil, types.ErrCocoonNotFound
 		}
 		return nil, err
 	}
-
+	fmt.Println("Found")
 	var cocoon types.Cocoon
 	util.FromJSON([]byte(tx.Value), &cocoon)
 
