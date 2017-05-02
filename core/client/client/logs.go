@@ -13,8 +13,6 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // MinimumLogLines defines the minimum number of lines of logs to return
@@ -38,21 +36,16 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 		source = "stdout"
 	}
 
-	userSession, err := GetUserSessionToken()
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to connect to the platform")
 	}
 
-	var fetch = func() (*proto_api.Response, error) {
-		conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-		if err != nil {
-			return nil, fmt.Errorf("unable to connect to cluster. please try again")
-		}
-		defer conn.Close()
+	defer conn.Close()
 
-		ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		defer cancel()
+	var fetch = func() (*proto_api.Response, error) {
+		ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+		defer cc()
 		cl := proto_api.NewAPIClient(conn)
 		resp, err := cl.GetLogs(ctx, &proto_api.GetLogsRequest{
 			CocoonID: cocoonID,
@@ -102,7 +95,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 			return nil
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		resp, err := fetch()
 		if err != nil {
 			return err

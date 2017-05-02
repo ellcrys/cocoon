@@ -78,7 +78,7 @@ func (api *API) Start(addr string, endedCh chan bool) {
 		api.EventEmitter.Emit("started")
 	})
 
-	api.server = grpc.NewServer()
+	api.server = grpc.NewServer(grpc.UnaryInterceptor(Interceptors()))
 	proto_api.RegisterAPIServer(api.server, api)
 	api.server.Serve(lis)
 }

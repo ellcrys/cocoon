@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/ncodes/cocoon/core/lock/consul"
 	"github.com/ncodes/cocoon/core/lock/memory"
 	"github.com/ncodes/cocoon/core/types"
+	context "golang.org/x/net/context"
 )
 
 // GetRPCErrDesc takes a grpc generated error and returns the description.
@@ -235,4 +237,26 @@ func ReturnFirstIfDiffACLMap(a, b types.ACLMap) types.ACLMap {
 		return a
 	}
 	return b
+}
+
+// GetAuthToken returns authorization code of a specific bearer from a context
+func GetAuthToken(ctx context.Context, scheme string) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("failed to get metadata from context")
+	}
+
+	authorization := md["authorization"]
+	if len(authorization) == 0 {
+		return "", fmt.Errorf("authorization not included in context")
+	}
+
+	authSplit := strings.SplitN(authorization[0], " ", 2)
+	if len(authSplit) != 2 {
+		return "", fmt.Errorf("authorization format is invalid")
+	} else if authSplit[0] != scheme {
+		return "", fmt.Errorf("Request unauthenticated with %s", scheme)
+	}
+
+	return authSplit[1], nil
 }

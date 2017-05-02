@@ -75,6 +75,7 @@ message CocoonReleasePayloadRequest {
     map<string,string> env = 13             [(gogoproto.jsontag) = "env,omitempty", (gogoproto.moretags) = 'structs:"env,omitempty" mapstructure:"env,omitempty"'];
 }
 
+
 message GetCocoonRequest {
     string ID = 1   [(gogoproto.jsontag) = "id", (gogoproto.moretags) = 'structs:"id,omitempty" mapstructure:"id,omitempty"'];
 }

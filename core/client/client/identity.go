@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"fmt"
-	"time"
 
 	context "golang.org/x/net/context"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/types"
-	"google.golang.org/grpc"
 )
 
 func init() {
@@ -26,15 +24,18 @@ func CreateIdentity(email string) error {
 
 	var err error
 
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-
 	stopSpinner := util.Spinner("Please wait")
 
+	conn, err := GetAPIConnection()
+	if err != nil {
+		return fmt.Errorf("unable to connect to the platform")
+	}
+	defer conn.Close()
+
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
+
 	client := proto_api.NewAPIClient(conn)
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
 	resp, err := client.GetIdentity(ctx, &proto_api.GetIdentityRequest{
 		Email: email,
 	})

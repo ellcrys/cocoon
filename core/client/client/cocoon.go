@@ -8,9 +8,6 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-
 	"sync"
 
 	"github.com/ellcrys/util"
@@ -28,39 +25,27 @@ var MaxBulkObjCount = 25
 // CreateCocoon a new cocoon
 func CreateCocoon(cocoonPayload *proto_api.CocoonReleasePayloadRequest) error {
 
-	userSession, err := GetUserSessionToken()
+	ss := util.Spinner("Please wait...")
+	defer ss()
+
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return err
-	}
-
-	stopSpinner := util.Spinner("Please wait")
-
-	// err = api.ValidateCocoon(cocoon)
-	// if err != nil {
-	// 	stopSpinner()
-	// 	return err
-	// }
-
-	defer stopSpinner()
-
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		stopSpinner()
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
-	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
 	cocoonJSON, err := proto_api.NewAPIClient(conn).CreateCocoon(ctx, cocoonPayload)
 	if err != nil {
-		stopSpinner()
 		return err
 	}
 
 	var cocoon types.Cocoon
 	util.FromJSON(cocoonJSON.Body, &cocoon)
 
-	stopSpinner()
+	ss()
+
 	log.Info(`==> New cocoon created`)
 	log.Infof(`==> Cocoon ID:  %s`, cocoon.ID)
 	log.Infof(`==> Release ID: %s`, cocoon.Releases[0])
@@ -74,22 +59,16 @@ func CreateCocoon(cocoonPayload *proto_api.CocoonReleasePayloadRequest) error {
 // existing fields.
 func UpdateCocoon(id string, upd *proto_api.CocoonReleasePayloadRequest) error {
 
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
-	}
-
 	stopSpinner := util.Spinner("Please wait")
 
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
-	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("access_token", userSession.Token))
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
 	cl := proto_api.NewAPIClient(conn)
 	resp, err := cl.UpdateCocoon(ctx, upd)
 	if err != nil {
@@ -130,27 +109,27 @@ func UpdateCocoon(id string, upd *proto_api.CocoonReleasePayloadRequest) error {
 // GetCocoons fetches one or more cocoons and logs them
 func GetCocoons(ids []string) error {
 
+	var cocoons = []types.Cocoon{}
+	var err error
+	var resp *proto_api.Response
+
 	if len(ids) > MaxBulkObjCount {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
 
-	var cocoons = []types.Cocoon{}
-	var err error
-	var resp *proto_api.Response
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
 	for _, id := range ids {
 		stopSpinner := util.Spinner("Please wait")
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
+
+		ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+		defer cc()
 		cl := proto_api.NewAPIClient(conn)
-		resp, err = cl.GetCocoon(ctx, &proto_api.GetCocoonRequest{
-			ID: id,
-		})
+		resp, err = cl.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: id})
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				stopSpinner()
@@ -182,9 +161,9 @@ func GetCocoons(ids []string) error {
 // Deploy creates and sends a deploy request to the server
 func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool) error {
 
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
@@ -208,22 +187,26 @@ func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool)
 func ListCocoons(showAll, jsonFormatted bool) error {
 
 	var cocoons []types.Cocoon
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
-	}
-
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-	defer conn.Close()
 
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
+
+	conn, err := GetAPIConnection()
+	if err != nil {
+		return fmt.Errorf("unable to connect to the platform")
+	}
+	defer conn.Close()
+
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
 	client := proto_api.NewAPIClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
+
+	userSession, err := GetUserSessionToken()
+	if err != nil {
+		return ErrNoUserSession
+	}
 
 	resp, err := client.GetIdentity(ctx, &proto_api.GetIdentityRequest{
 		Email: userSession.Email,
@@ -303,14 +286,9 @@ func StopCocoon(ids []string) error {
 	var errs []error
 	var stopped []string
 
-	userSession, err := GetUserSessionToken()
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return err
-	}
-
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
@@ -319,9 +297,8 @@ func StopCocoon(ids []string) error {
 
 	for _, id := range ids {
 
-		ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+		ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
 		defer cc()
-		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
 		_, err = cl.StopCocoon(ctx, &proto_api.StopCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
@@ -349,24 +326,15 @@ func StopCocoon(ids []string) error {
 // try to deploy the latest release.
 func Start(ids []string, useLastDeployedReleaseID bool) error {
 
-	if len(ids) > MaxBulkObjCount {
-		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
-	}
-
 	var errs []error
 	var started []string
 	var muErr = sync.Mutex{}
 	var muStarted = sync.Mutex{}
 	var wg = sync.WaitGroup{}
 
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
+	if len(ids) > MaxBulkObjCount {
+		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
-
-	md := metadata.Pairs("access_token", userSession.Token)
-	ctx := context.Background()
-	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	stopSpinner := util.Spinner("Please wait")
 
@@ -374,9 +342,9 @@ func Start(ids []string, useLastDeployedReleaseID bool) error {
 		id := id
 		wg.Add(1)
 		go func() {
-			ctx, cc := context.WithTimeout(ctx, 1*time.Minute)
+			ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
 			defer cc()
-			if err = deploy(ctx, id, useLastDeployedReleaseID); err != nil {
+			if err := deploy(ctx, id, useLastDeployedReleaseID); err != nil {
 				muErr.Lock()
 				errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), common.GetRPCErrDesc(err)))
 				muErr.Unlock()
@@ -414,22 +382,17 @@ func AddSignatories(cocoonID string, ids []string) error {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
 
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
-	}
-
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-	defer conn.Close()
-
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 
-	ctx := context.Background()
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	conn, err := GetAPIConnection()
+	if err != nil {
+		return fmt.Errorf("unable to connect to the platform")
+	}
+	defer conn.Close()
+
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
 	cl := proto_api.NewAPIClient(conn)
 	resp, err := cl.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
 		CocoonID: cocoonID,
@@ -471,22 +434,18 @@ func RemoveSignatories(cocoonID string, ids []string) error {
 		return fmt.Errorf("max number of objects exceeded. Expects a maximum of %d", MaxBulkObjCount)
 	}
 
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
-	}
-
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
-	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
-	}
-	defer conn.Close()
-
 	stopSpinner := util.Spinner("Please wait")
 	defer stopSpinner()
 
-	ctx := context.Background()
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	conn, err := GetAPIConnection()
+	if err != nil {
+		return fmt.Errorf("unable to connect to the platform")
+	}
+	defer conn.Close()
+
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
+
 	cl := proto_api.NewAPIClient(conn)
 	_, err = cl.RemoveSignatories(ctx, &proto_api.RemoveSignatoriesRequest{
 		CocoonID: cocoonID,

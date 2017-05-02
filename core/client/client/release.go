@@ -37,7 +37,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
 		stopSpinner()
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
@@ -121,16 +121,18 @@ func GetReleases(ids []string) error {
 	var releases []types.Release
 	var err error
 	var resp *proto_api.Response
-	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
+
+	conn, err := GetAPIConnection()
 	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	defer conn.Close()
 
 	for _, id := range ids {
 		stopSpinner := util.Spinner("Please wait")
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
+
+		ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+		defer cc()
 		cl := proto_api.NewAPIClient(conn)
 		resp, err = cl.GetRelease(ctx, &proto_api.GetReleaseRequest{
 			ID: id,

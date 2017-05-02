@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc/metadata"
-
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
@@ -15,40 +13,15 @@ import (
 	context "golang.org/x/net/context"
 )
 
-// authenticateToken validates a token
-func (api *API) authenticateToken(tokenStr string) (jwt.MapClaims, error) {
-
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		tokenType := token.Claims.(jwt.MapClaims)["type"]
-		if tokenType == "token.cli" {
-			return []byte(util.Env("API_SIGN_KEY", "secret")), nil
-		}
-		return nil, fmt.Errorf("unknown token type")
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	if err = claims.Valid(); err != nil {
-		return nil, err
-	}
-
-	return claims, nil
-}
-
 // checkCtxAccessToken authenticates the access token in the context
-func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) {
-	md, _ := metadata.FromIncomingContext(ctx)
-	accessTokens := md["access_token"]
-	if accessTokens == nil {
-		return nil, fmt.Errorf("access token is required")
-	}
-	return api.authenticateToken(accessTokens[0])
-}
+// func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) {
+// 	md, _ := metadata.FromIncomingContext(ctx)
+// 	accessTokens := md["access_token"]
+// 	if accessTokens == nil {
+// 		return nil, fmt.Errorf("access token is required")
+// 	}
+// 	return api.authenticateToken(accessTokens[0])
+// }
 
 // makeAuthToken creates a session token
 func makeAuthToken(id, identity, _type string, exp int64, secret string) (string, error) {

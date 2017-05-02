@@ -5,10 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/metadata"
+
 	"fmt"
 
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
+	context "golang.org/x/net/context"
 )
 
 func TestFunc(t *testing.T) {
@@ -145,6 +148,37 @@ func TestFunc(t *testing.T) {
 			So(ReturnFirstIfDiffString("abc", "a", false), ShouldEqual, "abc")
 			So(ReturnFirstIfDiffString("", "xyz", false), ShouldEqual, "")
 			So(ReturnFirstIfDiffString("", "xyz", true), ShouldEqual, "xyz")
+		})
+
+		Convey(".GetAuthToken", func() {
+			ctx := metadata.NewContext(context.Background(), nil)
+			_, err := GetAuthToken(ctx, "bearer")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed to get metadata from context")
+
+			md := metadata.Pairs()
+			ctx = metadata.NewIncomingContext(context.Background(), md)
+			_, err = GetAuthToken(ctx, "bearer")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "authorization not included in context")
+
+			md = metadata.Pairs("authorization", "abc")
+			ctx = metadata.NewIncomingContext(context.Background(), md)
+			_, err = GetAuthToken(ctx, "bearer")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "authorization format is invalid")
+
+			md = metadata.Pairs("authorization", "basic abc")
+			ctx = metadata.NewIncomingContext(context.Background(), md)
+			_, err = GetAuthToken(ctx, "bearer")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "Request unauthenticated with bearer")
+
+			md = metadata.Pairs("authorization", "bearer abc")
+			ctx = metadata.NewIncomingContext(context.Background(), md)
+			token, err := GetAuthToken(ctx, "bearer")
+			So(err, ShouldBeNil)
+			So(token, ShouldEqual, "abc")
 		})
 	})
 }

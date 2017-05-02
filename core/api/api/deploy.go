@@ -21,9 +21,9 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 
 	apiLog.Infof("New deploy request for cocoon with ID = %s", req.CocoonID)
 
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
+	// if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+	// 	return nil, types.ErrInvalidOrExpiredToken
+	// }
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.GetCocoonID())
 	if err != nil {

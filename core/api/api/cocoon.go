@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/asaskevich/govalidator"
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
 	"github.com/jinzhu/copier"
@@ -65,17 +64,11 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
 
 	var err error
-	var claims jwt.MapClaims
 	var releaseID = util.UUID4()
 	var now = time.Now()
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
-
-	loggedInIdentity := claims["identity"].(string)
-
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 	var cocoon types.Cocoon
+
 	cocoon.Merge(structs.New(req).Map())
 	cocoon.ID = req.CocoonID
 	cocoon.Status = CocoonStatusCreated
@@ -164,14 +157,10 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
 
 	var err error
-	var claims jwt.MapClaims
 	var cocoonUpdated bool
 	var releaseUpdated bool
 	var now = time.Now()
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
@@ -179,7 +168,6 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	}
 
 	// Ensure the cocoon identity matches the logged in user
-	loggedInIdentity := claims["identity"].(string)
 	if cocoon.IdentityID != loggedInIdentity {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
@@ -346,14 +334,10 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 // StopCocoon stops a running cocoon and sets its status to `stopped`
 func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest) (*proto_api.Response, error) {
 
-	apiLog.Infof("Received request to stop cocoon = %s", req.ID)
-
-	var claims jwt.MapClaims
 	var err error
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
+	apiLog.Infof("Received request to stop cocoon = %s", req.ID)
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.GetID())
 	if err != nil {
@@ -361,7 +345,7 @@ func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest
 	}
 
 	// ensure session identity matches cocoon identity
-	if claims["identity"].(string) != cocoon.IdentityID {
+	if loggedInIdentity != cocoon.IdentityID {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
@@ -381,12 +365,12 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 	var added = []string{}
 	var errs = []string{}
 	var _id = []string{}
-	var claims jwt.MapClaims
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 	var err error
 
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
+	// if claims, err = api.checkCtxAccessToken(ctx); err != nil {
+	// 	return nil, types.ErrInvalidOrExpiredToken
+	// }
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
@@ -394,7 +378,7 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 	}
 
 	// ensure session identity matches cocoon identity
-	if claims["identity"].(string) != cocoon.IdentityID {
+	if loggedInIdentity != cocoon.IdentityID {
 		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
 	}
 
@@ -458,12 +442,8 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 // AddVote adds a vote to a release where the logged in user is a signatory
 func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*proto_api.Response, error) {
 
-	var claims jwt.MapClaims
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 	var err error
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
 
 	release, err := api.platform.GetRelease(ctx, req.ReleaseID, false)
 	if err != nil {
@@ -478,15 +458,13 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, err
 	}
 
-	loggedInUserIdentity := claims["identity"].(string)
-
 	// ensure logged in user is a signatory of this cocoon
-	if !util.InStringSlice(cocoon.Signatories, loggedInUserIdentity) {
+	if !util.InStringSlice(cocoon.Signatories, loggedInIdentity) {
 		return nil, fmt.Errorf("Permission Denied: You are not a signatory to this cocoon")
 	}
 
 	// ensure logged in user has not voted before
-	if release.VotersID != nil && util.InStringSlice(release.VotersID, loggedInUserIdentity) {
+	if release.VotersID != nil && util.InStringSlice(release.VotersID, loggedInIdentity) {
 		return nil, fmt.Errorf("You have already cast a vote for this release")
 	}
 
@@ -498,9 +476,9 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 	}
 
 	if release.VotersID == nil {
-		release.VotersID = []string{loggedInUserIdentity}
+		release.VotersID = []string{loggedInIdentity}
 	} else {
-		release.VotersID = append(release.VotersID, loggedInUserIdentity)
+		release.VotersID = append(release.VotersID, loggedInIdentity)
 	}
 
 	err = api.platform.PutRelease(ctx, release)
@@ -517,22 +495,16 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 // RemoveSignatories removes one or more signatories
 func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSignatoriesRequest) (*proto_api.Response, error) {
 
-	var claims jwt.MapClaims
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 	var err error
-
-	if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-		return nil, types.ErrInvalidOrExpiredToken
-	}
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
 	}
 
-	loggedInUserIdentity := claims["identity"].(string)
-
 	// ensure logged user is owner
-	if loggedInUserIdentity != cocoon.IdentityID {
+	if loggedInIdentity != cocoon.IdentityID {
 		return nil, fmt.Errorf("Permission Denied: You are not a signatory to this cocoon")
 	}
 

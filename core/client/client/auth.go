@@ -20,7 +20,7 @@ func Login(email, password string) error {
 
 	conn, err := grpc.Dial(APIAddress, grpc.WithInsecure())
 	if err != nil {
-		return fmt.Errorf("unable to connect to cluster. please try again")
+		return fmt.Errorf("unable to connect to the platform")
 	}
 	stopSpinner := util.Spinner("Please wait")
 

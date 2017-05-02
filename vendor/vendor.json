@@ -368,6 +368,18 @@
 			"revisionTime": "2016-07-22T20:42:12Z"
 		},
 		{
+			"checksumSHA1": "P/N70TV4RjZC8YCmuwbRSoT5iGk=",
+			"path": "github.com/grpc-ecosystem/go-grpc-middleware",
+			"revision": "d2c1593bf15e3dda83159ecf2b8a95a2cd15a17f",
+			"revisionTime": "2017-05-01T10:54:15Z"
+		},
+		{
+			"checksumSHA1": "m9Ms6DWtj03euhhIZ4BFv7ytKyI=",
+			"path": "github.com/grpc-ecosystem/go-grpc-middleware/auth",
+			"revision": "d2c1593bf15e3dda83159ecf2b8a95a2cd15a17f",
+			"revisionTime": "2017-05-01T10:54:15Z"
+		},
+		{
 			"checksumSHA1": "hxj4nWuXjbCxO1105yFD1dBVRuM=",
 			"path": "github.com/hashicorp/consul/api",
 			"revision": "f17656c39f27f3adc79fd3fd51b9fdc84cc414a1",
