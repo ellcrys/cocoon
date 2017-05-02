@@ -14,26 +14,27 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 )
 
-// Transactions represents a collection of
-// methods for performing common, orderer-specific operations
-type Transactions struct {
+// Platform represents a collection of
+// methods for performing common platform business logic
+// that involves identity, cocoons and other platform resources
+type Platform struct {
 	ordererDiscoverer *orderer.Discovery
 }
 
-// NewTransactions creates a new transaction object
-func NewTransactions() (*Transactions, error) {
+// NewPlatform creates a new transaction object
+func NewPlatform() (*Platform, error) {
 	ordererDiscoverer, err := orderer.NewDiscovery()
 	if err != nil {
 		return nil, err
 	}
 	go ordererDiscoverer.Discover()
-	return &Transactions{
+	return &Platform{
 		ordererDiscoverer: ordererDiscoverer,
 	}, nil
 }
 
 // Stop stops the orderer discoverer service
-func (t *Transactions) Stop() {
+func (t *Platform) Stop() {
 	t.ordererDiscoverer.Stop()
 }
 
@@ -41,7 +42,7 @@ func (t *Transactions) Stop() {
 // Since an identity password is never saved along side the rest of the other identity
 // field on the system public ledger, it is retrieved from the private system ledger where
 // it is stored separately.
-func (t *Transactions) GetIdentity(ctx context.Context, id string) (*types.Identity, error) {
+func (t *Platform) GetIdentity(ctx context.Context, id string) (*types.Identity, error) {
 
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
@@ -85,7 +86,7 @@ func (t *Transactions) GetIdentity(ctx context.Context, id string) (*types.Ident
 // PutIdentity adds a new identity. If another identity with a matching key
 // exists, it is effectively shadowed. The identity password is not saved to the
 // systems public ledger but on the system private ledger.
-func (t *Transactions) PutIdentity(ctx context.Context, identity *types.Identity) error {
+func (t *Platform) PutIdentity(ctx context.Context, identity *types.Identity) error {
 
 	var password = identity.Password
 
@@ -130,7 +131,7 @@ func (t *Transactions) PutIdentity(ctx context.Context, identity *types.Identity
 
 // PutCocoon adds a new cocoon. If another cocoon with a matching key
 // exists, it is effectively shadowed
-func (t *Transactions) PutCocoon(ctx context.Context, cocoon *types.Cocoon) error {
+func (t *Platform) PutCocoon(ctx context.Context, cocoon *types.Cocoon) error {
 
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
@@ -157,7 +158,7 @@ func (t *Transactions) PutCocoon(ctx context.Context, cocoon *types.Cocoon) erro
 }
 
 // GetCocoon gets a cocoon with a matching id.
-func (t *Transactions) GetCocoon(ctx context.Context, id string) (*types.Cocoon, error) {
+func (t *Platform) GetCocoon(ctx context.Context, id string) (*types.Cocoon, error) {
 
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
@@ -187,7 +188,7 @@ func (t *Transactions) GetCocoon(ctx context.Context, id string) (*types.Cocoon,
 // GetCocoonAndLastRelease fetches a cocoon and the last release that was added to it.
 // If lastDeployed is set, it is forced to return the last release that was deployed otherwise,
 // error is returned. Set includePrivateFields to true to return include private fields of the cocoon and release
-func (t *Transactions) GetCocoonAndLastRelease(ctx context.Context, cocoonID string, lastDeployed, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
+func (t *Platform) GetCocoonAndLastRelease(ctx context.Context, cocoonID string, lastDeployed, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
 
 	cocoon, err := t.GetCocoon(ctx, cocoonID)
 	if err != nil {
@@ -215,7 +216,7 @@ func (t *Transactions) GetCocoonAndLastRelease(ctx context.Context, cocoonID str
 
 // PutRelease adds a new release. If another release with a matching key
 // exists, it is effectively shadowed
-func (t *Transactions) PutRelease(ctx context.Context, release *types.Release) error {
+func (t *Platform) PutRelease(ctx context.Context, release *types.Release) error {
 
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
@@ -259,7 +260,7 @@ func (t *Transactions) PutRelease(ctx context.Context, release *types.Release) e
 // GetRelease gets an existing release and returns a release object.
 // Passing true to includePrivateFields will fetch other field values stored
 // on the private system ledger.
-func (t *Transactions) GetRelease(ctx context.Context, id string, includePrivateFields bool) (*types.Release, error) {
+func (t *Platform) GetRelease(ctx context.Context, id string, includePrivateFields bool) (*types.Release, error) {
 
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {

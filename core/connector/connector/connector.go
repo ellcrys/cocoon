@@ -56,7 +56,7 @@ type Connector struct {
 	ordererDiscovery  *orderer.Discovery
 	cocoon            *types.Cocoon
 	release           *types.Release
-	Platform          *platform.Transactions
+	Platform          *platform.Platform
 }
 
 // NewConnector creates a new connector
@@ -65,7 +65,7 @@ func NewConnector(req *Request, waitCh chan bool) (*Connector, error) {
 	if err != nil {
 		return nil, err
 	}
-	platform, err := platform.NewTransactions()
+	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
 	}

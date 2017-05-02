@@ -32,7 +32,7 @@ func SetLogLevel(l logging.Level) {
 type API struct {
 	server       *grpc.Server
 	endedCh      chan bool
-	platform     *platform.Transactions
+	platform     *platform.Platform
 	scheduler    scheduler.Scheduler
 	logProvider  types.LogProvider
 	EventEmitter *emission.Emitter
@@ -40,7 +40,7 @@ type API struct {
 
 // NewAPI creates a new GRPCAPI object
 func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
-	platform, err := platform.NewTransactions()
+	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
 	}
