@@ -13,16 +13,6 @@ import (
 	context "golang.org/x/net/context"
 )
 
-// checkCtxAccessToken authenticates the access token in the context
-// func (api *API) checkCtxAccessToken(ctx context.Context) (jwt.MapClaims, error) {
-// 	md, _ := metadata.FromIncomingContext(ctx)
-// 	accessTokens := md["access_token"]
-// 	if accessTokens == nil {
-// 		return nil, fmt.Errorf("access token is required")
-// 	}
-// 	return api.authenticateToken(accessTokens[0])
-// }
-
 // makeAuthToken creates a session token
 func makeAuthToken(id, identity, _type string, exp int64, secret string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.MapClaims{

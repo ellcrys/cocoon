@@ -16,21 +16,19 @@ import (
 // grpc method to exclude from authentication
 var ExcludeMethodsFromAuth = []string{
 	"/proto_api.API/CreateIdentity",
-	"/proto_api.API/GetIdentity",
 	"/proto_api.API/Login",
-	"/proto_api.API/GetRelease",
 }
 
 // Interceptors returns the API interceptors
-func Interceptors() grpc.UnaryServerInterceptor {
+func (api *API) Interceptors() grpc.UnaryServerInterceptor {
 	return middleware.ChainUnaryServer(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		apiLog.Debugf("New request [method=%s]", info.FullMethod)
 		return handler(ctx, req)
-	}, authenticate)
+	}, api.authenticateInterceptor)
 }
 
 // Authenticate checks whether the request has valid access tokens
-func authenticate(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (api *API) authenticateInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	if util.InStringSlice(ExcludeMethodsFromAuth, info.FullMethod) {
 		return handler(ctx, req)
@@ -62,7 +60,21 @@ func authenticate(ctx context.Context, req interface{}, info *grpc.UnaryServerIn
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, types.CtxIdentity, claims["identity"].(string))
+	identityID := claims["identity"].(string)
+	identity, err := api.platform.GetIdentity(ctx, identityID)
+	if err != nil {
+		if common.CompareErr(err, types.ErrIdentityNotFound) == 0 {
+			return nil, fmt.Errorf("invalid session. identity does not exist")
+		}
+		return nil, err
+	}
+
+	sessionID := claims["id"].(string)
+	if !util.InStringSlice(identity.ClientSessions, sessionID) {
+		return nil, fmt.Errorf("invalid session. Please login")
+	}
+
+	ctx = context.WithValue(ctx, types.CtxIdentity, identityID)
 
 	return handler(ctx, req)
 }
