@@ -61,6 +61,6 @@ contracts {
     # @gen32 generates a 32 byte random string 
     env {
         "MY_VAR"  = "some value here"
-        // "MY_VAR2@private,genRand32" = ""
+        "MY_VAR2@private" = "private data"
     }
 }

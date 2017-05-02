@@ -64,21 +64,22 @@ func (t *Platform) GetIdentity(ctx context.Context, id string) (*types.Identity,
 		return nil, err
 	}
 
-	passwordTx, err := odc.Get(ctx, &proto_orderer.GetParams{
+	// get private data
+	privTx, err := odc.Get(ctx, &proto_orderer.GetParams{
 		CocoonID: types.SystemCocoonID,
-		Key:      types.MakeIdentityPasswordKey(id),
+		Key:      types.MakePrivateIdentityKey(id),
 		Ledger:   types.GetSystemPrivateLedgerName(),
 	})
 	if err != nil {
 		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
-			return nil, fmt.Errorf("identity password transaction not found")
+			return nil, fmt.Errorf("identity's private data not found")
 		}
 		return nil, err
 	}
 
 	var identity types.Identity
 	util.FromJSON([]byte(tx.GetValue()), &identity)
-	identity.Password = passwordTx.GetValue()
+	util.FromJSON([]byte(privTx.GetValue()), &identity)
 
 	return &identity, nil
 }
@@ -88,15 +89,19 @@ func (t *Platform) GetIdentity(ctx context.Context, id string) (*types.Identity,
 // systems public ledger but on the system private ledger.
 func (t *Platform) PutIdentity(ctx context.Context, identity *types.Identity) error {
 
-	var password = identity.Password
-
 	ordererConn, err := t.ordererDiscoverer.GetGRPConn()
 	if err != nil {
 		return err
 	}
 	defer ordererConn.Close()
 
+	var password = identity.Password
+	var clientSession = identity.ClientSessions
+
+	// remove private data
 	identity.Password = ""
+	identity.ClientSessions = nil
+
 	createdAt, _ := time.Parse(time.RFC3339Nano, identity.CreatedAt)
 	odc := proto_orderer.NewOrdererClient(ordererConn)
 	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
@@ -112,6 +117,12 @@ func (t *Platform) PutIdentity(ctx context.Context, identity *types.Identity) er
 		},
 	})
 
+	// create new identity object for private data
+	var privateIdentity = &types.Identity{
+		Password:       password,
+		ClientSessions: clientSession,
+	}
+
 	// save identity password alone in the system private ledger
 	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
@@ -119,8 +130,8 @@ func (t *Platform) PutIdentity(ctx context.Context, identity *types.Identity) er
 		Transactions: []*proto_orderer.Transaction{
 			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
-				Key:       types.MakeIdentityPasswordKey(identity.GetID()),
-				Value:     password,
+				Key:       types.MakePrivateIdentityKey(identity.GetID()),
+				Value:     string(privateIdentity.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
 		},
@@ -241,14 +252,18 @@ func (t *Platform) PutRelease(ctx context.Context, release *types.Release) error
 		},
 	})
 
+	var privRelease = &types.Release{
+		Env: privEnv,
+	}
+
 	_, err = odc.Put(ctx, &proto_orderer.PutTransactionParams{
 		CocoonID:   types.SystemCocoonID,
 		LedgerName: types.GetSystemPrivateLedgerName(),
 		Transactions: []*proto_orderer.Transaction{
 			&proto_orderer.Transaction{
 				Id:        util.UUID4(),
-				Key:       types.MakeReleaseEnvKey(release.ID),
-				Value:     string(privEnv.ToJSON()),
+				Key:       types.MakePrivateReleaseKey(release.ID),
+				Value:     string(privRelease.ToJSON()),
 				CreatedAt: createdAt.Unix(),
 			},
 		},
@@ -283,10 +298,10 @@ func (t *Platform) GetRelease(ctx context.Context, id string, includePrivateFiel
 
 	if includePrivateFields {
 
-		// get private environment variables
-		privEnvTx, err := odc.Get(ctx, &proto_orderer.GetParams{
+		// get private release data
+		privTx, err := odc.Get(ctx, &proto_orderer.GetParams{
 			CocoonID: types.SystemCocoonID,
-			Key:      types.MakeReleaseEnvKey(id),
+			Key:      types.MakePrivateReleaseKey(id),
 			Ledger:   types.GetSystemPrivateLedgerName(),
 		})
 		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
@@ -294,11 +309,11 @@ func (t *Platform) GetRelease(ctx context.Context, id string, includePrivateFiel
 		}
 
 		// include private environment variables with public variables in the release
-		if privEnvTx != nil {
-			var privEnvs map[string]string
-			util.FromJSON([]byte(privEnvTx.Value), &privEnvs)
+		if privTx != nil {
+			var privateRelease types.Release
+			util.FromJSON([]byte(privTx.GetValue()), &privateRelease)
 			releaseEnvAsMap := release.Env.ToMap()
-			mergo.MergeWithOverwrite(&releaseEnvAsMap, privEnvs)
+			mergo.MergeWithOverwrite(&releaseEnvAsMap, privateRelease.Env.ToMap())
 		}
 	}
 

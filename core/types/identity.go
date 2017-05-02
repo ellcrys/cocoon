@@ -40,7 +40,7 @@ func MakeIdentityKey(id string) string {
 	return fmt.Sprintf("identity;%s", id)
 }
 
-// MakeIdentityPasswordKey returns a key for storing an identities password
-func MakeIdentityPasswordKey(identityID string) string {
-	return fmt.Sprintf("identity_password;%s", identityID)
+// MakePrivateIdentityKey returns a key for storing private identity fields
+func MakePrivateIdentityKey(identityID string) string {
+	return fmt.Sprintf("identity_private;%s", identityID)
 }

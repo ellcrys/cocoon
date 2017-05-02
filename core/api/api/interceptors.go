@@ -17,6 +17,7 @@ import (
 var ExcludeMethodsFromAuth = []string{
 	"/proto_api.API/CreateIdentity",
 	"/proto_api.API/Login",
+	"/proto_api.API/GetIdentity",
 }
 
 // Interceptors returns the API interceptors

@@ -82,7 +82,7 @@ func MakeReleaseKey(id string) string {
 	return fmt.Sprintf("release;%s", id)
 }
 
-// MakeReleaseEnvKey returns a key for storing a release environment variable
-func MakeReleaseEnvKey(releaseID string) string {
-	return fmt.Sprintf("release_env;%s", releaseID)
+// MakePrivateReleaseKey returns a key for storing private release fields
+func MakePrivateReleaseKey(releaseID string) string {
+	return fmt.Sprintf("release_private;%s", releaseID)
 }
