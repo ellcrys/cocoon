@@ -76,7 +76,8 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	loggedInIdentity := claims["identity"].(string)
 
 	var cocoon types.Cocoon
-	copier.Copy(&cocoon, req)
+	cocoon.Merge(structs.New(req).Map())
+	cocoon.ID = req.CocoonID
 	cocoon.Status = CocoonStatusCreated
 	cocoon.Releases = []string{releaseID}
 	cocoon.IdentityID = loggedInIdentity
