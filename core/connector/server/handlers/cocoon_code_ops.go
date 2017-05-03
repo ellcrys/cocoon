@@ -59,6 +59,6 @@ func (l *CocoonCodeOperations) Stop(ctx context.Context) error {
 	defer client.Close()
 
 	stub := proto_runtime.NewStubClient(client)
-	stub.Stop(ctx, new(proto_runtime.Void))
-	return nil
+	_, err = stub.Stop(ctx, new(proto_runtime.Void))
+	return err
 }
