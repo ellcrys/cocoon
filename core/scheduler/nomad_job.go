@@ -262,7 +262,7 @@ func NewJob(version, id string, count int) *NomadJob {
 								NetworkMode: "bridge",
 								ForcePull:   true,
 								Command:     "bash",
-								Args:        []string{"-c", "echo 'Hello Human. I am alive'; tail -f /dev/null"},
+								Args:        []string{"-c", "echo 'Hello Human. I am alive'; tail -f /dev/null; sleep 15"},
 							},
 							Env:      map[string]string{},
 							Services: []NomadService{},
