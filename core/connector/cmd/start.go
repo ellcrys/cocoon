@@ -141,7 +141,6 @@ var startCmd = &cobra.Command{
 		// listen to terminate request
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
-			rpcServer.Stop()
 			cn.Stop(false)
 		})
 
