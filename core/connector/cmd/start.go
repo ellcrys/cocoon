@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
@@ -142,6 +143,7 @@ var startCmd = &cobra.Command{
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
 			rpcServer.Stop()
+			time.Sleep(2 * time.Second) // allow some time for logs to be read by the connector
 			cn.Stop(false)
 		})
 
