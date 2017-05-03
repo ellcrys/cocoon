@@ -143,7 +143,10 @@ var startCmd = &cobra.Command{
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
 			rpcServer.Stop()
-			time.Sleep(2 * time.Second) // allow some time for logs to be read by the connector
+
+			// allow some time for logs to be read by the connector
+			time.Sleep(10 * time.Second)
+
 			cn.Stop(false)
 		})
 
