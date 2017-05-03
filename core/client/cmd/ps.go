@@ -21,7 +21,7 @@ var psCmd = &cobra.Command{
 		log.SetBackend(config.MessageOnlyBackend)
 
 		if err := client.ListCocoons(showAll, jsonFormatted); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

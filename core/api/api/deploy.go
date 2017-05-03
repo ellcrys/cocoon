@@ -33,7 +33,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	// ensure logged in user owns this cocoon
 	userSessionIdentity := claims["identity"].(string)
 	if userSessionIdentity != cocoon.IdentityID {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+		return nil, types.ErrPermissionNotGrant
 	}
 
 	// don't continue if cocoon's status is in one of these statuses

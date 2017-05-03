@@ -26,7 +26,7 @@ var sigVoteCmd = &cobra.Command{
 		}
 
 		if err := client.AddVote(args[0], args[1], isCid); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

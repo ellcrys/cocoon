@@ -37,7 +37,7 @@ var sigAddCmd = &cobra.Command{
 		}
 
 		if err := client.AddSignatories(args[0], args[1:]); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

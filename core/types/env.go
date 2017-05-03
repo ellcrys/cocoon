@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 
+	"fmt"
+
 	"github.com/ellcrys/util"
 	"github.com/imdario/mergo"
 )
@@ -59,6 +61,17 @@ func GetFlags(v string) []string {
 	return flags
 }
 
+// GetByFlag returns the variables that have a flag
+func (e Env) GetByFlag(flag string) Env {
+	pinned := map[string]string{}
+	for k, v := range e {
+		if util.InStringSlice(GetFlags(k), flag) {
+			pinned[k] = v
+		}
+	}
+	return pinned
+}
+
 // Process applies the flags and returns both public
 // environment variables and private variables.
 // If keepFlag is set to true, the flags will not be removed
@@ -111,4 +124,63 @@ func (e Env) ProcessAsOne(keepFlags bool) Env {
 	pub, priv := e.Process(keepFlags)
 	mergo.Merge(&pub, priv)
 	return pub
+}
+
+// Has checks whether a variable exists
+func (e Env) Has(v string) bool {
+	for f := range e {
+		if GetVarName(f) == v {
+			return true
+		}
+	}
+	return false
+}
+
+// Get returns the value of a variable
+func (e Env) Get(f string) (string, bool) {
+	for v, val := range e {
+		if GetVarName(v) == f {
+			return val, true
+		}
+	}
+	return "", false
+}
+
+// GetFull returns the full name of a variable (name and flag) and its value.
+// Any flag contained the the variable is removed.
+func (e Env) GetFull(variable string) (string, string, bool) {
+	for v, value := range e {
+		if GetVarName(v) == GetVarName(variable) {
+			return v, value, true
+		}
+	}
+	return "", "", false
+}
+
+// Set adds a variable or overwrites an existing variable
+func (e Env) Set(v, value string) {
+	e[v] = value
+}
+
+// GetVarName returns the name of the variable without the flags
+func GetVarName(v string) string {
+	return strings.Split(v, "@")[0]
+}
+
+// ReplaceFlag replaces a flag with another flag in a variable.
+// if flag is not found, false is returned
+func ReplaceFlag(v, targetFlag, replacement string) (string, bool) {
+	flags := GetFlags(v)
+	found := false
+	for i, f := range flags {
+		if f == targetFlag {
+			flags[i] = replacement
+			found = true
+		}
+	}
+	if len(flags) == 0 {
+		return v, found
+	}
+
+	return fmt.Sprintf("%s@%s", GetVarName(v), strings.Join(flags, ",")), found
 }

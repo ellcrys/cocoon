@@ -79,7 +79,7 @@ func ValidateRelease(r *types.Release) error {
 		}
 	}
 	if r.Firewall != nil {
-		_, errs := ValidateFirewall(r.Firewall.ToMap())
+		_, errs := ValidateFirewallRules(r.Firewall.ToMap())
 		if len(errs) != 0 {
 			return fmt.Errorf("firewall: %s, ", errs[0])
 		}
@@ -122,6 +122,8 @@ func ValidateEnvVariables(envs map[string]string) []error {
 		"genRand128",
 		"genRand256",
 		"genRand512",
+		"pin",
+		"unpin",
 	}
 	for k := range envs {
 		if !govalidator.Matches(k, "(?i)^[a-z_0-9@,]+$") {
@@ -142,12 +144,12 @@ func ValidateEnvVariables(envs map[string]string) []error {
 	return errs
 }
 
-// ValidateFirewall parses and validates the content of
+// ValidateFirewallRules parses and validates the content of
 // a firewall ruleset. It expects a json string or a slice
-// of map[string]strins. It will return a slice of map[string]string
-// values that represents valid firewall rules. Destination host addresses
+// of map[string]strings. It will return a slice of FirewallRule
+// values that represents valid firewall rules. Destination addresses
 // are not resolved.
-func ValidateFirewall(firewall interface{}) ([]types.FirewallRule, []error) {
+func ValidateFirewallRules(firewall interface{}) ([]types.FirewallRule, []error) {
 
 	var errs []error
 	if firewall == nil {

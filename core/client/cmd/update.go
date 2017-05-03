@@ -33,7 +33,7 @@ var updateCmd = &cobra.Command{
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
-				log.Errorf("Err: %s", common.CapitalizeString(err.Error()))
+				log.Errorf("Err: %s", err.Error())
 			}
 			os.Exit(1)
 		}
@@ -42,7 +42,7 @@ var updateCmd = &cobra.Command{
 		for i, contract := range contracts {
 			err := client.UpdateCocoon(contract.CocoonID, contract)
 			if err != nil {
-				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
+				log.Fatalf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
 			}
 		}
 	},

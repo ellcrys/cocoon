@@ -118,15 +118,13 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	release.CocoonID = cocoon.ID
 	release.ACL = types.NewACLMapFromByte(req.ACL)
 	release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
-	release.Firewall = types.CopyFirewall(req.Firewall)
 
 	// Resolve firewall rules destination
 	if len(release.Firewall) > 0 {
-		resolvedFirewall, err := common.ResolveFirewall(release.Firewall)
+		release.Firewall, err = common.ResolveFirewall(release.Firewall.DeDup())
 		if err != nil {
 			return nil, fmt.Errorf("firewall: %s", err)
 		}
-		release.Firewall = resolvedFirewall
 	}
 
 	err = api.platform.PutRelease(ctx, &release)
@@ -151,6 +149,50 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	}, nil
 }
 
+// updateReleaseEnv processes flag behaviours of pin, unpin and
+// unpin_once and include the changes to the latest Env.
+// The following are the expected behaviour of the flags:
+//
+// "pin": All flags in the last release that have "pin" flag will
+// overwrite the corresponding/matching flag in latestEnv. In other words, If a variable
+// shares same flag name with a pinned flag in the last release, it is completely overridden.
+//
+// "unpin": This flag prevents "pin" flag from being enforced. It is the antidote of "pin". If a
+// variable includes this flag, it cannot be overridden by a matching, pinned variable in the last release.
+//
+// "unpin_once": This flag is the same as "unpin" except that final variable will still have a "pin" flag
+// which is useful if there is need to persist the new update to future releases.
+func (api *API) updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
+
+	// get new Env containing pinned variables
+	pinnedVarsFromLastRelease := lastReleaseEnv.GetByFlag("pin")
+
+	for curVar, curVal := range latestEnv {
+		// Find a variable from the latest Env that is included in the pinned variables on the last release Env
+		if pinnedVar, pinnedVarVal, ok := pinnedVarsFromLastRelease.GetFull(curVar); ok {
+
+			curVarFlags := types.GetFlags(curVar)
+
+			// If the current variable has "unpin_once", this means we can't override it's content
+			// but we will have to replace the "unpin_once" with "pin" which will keep the variable pinned
+			// to future updates
+			if util.InStringSlice(types.GetFlags(curVar), "unpin_once") {
+				delete(latestEnv, curVar)
+				curVar, _ = types.ReplaceFlag(curVar, "unpin_once", "pin")
+				latestEnv[curVar] = curVal
+				continue
+			}
+
+			// If the current variable does not contain an "unpin" flag, then we have to
+			// override it!
+			if !util.InStringSlice(curVarFlags, "unpin") {
+				delete(latestEnv, curVar)
+				latestEnv[pinnedVar] = pinnedVarVal
+			}
+		}
+	}
+}
+
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release related fields are
 // changed.
@@ -169,7 +211,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 
 	// Ensure the cocoon identity matches the logged in user
 	if cocoon.IdentityID != loggedInIdentity {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+		return nil, types.ErrPermissionNotGrant
 	}
 
 	var cocoonUpd = cocoon.Clone()
@@ -198,9 +240,13 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 
 	releaseUpd := release.Clone()
 	releaseUpd.Merge(structs.New(req).Map())
+	releaseUpd.Env = req.Env
 	releaseUpd.BuildParam = req.BuildParam
 	releaseUpd.Link = req.Link
 	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
+
+	// process special "pin", "unpin" and "unpin_once" environment flags
+	api.updateReleaseEnv(release.Env, releaseUpd.Env)
 
 	if len(releaseUpd.Firewall) > 0 {
 		releaseUpd.Firewall, err = common.ResolveFirewall(releaseUpd.Firewall.DeDup())
@@ -346,7 +392,7 @@ func (api *API) StopCocoon(ctx context.Context, req *proto_api.StopCocoonRequest
 
 	// ensure session identity matches cocoon identity
 	if loggedInIdentity != cocoon.IdentityID {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+		return nil, types.ErrPermissionNotGrant
 	}
 
 	if err = api.stopCocoon(ctx, req.GetID()); err != nil {
@@ -368,10 +414,6 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 	var err error
 
-	// if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-	// 	return nil, types.ErrInvalidOrExpiredToken
-	// }
-
 	cocoon, err := api.platform.GetCocoon(ctx, req.CocoonID)
 	if err != nil {
 		return nil, err
@@ -379,7 +421,7 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 
 	// ensure session identity matches cocoon identity
 	if loggedInIdentity != cocoon.IdentityID {
-		return nil, fmt.Errorf("Permission denied: You do not have permission to perform this operation")
+		return nil, types.ErrPermissionNotGrant
 	}
 
 	// convert email to ID

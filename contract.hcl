@@ -49,6 +49,26 @@ contracts {
     
     # Firewall stanza determines the addresses the contract
     # can make outbound connections to.
+    firewall {
+        
+        # If enabled, the contract will not be able to make outbound connections (Default: true)
+        enabled = true
+        
+        # Firewall rules for outbound connections.
+        # IP and DNS name is allowed. DNS name will be automatically resolved.
+        rule = {
+            destination = "google.com"
+            destinationPort = "80"
+            protocol = "tcp"    
+        }
+        
+        rule = {
+            destination = "google.com"
+            destinationPort = "80"
+            protocol = "tcp"    
+        }
+    }
+    
     firewall-rule {
         destination = "google.com"
         destinationPort = "80"
@@ -58,9 +78,10 @@ contracts {
     # Set environment variable. Use flags to 
     # enable special directives for individual variables.
     # @private flag will cause the value to never show up in any publicly accessible channel
-    # @gen32 generates a 32 byte random string 
+    # @genRand32 generates a 32 byte random string 
     env {
-        "MY_VAR"  = "some value here"
-        "MY_VAR2@private" = "private data"
+        "MY_VAR"  = "some value 2"
+        "MY_VAR2@unpin_once,private" = "yo"
+        "SOME" = "THING"
     }
 }

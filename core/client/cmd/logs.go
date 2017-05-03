@@ -29,7 +29,7 @@ var logsCmd = &cobra.Command{
 		disableColors, _ := cmd.Flags().GetBool("no-colors")
 
 		if err := client.GetLogs(args[0], numLines, tail, stderrOnly, stdoutOnly, disableColors); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

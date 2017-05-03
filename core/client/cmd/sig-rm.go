@@ -23,7 +23,7 @@ var sigRmCmd = &cobra.Command{
 		}
 
 		if err := client.RemoveSignatories(args[0], args[1:]); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

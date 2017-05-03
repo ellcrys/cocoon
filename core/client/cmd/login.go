@@ -34,7 +34,7 @@ var loginCmd = &cobra.Command{
 		fmt.Println("")
 
 		if err = client.Login(args[0], string(password)); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

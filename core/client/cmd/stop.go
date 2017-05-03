@@ -23,7 +23,7 @@ var stopCmd = &cobra.Command{
 		}
 
 		if err := client.StopCocoon(args); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }

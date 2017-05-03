@@ -34,7 +34,7 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 	var selectedResourceSet map[string]int
 	var numSig = 1
 	var sigThreshold = 1
-	var firewall string
+	var firewallRules string
 	var configFileData map[string]interface{}
 	var aclMap map[string]interface{}
 	var cocoons []*proto_api.CocoonReleasePayloadRequest
@@ -156,9 +156,11 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 					aclMap = acls[0]
 				}
 
-				if firewallRules, ok := contract["firewall-rule"].([]map[string]interface{}); ok && len(firewallRules) > 0 {
-					bs, _ := util.ToJSON(firewallRules)
-					firewall = string(bs)
+				if firewall, ok := contract["firewall"].([]map[string]interface{}); ok && len(firewall) > 0 {
+					if len(firewall[0]["rule"].([]map[string]interface{})) > 0 {
+						bs, _ := util.ToJSON(firewall[0]["rule"])
+						firewallRules = string(bs)
+					}
 				}
 
 				if envs, ok := contract["env"].([]map[string]interface{}); ok && len(envs) > 0 {
@@ -178,9 +180,9 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 
 				// parse and validate firewall
 				var payloadFirewallRules []*proto_api.FirewallRule
-				if len(firewall) > 0 {
+				if len(firewallRules) > 0 {
 					var _errs []error
-					validFirewallRules, _errs := api.ValidateFirewall(firewall)
+					validFirewallRules, _errs := api.ValidateFirewallRules(firewallRules)
 					if len(_errs) > 0 {
 						for _, err := range errs {
 							errs = append(errs, fmt.Errorf("firewall: %s", err))
@@ -241,7 +243,7 @@ var createCmd = &cobra.Command{
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
-				log.Errorf("Err: %s", common.CapitalizeString(err.Error()))
+				log.Errorf("Err: %s", err.Error())
 			}
 			os.Exit(1)
 		}
@@ -250,7 +252,7 @@ var createCmd = &cobra.Command{
 		for i, cocoon := range cocoons {
 			err := client.CreateCocoon(cocoon)
 			if err != nil {
-				log.Fatalf("Err (Contract %d): %s", i, common.CapitalizeString((common.GetRPCErrDesc(err))))
+				log.Fatalf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
 			}
 		}
 	},

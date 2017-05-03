@@ -37,7 +37,7 @@ var getReleaseCmd = &cobra.Command{
 		}
 
 		if err := client.GetReleases(args); err != nil {
-			log.Fatalf("Err: %s", common.CapitalizeString((common.GetRPCErrDesc(err))))
+			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},
 }
