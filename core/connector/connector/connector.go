@@ -429,14 +429,14 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 	fetchScript := `
 	    iptables -F &&
 		rm -rf ` + downloadDst + ` &&	
-		mkdir -p ` + downloadDst + ` &&
 		rm -rf ` + lang.GetSourceRootDir() + ` &&		
+		rm -rf ` + filePath + ` &&
+		mkdir -p ` + downloadDst + ` &&
 		mkdir -p ` + lang.GetSourceRootDir() + ` &&
 		printf "> Downloading source from remote url to download destination\n" &&
 		wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null &&
 		printf "> Unpacking downloaded source \n" &&
 		tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null &&
-		rm -rf ` + filePath + ` &&
 		printf "> Creating source root directory\n" &&
 		printf "> Moving source to new source root directory\n" &&
 		mv ` + downloadDst + `/* ` + lang.GetSourceRootDir() + `

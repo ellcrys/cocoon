@@ -159,7 +159,7 @@ func (g *Go) GetRunScript() []string {
 	// prepare environment variables
 	env := []string{}
 	for k, v := range g.env {
-		env = append(env, fmt.Sprintf("export %s=%s", k, v))
+		env = append(env, fmt.Sprintf("export %s='%s'", k, v))
 	}
 
 	script := []string{
