@@ -52,3 +52,9 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 
 	return resp, nil
 }
+
+// Stop calls the stop method of the code
+func (server *stubServer) Stop(context.Context, *proto_runtime.Void) (*proto_runtime.Void, error) {
+	ccode.OnStop()
+	return new(proto_runtime.Void), nil
+}

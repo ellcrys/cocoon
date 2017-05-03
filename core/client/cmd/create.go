@@ -41,6 +41,7 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 	var cocoons []*proto_api.CocoonReleasePayloadRequest
 	var env map[string]interface{}
 	var errs []error
+	var enableFirewall = true
 
 	// path is a local file path
 	if ok, _ := govalidator.IsFilePath(path); ok {
@@ -158,9 +159,16 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 				}
 
 				if firewall, ok := contract["firewall"].([]map[string]interface{}); ok && len(firewall) > 0 {
-					if len(firewall[0]["rule"].([]map[string]interface{})) > 0 {
-						bs, _ := util.ToJSON(firewall[0]["rule"])
-						firewallRules = string(bs)
+
+					if firewall[0]["enabled"] != nil {
+						enableFirewall = firewall[0]["enabled"].(bool)
+					}
+
+					if enableFirewall {
+						if len(firewall[0]["rule"].([]map[string]interface{})) > 0 {
+							bs, _ := util.ToJSON(firewall[0]["rule"])
+							firewallRules = string(bs)
+						}
 					}
 				}
 
@@ -199,6 +207,7 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 					Language:       lang,
 					Version:        version,
 					BuildParam:     buildParams,
+					EnableFirewall: enableFirewall,
 					Firewall:       payloadFirewallRules,
 					ACL:            types.NewACLMap(aclMap).ToJSON(),
 					Env:            types.NewEnv(env),

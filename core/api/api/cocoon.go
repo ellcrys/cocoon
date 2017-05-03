@@ -119,12 +119,17 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	release.ACL = types.NewACLMapFromByte(req.ACL)
 	release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
-	// Resolve firewall rules destination
-	if len(release.Firewall) > 0 {
-		release.Firewall, err = common.ResolveFirewall(release.Firewall.DeDup())
-		if err != nil {
-			return nil, fmt.Errorf("firewall: %s", err)
+	// Resolve firewall rules destination if firewall is enabled.
+	// Otherwise, set firewall to nil
+	if req.EnableFirewall {
+		if len(release.Firewall) > 0 {
+			release.Firewall, err = common.ResolveFirewall(release.Firewall.DeDup())
+			if err != nil {
+				return nil, fmt.Errorf("firewall: %s", err)
+			}
 		}
+	} else {
+		release.Firewall = nil
 	}
 
 	err = api.platform.PutRelease(ctx, &release)
@@ -248,11 +253,17 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	// process special "pin", "unpin" and "unpin_once" environment flags
 	api.updateReleaseEnv(release.Env, releaseUpd.Env)
 
-	if len(releaseUpd.Firewall) > 0 {
-		releaseUpd.Firewall, err = common.ResolveFirewall(releaseUpd.Firewall.DeDup())
-		if err != nil {
-			return nil, fmt.Errorf("firewall: %s", err)
+	// Resolve firewall rules destination if firewall is enabled.
+	// Otherwise, set firewall to nil
+	if req.EnableFirewall {
+		if len(releaseUpd.Firewall) > 0 {
+			releaseUpd.Firewall, err = common.ResolveFirewall(releaseUpd.Firewall.DeDup())
+			if err != nil {
+				return nil, fmt.Errorf("firewall: %s", err)
+			}
 		}
+	} else {
+		req.Firewall = nil
 	}
 
 	// check if the existing release differ from the updated release

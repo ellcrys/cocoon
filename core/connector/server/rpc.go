@@ -65,6 +65,7 @@ func (rpc *RPC) Start(addr string, startedCh chan bool) {
 
 // Stop stops the server
 func (rpc *RPC) Stop() {
+	rpc.stopCocoonCode()
 	if rpc.server != nil {
 		rpc.server.Stop()
 	}
@@ -80,4 +81,11 @@ func (rpc *RPC) Transact(ctx context.Context, req *proto_connector.Request) (*pr
 	default:
 		return nil, fmt.Errorf("unsupported operation type")
 	}
+}
+
+// stop the cocoon code
+func (rpc *RPC) stopCocoonCode() {
+	ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cc()
+	rpc.cocoonCodeOps.Stop(ctx)
 }

@@ -8,7 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestblockMaker(t *testing.T) {
+func TestBlockMaker(t *testing.T) {
 	Convey("blockMaker", t, func() {
 
 		bm := newblockMaker(10, 10*time.Millisecond)
@@ -39,7 +39,7 @@ func TestblockMaker(t *testing.T) {
 			})
 		})
 
-		Convey(".sendToentries", func() {
+		Convey(".sendToEntries", func() {
 			Convey("Should successfully receive message from entries channel", func() {
 				ch1 := make(chan interface{})
 				ch2 := make(chan interface{})
@@ -47,9 +47,15 @@ func TestblockMaker(t *testing.T) {
 				bm.Add(&entry{Tx: &types.Transaction{Number: 1}, RespChan: ch2})
 				entries := bm.getBlockentries()
 				So(len(entries), ShouldEqual, 2)
-				go bm.sendToentries(entries, nil)
-				So(<-ch1, ShouldBeNil)
-				So(<-ch2, ShouldBeNil)
+
+				msg := types.PutResult{
+					Block:      &types.Block{ID: "block1"},
+					TxReceipts: nil,
+				}
+
+				go bm.sendToEntries(entries, &msg)
+				So(<-ch1, ShouldEqual, msg.Block)
+				So(<-ch2, ShouldEqual, msg.Block)
 
 				Convey("Should be unable to send to the now closed entry channel", func() {
 					So(func() {
@@ -68,18 +74,21 @@ func TestblockMaker(t *testing.T) {
 				bm.Add(&entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch1})
 				bm.Add(&entry{Tx: &types.Transaction{Ledger: "b"}, RespChan: ch2})
 				bm.Add(&entry{Tx: &types.Transaction{Ledger: "a"}, RespChan: ch3})
-				block := types.Block{ID: "block1"}
+				result := types.PutResult{
+					Block:      &types.Block{ID: "block1"},
+					TxReceipts: nil,
+				}
 
 				committerCallCount := 0
 				go bm.Begin(func(entries []*entry) interface{} {
 					committerCallCount++
-					return &block
+					return &result
 				})
 
 				time.Sleep(15 * time.Millisecond)
-				So(<-ch1, ShouldResemble, &block)
-				So(<-ch2, ShouldResemble, &block)
-				So(<-ch3, ShouldResemble, &block)
+				So(<-ch1, ShouldResemble, result.Block)
+				So(<-ch2, ShouldResemble, result.Block)
+				So(<-ch3, ShouldResemble, result.Block)
 				So(committerCallCount, ShouldEqual, 2)
 				So(bm.entryQueue.Empty(), ShouldEqual, true)
 				bm.Stop()
@@ -87,6 +96,7 @@ func TestblockMaker(t *testing.T) {
 		})
 
 		Convey(".groupentriesByLedgerAndLink", func() {
+
 			Convey("Should return expected entries in expected order", func() {
 				ch1 := make(chan interface{})
 				var entries entries = []*entry{}

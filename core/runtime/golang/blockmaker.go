@@ -103,6 +103,8 @@ func (b *blockMaker) sendToEntries(_entries []*entry, msg interface{}) {
 			if !isErr {
 				_entry.RespChan <- v.Block
 			}
+		default:
+			_entry.RespChan <- fmt.Errorf("sendToEntries: unexpected type")
 		}
 		close(_entry.RespChan)
 	}

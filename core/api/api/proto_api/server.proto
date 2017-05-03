@@ -73,6 +73,7 @@ message CocoonReleasePayloadRequest {
     int32 numSignatories = 11               [(gogoproto.jsontag) = "numSignatories,omitempty", (gogoproto.moretags) = 'structs:"numSignatories,omitempty" mapstructure:"numSignatories,omitempty"'];
     int32 sigThreshold = 12                 [(gogoproto.jsontag) = "sigThreshold,omitempty", (gogoproto.moretags) = 'structs:"sigThreshold,omitempty" mapstructure:"sigThreshold,omitempty"'];
     map<string,string> env = 13             [(gogoproto.jsontag) = "env,omitempty", (gogoproto.moretags) = 'structs:"env,omitempty" mapstructure:"env,omitempty"'];
+    bool enableFirewall = 14                [(gogoproto.jsontag) = "enableFirewall,omitempty", (gogoproto.moretags) = 'structs:"enableFirewall,omitempty" mapstructure:"enableFirewall,omitempty"'];
 }
 
 

@@ -3,7 +3,7 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "u16"
     
     # Contract source location and information
     repo {
@@ -24,7 +24,7 @@ contracts {
     # Provide build information if the contract code requires it
     build {
         # The package manager to use (supported: glide, govendor)
-        // pkgMgr = "govendor"
+        pkgMgr = "govendor"
     }
     
     # Resources to allocate to the contract's cocoon
@@ -52,7 +52,7 @@ contracts {
     firewall {
         
         # If enabled, the contract will not be able to make outbound connections (Default: true)
-        enabled = true
+        enabled = false
         
         # Firewall rules for outbound connections.
         # IP and DNS name is allowed. DNS name will be automatically resolved.
@@ -67,12 +67,6 @@ contracts {
             destinationPort = "80"
             protocol = "tcp"    
         }
-    }
-    
-    firewall-rule {
-        destination = "google.com"
-        destinationPort = "80"
-        protocol = "tcp"
     }
     
     # Set environment variable. Use flags to 

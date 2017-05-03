@@ -4,4 +4,5 @@ package golang
 type CocoonCode interface {
 	OnInit() error
 	OnInvoke(header Metadata, function string, params []string) ([]byte, error)
+	OnStop()
 }

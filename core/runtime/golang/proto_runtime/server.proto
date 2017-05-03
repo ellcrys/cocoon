@@ -4,6 +4,10 @@ package proto_runtime;
 service Stub {
     rpc HealthCheck(Ok) returns (Ok);
     rpc Invoke(InvokeParam) returns (InvokeResponse);
+    rpc Stop(Void) returns (Void);
+}
+
+message Void {
 }
 
 message Ok {

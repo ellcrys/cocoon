@@ -49,3 +49,16 @@ func (l *CocoonCodeOperations) Handle(ctx context.Context, op *proto_connector.C
 		Body:   resp.Body,
 	}, nil
 }
+
+// Stop the cocoon code
+func (l *CocoonCodeOperations) Stop(ctx context.Context) error {
+	client, err := grpc.Dial(l.cocoonCodeRPCAddr, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	stub := proto_runtime.NewStubClient(client)
+	stub.Stop(ctx, new(proto_runtime.Void))
+	return nil
+}
