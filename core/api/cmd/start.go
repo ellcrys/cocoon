@@ -47,7 +47,7 @@ var apiStartCmd = &cobra.Command{
 				apiLog.Fatalf("failed get an instance of service discoverer: %s", err)
 			}
 
-			apiLog.Infof("Discovering scheduler named: ", nomad.GetName())
+			apiLog.Infof("Discovering scheduler named: %s", nomad.GetName())
 			services, err := sd.GetByID(nomad.GetName(), map[string]string{"tag": "http"})
 			if err != nil {
 				apiLog.Fatalf("failed get scheduler address(es): %s", err)
