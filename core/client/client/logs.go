@@ -83,7 +83,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 			if disableColor {
 				msg = string(common.RemoveASCIIColors([]byte(msg)))
 			}
-			time.Sleep(300 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			fmt.Println(
 				fmt.Sprintf(color.CyanString("(%s):"), cocoonID),
 				c.SprintfFunc()("%s", strings.TrimSpace(msg)),
@@ -94,7 +94,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 			return nil
 		}
 
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 		resp, err := fetch()
 		if err != nil {
 			return err
