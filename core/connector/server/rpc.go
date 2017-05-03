@@ -88,4 +88,5 @@ func (rpc *RPC) stopCocoonCode() {
 	ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cc()
 	rpc.cocoonCodeOps.Stop(ctx)
+	log.Info("Called Stop() on cocoon code")
 }

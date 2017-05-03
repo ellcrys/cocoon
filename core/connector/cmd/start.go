@@ -141,8 +141,8 @@ var startCmd = &cobra.Command{
 		// listen to terminate request
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
-			cn.Stop(false)
 			rpcServer.Stop()
+			cn.Stop(false)
 		})
 
 		// launch the deployed cocoon code
