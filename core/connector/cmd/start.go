@@ -145,7 +145,7 @@ var startCmd = &cobra.Command{
 			rpcServer.Stop()
 
 			// allow some time for logs to be read by the connector
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 
 			cn.Stop(false)
 		})
