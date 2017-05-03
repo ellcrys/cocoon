@@ -85,7 +85,7 @@ func (rpc *RPC) Transact(ctx context.Context, req *proto_connector.Request) (*pr
 
 // stop the cocoon code
 func (rpc *RPC) stopCocoonCode() {
-	ctx, cc := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cc := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cc()
 	err := rpc.cocoonCodeOps.Stop(ctx)
 	if err != nil {
