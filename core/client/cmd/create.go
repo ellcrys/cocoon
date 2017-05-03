@@ -10,6 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
 	"github.com/hashicorp/hcl"
+	"github.com/jinzhu/copier"
 	c_util "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
@@ -189,13 +190,7 @@ func parseContract(path, repoVersion string) ([]*proto_api.CocoonReleasePayloadR
 						}
 						return nil, errs
 					}
-					for _, rule := range validFirewallRules {
-						payloadFirewallRules = append(payloadFirewallRules, &proto_api.FirewallRule{
-							Destination:     rule.Destination,
-							DestinationPort: rule.DestinationPort,
-							Protocol:        rule.Protocol,
-						})
-					}
+					copier.Copy(&payloadFirewallRules, validFirewallRules)
 				}
 
 				cocoons = append(cocoons, &proto_api.CocoonReleasePayloadRequest{
