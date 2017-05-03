@@ -72,7 +72,7 @@ func GetLogs(cocoonID string, numLines int, tail, stderrOnly, stdoutOnly, disabl
 
 	for {
 		for i := len(messages) - 1; i >= 0; i-- {
-
+			fmt.Println(messages[i].Text)
 			if seen.Contains(messages[i].ID) {
 				continue
 			} else {

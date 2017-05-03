@@ -41,7 +41,7 @@ func (api *API) Login(ctx context.Context, req *proto_api.LoginRequest) (*proto_
 
 	sessionID := util.Sha256(util.UUID4())
 	identity.ClientSessions = append(identity.ClientSessions, sessionID)
-	key := util.Env("API_SIGN_KEY", "secret")
+	key := util.Env("API_SIGN_KEY", "")
 	ss, err := makeAuthToken(sessionID, identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
 	if err != nil {
 		apiLog.Error(err.Error())

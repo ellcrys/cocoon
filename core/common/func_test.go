@@ -9,6 +9,8 @@ import (
 
 	"fmt"
 
+	"os"
+
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 	context "golang.org/x/net/context"
@@ -179,6 +181,12 @@ func TestFunc(t *testing.T) {
 			token, err := GetAuthToken(ctx, "bearer")
 			So(err, ShouldBeNil)
 			So(token, ShouldEqual, "abc")
+		})
+
+		Convey("HasEnv", func() {
+			So(HasEnv("VAR_A", "VAR_B"), ShouldResemble, []string{"VAR_A", "VAR_B"})
+			os.Setenv("VAR_A", "stuff")
+			So(HasEnv("VAR_A", "VAR_B"), ShouldResemble, []string{"VAR_B"})
 		})
 	})
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/franela/goreq"
 	"github.com/ncodes/cocoon/core/api/api"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/scheduler"
 	logging "github.com/op/go-logging"
@@ -32,6 +33,16 @@ var apiStartCmd = &cobra.Command{
 		nomad := scheduler.NewNomad()
 		bindAddr, _ := cmd.Flags().GetString("bind-addr")
 		schedulerAddr, _ := cmd.Flags().GetString("scheduler-addr")
+
+		// Ensure expected environment variables are set
+		if missingEnv := common.HasEnv([]string{
+			"API_SIGN_KEY",
+			"API_VERSION",
+			"CONNECTOR_VERSION",
+			"GCP_PROJECT_ID",
+		}...); len(missingEnv) > 0 {
+			apiLog.Fatalf("The following environment variables must be set: %v", missingEnv)
+		}
 
 		// set scheduler addr from environment var if set
 		if len(schedulerAddr) == 0 {

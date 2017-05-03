@@ -47,13 +47,13 @@ func (api *API) authenticateInterceptor(ctx context.Context, req interface{}, in
 
 		tokenType := token.Claims.(jwt.MapClaims)["type"]
 		if tokenType == "token.cli" {
-			return []byte(util.Env("API_SIGN_KEY", "secret")), nil
+			return []byte(util.Env("API_SIGN_KEY", "")), nil
 		}
 
 		return nil, fmt.Errorf("unknown token type")
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invalid session. Please login")
 	}
 
 	claims := token.Claims.(jwt.MapClaims)

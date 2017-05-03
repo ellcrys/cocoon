@@ -206,6 +206,7 @@ func NewJob(version, id string, count int) *NomadJob {
 								Args:    []string{"/local/run-connector.sh"},
 							},
 							Env: map[string]string{
+								"ROUTER_DOMAIN":         "whatbay.co",
 								"VERSION":               "${NOMAD_META_VERSION}",
 								"ENV":                   "",
 								"COCOON_ID":             id,

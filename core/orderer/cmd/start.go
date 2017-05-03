@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"log"
 	"time"
 
 	"os"
 
 	"github.com/ellcrys/util"
 	b_impl "github.com/ncodes/cocoon/core/blockchain/impl"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/lock/consul"
 	"github.com/ncodes/cocoon/core/lock/memory"
@@ -27,6 +29,11 @@ var ordererCmd = &cobra.Command{
 	Short: "Starts the orderer",
 	Long:  `Starts the orderer`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// Ensure expected environment variables are set
+		if missingEnv := common.HasEnv([]string{}...); len(missingEnv) > 0 {
+			log.Fatalf("The following environment variables must be set: %v", missingEnv)
+		}
 
 		if os.Getenv("DEV_MEMORY_LOCK") != "" {
 			c := memory.StartLockWatcher()

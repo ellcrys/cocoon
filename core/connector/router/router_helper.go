@@ -9,7 +9,7 @@ import (
 )
 
 // RouterDomain is the router's domain
-var RouterDomain = util.Env("ROUTER_DOMAIN", "whatbay.co")
+var RouterDomain = util.Env("ROUTER_DOMAIN", "")
 
 // Helper defines a structure for hooking up to the
 // reverse proxy tool within the cluster. Current implementation

@@ -85,6 +85,15 @@ var startCmd = &cobra.Command{
 	Long:  `Starts the connector and launch a cocoon code`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		if missingEnv := common.HasEnv([]string{
+			"ROUTER_DOMAIN",
+			"COCOON_ID",
+			"COCOON_CODE_URL",
+			"COCOON_CODE_LANG",
+		}...); len(missingEnv) > 0 {
+			log.Fatalf("The following environment variables must be set: %v", missingEnv)
+		}
+
 		log.Info("Connector has started")
 
 		// get deployment request from environment and validate it

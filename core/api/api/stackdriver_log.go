@@ -22,8 +22,8 @@ func (s *StackDriverLog) Init(config map[string]interface{}) error {
 	var err error
 	var ok bool
 
-	if s.projectID, ok = config["projectId"].(string); !ok {
-		return fmt.Errorf("project id is required")
+	if s.projectID, ok = config["projectId"].(string); !ok || len(s.projectID) == 0 {
+		return fmt.Errorf("project id is required. Is `GCP_PROJECT_ID` set?")
 	}
 
 	ctx := context.Background()

@@ -256,3 +256,15 @@ func GetAuthToken(ctx context.Context, scheme string) (string, error) {
 
 	return authSplit[1], nil
 }
+
+// HasEnv checks whether a slice of environment variable have been set.
+// It returns the variables that haven't been set
+func HasEnv(envs ...string) []string {
+	notSet := []string{}
+	for _, v := range envs {
+		if os.Getenv(v) == "" {
+			notSet = append(notSet, v)
+		}
+	}
+	return notSet
+}
