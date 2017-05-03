@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/types"
@@ -17,13 +16,9 @@ import (
 func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*proto_api.Response, error) {
 
 	var err error
-	var claims jwt.MapClaims
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
 	apiLog.Infof("New deploy request for cocoon with ID = %s", req.CocoonID)
-
-	// if claims, err = api.checkCtxAccessToken(ctx); err != nil {
-	// 	return nil, types.ErrInvalidOrExpiredToken
-	// }
 
 	cocoon, err := api.platform.GetCocoon(ctx, req.GetCocoonID())
 	if err != nil {
@@ -31,8 +26,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	}
 
 	// ensure logged in user owns this cocoon
-	userSessionIdentity := claims["identity"].(string)
-	if userSessionIdentity != cocoon.IdentityID {
+	if loggedInIdentity != cocoon.IdentityID {
 		return nil, types.ErrPermissionNotGrant
 	}
 
