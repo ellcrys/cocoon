@@ -14,6 +14,7 @@ import (
 	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
+	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -23,6 +24,7 @@ import (
 	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/types"
 	docker "github.com/ncodes/go-dockerclient"
+	"github.com/ncodes/modo"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 )
@@ -49,7 +51,7 @@ type Connector struct {
 	cocoonCodeRPCAddr string
 	languages         []Language
 	container         *docker.APIContainers
-	containerRunning  bool
+	cocoonRunning     bool
 	routerHelper      *router.Helper
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
@@ -132,7 +134,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, true)
+	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, true)
 	if err != nil {
 		log.Errorf("Failed to fetch cocoon [%s] information", cn.req.ID)
 		return
@@ -218,7 +220,7 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 	}
 
 	// set flag to true to indicate that the container is running
-	cn.containerRunning = true
+	cn.cocoonRunning = true
 	cn.container = container
 	cn.monitor.SetContainerID(cn.container.ID)
 	cn.HookToMonitor(cn.req)
@@ -253,7 +255,7 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 		}
 	}
 
-	if err = cn.configFirewall(container, cn.req); err != nil {
+	if err = cn.configureFirewall(container, cn.req); err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
 
@@ -322,7 +324,7 @@ func (cn *Connector) restart() error {
 
 	log.Info("Restarting cocoon code")
 
-	cn.containerRunning = false
+	cn.cocoonRunning = false
 
 	err := dckClient.RemoveContainer(docker.RemoveContainerOptions{
 		ID:            cn.container.ID,
@@ -480,8 +482,17 @@ func (cn *Connector) stopContainer(id string) error {
 	if err := dckClient.StopContainer(id, uint((5 * time.Second).Seconds())); err != nil {
 		return err
 	}
-	cn.containerRunning = false
+	cn.cocoonRunning = false
 	return nil
+}
+
+// ExecInContainer executes one of more commands in a command in series. Returns a any error for each command in their
+// respective index location.
+func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged bool, outputCB modo.OutputFunc) ([]error, error) {
+	doer := modo.NewMoDo(id, true, privileged, outputCB)
+	doer.UseClient(dckClient)
+	doer.Add(commands...)
+	return doer.Do()
 }
 
 // Executes is a general purpose function
@@ -503,7 +514,7 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 		if err != nil {
 			return fmt.Errorf("failed start container for exec [%s]. %s", name, err.Error())
 		}
-		cn.containerRunning = true
+		cn.cocoonRunning = true
 	}
 
 	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
@@ -550,7 +561,7 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 		return err
 	}
 
-	for cn.containerRunning {
+	for cn.cocoonRunning {
 		execIns, err := dckClient.InspectExec(exec.ID)
 		if err != nil {
 			outStream.Stop()
@@ -584,7 +595,7 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 func (cn *Connector) build(container *docker.APIContainers, lang Language) error {
 	cmd := []string{"bash", "-c", lang.GetBuildScript()}
 	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, exitCode interface{}) error {
-		if cn.containerRunning {
+		if cn.cocoonRunning {
 			switch state {
 			case "before":
 				log.Info("Building cocoon code")
@@ -608,7 +619,7 @@ func (cn *Connector) configureRouter() error {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cocoon, release, err := cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
+	cocoon, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, false)
 	if err != nil {
 		return err
 	}
@@ -679,7 +690,7 @@ func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
 		}
 	}
 
-	return strings.TrimSpace(`iptables -F && 
+	a := strings.TrimSpace(`iptables -F && 
 			iptables -P INPUT DROP; 
 			iptables -P FORWARD DROP; 
 			iptables -P OUTPUT DROP;
@@ -690,15 +701,18 @@ func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
 			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 		`)
+
+	pretty.Println(a)
+
+	return a
 }
 
-// configFirewall configures the container firewall.
-func (cn *Connector) configFirewall(container *docker.APIContainers, req *Request) error {
+// configureFirewall configures the container firewall.
+func (cn *Connector) configureFirewall(container *docker.APIContainers, req *Request) error {
 
-	// get cocoon object
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	_, release, err := cn.Platform.GetCocoonAndLastRelease(ctx, cn.req.ID, true, false)
+	_, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, false)
 	if err != nil {
 		return err
 	}
@@ -721,7 +735,7 @@ func (cn *Connector) configFirewall(container *docker.APIContainers, req *Reques
 func (cn *Connector) Stop(failed bool) error {
 
 	defer func() {
-		cn.containerRunning = false
+		cn.cocoonRunning = false
 		cn.setStatus(api.CocoonStatusStopped)
 		cn.waitCh <- failed
 	}()

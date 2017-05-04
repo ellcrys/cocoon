@@ -4,11 +4,12 @@ package connector
 type Request struct {
 	ID          string
 	URL         string
-	Version         string
+	Version     string
 	Lang        string
 	DiskLimit   int64
 	BuildParams string
 	Link        string
 	Memory      int64
-	CPUShare   int64
+	CPUShare    int64
+	ReleaseID   string
 }

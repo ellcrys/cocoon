@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"strings"
-
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
@@ -110,13 +108,12 @@ func Run(cc CocoonCode) {
 
 	serverDone = make(chan bool, 1)
 
-	bindPort := strings.Split(serverAddr, ":")[1]
-	lis, err := net.Listen("tcp", net.JoinHostPort("", bindPort))
+	lis, err := net.Listen("tcp", serverAddr)
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s", bindPort)
+		log.Fatalf("failed to listen on %s", serverAddr)
 	}
 
-	log.Infof("Started stub service at port=%s", bindPort)
+	log.Infof("Started stub service started %s", serverAddr)
 	server := grpc.NewServer()
 	proto_runtime.RegisterStubServer(server, defaultServer)
 	go startServer(server, lis)

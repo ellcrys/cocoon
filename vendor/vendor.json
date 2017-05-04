@@ -613,6 +613,12 @@
 			"revisionTime": "2017-03-20T09:03:40Z"
 		},
 		{
+			"checksumSHA1": "ATVogiDK0C7LjAkAaeQ4zPbE4xg=",
+			"path": "github.com/ncodes/modo",
+			"revision": "abaa789fdc8cd7167f33be4e4415e223b0c755fe",
+			"revisionTime": "2017-05-04T17:01:10Z"
+		},
+		{
 			"checksumSHA1": "Fx3O3Kf9UqOPVgZ8r+7VG5PmPSc=",
 			"path": "github.com/olebedev/emitter",
 			"revision": "9110dbae3d07cb26c2993dbf3bdbd0aad98329f9",

@@ -196,10 +196,25 @@ func (t *Platform) GetCocoon(ctx context.Context, id string) (*types.Cocoon, err
 	return &cocoon, nil
 }
 
-// GetCocoonAndLastRelease fetches a cocoon and the last release that was added to it.
-// If lastDeployed is set, it is forced to return the last release that was deployed otherwise,
-// error is returned. Set includePrivateFields to true to return include private fields of the cocoon and release
-func (t *Platform) GetCocoonAndLastRelease(ctx context.Context, cocoonID string, lastDeployed, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
+// GetCocoonAndRelease fetches a cocoon and a release that once. Returns error if either of them are not found.
+func (t *Platform) GetCocoonAndRelease(ctx context.Context, cocoonID, releaseID string, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
+
+	cocoon, err := t.GetCocoon(ctx, cocoonID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	release, err := t.GetRelease(ctx, releaseID, includePrivateFields)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cocoon, release, nil
+}
+
+// GetCocoonAndLastActiveRelease fetches a cocoon with the release that was last deployed or last created.
+// Set includePrivateFields to true to include private fields of the cocoon and release
+func (t *Platform) GetCocoonAndLastActiveRelease(ctx context.Context, cocoonID string, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
 
 	cocoon, err := t.GetCocoon(ctx, cocoonID)
 	if err != nil {
@@ -207,14 +222,11 @@ func (t *Platform) GetCocoonAndLastRelease(ctx context.Context, cocoonID string,
 	}
 
 	var releaseID = cocoon.LastDeployedReleaseID
-	if lastDeployed && len(cocoon.LastDeployedReleaseID) == 0 {
-		return nil, nil, fmt.Errorf("cocoon has no recently deployed release")
-	}
-	if !lastDeployed && len(cocoon.Releases) > 0 {
+	if len(cocoon.LastDeployedReleaseID) == 0 {
+		if len(cocoon.Releases) == 0 {
+			return nil, nil, fmt.Errorf("cocoon has no release. Wierd")
+		}
 		releaseID = cocoon.Releases[len(cocoon.Releases)-1]
-	}
-	if len(cocoon.Releases) == 0 {
-		return nil, nil, fmt.Errorf("cocoon has no release. Wierd")
 	}
 
 	release, err := t.GetRelease(ctx, releaseID, includePrivateFields)

@@ -50,6 +50,7 @@ func getRequest() (*connector.Request, error) {
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
 	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
 	ccLink := os.Getenv("COCOON_LINK")
+	ccRelease := os.Getenv("COCOON_RELEASE")
 
 	if ccID == "" {
 		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
@@ -67,6 +68,7 @@ func getRequest() (*connector.Request, error) {
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
 		BuildParams: buildParam,
 		Link:        ccLink,
+		ReleaseID:   ccRelease,
 	}, nil
 }
 
@@ -91,6 +93,7 @@ var startCmd = &cobra.Command{
 			"COCOON_ID",
 			"COCOON_CODE_URL",
 			"COCOON_CODE_LANG",
+			"COCOON_RELEASE",
 		}...); len(missingEnv) > 0 {
 			log.Fatalf("The following environment variables must be set: %v", missingEnv)
 		}

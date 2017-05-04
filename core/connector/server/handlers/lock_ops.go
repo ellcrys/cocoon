@@ -47,8 +47,8 @@ func (l *LockOperations) checkPermission(ctx context.Context, op *proto_connecto
 	// Target cocoon is not the same as the current cocoon
 	if op.LinkTo != l.connector.GetRequest().ID {
 
-		// get the current calling/requesting cocoon
-		_, release, err := l.connector.Platform.GetCocoonAndLastRelease(ctx, l.connector.GetRequest().ID, true, false)
+		// get the currently executing release of the current cocoon
+		_, release, err := l.connector.Platform.GetCocoonAndRelease(ctx, l.connector.GetRequest().ID, l.connector.GetRequest().ReleaseID, false)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("calling cocoon not found")
