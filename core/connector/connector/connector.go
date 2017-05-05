@@ -11,10 +11,8 @@ import (
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
-	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	"github.com/kr/pretty"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
 	"github.com/ncodes/cocoon/core/config"
@@ -26,6 +24,7 @@ import (
 	docker "github.com/ncodes/go-dockerclient"
 	"github.com/ncodes/modo"
 	logging "github.com/op/go-logging"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 )
 
@@ -46,7 +45,7 @@ func init() {
 // Connector defines a structure for starting and managing a cocoon (coode)
 type Connector struct {
 	waitCh            chan bool
-	req               *Request
+	spec              *Spec
 	connectorRPCAddr  string
 	cocoonCodeRPCAddr string
 	languages         []Language
@@ -55,46 +54,36 @@ type Connector struct {
 	routerHelper      *router.Helper
 	monitor           *monitor.Monitor
 	healthCheck       *HealthChecker
-	ordererDiscovery  *orderer.Discovery
 	cocoon            *types.Cocoon
 	release           *types.Release
 	Platform          *platform.Platform
 }
 
 // NewConnector creates a new connector
-func NewConnector(req *Request, waitCh chan bool) (*Connector, error) {
-	ordererDiscovery, err := orderer.NewDiscovery()
-	if err != nil {
-		return nil, err
-	}
-	platform, err := platform.NewPlatform()
-	if err != nil {
-		return nil, err
-	}
+func NewConnector(platform *platform.Platform, spec *Spec, waitCh chan bool) *Connector {
 	return &Connector{
-		req:              req,
-		waitCh:           waitCh,
-		monitor:          monitor.NewMonitor(req.ID),
-		ordererDiscovery: ordererDiscovery,
-		Platform:         platform,
-	}, nil
+		spec:     spec,
+		waitCh:   waitCh,
+		monitor:  monitor.NewMonitor(spec.ID),
+		Platform: platform,
+	}
 }
 
 // Launch starts a cocoon code
 func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
-	log = config.MakeLogger("connector", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	buildLog = config.MakeLogger("ccode.build", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	runLog = config.MakeLoggerMessageOnly("ccode.run", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	configLog = config.MakeLogger("ccode.config", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	ccodeLog = config.MakeLogger("ccode.main", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	fetchLog = config.MakeLogger("ccode.fetch", fmt.Sprintf("cocoon.%s", cn.req.ID))
-	logHealthChecker = config.MakeLogger("connector.health_checker", fmt.Sprintf("cocoon.%s", cn.req.ID))
+	log = config.MakeLogger("connector", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	buildLog = config.MakeLogger("ccode.build", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	runLog = config.MakeLoggerMessageOnly("ccode.run", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	configLog = config.MakeLogger("ccode.config", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	ccodeLog = config.MakeLogger("ccode.main", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	fetchLog = config.MakeLogger("ccode.fetch", fmt.Sprintf("cocoon.%s", cn.spec.ID))
+	logHealthChecker = config.MakeLogger("connector.health_checker", fmt.Sprintf("cocoon.%s", cn.spec.ID))
 
 	endpoint := "unix:///var/run/docker.sock"
 	client, err := docker.NewClient(endpoint)
 	if err != nil {
-		log.Errorf("failed to create docker client. Is dockerd running locally?. %s", err)
+		log.Errorf("%+v", errors.Wrap(err, "failed to create docker client. Is dockerd running locally?"))
 		cn.Stop(true)
 		return
 	}
@@ -102,7 +91,6 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	dckClient = client
 	cn.monitor.SetDockerClient(dckClient)
 	cn.healthCheck = NewHealthChecker(cn.cocoonCodeRPCAddr, cn.cocoonUnresponsive)
-	go cn.ordererDiscovery.Discover()
 
 	// No need downloading, building and starting a cocoon code
 	// if DEV_ADDR_COCOON_CODE_RPC has been specified. This means a dev cocoon code
@@ -116,38 +104,38 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	}
 
 	log.Info("Ready to install cocoon code")
-	log.Debugf("Found ccode url=%s and lang=%s", cn.req.URL, cn.req.Lang)
+	log.Debugf("Found ccode url=%s and lang=%s", cn.spec.URL, cn.spec.Lang)
 
-	lang := cn.GetLanguage(cn.req.Lang)
+	lang := cn.GetLanguage(cn.spec.Lang)
 	if lang == nil {
-		log.Errorf("cocoon code language (%s) not supported", cn.req.Lang)
+		log.Errorf("cocoon code language (%s) not supported", cn.spec.Lang)
 		cn.Stop(true)
 		return
 	}
 
 	cocoonCodeContainer, err := cn.prepareContainer(lang)
 	if err != nil {
-		log.Error(err.Error())
+		log.Errorf("%+v", errors.Wrap(err, ""))
 		cn.Stop(true)
 		return
 	}
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, true)
+	cn.cocoon, cn.release, err = cn.Platform.GetCocoonAndRelease(ctx, cn.spec.ID, cn.spec.ReleaseID, true)
 	if err != nil {
-		log.Errorf("Failed to fetch cocoon [%s] information", cn.req.ID)
+		log.Errorf("Failed to fetch cocoon [%s] information", cn.spec.ID)
 		return
 	}
 
 	log.Info("Preparing cocoon code environment variables")
 
 	var env = map[string]string{
-		"COCOON_ID":           cn.req.ID,
+		"COCOON_ID":           cn.spec.ID,
 		"CONNECTOR_RPC_ADDR":  cn.connectorRPCAddr,
 		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr, // cocoon code server will bind to the port of this addråess
-		"COCOON_LINK":         cn.req.Link,          // the cocoon code id to link to natively
-		"COCOON_CODE_VERSION": cn.req.Version,
+		"COCOON_LINK":         cn.spec.Link,         // the cocoon code id to link to natively
+		"COCOON_CODE_VERSION": cn.spec.Version,
 	}
 
 	// include the environment variable of the release
@@ -161,7 +149,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
 	go func() {
 		if err = cn.run(cocoonCodeContainer, lang); err != nil {
-			log.Error(err.Error())
+			log.Errorf("%+v", errors.Wrap(err, ""))
 			cn.Stop(true)
 			return
 		}
@@ -175,7 +163,7 @@ func (cn *Connector) SetRouterHelper(rh *router.Helper) {
 
 // GetOrdererDiscoverer returns the orderer discovery instance
 func (cn *Connector) GetOrdererDiscoverer() *orderer.Discovery {
-	return cn.ordererDiscovery
+	return cn.Platform.GetOrdererDiscoverer()
 }
 
 // cocoonUnresponsive is called when the cocoon code failed health check
@@ -190,9 +178,9 @@ func (cn *Connector) SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	cn.cocoonCodeRPCAddr = cocoonCodeRPCAddr
 }
 
-// GetRequest returns the current cocoon launch request
-func (cn *Connector) GetRequest() *Request {
-	return cn.req
+// GetSpec returns the current cocoon launch spec
+func (cn *Connector) GetSpec() *Spec {
+	return cn.spec
 }
 
 // GetCocoonCodeRPCAddr returns the RPC address of the cocoon code
@@ -223,7 +211,7 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 	cn.cocoonRunning = true
 	cn.container = container
 	cn.monitor.SetContainerID(cn.container.ID)
-	cn.HookToMonitor(cn.req)
+	cn.HookToMonitor()
 
 	err = cn.fetchSource(lang)
 	if err != nil {
@@ -233,15 +221,11 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 	if lang.RequiresBuild() {
 		var buildParams map[string]interface{}
 
-		if len(cn.req.BuildParams) == 0 {
-			log.Info("No build parameters provided. Making binary.")
+		if len(cn.spec.BuildParams) == 0 {
+			log.Info("No build parameters provided. Running build with language default config.")
 		} else {
-			log.Info("Parsing build parameters")
-			cn.req.BuildParams, err = crypto.FromBase64(cn.req.BuildParams)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode build parameter. Expects a base 64 encoded string. %s", err)
-			}
-			if err = util.FromJSON([]byte(cn.req.BuildParams), &buildParams); err != nil {
+			log.Info("Parsing and validating build parameters")
+			if err = util.FromJSON([]byte(cn.spec.BuildParams), &buildParams); err != nil {
 				return nil, fmt.Errorf("failed to parse build parameter. Expects valid json string. %s", err)
 			}
 			if err = lang.SetBuildParams(buildParams); err != nil {
@@ -255,7 +239,7 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 		}
 	}
 
-	if err = cn.configureFirewall(container, cn.req); err != nil {
+	if err = cn.configureFirewall(container); err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
 
@@ -264,10 +248,10 @@ func (cn *Connector) prepareContainer(lang Language) (*docker.APIContainers, err
 
 // HookToMonitor is where all listeners to the monitor
 // are attached.
-func (cn *Connector) HookToMonitor(req *Request) {
+func (cn *Connector) HookToMonitor() {
 	go func() {
 		for evt := range cn.monitor.GetEmitter().On("monitor.report") {
-			if cn.RestartIfDiskAllocExceeded(req, evt.Args[0].(monitor.Report).DiskUsage) {
+			if cn.RestartIfDiskAllocExceeded(evt.Args[0].(monitor.Report).DiskUsage) {
 				break
 			}
 		}
@@ -280,7 +264,7 @@ func (cn *Connector) setStatus(status string) error {
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
 
-	cocoon, err := cn.Platform.GetCocoon(ctx, cn.req.ID)
+	cocoon, err := cn.Platform.GetCocoon(ctx, cn.spec.ID)
 	if err != nil {
 		return err
 	}
@@ -296,13 +280,13 @@ func (cn *Connector) setStatus(status string) error {
 
 // RestartIfDiskAllocExceeded restarts the cocoon code is disk usages
 // has exceeded its set limit.
-func (cn *Connector) RestartIfDiskAllocExceeded(req *Request, curDiskSize int64) bool {
-	if curDiskSize > req.DiskLimit {
+func (cn *Connector) RestartIfDiskAllocExceeded(curDiskSize int64) bool {
+	if curDiskSize > cn.spec.DiskLimit {
 		log.Errorf("cocoon code has used more than its allocated disk space (%s of %s)",
 			humanize.Bytes(uint64(curDiskSize)),
-			humanize.Bytes(uint64(req.DiskLimit)))
+			humanize.Bytes(uint64(cn.spec.DiskLimit)))
 		if err := cn.restart(); err != nil {
-			log.Error(err.Error())
+			log.Errorf("%+v", err)
 			return false
 		}
 		return true
@@ -335,7 +319,7 @@ func (cn *Connector) restart() error {
 		return fmt.Errorf("failed to remove container. %s", err)
 	}
 
-	cocoonCodeContainer, err := cn.prepareContainer(cn.GetLanguage(cn.req.Lang))
+	cocoonCodeContainer, err := cn.prepareContainer(cn.GetLanguage(cn.spec.Lang))
 	if err != nil {
 		return fmt.Errorf("restart failed: %s", err)
 	}
@@ -343,8 +327,8 @@ func (cn *Connector) restart() error {
 	go cn.monitor.Monitor()
 
 	go func() {
-		if err = cn.run(cocoonCodeContainer, cn.GetLanguage(cn.req.Lang)); err != nil {
-			log.Errorf("restart failed: %s", err)
+		if err = cn.run(cocoonCodeContainer, cn.GetLanguage(cn.spec.Lang)); err != nil {
+			log.Errorf("%+v", errors.Wrap(err, "restart failed"))
 			cn.Stop(true)
 		}
 	}()
@@ -381,7 +365,7 @@ func (cn *Connector) GetLanguages() []Language {
 // a remote address
 func (cn *Connector) fetchSource(lang Language) error {
 
-	if !cutil.IsGithubRepoURL(cn.req.URL) {
+	if !cutil.IsGithubRepoURL(cn.spec.URL) {
 		return fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
@@ -396,29 +380,30 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 	var err error
 
 	// set version to latest if not provided
-	versionStr := cn.req.Version
+	versionStr := cn.spec.Version
 	if versionStr == "" {
 		versionStr = "latest"
+		log.Debug("Cocoon code version set to = latest")
 	}
 
 	// If version is a sha1 hash, it is a commit id, fetch the repo using this id
 	// otherwise it is considered a release tag. If version is not set, we fetch the latest release
-	if cutil.IsGithubCommitID(cn.req.Version) {
-		url, err := urlx.Parse(cn.req.URL)
+	if cutil.IsGithubCommitID(cn.spec.Version) {
+		url, err := urlx.Parse(cn.spec.URL)
 		if err != nil {
 			return fmt.Errorf("Failed to parse git url: %s", err)
 		}
-		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.req.Version)
+		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.spec.Version)
 		log.Debugf("Downloading repo with commit id = %s", versionStr)
 	} else {
-		repoTarURL, err = cutil.GetGithubRepoRelease(cn.req.URL, cn.req.Version)
+		repoTarURL, err = cutil.GetGithubRepoRelease(cn.spec.URL, cn.spec.Version)
 		if err != nil {
 			return fmt.Errorf("Failed to fetch release from github repo. %s", err)
 		}
-		if len(cn.req.Version) == 0 {
+		if len(cn.spec.Version) == 0 {
 			log.Debug("Downloading latest repo")
 		} else {
-			log.Debugf("Downloading repo with release tag = %s", cn.req.Version)
+			log.Debugf("Downloading repo with release tag = %s", cn.spec.Version)
 		}
 	}
 
@@ -427,7 +412,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 	log.Infof("Downloading cocoon repository with version=%s", versionStr)
 
 	// construct fetch script
-	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.req.ID))
+	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
 	fetchScript := `
 	    iptables -F &&
 		rm -rf ` + downloadDst + ` &&	
@@ -488,10 +473,11 @@ func (cn *Connector) stopContainer(id string) error {
 
 // ExecInContainer executes one of more commands in a command in series. Returns a any error for each command in their
 // respective index location.
-func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged bool, outputCB modo.OutputFunc) ([]error, error) {
+func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged bool, outputCB modo.OutputFunc, stateCB func(modo.State, *modo.Do)) ([]error, error) {
 	doer := modo.NewMoDo(id, true, privileged, outputCB)
 	doer.UseClient(dckClient)
 	doer.Add(commands...)
+	doer.SetStateCB(stateCB)
 	return doer.Do()
 }
 
@@ -542,14 +528,14 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 			ErrorStream:  outStream.GetWriter(),
 		})
 		if err != nil {
-			log.Infof("failed to start exec [%s] command. %s", name, err)
+			log.Errorf("%+v", errors.Wrap(fmt.Errorf("failed to start exec [%s] command. %s", name, err), ""))
 		}
 	}()
 
 	go func() {
 		err := outStream.Start()
 		if err != nil {
-			log.Errorf("failed to start exec [%s] output stream logger. %s", name, err)
+			log.Errorf("%+v", errors.Wrap(fmt.Errorf("failed to start exec [%s] output stream logger. %s", name, err), ""))
 		}
 	}()
 
@@ -598,8 +584,8 @@ func (cn *Connector) build(container *docker.APIContainers, lang Language) error
 		if cn.cocoonRunning {
 			switch state {
 			case "before":
-				log.Info("Building cocoon code")
 				cn.setStatus(api.CocoonStatusBuilding)
+				log.Info("Building cocoon code")
 			case "end":
 				if exitCode.(int) == 0 {
 					log.Info("Build succeeded!")
@@ -619,7 +605,7 @@ func (cn *Connector) configureRouter() error {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	cocoon, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, false)
+	cocoon, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.spec.ID, cn.spec.ReleaseID, false)
 	if err != nil {
 		return err
 	}
@@ -649,27 +635,28 @@ func (cn *Connector) configureRouter() error {
 // Run the cocoon code. First it gets the IP address of the container and sets
 // the language environment.
 func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
-	return cn.execInContainer(container, "RUN", lang.GetRunScript(), false, runLog, func(state string, exitCode interface{}) error {
+	errs, err := cn.ExecInContainer(container.ID, []*modo.Do{lang.GetRunCommand()}, false, func(d []byte, stdout bool) {
+		runLog.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
 		switch state {
-		case "before":
+		case modo.Before:
 			log.Info("Starting cocoon code")
-		case "after":
-			go cn.healthCheck.Start()
-			cn.setStatus(api.CocoonStatusRunning)
-			if err := cn.configureRouter(); err != nil {
-				log.Errorf("Failed to set frontend router configuration: %s", err)
-				cn.Stop(true)
-			}
-			return nil
-		case "end":
-			cn.setStatus(api.CocoonStatusStopped)
-			if exitCode.(int) == 0 {
-				log.Info("Cocoon code successfully stop")
-				return nil
-			}
+		case modo.Executing:
+			fmt.Println("Executing")
+			// go cn.healthCheck.Start()
+			// cn.setStatus(api.CocoonStatusRunning)
+			// if err := cn.configureRouter(); err != nil {
+			// 	log.Errorf("Failed to set frontend router configuration: %s", err)
+			// 	cn.Stop(true)
+			// }
 		}
-		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to run cocoon code")
+	} else if len(errs) > 0 {
+		return errors.Wrap(errs[0], "failed to run command has failed")
+	}
+	return nil
 }
 
 // getFirewallScript returns the firewall script to apply to the container.
@@ -702,17 +689,15 @@ func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
 			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 		`)
 
-	pretty.Println(a)
-
 	return a
 }
 
 // configureFirewall configures the container firewall.
-func (cn *Connector) configureFirewall(container *docker.APIContainers, req *Request) error {
+func (cn *Connector) configureFirewall(container *docker.APIContainers) error {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
-	_, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.req.ID, cn.req.ReleaseID, false)
+	_, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.spec.ID, cn.spec.ReleaseID, false)
 	if err != nil {
 		return err
 	}

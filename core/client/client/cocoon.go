@@ -169,8 +169,7 @@ func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool)
 
 	client := proto_api.NewAPIClient(conn)
 	resp, err := client.Deploy(ctx, &proto_api.DeployRequest{
-		CocoonID:                 cocoonID,
-		UseLastDeployedReleaseID: useLastDeployedReleaseID,
+		CocoonID: cocoonID,
 	})
 	if err != nil {
 		return err

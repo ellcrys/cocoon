@@ -92,7 +92,7 @@ message GetReleaseRequest {
 
 message DeployRequest {
     string cocoonID = 1;
-    bool useLastDeployedReleaseID = 2; 
+    string releaseID = 2;
 }
 
 message CreateIdentityRequest {

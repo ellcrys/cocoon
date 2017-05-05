@@ -16,6 +16,7 @@ import (
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -110,7 +111,7 @@ func Run(cc CocoonCode) {
 
 	lis, err := net.Listen("tcp", serverAddr)
 	if err != nil {
-		log.Fatalf("failed to listen on %s", serverAddr)
+		log.Fatalf("%+v", errors.Wrapf(err, "failed to listen on %s", serverAddr))
 	}
 
 	log.Infof("Started stub service started %s", serverAddr)
@@ -128,7 +129,7 @@ func Run(cc CocoonCode) {
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
 		if err = cc.OnInit(); err != nil {
-			log.Errorf("cocoode OnInit() returned error: %s", err)
+			log.Errorf("cocoode OnInit() returned error: %+v", err)
 			Stop(2)
 		} else {
 			running = true
@@ -144,7 +145,7 @@ func Run(cc CocoonCode) {
 func startServer(server *grpc.Server, lis net.Listener) {
 	err := server.Serve(lis)
 	if err != nil {
-		log.Errorf("server has stopped: %s", err)
+		log.Errorf("server has stopped: %+v", err)
 		Stop(1)
 	}
 }

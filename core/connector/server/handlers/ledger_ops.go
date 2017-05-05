@@ -28,7 +28,7 @@ type LedgerOperations struct {
 func NewLedgerOperationHandler(log *logging.Logger, connector *connector.Connector) *LedgerOperations {
 	return &LedgerOperations{
 		connector:        connector,
-		CocoonID:         connector.GetRequest().ID,
+		CocoonID:         connector.GetSpec().ID,
 		ordererDiscovery: connector.GetOrdererDiscoverer(),
 		log:              log,
 	}
@@ -55,7 +55,7 @@ func (l *LedgerOperations) checkACL(ctx context.Context, op *proto_connector.Led
 	// Handle links to other cocoon code
 	if op.LinkTo != l.CocoonID {
 
-		_, callingCocoonRelease, err := l.connector.Platform.GetCocoonAndRelease(ctx, l.CocoonID, l.connector.GetRequest().ReleaseID, false)
+		_, callingCocoonRelease, err := l.connector.Platform.GetCocoonAndRelease(ctx, l.CocoonID, l.connector.GetSpec().ReleaseID, false)
 		if err != nil {
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
 				return fmt.Errorf("calling cocoon not found")

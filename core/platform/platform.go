@@ -12,6 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/pkg/errors"
 )
 
 // Platform represents a collection of
@@ -31,6 +32,11 @@ func NewPlatform() (*Platform, error) {
 	return &Platform{
 		ordererDiscoverer: ordererDiscoverer,
 	}, nil
+}
+
+// GetOrdererDiscoverer returns the orderer discover used
+func (t *Platform) GetOrdererDiscoverer() *orderer.Discovery {
+	return t.ordererDiscoverer
 }
 
 // Stop stops the orderer discoverer service
@@ -201,11 +207,17 @@ func (t *Platform) GetCocoonAndRelease(ctx context.Context, cocoonID, releaseID 
 
 	cocoon, err := t.GetCocoon(ctx, cocoonID)
 	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, nil, errors.Wrap(err, "cocoon not found")
+		}
 		return nil, nil, err
 	}
 
 	release, err := t.GetRelease(ctx, releaseID, includePrivateFields)
 	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, nil, errors.Wrap(err, "release not found")
+		}
 		return nil, nil, err
 	}
 
@@ -224,7 +236,7 @@ func (t *Platform) GetCocoonAndLastActiveRelease(ctx context.Context, cocoonID s
 	var releaseID = cocoon.LastDeployedReleaseID
 	if len(cocoon.LastDeployedReleaseID) == 0 {
 		if len(cocoon.Releases) == 0 {
-			return nil, nil, fmt.Errorf("cocoon has no release. Wierd")
+			return nil, nil, errors.Wrap(err, "cocoon has no release. Wierd")
 		}
 		releaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}

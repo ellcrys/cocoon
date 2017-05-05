@@ -12,9 +12,11 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/router"
-	"github.com/ncodes/cocoon/core/connector/server"
+	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -28,7 +30,7 @@ var (
 	defaultConnectorHTTPAddr = util.Env("DEV_ADDR_CONNECTOR_HTTP", ":8900")
 
 	// default cocoon code RPC ADDR
-	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", ":8004")
+	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", "127.0.0.1:8004")
 
 	// Signals channel
 	sigs = make(chan os.Signal, 1)
@@ -38,37 +40,29 @@ func init() {
 	config.ConfigureLogger()
 }
 
-// creates a deployment request with argument
-// fetched from the environment.
-func getRequest() (*connector.Request, error) {
+// Pull the cocoon specification
+func getSpec(pf *platform.Platform) (*connector.Spec, error) {
 
-	// get cocoon code github link and language
-	ccID := os.Getenv("COCOON_ID")
-	ccURL := os.Getenv("COCOON_CODE_URL")
-	ccVersion := os.Getenv("COCOON_CODE_VERSION")
-	ccLang := os.Getenv("COCOON_CODE_LANG")
-	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
-	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
-	ccLink := os.Getenv("COCOON_LINK")
-	ccRelease := os.Getenv("COCOON_RELEASE")
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
 
-	if ccID == "" {
-		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
-	} else if ccURL == "" {
-		return nil, fmt.Errorf("Cocoon code url not set @ $COCOON_CODE_URL")
-	} else if ccLang == "" {
-		return nil, fmt.Errorf("Cocoon code url not set @ $COCOON_CODE_LANG")
+	cocoon, release, err := pf.GetCocoonAndRelease(ctx, os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"), true)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get spec")
 	}
 
-	return &connector.Request{
-		ID:          ccID,
-		URL:         ccURL,
-		Version:     ccVersion,
-		Lang:        ccLang,
+	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
+	return &connector.Spec{
+		ID:          cocoon.ID,
+		URL:         release.URL,
+		Version:     release.Version,
+		Lang:        release.Language,
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
-		BuildParams: buildParam,
-		Link:        ccLink,
-		ReleaseID:   ccRelease,
+		BuildParams: release.BuildParam,
+		Link:        release.Link,
+		ReleaseID:   release.ID,
+		Cocoon:      cocoon,
+		Release:     release,
 	}, nil
 }
 
@@ -91,23 +85,26 @@ var startCmd = &cobra.Command{
 		if missingEnv := common.HasEnv([]string{
 			"ROUTER_DOMAIN",
 			"COCOON_ID",
-			"COCOON_CODE_URL",
-			"COCOON_CODE_LANG",
 			"COCOON_RELEASE",
+			"COCOON_CONTAINER_NAME",
 		}...); len(missingEnv) > 0 {
 			log.Fatalf("The following environment variables must be set: %v", missingEnv)
 		}
 
-		log.Info("Connector has started")
-
-		// get deployment request from environment and validate it
-		log.Info("Collecting and validating launch request")
-		req, err := getRequest()
+		platform, err := platform.NewPlatform()
 		if err != nil {
-			log.Error(err.Error())
+			log.Fatalf("Failed to initialize platform: %s", err)
 			return
 		}
-		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
+
+		log.Infof("Connector initialized [cocoon=%s, release=%s]", os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"))
+		log.Infof("Fetching cocoon specification")
+		spec, err := getSpec(platform)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+
+		log.Infof("Launching...")
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
 		connectorHTTPAddr := scheduler.Getenv("ADDR_HTTP", defaultConnectorHTTPAddr)
@@ -120,38 +117,35 @@ var startCmd = &cobra.Command{
 			log.Fatal("Ensure consul is running at 127.0.0.1:8500. Use CONSUL_ADDR to set alternative consul address")
 		}
 
+		// initialize connector
 		waitCh := make(chan bool, 1)
-		cn, err := connector.NewConnector(req, waitCh)
-		if err != nil {
-			log.Fatal(err.Error())
-			return
-		}
+		cn := connector.NewConnector(platform, spec, waitCh)
 		cn.SetRouterHelper(routerHelper)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
-		cn.AddLanguage(connector.NewGo(req))
+		cn.AddLanguage(connector.NewGo(spec))
 
 		// start grpc API server
-		rpcServerStartedCh := make(chan bool)
-		rpcServer := server.NewRPC(cn)
-		go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
-		<-rpcServerStartedCh
+		// rpcServerStartedCh := make(chan bool)
+		// rpcServer := server.NewRPC(cn)
 
-		// start http server
-		httpServerStartedCh := make(chan bool)
-		httpServer := server.NewHTTP(rpcServer)
-		go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
-		<-httpServerStartedCh
+		// // start http server
+		// httpServerStartedCh := make(chan bool)
+		// httpServer := server.NewHTTP(rpcServer)
 
 		// listen to terminate request
 		onTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received. Stopping connector")
-			rpcServer.Stop()
-
+			// rpcServer.Stop()
 			// allow some time for logs to be read by the connector
 			time.Sleep(2 * time.Second)
-
 			cn.Stop(false)
 		})
+
+		// go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
+		// <-rpcServerStartedCh
+
+		// go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
+		// <-httpServerStartedCh
 
 		// launch the deployed cocoon code
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
