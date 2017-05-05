@@ -29,6 +29,10 @@ func NewPlatform() (*Platform, error) {
 		return nil, err
 	}
 	go ordererDiscoverer.Discover()
+
+	// wait for discoverer to do initial discovery
+	time.Sleep(1 * time.Second)
+
 	return &Platform{
 		ordererDiscoverer: ordererDiscoverer,
 	}, nil
