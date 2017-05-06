@@ -59,6 +59,8 @@ func (od *Discovery) discover() error {
 	var err error
 
 	if len(os.Getenv("DEV_ORDERER_ADDR")) > 0 {
+		od.Lock()
+		defer od.Unlock()
 		od.orderersAddr = []string{os.Getenv("DEV_ORDERER_ADDR")}
 		return nil
 	}
@@ -68,15 +70,18 @@ func (od *Discovery) discover() error {
 		return err
 	}
 
-	var orderers []string
 	for _, orderer := range _orderers {
-		orderers = append(orderers, fmt.Sprintf("%s:%d", orderer.IP, int(orderer.Port)))
+		od.Add(fmt.Sprintf("%s:%d", orderer.IP, int(orderer.Port)))
 	}
 
-	od.Lock()
-	od.orderersAddr = orderers
-	od.Unlock()
 	return nil
+}
+
+// Add a new orderer address
+func (od *Discovery) Add(addr string) {
+	od.Lock()
+	defer od.Unlock()
+	od.orderersAddr = append(od.orderersAddr, addr)
 }
 
 // Discover starts a ticker that discovers and updates the list
@@ -121,28 +126,39 @@ func (od *Discovery) addOrdererService(addr string, port int) error {
 
 // GetAddrs returns the list of discovered addresses
 func (od *Discovery) GetAddrs() []string {
+	od.Lock()
+	defer od.Unlock()
 	return od.orderersAddr
+}
+
+// Len returns the number of orderer addresses
+func (od *Discovery) Len() int {
+	od.Lock()
+	defer od.Unlock()
+	return len(od.orderersAddr)
+}
+
+// GetRandAddr returns a randomly selected address or an empty
+// string if no address is available
+func (od *Discovery) GetRandAddr() string {
+	od.Lock()
+	defer od.Unlock()
+	if nOrderer := len(od.orderersAddr); nOrderer > 0 {
+		return od.orderersAddr[util.RandNum(0, nOrderer)]
+	}
+	return ""
 }
 
 // GetGRPConn dials a random orderer address and returns a
 // grpc connection. If no orderer address has been discovered, nil and are error are returned.
 func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 
-	od.Lock()
-
 	var selected string
-	if len(od.orderersAddr) == 0 {
-		od.Unlock()
+	var addr = od.GetRandAddr()
+
+	if addr == "" {
 		return nil, fmt.Errorf("no known orderer address")
 	}
-
-	if len(od.orderersAddr) == 1 {
-		selected = od.orderersAddr[0]
-	} else {
-		selected = od.orderersAddr[util.RandNum(0, len(od.orderersAddr))]
-	}
-
-	od.Unlock()
 
 	client, err := grpc.Dial(selected, grpc.WithInsecure())
 	if err != nil {
