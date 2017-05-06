@@ -11,12 +11,15 @@ import (
 
 	"io/ioutil"
 
+	"net"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/gorilla/mux"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	logging "github.com/op/go-logging"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 )
 
@@ -67,12 +70,19 @@ func (s *HTTP) getRouter() *mux.Router {
 // Start starts the http server. Passes true to the startedCh channel
 // when started
 func (s *HTTP) Start(addr string, startedCh chan bool) error {
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "failed to parse address"))
+		startedCh <- false
+		return err
+	}
+
 	time.AfterFunc(2*time.Second, func() {
-		httpLog.Infof("Started HTTP API server @ %s", addr)
+		httpLog.Infof("Started HTTP API server @ :%s", port)
 		startedCh <- true
 	})
-	err := http.ListenAndServe(addr, s.getRouter())
-	return err
+
+	return http.ListenAndServe(addr, s.getRouter())
 }
 
 // headerToMap converts http.Header to a map[string]string.

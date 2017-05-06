@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"net"
+
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -33,7 +35,8 @@ func NewHealthChecker(cocoonCodeAddr string, onDeadFunc func()) *HealthChecker {
 // if check returns err, it calls the OnDeadFunc and stops the health check.
 func (hc *HealthChecker) Start() {
 
-	logHealthChecker.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
+	_, port, _ := net.SplitHostPort(hc.cocoonCodeAddr)
+	logHealthChecker.Infof("Started cocoon code health @ %s", port)
 
 	if err := hc.check(); err != nil {
 		logHealthChecker.Infof(err.Error())
@@ -71,6 +74,7 @@ func (hc *HealthChecker) check() error {
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		_, err = stub.HealthCheck(ctx, &proto_runtime.Ok{})
 		if err != nil {
+			log.Error(err.Error())
 			logHealthChecker.Warningf("health check not passed. Retry Remaining: %d", retryLimit)
 			retryLimit--
 			time.Sleep(2 * time.Second)

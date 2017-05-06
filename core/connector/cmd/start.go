@@ -12,6 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
 	"github.com/ncodes/cocoon/core/connector/router"
+	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/pkg/errors"
@@ -125,31 +126,34 @@ var startCmd = &cobra.Command{
 		cn.AddLanguage(connector.NewGo(spec))
 
 		// start grpc API server
-		// rpcServerStartedCh := make(chan bool)
-		// rpcServer := server.NewRPC(cn)
+		rpcServerStartedCh := make(chan bool)
+		rpcServer := server.NewRPC(cn)
 
-		// // start http server
-		// httpServerStartedCh := make(chan bool)
-		// httpServer := server.NewHTTP(rpcServer)
+		// start http server
+		httpServerStartedCh := make(chan bool)
+		httpServer := server.NewHTTP(rpcServer)
+
+		go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
+		<-rpcServerStartedCh
+
+		go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
+		<-httpServerStartedCh
 
 		// listen to terminate request
 		onTerminate(func(s os.Signal) {
-			log.Info("Terminate signal received. Stopping connector")
-			// rpcServer.Stop()
+			log.Info("Terminate signal received")
+			log.Info("Stopping cocoon code")
+			rpcServer.Stop()
 			// allow some time for logs to be read by the connector
 			time.Sleep(2 * time.Second)
+			log.Info("Stopping connector")
 			cn.Stop(false)
 		})
-
-		// go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
-		// <-rpcServerStartedCh
-
-		// go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
-		// <-httpServerStartedCh
 
 		// launch the deployed cocoon code
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
 		<-waitCh
+
 		log.Info("Connector stopped")
 	},
 }

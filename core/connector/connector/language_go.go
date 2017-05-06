@@ -98,7 +98,7 @@ func (g *Go) GetSourceRootDir() string {
 }
 
 // RequiresBuild returns true if cocoon codes written in
-// go language specuires a build process.
+// go language spec a build process.
 // During development, If DEV_RUN_ROOT_BIN env is set, it will return false as
 // the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
@@ -123,8 +123,7 @@ func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 	return nil
 }
 
-// GetBuildScript will return the script specuired
-// to create an executable
+// GetBuildScript will return the script to create an executable
 func (g *Go) GetBuildScript() string {
 
 	cmds := []string{
@@ -179,15 +178,12 @@ func (g *Go) GetRunCommand() *modo.Do {
 		Cmd: []string{
 			"bash",
 			"-c",
-			`
-			go-echo-server
-			`,
-			// strings.Join(cmds, "&&"),
+			strings.Join(cmds, "&&"),
 		},
 	}
 }
 
-// GetRunCommand returns the script specuired to start the
+// GetRunCommand returns the script required to start the
 // cocoon code according to the build and installation process
 // of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
 // ccode binary located in the mount destination.

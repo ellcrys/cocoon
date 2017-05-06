@@ -153,14 +153,13 @@ func (od *Discovery) GetRandAddr() string {
 // grpc connection. If no orderer address has been discovered, nil and are error are returned.
 func (od *Discovery) GetGRPConn() (*grpc.ClientConn, error) {
 
-	var selected string
 	var addr = od.GetRandAddr()
 
 	if addr == "" {
 		return nil, fmt.Errorf("no known orderer address")
 	}
 
-	client, err := grpc.Dial(selected, grpc.WithInsecure())
+	client, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}

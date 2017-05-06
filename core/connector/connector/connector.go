@@ -12,6 +12,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ellcrys/util"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/goware/urlx"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
@@ -21,7 +22,6 @@ import (
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/types"
-	docker "github.com/ncodes/go-dockerclient"
 	"github.com/ncodes/modo"
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -437,7 +437,7 @@ func (cn *Connector) fetchFromGit(lang Language) error {
 				fetchLog.Info("Fetch succeeded!")
 				fetchLog.Infof("Successfully unpacked cocoon code")
 			} else {
-				return fmt.Errorf("Fetch has failed with exit code=%d", exitCode.(int))
+				return fmt.Errorf("Repository fetch has failed with exit code=%d", exitCode.(int))
 			}
 		}
 		return nil
@@ -478,7 +478,16 @@ func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged 
 	doer.UseClient(dckClient)
 	doer.Add(commands...)
 	doer.SetStateCB(stateCB)
-	return doer.Do()
+
+	done := make(chan struct{}, 1)
+	var err error
+	var errs []error
+	go func() {
+		errs, err = doer.Do()
+		close(done)
+	}()
+	time.Sleep(3 * time.Hour)
+	return errs, err
 }
 
 // Executes is a general purpose function
@@ -642,13 +651,14 @@ func (cn *Connector) run(container *docker.APIContainers, lang Language) error {
 		case modo.Before:
 			log.Info("Starting cocoon code")
 		case modo.Executing:
-			fmt.Println("Executing")
-			// go cn.healthCheck.Start()
-			// cn.setStatus(api.CocoonStatusRunning)
-			// if err := cn.configureRouter(); err != nil {
-			// 	log.Errorf("Failed to set frontend router configuration: %s", err)
-			// 	cn.Stop(true)
-			// }
+			time.AfterFunc(2*time.Second, func() {
+				cn.healthCheck.Start()
+			})
+			cn.setStatus(api.CocoonStatusRunning)
+			if err := cn.configureRouter(); err != nil {
+				log.Errorf("Failed to set frontend router configuration: %s", err)
+				cn.Stop(true)
+			}
 		}
 	})
 	if err != nil {
@@ -686,7 +696,7 @@ func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
 			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT;
 			` + strings.Join(cocoonFirewallRules, ";") + `
 			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
-			iptables -A INPUT -p tcp -s ` + connectorRPCIP + ` --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
+			iptables -A INPUT -p tcp --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
 		`)
 
 	return a

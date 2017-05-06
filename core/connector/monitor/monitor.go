@@ -3,10 +3,11 @@ package monitor
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/ncodes/cocoon/core/config"
-	docker "github.com/ncodes/go-dockerclient"
 	"github.com/olebedev/emitter"
 	logging "github.com/op/go-logging"
 )
@@ -31,6 +32,7 @@ type Report struct {
 // other external modules to subscribe to events from it and to also emit events to
 // the module.
 type Monitor struct {
+	sync.Mutex
 	emitter     *emitter.Emitter
 	containerID string
 	stop        bool
@@ -63,6 +65,8 @@ func (m *Monitor) GetEmitter() *emitter.Emitter {
 
 // Stop the monitor
 func (m *Monitor) Stop() {
+	m.Lock()
+	defer m.Unlock()
 	m.stop = true
 	m.emitter.Off("*")
 }
@@ -70,6 +74,9 @@ func (m *Monitor) Stop() {
 // Reset resets the monitor
 func (m *Monitor) Reset() {
 	m.Stop()
+
+	m.Lock()
+	defer m.Unlock()
 	m.emitter = emitter.New(10)
 	m.stop = false
 }
