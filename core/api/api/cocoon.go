@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/structs"
 	"github.com/jinzhu/copier"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
+	"github.com/ncodes/cocoon/core/api/archiver"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
@@ -77,40 +78,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 
-	// ensure a similar cocoon does not exist
-	_, err = api.platform.GetCocoon(ctx, cocoon.ID)
-	if err != nil && err != types.ErrCocoonNotFound {
-		return nil, err
-	} else if err == nil {
-		return nil, fmt.Errorf("cocoon with the same id already exists")
-	}
-
-	if err := ValidateCocoon(&cocoon); err != nil {
-		return nil, err
-	}
-
-	err = api.platform.PutCocoon(ctx, &cocoon)
-	if err != nil {
-		return nil, err
-	}
-
-	// if a link cocoon id is provided, ensure the linked cocoon exists
-	// and is owned by the currently logged in identity
-	if len(req.Link) > 0 {
-		cocoonToLinkTo, err := api.platform.GetCocoon(ctx, req.Link)
-		if err != nil {
-			if err != types.ErrCocoonNotFound {
-				return nil, err
-			} else if err == types.ErrCocoonNotFound {
-				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", req.Link)
-			}
-		}
-		// ensure logged in user owns the cocoon being linked
-		if loggedInIdentity != cocoonToLinkTo.IdentityID {
-			return nil, fmt.Errorf("link: Permission denied. Cannot create a native link to a cocoon you did not create")
-		}
-	}
-
 	// create new release
 	var release types.Release
 	copier.Copy(&release, req)
@@ -132,6 +99,44 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 		release.Firewall = nil
 	}
 
+	// ensure a similar cocoon does not exist
+	_, err = api.platform.GetCocoon(ctx, cocoon.ID)
+	if err != nil && err != types.ErrCocoonNotFound {
+		return nil, err
+	} else if err == nil {
+		return nil, fmt.Errorf("cocoon with the same id already exists")
+	}
+
+	if err := ValidateCocoon(&cocoon); err != nil {
+		return nil, err
+	}
+
+	if err := ValidateRelease(&release); err != nil {
+		return nil, err
+	}
+
+	// if a link cocoon id is provided, ensure the linked cocoon exists
+	// and is owned by the currently logged in identity
+	if len(req.Link) > 0 {
+		cocoonToLinkTo, err := api.platform.GetCocoon(ctx, req.Link)
+		if err != nil {
+			if err != types.ErrCocoonNotFound {
+				return nil, err
+			} else if err == types.ErrCocoonNotFound {
+				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", req.Link)
+			}
+		}
+		// ensure logged in user owns the cocoon being linked
+		if loggedInIdentity != cocoonToLinkTo.IdentityID {
+			return nil, fmt.Errorf("link: Permission denied. Cannot create a native link to a cocoon you did not create")
+		}
+	}
+
+	err = api.platform.PutCocoon(ctx, &cocoon)
+	if err != nil {
+		return nil, err
+	}
+
 	err = api.platform.PutRelease(ctx, &release)
 	if err != nil {
 		return nil, err
@@ -146,6 +151,19 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	err = api.platform.PutIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
+	}
+
+	// archive release
+	persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create persister")
+	}
+	err = archiver.NewArchiver(
+		archiver.NewGitObject(release.URL, release.Version),
+		persister,
+	).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to archive release: %s", err)
 	}
 
 	return &proto_api.Response{
@@ -206,6 +224,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	var err error
 	var cocoonUpdated bool
 	var releaseUpdated bool
+	var versionUpdated bool
 	var now = time.Now()
 	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
@@ -270,6 +289,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	// if so, apply the new update
 	if diffs := release.Difference(releaseUpd); diffs[0] != nil {
 		releaseUpdated = true
+		versionUpdated = release.Version != releaseUpd.Version
 		release = &releaseUpd
 		release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 		release.ID = util.UUID4()
@@ -301,6 +321,21 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 		err = api.platform.PutCocoon(ctx, cocoon)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	// archive release version if it changed
+	if versionUpdated {
+		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create persister")
+		}
+		err = archiver.NewArchiver(
+			archiver.NewGitObject(release.URL, release.Version),
+			persister,
+		).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive release: %s", err)
 		}
 	}
 

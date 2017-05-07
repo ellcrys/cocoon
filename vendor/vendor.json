@@ -17,8 +17,8 @@
 		{
 			"checksumSHA1": "O/AfydDoqsutSHa0b0rzRTJkIAw=",
 			"path": "cloud.google.com/go/logging",
-			"revision": "085c05ca074a8de9107005f9baa6308eae7eaf41",
-			"revisionTime": "2017-04-20T21:47:30Z"
+			"revision": "f96f9416f20012d9164d6d476a1d6063c0a92926",
+			"revisionTime": "2017-05-03T06:06:58Z"
 		},
 		{
 			"checksumSHA1": "exuS9agnQAw6U+4nW74436Da1Fs=",
@@ -37,6 +37,12 @@
 			"path": "cloud.google.com/go/logging/logadmin",
 			"revision": "085c05ca074a8de9107005f9baa6308eae7eaf41",
 			"revisionTime": "2017-04-20T21:47:30Z"
+		},
+		{
+			"checksumSHA1": "BhJJqaWD0T6OVsbk/mYxaRrijd4=",
+			"path": "cloud.google.com/go/storage",
+			"revision": "f96f9416f20012d9164d6d476a1d6063c0a92926",
+			"revisionTime": "2017-05-03T06:06:58Z"
 		},
 		{
 			"checksumSHA1": "490TPsecQDBx8BF0xZk5AedmPsE=",
@@ -243,10 +249,10 @@
 			"revisionTime": "2017-01-28T16:01:50Z"
 		},
 		{
-			"checksumSHA1": "3icx+kFlW7nJxQC0pINJADVJXF8=",
+			"checksumSHA1": "VSvJ311wV1OiYV0L/nB6qnRTu1M=",
 			"path": "github.com/ellcrys/util",
-			"revision": "9012b256981593186672bf5ab922b3ff9add55e8",
-			"revisionTime": "2017-04-29T10:27:37Z"
+			"revision": "aa0afdacb978d34e2145faed75b2121b71815935",
+			"revisionTime": "2017-05-07T13:09:47Z"
 		},
 		{
 			"checksumSHA1": "x77xUarDfVxctJMAJPCQzlYk8JM=",
@@ -619,6 +625,12 @@
 			"path": "github.com/ncodes/modo",
 			"revision": "1b464bd822cf910fa62b3fafa5e011ce59a66ee4",
 			"revisionTime": "2017-05-07T11:24:08Z"
+		},
+		{
+			"checksumSHA1": "ksSIriS091IdyuE2PmFoFTO90hU=",
+			"path": "github.com/ncodes/safebuffer",
+			"revision": "bf465d911d23075ab653f42a3a0d315584383612",
+			"revisionTime": "2017-05-07T12:02:19Z"
 		},
 		{
 			"checksumSHA1": "Fx3O3Kf9UqOPVgZ8r+7VG5PmPSc=",

@@ -124,6 +124,7 @@ func ValidateEnvVariables(envs map[string]string) []error {
 		"genRand512",
 		"pin",
 		"unpin",
+		"unpin_once",
 	}
 	for k := range envs {
 		if !govalidator.Matches(k, "(?i)^[a-z_0-9@,]+$") {

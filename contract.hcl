@@ -3,14 +3,14 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "a7"
     
     # Contract source location and information
     repo {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "81ea51ab01bcb99d881243bb9c56d7a885d0b7b9"
+        version = "e1153b2dfc4e16eb5bf05609569b966f086cb517"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -56,12 +56,6 @@ contracts {
         
         # Firewall rules for outbound connections.
         # IP and DNS name is allowed. DNS name will be automatically resolved.
-        rule = {
-            destination = "google.com"
-            destinationPort = "80"
-            protocol = "tcp"    
-        }
-        
         rule = {
             destination = "google.com"
             destinationPort = "80"

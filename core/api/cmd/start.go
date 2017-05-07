@@ -19,7 +19,7 @@ var apiLog *logging.Logger
 
 func init() {
 	config.ConfigureLogger()
-	apiLog = config.MakeLogger("api", "api")
+	apiLog = config.MakeLogger("api")
 	goreq.SetConnectTimeout(5 * time.Second)
 }
 
@@ -40,6 +40,7 @@ var apiStartCmd = &cobra.Command{
 			"API_VERSION",
 			"CONNECTOR_VERSION",
 			"GCP_PROJECT_ID",
+			"REPO_ARCHIVE_BKT",
 		}...); len(missingEnv) > 0 {
 			apiLog.Fatalf("The following environment variables must be set: %v", missingEnv)
 		}
