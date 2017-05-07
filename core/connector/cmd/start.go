@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,18 +10,20 @@ import (
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
+	"github.com/ncodes/cocoon/core/connector/connector/languages"
 	"github.com/ncodes/cocoon/core/connector/router"
 	"github.com/ncodes/cocoon/core/connector/server"
 	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/ncodes/cocoon/core/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
 
 var (
-	log       = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
-	routerLog = config.MakeLogger("connector.routerHelper", "routerHelper")
+	log       = config.MakeLogger("connector")
+	routerLog = config.MakeLogger("connector.router_helper")
 
 	// default connector RPC Addr
 	defaultConnectorRPCAddr = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
@@ -42,7 +43,7 @@ func init() {
 }
 
 // Pull the cocoon specification
-func getSpec(pf *platform.Platform) (*connector.Spec, error) {
+func getSpec(pf *platform.Platform) (*types.Spec, error) {
 
 	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cc()
@@ -53,7 +54,7 @@ func getSpec(pf *platform.Platform) (*connector.Spec, error) {
 	}
 
 	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
-	return &connector.Spec{
+	return &types.Spec{
 		ID:          cocoon.ID,
 		URL:         release.URL,
 		Version:     release.Version,
@@ -123,7 +124,7 @@ var startCmd = &cobra.Command{
 		cn := connector.NewConnector(platform, spec, waitCh)
 		cn.SetRouterHelper(routerHelper)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
-		cn.AddLanguage(connector.NewGo(spec))
+		cn.AddLanguage(languages.NewGo(spec))
 
 		// start grpc API server
 		rpcServerStartedCh := make(chan bool)

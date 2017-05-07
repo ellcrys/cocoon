@@ -12,7 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 )
 
-var log = config.MakeLogger("nomad", "nomad")
+var log = config.MakeLogger("nomad")
 
 // SupportedCocoonCodeLang defines the supported chaincode language
 var SupportedCocoonCodeLang = []string{"go"}

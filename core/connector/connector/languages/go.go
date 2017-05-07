@@ -1,4 +1,4 @@
-package connector
+package languages
 
 import (
 	"os"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
+	"github.com/ncodes/cocoon/core/types"
 	"github.com/ncodes/modo"
 )
 
@@ -21,7 +22,7 @@ var SupportedVendorTool = []string{
 
 // Go defines a deployment helper for go cocoon.
 type Go struct {
-	spec        *Spec
+	spec        *types.Spec
 	name        string
 	image       string
 	userHome    string
@@ -33,7 +34,7 @@ type Go struct {
 
 // NewGo returns a new instance a golang
 // cocoon code deployment helper.
-func NewGo(spec *Spec) *Go {
+func NewGo(spec *types.Spec) *Go {
 	g := &Go{
 		name:      "go",
 		image:     "ncodes/launch-go",

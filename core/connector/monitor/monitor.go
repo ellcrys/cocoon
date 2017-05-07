@@ -41,7 +41,7 @@ type Monitor struct {
 
 // NewMonitor creates a new monitor instance.
 func NewMonitor(cocoonID string) *Monitor {
-	log = config.MakeLogger("connector.monitor", fmt.Sprintf("cocoon.%s", cocoonID))
+	log = config.MakeLogger("connector.monitor")
 	e := emitter.New(10)
 	return &Monitor{
 		emitter: e,

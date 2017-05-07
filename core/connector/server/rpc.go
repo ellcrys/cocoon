@@ -29,7 +29,7 @@ type RPC struct {
 
 // NewRPC creates a new grpc API server
 func NewRPC(connector *connector.Connector) *RPC {
-	log = config.MakeLogger("connector.rpc", "")
+	log = config.MakeLogger("connector.rpc")
 	server := new(RPC)
 	server.connector = connector
 	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)

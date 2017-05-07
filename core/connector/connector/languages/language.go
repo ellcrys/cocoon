@@ -1,4 +1,4 @@
-package connector
+package languages
 
 import "github.com/ncodes/modo"
 

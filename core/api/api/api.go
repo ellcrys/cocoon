@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var apiLog = config.MakeLogger("api.rpc", "api")
+var apiLog = config.MakeLogger("api.rpc")
 
 // SetLogLevel sets the log level of the logger
 func SetLogLevel(l logging.Level) {

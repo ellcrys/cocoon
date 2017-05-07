@@ -14,7 +14,7 @@ import (
 	"github.com/ncodes/cocoon/core/scheduler"
 )
 
-var discoveryLog = config.MakeLogger("orderer.discovery", "orderer")
+var discoveryLog = config.MakeLogger("orderer.discovery")
 
 // DiscoveryInterval is the time between each discovery checks
 var DiscoveryInterval = time.Second * 15

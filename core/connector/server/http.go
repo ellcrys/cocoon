@@ -55,7 +55,7 @@ type HTTP struct {
 
 // NewHTTP creates an new http server instance
 func NewHTTP(rpc *RPC) *HTTP {
-	httpLog = config.MakeLogger("connector.http", "")
+	httpLog = config.MakeLogger("connector.http")
 	return &HTTP{rpc}
 }
 

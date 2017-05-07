@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = config.MakeLogger("orderer", "orderer")
+var log = config.MakeLogger("orderer")
 
 // SetLogLevel sets the log level of the logger
 func SetLogLevel(l logging.Level) {
