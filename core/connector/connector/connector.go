@@ -38,6 +38,9 @@ var fetchLog *logging.Logger
 var logHealthChecker *logging.Logger
 var dckClient *docker.Client
 
+// DockerEndpoint is the endpoint to docker API
+var DockerEndpoint = "unix:///var/run/docker.sock"
+
 var bridgeName = os.Getenv("BRIDGE_NAME")
 
 func init() {
@@ -79,8 +82,9 @@ func NewConnector(platform *platform.Platform, spec *types.Spec, waitCh chan boo
 // Launch starts a cocoon code
 func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 
-	endpoint := "unix:///var/run/docker.sock"
-	dckClient, err := docker.NewClient(endpoint)
+	var err error
+
+	dckClient, err = docker.NewClient(DockerEndpoint)
 	if err != nil {
 		log.Errorf("%+v", errors.Wrap(err, "failed to create docker client. Is dockerd running locally?"))
 		cn.Stop(true)
@@ -469,16 +473,7 @@ func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged 
 	doer.UseClient(dckClient)
 	doer.Add(commands...)
 	doer.SetStateCB(stateCB)
-
-	done := make(chan struct{}, 1)
-	var err error
-	var errs []error
-	go func() {
-		errs, err = doer.Do()
-		close(done)
-	}()
-	time.Sleep(3 * time.Hour)
-	return errs, err
+	return doer.Do()
 }
 
 // Executes is a general purpose function
@@ -579,23 +574,25 @@ func (cn *Connector) execInContainer(container *docker.APIContainers, name strin
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the language.
 func (cn *Connector) build(container *docker.APIContainers) error {
-	cmd := []string{"bash", "-c", cn.lang.GetBuildScript()}
-	return cn.execInContainer(container, "BUILD", cmd, false, buildLog, func(state string, exitCode interface{}) error {
-		if cn.cocoonRunning {
-			switch state {
-			case "before":
-				cn.setStatus(api.CocoonStatusBuilding)
-				log.Info("Building cocoon code")
-			case "end":
-				if exitCode.(int) == 0 {
-					log.Info("Build succeeded!")
-				} else {
-					return fmt.Errorf("Build has failed with exit code=%d", exitCode.(int))
-				}
+	errs, err := cn.ExecInContainer(container.ID, []*modo.Do{cn.lang.GetBuildScript()}, false, func(d []byte, stdout bool) {
+		buildLog.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
+		switch state {
+		case modo.Before:
+			cn.setStatus(api.CocoonStatusBuilding)
+			log.Info("Building cocoon code")
+		case modo.After:
+			if task.ExitCode == 0 {
+				log.Info("Build succeeded!")
 			}
 		}
-		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to build cocoon code")
+	} else if len(errs) > 0 {
+		return errors.Wrap(fmt.Errorf("[build] could not be completed"), "")
+	}
+	return nil
 }
 
 // configureRouter sets up frontend and backend router configurations
@@ -655,66 +652,75 @@ func (cn *Connector) run(container *docker.APIContainers) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to run cocoon code")
 	} else if len(errs) > 0 {
-		return errors.Wrap(errs[0], "failed to run command has failed")
+		return errors.Wrap(errs[0], "[run]")
 	}
 	return nil
 }
 
-// getFirewallScript returns the firewall script to apply to the container.
-func (cn *Connector) getFirewallScript(cocoonFirewall types.Firewall) string {
-	_, cocoonCodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
-	connectorRPCIP, connectorRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
+// getFirewallCommands returns the firewall script to apply to the container.
+func (cn *Connector) getFirewallCommands(cocoonFirewall types.Firewall) []*modo.Do {
 
-	var cocoonFirewallRules []string
+	_, ccodeRPCPort, _ := net.SplitHostPort(cn.cocoonCodeRPCAddr)
+	conRPCIP, conRPCPort, _ := net.SplitHostPort(cn.connectorRPCAddr)
+
+	cmds := []*modo.Do{
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -F"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -P INPUT DROP"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -P FORWARD DROP"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -P OUTPUT DROP"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `iptables -A OUTPUT -p tcp -d ` + conRPCIP + ` --dport ` + conRPCPort + ` -j ACCEPT`}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -A OUTPUT -p udp --dport 53 -j ACCEPT"}, AbortSeriesOnFail: true},
+	}
+
+	// construct cocoon specific iptables rules
 	for _, rule := range cocoonFirewall {
-		ipTableVals := []string{}
+		flags := []string{}
 		if len(rule.Destination) > 0 {
-			ipTableVals = append(ipTableVals, fmt.Sprintf("-p %s", rule.Protocol))
-			ipTableVals = append(ipTableVals, fmt.Sprintf("-d %s", rule.Destination))
+			flags = append(flags, fmt.Sprintf("-p %s", rule.Protocol))
+			flags = append(flags, fmt.Sprintf("-d %s", rule.Destination))
 			if len(rule.DestinationPort) > 0 {
-				ipTableVals = append(ipTableVals, fmt.Sprintf("--dport %s", rule.DestinationPort))
+				flags = append(flags, fmt.Sprintf("--dport %s", rule.DestinationPort))
 			}
-			cocoonFirewallRules = append(cocoonFirewallRules, fmt.Sprintf("iptables -A OUTPUT %s -j ACCEPT", strings.Join(ipTableVals, " ")))
+			cmds = append(cmds, &modo.Do{
+				Cmd:               []string{"bash", "-c", fmt.Sprintf("iptables -A OUTPUT %s -j ACCEPT", strings.Join(flags, " "))},
+				AbortSeriesOnFail: true,
+			})
 		}
 	}
 
-	a := strings.TrimSpace(`iptables -F && 
-			iptables -P INPUT DROP; 
-			iptables -P FORWARD DROP; 
-			iptables -P OUTPUT DROP;
-			iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
-			iptables -A OUTPUT -p tcp -d ` + connectorRPCIP + ` --dport ` + connectorRPCPort + ` -j ACCEPT;
-			iptables -A OUTPUT -p udp --dport 53 -j ACCEPT;
-			` + strings.Join(cocoonFirewallRules, ";") + `
-			iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT;
-			iptables -A INPUT -p tcp --dport ` + cocoonCodeRPCPort + ` -j ACCEPT 
-		`)
+	cmds = append(cmds, &modo.Do{Cmd: []string{"bash", "-c", "iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT"}, AbortSeriesOnFail: true})
+	cmds = append(cmds, &modo.Do{Cmd: []string{"bash", "-c", `iptables -A INPUT -p tcp --dport ` + ccodeRPCPort + ` -j ACCEPT`}, AbortSeriesOnFail: true})
 
-	return a
+	return cmds
 }
 
 // configureFirewall configures the container firewall.
 func (cn *Connector) configureFirewall(container *docker.APIContainers) error {
-
-	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cc()
-	_, release, err := cn.Platform.GetCocoonAndRelease(ctx, cn.spec.ID, cn.spec.ReleaseID, false)
-	if err != nil {
-		return err
-	}
-
-	cmd := []string{"bash", "-c", cn.getFirewallScript(release.Firewall)}
-	return cn.execInContainer(container, "CONFIG-FIREWALL", cmd, true, configLog, func(state string, exitCode interface{}) error {
+	var errCount = 0
+	cmds := cn.getFirewallCommands(cn.spec.Release.Firewall)
+	errs, err := cn.ExecInContainer(container.ID, cmds, false, func(d []byte, stdout bool) {
+		log.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
 		switch state {
-		case "before":
-			log.Info("Configuring firewall for cocoon")
-		case "end":
-			if exitCode.(int) == 0 {
-				log.Info("Firewall configured for cocoon")
+		case modo.Begin:
+			log.Info("Configuring cocoon code firewall for cocoon")
+		case modo.After:
+			if task.ExitCode != 0 {
+				errCount++
+			}
+		case modo.End:
+			if errCount == 0 {
+				log.Info("Firewall successfully configured")
 			}
 		}
-		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to configure cocoon code firewall")
+	} else if len(errs) > 0 {
+		return errors.Wrap(errs[0], "[confire-firewall]")
+	}
+	return nil
 }
 
 // Stop stops all sub routines and releases resources.

@@ -124,15 +124,15 @@ func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 	return nil
 }
 
-// GetBuildScript will return the script to create an executable
-func (g *Go) GetBuildScript() string {
+// GetBuildScript will return the command to build
+// the source code and generate a binary.
+func (g *Go) GetBuildScript() *modo.Do {
 
 	cmds := []string{
-		// change dir to cocoon source root directory
-		fmt.Sprintf("cd %s", g.GetSourceRootDir()),
+		"cd " + g.GetSourceRootDir(),
 	}
 
-	// add pre-build commands
+	// add the command to run package manager vendor operation
 	if len(g.buildParams) > 0 {
 		if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
 			switch pkgMgr {
@@ -144,11 +144,16 @@ func (g *Go) GetBuildScript() string {
 		}
 	}
 
-	// build the source
+	// build source
 	cmds = append(cmds, "go build -v -o /bin/ccode")
 
-	// run the commands
-	return strings.Join(util.RemoveEmptyInStringSlice(cmds), " && ")
+	return &modo.Do{
+		Cmd: []string{
+			"bash",
+			"-c",
+			strings.Join(cmds, "&&"),
+		},
+	}
 }
 
 // GetRunCommand returns the command to start the

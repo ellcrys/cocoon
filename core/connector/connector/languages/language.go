@@ -11,7 +11,7 @@ type Language interface {
 	GetCopyDestination() string
 	GetSourceRootDir() string
 	RequiresBuild() bool
-	GetBuildScript() string
+	GetBuildScript() *modo.Do
 	GetRunCommand() *modo.Do
 	SetBuildParams(map[string]interface{}) error
 	SetRunEnv(env map[string]string)
