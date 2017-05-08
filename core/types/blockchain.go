@@ -10,4 +10,5 @@ type Blockchain interface {
 	GetChain(name string) (*Chain, error)
 	CreateBlock(id, chainName string, transactions []*Transaction) (*Block, error)
 	GetBlock(chainName, id string) (*Block, error)
+	Close() error
 }

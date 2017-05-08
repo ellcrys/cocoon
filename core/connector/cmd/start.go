@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/ellcrys/util"
@@ -33,9 +31,6 @@ var (
 
 	// default cocoon code RPC ADDR
 	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", "127.0.0.1:8004")
-
-	// Signals channel
-	sigs = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -66,15 +61,6 @@ func getSpec(pf *platform.Platform) (*types.Spec, error) {
 		Cocoon:      cocoon,
 		Release:     release,
 	}, nil
-}
-
-// onTerminate calls a function when a terminate or interrupt signal is received.
-func onTerminate(f func(s os.Signal)) {
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		s := <-sigs
-		f(s)
-	}()
 }
 
 // startCmd represents the connector command
@@ -141,7 +127,7 @@ var startCmd = &cobra.Command{
 		<-httpServerStartedCh
 
 		// listen to terminate request
-		onTerminate(func(s os.Signal) {
+		common.OnTerminate(func(s os.Signal) {
 			log.Info("Terminate signal received")
 			log.Info("Stopping cocoon code")
 			rpcServer.Stop()

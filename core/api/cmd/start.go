@@ -84,9 +84,15 @@ var apiStartCmd = &cobra.Command{
 			apiLog.Fatal(err.Error())
 		}
 
+		common.OnTerminate(func(s os.Signal) {
+			apiLog.Info("Terminate signal received. Stopping...")
+			api.Stop()
+		})
+
 		var endedCh = make(chan bool)
 		api.Start(bindAddr, endedCh)
 		<-endedCh
+		apiLog.Info("Stopped")
 	},
 }
 

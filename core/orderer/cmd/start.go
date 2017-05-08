@@ -40,7 +40,7 @@ var ordererCmd = &cobra.Command{
 			defer c()
 		}
 
-		var log = config.MakeLogger("orderer", "orderer")
+		var log = config.MakeLogger("orderer")
 		log.Info("Orderer has started")
 		bindAddr := scheduler.Getenv("ADDR_ORDERER_RPC", "127.0.0.1:8001")
 		storeConStr := util.Env("STORE_CON_STR", "host=localhost user=ned dbname=cocoon sslmode=disable password=")
@@ -51,7 +51,13 @@ var ordererCmd = &cobra.Command{
 		newOrderer.SetBlockchain(new(b_impl.PostgresBlockchain))
 		go newOrderer.Start(bindAddr, storeConStr, endedCh)
 
+		common.OnTerminate(func(s os.Signal) {
+			log.Info("Terminate signal received. Stopping...")
+			newOrderer.Stop()
+		})
+
 		<-endedCh
+		log.Info("Stopped")
 	},
 }
 

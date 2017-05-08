@@ -84,9 +84,8 @@ func (api *API) Start(addr string, endedCh chan bool) {
 }
 
 // Stop stops the api and returns an exit code.
-func (api *API) Stop(exitCode int) int {
+func (api *API) Stop() {
 	api.server.Stop()
 	api.platform.Stop()
 	close(api.endedCh)
-	return exitCode
 }
