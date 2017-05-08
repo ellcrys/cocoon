@@ -48,9 +48,13 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 		}
 	}
 
-	// don't continue if cocoon has no release (this should never happen)
-	if len(cocoon.Releases) == 0 {
-		return nil, fmt.Errorf("No release to run. Wierd")
+	// when release id isn't provided, use the most recently created release
+	if len(req.ReleaseID) == 0 {
+		// don't continue if cocoon has no release (this should never happen)
+		if len(cocoon.Releases) == 0 {
+			return nil, fmt.Errorf("No release to run. Wierd")
+		}
+		req.ReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
 	apiLog.Debugf("Deploying release = %s", req.ReleaseID)
