@@ -1,9 +1,9 @@
-package golang
+package stub
 
 import (
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )

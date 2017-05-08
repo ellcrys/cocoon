@@ -88,7 +88,7 @@ func TestConsulLock(t *testing.T) {
 					So(err, ShouldBeNil)
 					err = l.Acquire()
 					So(err, ShouldBeNil)
-					time.Sleep(20 * time.Second)
+					time.Sleep(25 * time.Second)
 					err = l.IsAcquirer()
 					So(err, ShouldResemble, types.ErrLockNotAcquired)
 				})

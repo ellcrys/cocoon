@@ -1,4 +1,4 @@
-package golang
+package stub
 
 // CocoonCode defines the interface of a cocoon code.
 type CocoonCode interface {

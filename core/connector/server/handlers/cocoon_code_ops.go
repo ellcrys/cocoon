@@ -5,7 +5,7 @@ import (
 
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

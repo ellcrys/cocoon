@@ -139,7 +139,7 @@ func TestOrderer(t *testing.T) {
 
 								id := util.UUID4()
 								r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
-									ID:             id,
+									CocoonID:       id,
 									URL:            "https://github.com/ncodes/cocoon-example-01",
 									Language:       "go",
 									Memory:         512,
@@ -153,7 +153,7 @@ func TestOrderer(t *testing.T) {
 
 								Convey("Should fail to create cocoon with an already used id", func() {
 									r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
-										ID:             id,
+										CocoonID:       id,
 										URL:            "https://github.com/ncodes/cocoon-example-01",
 										Language:       "go",
 										Memory:         512,
@@ -198,7 +198,7 @@ func TestOrderer(t *testing.T) {
 
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
-								ID:             id,
+								CocoonID:       id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",
 								Memory:         512,
@@ -216,7 +216,7 @@ func TestOrderer(t *testing.T) {
 								ctx := context.Background()
 								ctx = metadata.NewIncomingContext(ctx, md)
 								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
-									ID: id,
+									CocoonID: id,
 								})
 								So(err, ShouldNotBeNil)
 								So(err.Error(), ShouldEqual, "Permission denied: You do not have permission to perform this operation")
@@ -224,7 +224,7 @@ func TestOrderer(t *testing.T) {
 
 							Convey("Should return error if a field is missing", func() {
 								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
-									ID: id,
+									CocoonID: id,
 								})
 								So(err, ShouldNotBeNil)
 								So(err.Error(), ShouldEqual, "resources.memory: memory is required")

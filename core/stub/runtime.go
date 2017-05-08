@@ -1,6 +1,6 @@
 // Package golang includes The runtime, which is just a stub that connects the cocoon code to the connector's RPC
 // server. The runtime provides access to APIs for various operations.
-package golang
+package stub
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/runtime/golang/config"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/config"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"

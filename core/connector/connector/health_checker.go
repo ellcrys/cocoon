@@ -3,7 +3,7 @@ package connector
 import (
 	"time"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 
 	"fmt"
 
