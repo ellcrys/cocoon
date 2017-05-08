@@ -159,7 +159,7 @@ func GetCocoons(ids []string) error {
 }
 
 // Deploy creates and sends a deploy request to the server
-func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool) error {
+func deploy(ctx context.Context, cocoonID string, releaseID string) error {
 
 	conn, err := GetAPIConnection()
 	if err != nil {
@@ -169,7 +169,8 @@ func deploy(ctx context.Context, cocoonID string, useLastDeployedReleaseID bool)
 
 	client := proto_api.NewAPIClient(conn)
 	resp, err := client.Deploy(ctx, &proto_api.DeployRequest{
-		CocoonID: cocoonID,
+		CocoonID:  cocoonID,
+		ReleaseID: releaseID,
 	})
 	if err != nil {
 		return err
@@ -320,10 +321,9 @@ func StopCocoon(ids []string) error {
 }
 
 // Start starts one or more new or stopped cocoon code.
-// If useLastDeployedReleaseID is set to true, the scheduler will use the
-// most recently approved and deployed release, otherwise it will
-// try to deploy the latest release.
-func Start(ids []string, useLastDeployedReleaseID bool) error {
+// If releaseID is set, the release is executed as opposed to
+// the latest release being executed
+func Start(ids []string, releaseID bool) error {
 
 	var errs []error
 	var started []string
@@ -343,7 +343,7 @@ func Start(ids []string, useLastDeployedReleaseID bool) error {
 		go func() {
 			ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
 			defer cc()
-			if err := deploy(ctx, id, useLastDeployedReleaseID); err != nil {
+			if err := deploy(ctx, id, releaseID); err != nil {
 				muErr.Lock()
 				errs = append(errs, fmt.Errorf("%s: %s", common.GetShortID(id), common.GetRPCErrDesc(err)))
 				muErr.Unlock()
