@@ -1,8 +1,10 @@
 package golang
 
 import (
-	"github.com/go-errors/errors"
+	"fmt"
+
 	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -18,6 +20,27 @@ func (server *stubServer) HealthCheck(context.Context, *proto_runtime.Ok) (*prot
 	}, nil
 }
 
+func recoverPanic(f func()) error {
+	var err error
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				switch v := r.(type) {
+				case error:
+					err = errors.Wrap(v, "Panicked")
+				default:
+					err = errors.Wrap(fmt.Errorf("%v", v), "Panicked")
+				}
+				log.Errorf("%+v", err)
+			}
+		}()
+		f()
+	}()
+
+	return err
+}
+
 // Invoke invokes a function on the running cocoon code
 func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.InvokeParam) (*proto_runtime.InvokeResponse, error) {
 
@@ -28,23 +51,14 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 
 	// This closure allows us to catch panics from the cocoon code Invoke() method
 	// so cocoon codes will always continue to run
-	func() {
-
-		defer func() {
-			if rErr := recover(); rErr != nil {
-				err = errors.WrapPrefix(err, "Invoke() panicked", 2)
-				log.Errorf(err.Error())
-			}
-		}()
-
+	err = recoverPanic(func() {
 		result, err := ccode.OnInvoke(params.GetHeader(), params.GetFunction(), params.GetParams())
 		if err != nil {
 			return
 		}
-
 		resp.Status = 200
 		resp.Body = result
-	}()
+	})
 
 	if err != nil {
 		return nil, err

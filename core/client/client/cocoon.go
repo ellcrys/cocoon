@@ -323,7 +323,7 @@ func StopCocoon(ids []string) error {
 // Start starts one or more new or stopped cocoon code.
 // If releaseID is set, the release is executed as opposed to
 // the latest release being executed
-func Start(ids []string, releaseID bool) error {
+func Start(ids []string, releaseID string) error {
 
 	var errs []error
 	var started []string

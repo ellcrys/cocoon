@@ -130,7 +130,7 @@ func Run(cc CocoonCode) {
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
 		if err = cc.OnInit(); err != nil {
-			log.Errorf("cocoode OnInit() returned error: %+v", err)
+			log.Errorf("OnInit() Panicked: %+v", err)
 			Stop(2)
 		} else {
 			running = true
