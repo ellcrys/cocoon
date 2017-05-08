@@ -13,9 +13,9 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ellcrys/util"
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/goware/urlx"
 	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/cocoon/core/api/api"
+	"github.com/ncodes/cocoon/core/api/archiver"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector/languages"
 	"github.com/ncodes/cocoon/core/connector/monitor"
@@ -208,6 +208,11 @@ func (cn *Connector) prepareContainer() (*docker.APIContainers, error) {
 	cn.monitor.SetContainerID(cn.container.ID)
 	cn.HookToMonitor()
 
+	// clean container
+	if err = cn.cleanContainer(); err != nil {
+		return nil, errors.Wrap(err, "failed to complete clean stage")
+	}
+
 	err = cn.fetchSource()
 	if err != nil {
 		return nil, err
@@ -356,87 +361,104 @@ func (cn *Connector) GetLanguages() []languages.Language {
 	return cn.languages
 }
 
-// fetchSource fetches the cocoon code source from
-// a remote address
+// fetchSource fetches the cocoon code release source code
 func (cn *Connector) fetchSource() error {
 
 	if !cutil.IsGithubRepoURL(cn.spec.URL) {
 		return fmt.Errorf("only public source code hosted on github is supported") // TODO: support zip files
 	}
 
-	return cn.fetchFromGit()
+	return cn.fetchGitSourceFromArchive()
 }
 
-// fetchFromGit execs fetch script that fetches the cocoon code source
-// into the cocoon code container and readies it form the build stage.
-func (cn *Connector) fetchFromGit() error {
+// cleanContainer removes build directories, previously
+// running cocoon code by force and resets iptables rules.
+func (cn *Connector) cleanContainer() error {
 
-	var repoTarURL, downloadDst string
-	var err error
-
-	// set version to latest if not provided
-	versionStr := cn.spec.Version
-	if versionStr == "" {
-		versionStr = "latest"
-		log.Debug("Cocoon code version set to = latest")
-	}
-
-	// If version is a sha1 hash, it is a commit id, fetch the repo using this id
-	// otherwise it is considered a release tag. If version is not set, we fetch the latest release
-	if cutil.IsGithubCommitID(cn.spec.Version) {
-		url, err := urlx.Parse(cn.spec.URL)
-		if err != nil {
-			return fmt.Errorf("Failed to parse git url: %s", err)
-		}
-		repoTarURL = fmt.Sprintf("https://api.github.com/repos%s/tarball/%s", url.Path, cn.spec.Version)
-		log.Debugf("Downloading repo with commit id = %s", versionStr)
-	} else {
-		repoTarURL, err = cutil.GetGithubRepoRelease(cn.spec.URL, cn.spec.Version)
-		if err != nil {
-			return fmt.Errorf("Failed to fetch release from github repo. %s", err)
-		}
-		if len(cn.spec.Version) == 0 {
-			log.Debug("Downloading latest repo")
-		} else {
-			log.Debugf("Downloading repo with release tag = %s", cn.spec.Version)
-		}
-	}
-
-	// determine download directory
-	downloadDst = cn.lang.GetDownloadDestination()
-	log.Infof("Downloading cocoon repository with version=%s", versionStr)
-
-	// construct fetch script
+	// build directories and path
+	downloadDst := cn.lang.GetDownloadDestination()
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
-	fetchScript := `
-	    iptables -F &&
-		rm -rf ` + downloadDst + ` &&	
-		rm -rf ` + cn.lang.GetSourceRootDir() + ` &&		
-		rm -rf ` + filePath + ` &&
-		mkdir -p ` + downloadDst + ` &&
-		mkdir -p ` + cn.lang.GetSourceRootDir() + ` &&
-		printf "> Downloading source from remote url to download destination\n" &&
-		wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null &&
-		printf "> Unpacking downloaded source \n" &&
-		tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null &&
-		printf "> Creating source root directory\n" &&
-		printf "> Moving source to new source root directory\n" &&
-		mv ` + downloadDst + `/* ` + cn.lang.GetSourceRootDir() + `
-	`
 
-	cmd := []string{"bash", "-c", strings.TrimSpace(fetchScript)}
-	return cn.execInContainer(cn.container, "FETCH", cmd, true, fetchLog, func(state string, exitCode interface{}) error {
+	cmds := []*modo.Do{
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -F; iptables -P INPUT ACCEPT; iptables -P OUTPUT ACCEPT; iptables -P FORWARD ACCEPT"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + downloadDst + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + filePath + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode || true 2>/dev/null`}, AbortSeriesOnFail: false},
+	}
+
+	var errCount = 0
+	errs, err := cn.ExecInContainer(cn.container.ID, cmds, true, func(d []byte, stdout bool) {
+		fetchLog.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
 		switch state {
-		case "end":
-			if exitCode.(int) == 0 {
-				fetchLog.Info("Fetch succeeded!")
-				fetchLog.Infof("Successfully unpacked cocoon code")
-			} else {
-				return fmt.Errorf("Repository fetch has failed with exit code=%d", exitCode.(int))
+		case modo.Begin:
+			log.Infof("Cleaning cocoon code container")
+		case modo.After:
+			if task.ExitCode != 0 {
+				errCount++
+			}
+		case modo.End:
+			if errCount == 0 {
+				fetchLog.Info("Cleaning complete. Cocoon code container is squeaky clean!")
 			}
 		}
-		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to clean cocoon code container")
+	} else if len(errs) > 0 {
+		return errors.Wrap(errs[0], "[clean]")
+	}
+
+	return nil
+}
+
+// fetchGitSourceFromArchive fetches the current cocoon release source from
+// the git source archive.
+func (cn *Connector) fetchGitSourceFromArchive() error {
+
+	var repoTarURL = fmt.Sprintf(
+		"https://storage.googleapis.com/%s/%s",
+		util.Env("REPO_ARCHIVE_BKT", "gitsources"),
+		archiver.MakeArchiveName(cn.spec.Cocoon.ID, cn.spec.Release.Version),
+	)
+
+	// determine download directory
+	downloadDst := cn.lang.GetDownloadDestination()
+	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
+
+	cmds := []*modo.Do{
+		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + downloadDst + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null`}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null`}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `mv ` + downloadDst + `/* ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+	}
+
+	var errCount = 0
+	errs, err := cn.ExecInContainer(cn.container.ID, cmds, true, func(d []byte, stdout bool) {
+		fetchLog.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
+		switch state {
+		case modo.Begin:
+			log.Infof("Fetching cocoon code source from archive. [version=%s]", cn.spec.Release.Version)
+		case modo.After:
+			if task.ExitCode != 0 {
+				errCount++
+			}
+		case modo.End:
+			if errCount == 0 {
+				fetchLog.Info("Fetch succeeded!")
+			}
+		}
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch cocoon code source")
+	} else if len(errs) > 0 {
+		return errors.Wrap(errs[0], "[fetch]")
+	}
+
+	return nil
 }
 
 // getContainer returns a container with a
@@ -474,101 +496,6 @@ func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged 
 	doer.Add(commands...)
 	doer.SetStateCB(stateCB)
 	return doer.Do()
-}
-
-// Executes is a general purpose function
-// to execute a command in a running container. If container is not running, it starts it.
-// It accepts the container, a unique name for the execution
-// and a callback function that is passed a lifecycle status and a value.
-// If privileged is set to true, command will attain root powers.
-// Supported statuses are before (before command is executed), after (after command is executed)
-// and end (when command exits).
-func (cn *Connector) execInContainer(container *docker.APIContainers, name string, command []string, privileged bool, logger *logging.Logger, cb func(string, interface{}) error) error {
-
-	containerStatus, err := dckClient.InspectContainer(container.ID)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container before executing command [%s]. %s", name, err)
-	}
-
-	if !containerStatus.State.Running {
-		err := dckClient.StartContainer(container.ID, nil)
-		if err != nil {
-			return fmt.Errorf("failed start container for exec [%s]. %s", name, err.Error())
-		}
-		cn.cocoonRunning = true
-	}
-
-	exec, err := dckClient.CreateExec(docker.CreateExecOptions{
-		Container:    container.ID,
-		AttachStderr: true,
-		AttachStdout: true,
-		Cmd:          command,
-		Privileged:   privileged,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create exec [%s] object. %s", name, err)
-	}
-
-	if err = cb("before", nil); err != nil {
-		return err
-	}
-
-	outStream := NewLogStreamer()
-	outStream.SetLogger(logger)
-
-	go func() {
-		err = dckClient.StartExec(exec.ID, docker.StartExecOptions{
-			OutputStream: outStream.GetWriter(),
-			ErrorStream:  outStream.GetWriter(),
-		})
-		if err != nil {
-			log.Errorf("%+v", errors.Wrap(fmt.Errorf("failed to start exec [%s] command. %s", name, err), ""))
-		}
-	}()
-
-	go func() {
-		err := outStream.Start()
-		if err != nil {
-			log.Errorf("%+v", errors.Wrap(fmt.Errorf("failed to start exec [%s] output stream logger. %s", name, err), ""))
-		}
-	}()
-
-	execExitCode := 0
-	time.Sleep(1 * time.Second)
-
-	if err = cb("after", nil); err != nil {
-		outStream.Stop()
-		return err
-	}
-
-	for cn.cocoonRunning {
-		execIns, err := dckClient.InspectExec(exec.ID)
-		if err != nil {
-			outStream.Stop()
-			return err
-		}
-
-		if execIns.Running {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-
-		execExitCode = execIns.ExitCode
-		break
-	}
-
-	outStream.Stop()
-
-	if err = cb("end", execExitCode); err != nil {
-		return err
-	}
-
-	if execExitCode != 0 {
-		return fmt.Errorf("Exec [%s] exited with code=%d", name, execExitCode)
-	}
-
-	return nil
 }
 
 // build starts up the container and builds the cocoon code
