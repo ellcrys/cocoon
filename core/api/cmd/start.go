@@ -36,6 +36,7 @@ var apiStartCmd = &cobra.Command{
 
 		// Ensure expected environment variables are set
 		if missingEnv := common.HasEnv([]string{
+			"ENV",
 			"API_SIGN_KEY",
 			"API_VERSION",
 			"CONNECTOR_VERSION",

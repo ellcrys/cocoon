@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"os"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
@@ -154,16 +156,18 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	}
 
 	// archive release
-	persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create persister")
-	}
-	err = archiver.NewArchiver(
-		archiver.NewGitObject(release.URL, release.Version),
-		persister,
-	).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to archive release: %s", err)
+	if env := os.Getenv("ENV"); env == "production" || env == "development" {
+		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create persister")
+		}
+		err = archiver.NewArchiver(
+			archiver.NewGitObject(release.URL, release.Version),
+			persister,
+		).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive release: %s", err)
+		}
 	}
 
 	return &proto_api.Response{
@@ -185,7 +189,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 //
 // "unpin_once": This flag is the same as "unpin" except that final variable will still have a "pin" flag
 // which is useful if there is need to persist the new update to future releases.
-func (api *API) updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
+func updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
 
 	// get new Env containing pinned variables
 	pinnedVarsFromLastRelease := lastReleaseEnv.GetByFlag("pin")
@@ -270,7 +274,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
 
 	// process special "pin", "unpin" and "unpin_once" environment flags
-	api.updateReleaseEnv(release.Env, releaseUpd.Env)
+	updateReleaseEnv(release.Env, releaseUpd.Env)
 
 	// Resolve firewall rules destination if firewall is enabled.
 	// Otherwise, set firewall to nil
@@ -325,7 +329,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	}
 
 	// archive release version if it changed
-	if versionUpdated {
+	if env := os.Getenv("ENV"); versionUpdated && (env == "production" || env == "development") {
 		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create persister")
@@ -470,6 +474,8 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 		return nil, types.ErrPermissionNotGrant
 	}
 
+	req.IDs = util.UniqueStringSlice(req.IDs)
+
 	// convert email to ID
 	for i, id := range req.IDs {
 		_id = append(_id, id)
@@ -556,10 +562,10 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, fmt.Errorf("You have already cast a vote for this release")
 	}
 
-	if req.Vote == "1" {
+	if req.Vote == 1 {
 		release.SigApproved++
 	}
-	if req.Vote == "0" {
+	if req.Vote == 0 {
 		release.SigDenied++
 	}
 
@@ -620,9 +626,4 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSign
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
-}
-
-// FirewallAllow an 'allow' firewall rule to a cocoon
-func (api *API) FirewallAllow(ctx context.Context, req *proto_api.FirewallAllowRequest) (*proto_api.Response, error) {
-	return nil, fmt.Errorf("not implemented")
 }

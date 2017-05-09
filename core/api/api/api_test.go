@@ -1,11 +1,9 @@
 package api
 
 import (
-	"context"
 	"testing"
-	"time"
 
-	"google.golang.org/grpc/metadata"
+	"golang.org/x/net/context"
 
 	"os"
 
@@ -34,12 +32,13 @@ var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+db
 var storeConStrWithDB = util.Env("STORE_CON_STR", "host=localhost user=ned sslmode=disable password=")
 
 func init() {
-	os.Setenv("APP_ENV", "test")
+	os.Setenv("ENV", "test")
+	os.Setenv("GCP_PROJECT_ID", "visiontest-1281")
 
 	var err error
 	db, err = sql.Open("postgres", storeConStrWithDB)
 	if err != nil {
-		panic(fmt.Errorf("failed to connector to datatabase: %s", err))
+		panic(fmt.Errorf("failed to connect to database: %s", err))
 	}
 }
 
@@ -85,7 +84,7 @@ func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 	<-endCh
 }
 
-func TestOrderer(t *testing.T) {
+func TestRPCHandles(t *testing.T) {
 
 	defer db.Close()
 	err := createDb(t)
@@ -93,8 +92,6 @@ func TestOrderer(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer dropDB(t)
-
-	key := "secret"
 
 	startOrderer(func(od *orderer.Orderer, endCh chan bool) {
 		startAPIServer(t, func(api *API, apiEndCh chan bool) {
@@ -129,11 +126,7 @@ func TestOrderer(t *testing.T) {
 
 						Convey(".CreateCocoon", func() {
 
-							ss, err := makeAuthToken(util.UUID4(), identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
-							So(err, ShouldBeNil)
-							md := metadata.Pairs("access_token", ss)
-							ctx := context.Background()
-							ctx = metadata.NewIncomingContext(ctx, md)
+							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 
 							Convey("Should successfully create a cocoon", func() {
 
@@ -190,11 +183,7 @@ func TestOrderer(t *testing.T) {
 
 						Convey(".UpdateCocoon", func() {
 
-							ss, err := makeAuthToken(util.UUID4(), identity.GetID(), "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
-							So(err, ShouldBeNil)
-							md := metadata.Pairs("access_token", ss)
-							ctx := context.Background()
-							ctx = metadata.NewIncomingContext(ctx, md)
+							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
@@ -210,11 +199,7 @@ func TestOrderer(t *testing.T) {
 							So(r.Status, ShouldEqual, 200)
 
 							Convey("Should return error if logged in identity does not own the cocoon", func() {
-								ss, err := makeAuthToken(util.UUID4(), "some_identity", "token.cli", time.Now().AddDate(0, 1, 0).Unix(), key)
-								So(err, ShouldBeNil)
-								md := metadata.Pairs("access_token", ss)
-								ctx := context.Background()
-								ctx = metadata.NewIncomingContext(ctx, md)
+								ctx := context.WithValue(context.Background(), types.CtxIdentity, "some_identity_id")
 								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 									CocoonID: id,
 								})
@@ -222,15 +207,232 @@ func TestOrderer(t *testing.T) {
 								So(err.Error(), ShouldEqual, "Permission denied: You do not have permission to perform this operation")
 							})
 
-							Convey("Should return error if a field is missing", func() {
-								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+							Convey("Should return no error and update nothing if no change detected", func() {
+								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
 									CocoonID: id,
 								})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "newReleaseID")
+								So(result, ShouldContainKey, "cocoonUpdated")
+								So(result["newReleaseID"], ShouldBeEmpty)
+								So(result["cocoonUpdated"], ShouldEqual, false)
+							})
+
+							Convey("Should return error if a field fails validation", func() {
+								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+									CocoonID: id,
+									Language: "abc",
+								})
 								So(err, ShouldNotBeNil)
-								So(err.Error(), ShouldEqual, "resources.memory: memory is required")
+								So(err.Error(), ShouldContainSubstring, "language is not supported. Expects one of these ")
+							})
+
+							Convey("Should return `cocoonUpdated` set to true if cocoon field is updated because of a change", func() {
+								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+									CocoonID:       id,
+									NumSignatories: 2,
+								})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "newReleaseID")
+								So(result, ShouldContainKey, "cocoonUpdated")
+								So(result["newReleaseID"], ShouldBeEmpty)
+								So(result["cocoonUpdated"], ShouldEqual, true)
+
+								cocoon, err := api.platform.GetCocoon(ctx, id)
+								So(err, ShouldBeNil)
+								So(cocoon.NumSignatories, ShouldEqual, 2)
+							})
+
+							Convey("Should return `newReleaseID` set if a new release is created because of a change in a release field", func() {
+								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+									CocoonID: id,
+									Version:  "some_version",
+								})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "newReleaseID")
+								So(result, ShouldContainKey, "cocoonUpdated")
+								So(result["newReleaseID"], ShouldNotBeEmpty)
+								So(result["cocoonUpdated"], ShouldEqual, false)
+
+								release, err := api.platform.GetRelease(ctx, result["newReleaseID"].(string), false)
+								So(err, ShouldBeNil)
+								So(release.Version, ShouldEqual, "some_version")
+							})
+						})
+						Convey(".AddSignatories", func() {
+
+							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
+							id := util.UUID4()
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								CocoonID:       id,
+								URL:            "https://github.com/ncodes/cocoon-example-01",
+								Language:       "go",
+								Memory:         512,
+								NumSignatories: 2,
+								SigThreshold:   1,
+								CPUShare:       100,
+							})
+							So(err, ShouldBeNil)
+							So(r.Status, ShouldEqual, 200)
+
+							Convey("Should return error if identity does not exist", func() {
+								resp, err := api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
+									CocoonID: id,
+									IDs:      []string{"unknown_identity_id"},
+								})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "added")
+								So(result, ShouldContainKey, "errs")
+								So(len(result["added"].([]interface{})), ShouldEqual, 0)
+								So(len(result["errs"].([]interface{})), ShouldEqual, 1)
+								So(result["errs"].([]interface{})[0], ShouldEqual, "unknown_ide: identity not found")
+							})
+
+							Convey("Should successfully add a signatories", func() {
+								identity := &types.Identity{Email: "some@email.com"}
+								err := api.platform.PutIdentity(ctx, identity)
+								So(err, ShouldBeNil)
+								resp, err := api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{CocoonID: id, IDs: []string{identity.GetID()}})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "added")
+								So(result, ShouldContainKey, "errs")
+								So(len(result["added"].([]interface{})), ShouldEqual, 1)
+								So(len(result["errs"].([]interface{})), ShouldEqual, 0)
+								So(result["added"].([]interface{})[0], ShouldEqual, identity.GetID())
+
+								Convey("Should return error if maximum signatories have been added when adding a single identity", func() {
+									_, err := api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
+										CocoonID: id,
+										IDs:      []string{"an_id"},
+									})
+									So(err, ShouldNotBeNil)
+									So(err.Error(), ShouldContainSubstring, "max signatories already added. You can't add more")
+								})
+							})
+
+							Convey("Should return error if maximum signatories have been added when adding more than the available slots", func() {
+								_, err := api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{
+									CocoonID: id,
+									IDs:      []string{"an_id", "an_id2"},
+								})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldContainSubstring, "maximum required signatories cannot be exceeded. You can only add 1 more signatory")
+							})
+
+							Convey("Should return error if identity is already a signatory", func() {
+								err := api.platform.PutIdentity(ctx, &identity)
+								So(err, ShouldBeNil)
+								resp, err := api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{CocoonID: id, IDs: []string{identity.GetID()}})
+								So(err, ShouldBeNil)
+								var result map[string]interface{}
+								util.FromJSON(resp.Body, &result)
+								So(result, ShouldContainKey, "added")
+								So(result, ShouldContainKey, "errs")
+								So(len(result["added"].([]interface{})), ShouldEqual, 0)
+								So(len(result["errs"].([]interface{})), ShouldEqual, 1)
+								So(result["errs"].([]interface{})[0], ShouldContainSubstring, "identity is already a signatory")
+							})
+
+						})
+
+						Convey(".RemoveSignatories", func() {
+
+							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
+							id := util.UUID4()
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								CocoonID:       id,
+								URL:            "https://github.com/ncodes/cocoon-example-01",
+								Language:       "go",
+								Memory:         512,
+								NumSignatories: 2,
+								SigThreshold:   1,
+								CPUShare:       100,
+							})
+							So(err, ShouldBeNil)
+							So(r.Status, ShouldEqual, 200)
+
+							identity := &types.Identity{Email: "some@email.com"}
+							err = api.platform.PutIdentity(ctx, identity)
+							So(err, ShouldBeNil)
+							_, err = api.AddSignatories(ctx, &proto_api.AddSignatoriesRequest{CocoonID: id, IDs: []string{identity.GetID()}})
+							So(err, ShouldBeNil)
+
+							Convey("Should successfully remove signatory", func() {
+								cocoon, err := api.platform.GetCocoon(ctx, id)
+								So(cocoon.Signatories, ShouldContain, identity.GetID())
+
+								_, err = api.RemoveSignatories(ctx, &proto_api.RemoveSignatoriesRequest{CocoonID: id, IDs: []string{identity.GetID()}})
+								So(err, ShouldBeNil)
+								cocoon, err = api.platform.GetCocoon(ctx, id)
+
+								So(err, ShouldBeNil)
+								So(cocoon.Signatories, ShouldNotContain, identity.GetID())
+
+								Convey("Should return no error if identity is not a signatory", func() {
+									_, err = api.RemoveSignatories(ctx, &proto_api.RemoveSignatoriesRequest{CocoonID: id, IDs: []string{identity.GetID()}})
+									So(err, ShouldBeNil)
+								})
+							})
+						})
+
+						Convey(".AddVote", func() {
+
+							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
+							id := util.UUID4()
+							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								CocoonID:       id,
+								URL:            "https://github.com/ncodes/cocoon-example-01",
+								Language:       "go",
+								Memory:         512,
+								NumSignatories: 2,
+								SigThreshold:   1,
+								CPUShare:       100,
+							})
+							So(err, ShouldBeNil)
+							So(r.Status, ShouldEqual, 200)
+							var cocoon types.Cocoon
+							util.FromJSON(r.Body, &cocoon)
+
+							Convey("Should return error if release does not exist", func() {
+								_, err := api.AddVote(ctx, &proto_api.AddVoteRequest{ReleaseID: "some_unknown_release"})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "release not found")
+							})
+
+							Convey("Should deny identity if identity is not a signatory", func() {
+								ctx := context.WithValue(context.Background(), types.CtxIdentity, "unknown_identity")
+								_, err := api.AddVote(ctx, &proto_api.AddVoteRequest{ReleaseID: cocoon.Releases[0]})
+								So(err, ShouldNotBeNil)
+								So(err.Error(), ShouldEqual, "Permission Denied: You are not a signatory to this cocoon")
+							})
+
+							Convey("Should successfully add a vote to a release", func() {
+								_, err := api.AddVote(ctx, &proto_api.AddVoteRequest{ReleaseID: cocoon.Releases[0], Vote: 1})
+								So(err, ShouldBeNil)
+								release, err := api.platform.GetRelease(ctx, cocoon.Releases[0], false)
+								So(err, ShouldBeNil)
+								So(release.SigApproved, ShouldEqual, 1)
+								So(release.SigDenied, ShouldEqual, 0)
+
+								Convey("Should return error if identity has already added a vote", func() {
+									_, err := api.AddVote(ctx, &proto_api.AddVoteRequest{ReleaseID: cocoon.Releases[0]})
+									So(err, ShouldNotBeNil)
+									So(err.Error(), ShouldEqual, "You have already cast a vote for this release")
+								})
 							})
 						})
 					})
+
 				})
 
 				Convey(".GetIdentity", func() {
@@ -308,10 +510,50 @@ func TestOrderer(t *testing.T) {
 					})
 				})
 
-				Convey(".CreateCocoon", func() {
+				Convey(".updateReleaseEnv", func() {
 
+					Convey("Should successfully return updated Env", func() {
+						last := types.Env(map[string]string{"VAR_A": "hello", "VAR_B": "100"})
+						newest := types.Env(map[string]string{"VAR_B": "300"})
+						expected := types.Env(map[string]string{"VAR_B": "300"})
+						updateReleaseEnv(last, newest)
+						So(newest, ShouldResemble, expected)
+					})
+
+					Convey("Should successfully include pinned variables from previous Env when the variable is included in the latest Env", func() {
+						last := types.Env(map[string]string{"VAR_A@pin": "hello", "VAR_B": "100"})
+						newest := types.Env(map[string]string{"VAR_A": "some_value", "VAR_B": "300"})
+						expected := types.Env(map[string]string{"VAR_A@pin": "hello", "VAR_B": "300"})
+						updateReleaseEnv(last, newest)
+						So(newest, ShouldResemble, expected)
+					})
+
+					Convey("Should not included pinned variables from previous Env that is not in the latest Env", func() {
+						last := types.Env(map[string]string{"VAR_A@pin": "hello", "VAR_B": "100"})
+						newest := types.Env(map[string]string{"VAR_B": "300"})
+						expected := types.Env(map[string]string{"VAR_B": "300"})
+						updateReleaseEnv(last, newest)
+						So(newest, ShouldResemble, expected)
+					})
+
+					Convey("Should not include pinned variables from previous Env if latest Env contains an `unpin` flag", func() {
+						last := types.Env(map[string]string{"VAR_A@pin": "hello", "VAR_B": "100"})
+						newest := types.Env(map[string]string{"VAR_A@unpin": "hello_world", "VAR_B": "300"})
+						expected := types.Env(map[string]string{"VAR_A@unpin": "hello_world", "VAR_B": "300"})
+						updateReleaseEnv(last, newest)
+						So(newest, ShouldResemble, expected)
+					})
+
+					Convey("Should not include pinned variables from previous Env if latest Env contains an `unpin_once` flag but new variable flag must have `pin` flag", func() {
+						last := types.Env(map[string]string{"VAR_A@pin": "hello", "VAR_B": "100"})
+						newest := types.Env(map[string]string{"VAR_A@unpin_once": "hello_world", "VAR_B": "300"})
+						expected := types.Env(map[string]string{"VAR_A@pin": "hello_world", "VAR_B": "300"})
+						updateReleaseEnv(last, newest)
+						So(newest, ShouldResemble, expected)
+					})
 				})
 			})
+
 			close(apiEndCh)
 		})
 		close(endCh)

@@ -16,7 +16,6 @@ service API {
     rpc AddSignatories(AddSignatoriesRequest) returns (Response);
     rpc AddVote(AddVoteRequest) returns (Response);
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
-    rpc FirewallAllow(FirewallAllowRequest) returns (Response);
     rpc GetLogs(GetLogsRequest) returns (Response);
 }
 
@@ -24,13 +23,6 @@ message GetLogsRequest {
     string cocoonID = 1;
     int32 numLines = 2;
     string source = 3;
-}
-
-message FirewallAllowRequest {
-    string cocoonID = 1;
-    string destination = 2;
-    string destinationPort = 3;
-    string protocol = 4;    
 }
 
 message FirewallRule {
@@ -56,7 +48,7 @@ message RemoveSignatoriesRequest {
 
 message AddVoteRequest {
     string releaseID = 1;
-    string vote = 2;    
+    int32 vote = 2;    
 }
 
 message CocoonReleasePayloadRequest {

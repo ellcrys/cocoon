@@ -14,13 +14,14 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 	context "golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 func TestFunc(t *testing.T) {
 	Convey("Func", t, func() {
 		Convey(".GetRPCErrDesc", func() {
 			Convey("Should remove rpc error = 2 from error", func() {
-				bs := GetRPCErrDesc(errors.New("rpc error: code = 2 desc = something bad happened"))
+				bs := GetRPCErrDesc(grpc.Errorf(1, "something bad happened"))
 				So(string(bs), ShouldEqual, "something bad happened")
 			})
 		})
