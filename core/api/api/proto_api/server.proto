@@ -17,6 +17,11 @@ service API {
     rpc AddVote(AddVoteRequest) returns (Response);
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
     rpc GetLogs(GetLogsRequest) returns (Response);
+    rpc DeleteSessions(DeleteSessionsRequest) returns (Response);
+}
+
+message DeleteSessionsRequest {
+    bool all = 1;
 }
 
 message GetLogsRequest {

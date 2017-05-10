@@ -552,6 +552,44 @@ func TestRPCHandles(t *testing.T) {
 						So(newest, ShouldResemble, expected)
 					})
 				})
+
+				Convey(".DeleteSessions", func() {
+
+					identity := &types.Identity{
+						Email:          fmt.Sprintf("%s@gmail.com", util.RandString(5)),
+						Password:       "some_pass",
+						ClientSessions: []string{"session_1", "session_2", "session_3"},
+					}
+					err := api.platform.PutIdentity(context.Background(), identity)
+					So(err, ShouldBeNil)
+
+					Convey("Should remove a single client session if `All` is set to false", func() {
+						ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
+						ctx = context.WithValue(ctx, types.CtxSessionID, "session_2")
+						_, err := api.DeleteSessions(ctx, &proto_api.DeleteSessionsRequest{All: false})
+						So(err, ShouldBeNil)
+
+						curIdentity, err := api.platform.GetIdentity(ctx, identity.GetID())
+						So(err, ShouldBeNil)
+						So(len(curIdentity.ClientSessions), ShouldEqual, 2)
+						So(curIdentity.ClientSessions[0], ShouldEqual, "session_1")
+						So(curIdentity.ClientSessions[1], ShouldEqual, "session_3")
+					})
+
+					Convey("Should remove all client sessions if `All` is set to true", func() {
+						ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
+						ctx = context.WithValue(ctx, types.CtxSessionID, "session_2")
+						_, err := api.DeleteSessions(ctx, &proto_api.DeleteSessionsRequest{All: true})
+						So(err, ShouldBeNil)
+
+						curIdentity, err := api.platform.GetIdentity(ctx, identity.GetID())
+						So(err, ShouldBeNil)
+						So(len(curIdentity.ClientSessions), ShouldEqual, 0)
+						So(curIdentity.ClientSessions, ShouldBeNil)
+					})
+
+				})
+
 			})
 
 			close(apiEndCh)

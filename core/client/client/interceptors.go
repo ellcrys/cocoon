@@ -34,6 +34,5 @@ func includeAuthorize(ctx context.Context, method string, req, reply interface{}
 
 	md := metadata.Pairs("authorization", fmt.Sprintf("bearer %s", userSession.Token))
 	ctx = metadata.NewOutgoingContext(context.Background(), md)
-
 	return invoker(ctx, method, req, reply, cc, opts...)
 }

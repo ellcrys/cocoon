@@ -75,6 +75,8 @@ func (api *API) authenticateInterceptor(ctx context.Context, req interface{}, in
 		return nil, fmt.Errorf("invalid session. Please login")
 	}
 
+	ctx = context.WithValue(ctx, types.CtxAuthToken, tokenStr)
+	ctx = context.WithValue(ctx, types.CtxSessionID, sessionID)
 	ctx = context.WithValue(ctx, types.CtxIdentity, identityID)
 
 	return handler(ctx, req)
