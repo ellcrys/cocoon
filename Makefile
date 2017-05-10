@@ -35,4 +35,6 @@ test-bcm:
 	@bash -c "go test -v ./core/blockchain/..."
 test-platform:
 	@bash -c "go test -v ./core/platform/..."
+coverage:
+	@bash scripts/coverage.sh
 	
