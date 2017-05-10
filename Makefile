@@ -12,7 +12,7 @@ gen-pb:
 	@bash -c "protoc --proto_path=./vendor -I ./core/orderer/proto_orderer/ ./core/orderer/proto_orderer/server.proto --gogo_out=plugins=grpc:./core/orderer/proto_orderer"
 	@bash -c "protoc --proto_path=./vendor -I ./core/stub/proto_runtime/ ./core/stub/proto_runtime/server.proto --gogo_out=plugins=grpc:./core/stub/proto_runtime"
 	@bash -c "echo Done!"
-test: test-common test-types test-lock test-store test-bcm test-api test-connector test-orderer test-client test-stub
+test: test-common test-types test-lock test-store test-bcm test-platform test-api test-connector test-orderer test-client test-stub
 test-api:
 	@bash -c "go test -v ./core/api/api/..."
 test-connector:
@@ -33,4 +33,6 @@ test-store:
 	@bash -c "go test -v ./core/store/..."
 test-bcm:
 	@bash -c "go test -v ./core/blockchain/..."
+test-platform:
+	@bash -c "go test -v ./core/platform/..."
 	
