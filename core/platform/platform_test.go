@@ -50,7 +50,7 @@ func dropDB(t *testing.T) error {
 
 func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
 	endCh := make(chan bool)
-	os.Setenv("DEV_ORDERER_ADDR", "127.0.0.1:7011")
+	os.Setenv("DEV_ORDERER_ADDR", "127.0.0.1:7013")
 	addr := util.Env("DEV_ORDERER_ADDR", "")
 	orderer.SetLogLevel(logging.CRITICAL)
 	newOrderer := orderer.NewOrderer()
@@ -172,7 +172,7 @@ func TestPlatform(t *testing.T) {
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, "cocoon has no release. Wierd")
 				})
-				
+
 			})
 		})
 
