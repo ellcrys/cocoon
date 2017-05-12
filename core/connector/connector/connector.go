@@ -261,7 +261,7 @@ func (cn *Connector) HookToMonitor() {
 		}
 
 		// shutdown cocoon code if hard limit is exceeded (TODO: we would instead prevent any further outbound or inbound traffic)
-		if (totalInbound + totalOutbound) >= 15000000 {
+		if (totalInbound + totalOutbound) >= 100000000 {
 			log.Errorf("Total bandwidth used has reached the had limit of 5GB")
 			cn.shutdown()
 			return
