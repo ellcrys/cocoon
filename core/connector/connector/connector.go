@@ -685,9 +685,15 @@ func (cn *Connector) Stop(failed bool) error {
 // a restart by the scheduler.
 func (cn *Connector) shutdown() error {
 
-	if err := cn.Stop(true); err != nil {
-		return errors.Wrap(err, "failed to shutdown")
+	if cn.monitor != nil {
+		cn.monitor.Stop()
 	}
+
+	if cn.healthCheck != nil {
+		cn.healthCheck.Stop()
+	}
+
+	cn.setStatus(api.CocoonStatusStopped)
 
 	// ask platform to stop cocoon on the scheduler to prevent a restart
 	if err := cn.Platform.GetScheduler().Stop(cn.spec.ID); err != nil {
