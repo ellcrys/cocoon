@@ -13,7 +13,6 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/platform"
-	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
@@ -33,13 +32,12 @@ type API struct {
 	server       *grpc.Server
 	endedCh      chan bool
 	platform     *platform.Platform
-	scheduler    scheduler.Scheduler
 	logProvider  types.LogProvider
 	EventEmitter *emission.Emitter
 }
 
 // NewAPI creates a new GRPCAPI object
-func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
+func NewAPI() (*API, error) {
 	platform, err := platform.NewPlatform()
 	if err != nil {
 		return nil, err
@@ -47,7 +45,6 @@ func NewAPI(scheduler scheduler.Scheduler) (*API, error) {
 	eventEmitter := emission.NewEmitter()
 	eventEmitter.SetMaxListeners(20)
 	return &API{
-		scheduler:    scheduler,
 		logProvider:  &StackDriverLog{},
 		platform:     platform,
 		EventEmitter: eventEmitter,

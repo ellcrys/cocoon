@@ -67,6 +67,7 @@ type Connector struct {
 	healthCheck       *HealthChecker
 	Platform          *platform.Platform
 	lang              languages.Language
+	resourceUsage     *monitor.Report
 }
 
 // NewConnector creates a new connector
@@ -246,16 +247,29 @@ func (cn *Connector) prepareContainer() (*docker.APIContainers, error) {
 	return container, nil
 }
 
-// HookToMonitor is where all listeners to the monitor
-// are attached.
+// HookToMonitor is where all listeners to the monitor are attached.
 func (cn *Connector) HookToMonitor() {
-	go func() {
-		for evt := range cn.monitor.GetEmitter().On("monitor.report") {
-			if cn.RestartIfDiskAllocExceeded(evt.Args[0].(monitor.Report).DiskUsage) {
-				break
-			}
+	cn.monitor.GetEmitter().On("monitor.report", func(report monitor.Report) {
+		cn.resourceUsage = &report
+
+		// save network usage
+		ctx, cc := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cc()
+		totalInbound, totalOutbound, err := cn.persistNetUsage(ctx)
+		if err != nil {
+			log.Errorf("%+v", err)
 		}
-	}()
+
+		// shutdown cocoon code if hard limit is exceeded (TODO: we would instead prevent any further outbound or inbound traffic)
+		if (totalInbound + totalOutbound) >= 15000000 {
+			log.Errorf("Total bandwidth used has reached the had limit of 5GB")
+			cn.shutdown()
+			return
+		}
+
+		// log.Debugf("Rx Bytes: %d / Tx Bytes: %d", report.NetRx, report.NetTx)
+		cn.RestartIfDiskAllocExceeded(report.DiskUsage)
+	})
 }
 
 // setStatus Set the cocoon status
@@ -300,10 +314,6 @@ func (cn *Connector) restart() error {
 
 	if dckClient == nil || cn.container == nil {
 		return nil
-	}
-
-	if cn.monitor != nil {
-		cn.monitor.Reset()
 	}
 
 	log.Info("Restarting cocoon code")
@@ -665,6 +675,23 @@ func (cn *Connector) Stop(failed bool) error {
 
 	if cn.healthCheck != nil {
 		cn.healthCheck.Stop()
+	}
+
+	return nil
+}
+
+// shutdown stops the cocoon service on the scheduler.
+// It is different from Stop() because this will not result in
+// a restart by the scheduler.
+func (cn *Connector) shutdown() error {
+
+	if err := cn.Stop(true); err != nil {
+		return errors.Wrap(err, "failed to shutdown")
+	}
+
+	// ask platform to stop cocoon on the scheduler to prevent a restart
+	if err := cn.Platform.GetScheduler().Stop(cn.spec.ID); err != nil {
+		return errors.Wrap(err, "failed to shutdown cocoon on the scheduler")
 	}
 
 	return nil

@@ -27,13 +27,13 @@ var versionCmd = &cobra.Command{
 	Long:  `Show the Cocoon version information`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(`Client:
-  Version:     1.0.0
-  API version: 1.0.0
+  Version:     0.5.0
+  API version: 0.5.0
   Go version:  go1.8
   
 Core:
-  Version:     1.0.0
-  API version: 1.0.0
+  Version:     0.5.0
+  API version: 0.5.0
   Go version:  go1.8
 		`)
 	},

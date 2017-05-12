@@ -371,7 +371,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto_api.GetCocoonRequest) 
 // we check with the scheduler to know if the cocoon code was deployed successfully.
 func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 
-	sd, err := api.scheduler.GetServiceDiscoverer()
+	sd, err := api.platform.GetScheduler().GetServiceDiscoverer()
 	if err != nil {
 		return "", fmt.Errorf("failed to get service discovery from scheduler: %s", err)
 	}
@@ -385,7 +385,7 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 	if len(s) == 0 {
 
 		// check with the scheduler to know status of the cocoon deployment
-		dStatus, err := api.scheduler.GetDeploymentStatus(cocoonID)
+		dStatus, err := api.platform.GetScheduler().GetDeploymentStatus(cocoonID)
 		if err != nil {
 			if err.Error() != "not found" {
 				return CocoonStatusStopped, nil
@@ -411,7 +411,7 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 	}
 
 	apiLog.Info("Calling scheduler to stop cocoon = ", id)
-	err = api.scheduler.Stop(id)
+	err = api.platform.GetScheduler().Stop(id)
 	if err != nil {
 		apiLog.Error(err.Error())
 		return fmt.Errorf("failed to stop cocoon")

@@ -20,7 +20,7 @@ var RootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		showVersion, _ := cmd.Flags().GetBool("version")
 		if showVersion {
-			fmt.Println("Cocoon version 1.0.0")
+			fmt.Println("Cocoon version 0.5.0")
 			return
 		}
 		fmt.Println(cmd.Long)

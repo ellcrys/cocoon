@@ -15,7 +15,6 @@ import (
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
 	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
-	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/store/impl"
 	"github.com/ncodes/cocoon/core/types"
 	logging "github.com/op/go-logging"
@@ -69,7 +68,7 @@ func startOrderer(startCB func(*orderer.Orderer, chan bool)) {
 
 func startAPIServer(t *testing.T, startCB func(*API, chan bool)) {
 	endCh := make(chan bool)
-	apiServer, err := NewAPI(scheduler.NewNomad())
+	apiServer, err := NewAPI()
 	if err != nil {
 		t.Error(err)
 		t.Fail()

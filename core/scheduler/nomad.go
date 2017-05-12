@@ -173,7 +173,6 @@ func Getenv(env, defaultVal string) string {
 
 // GetServiceDiscoverer returns an instance of the nomad service discovery
 func (sc *Nomad) GetServiceDiscoverer() (ServiceDiscovery, error) {
-	log.Debug("Getting service discoverer")
 	cfg := api.DefaultConfig()
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	client, err := api.NewClient(cfg)

@@ -6,12 +6,20 @@ import (
 
 	context "golang.org/x/net/context"
 
+	"os"
+
 	"github.com/ellcrys/util"
 	"github.com/imdario/mergo"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
+	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/pkg/errors"
+)
+
+var (
+	schedulerAddr = os.Getenv("SCHEDULER_ADDR")
 )
 
 // Platform represents a collection of
@@ -19,22 +27,58 @@ import (
 // that involves identity, cocoons and other platform resources
 type Platform struct {
 	ordererDiscoverer *orderer.Discovery
+	scheduler         scheduler.Scheduler
 }
 
 // NewPlatform creates a new transaction object
 func NewPlatform() (*Platform, error) {
+
+	// configure orderer discovery sub-routine
 	ordererDiscoverer, err := orderer.NewDiscovery()
 	if err != nil {
 		return nil, err
 	}
 	go ordererDiscoverer.Discover()
 
+	// configure scheduler
+	nomad := scheduler.NewNomad()
+
+	// if scheduler address is not set, try to discovery it
+	if len(schedulerAddr) == 0 {
+
+		sd, err := nomad.GetServiceDiscoverer()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed get an instance of service discoverer")
+		}
+
+		services, err := sd.GetByID(nomad.GetName(), map[string]string{"tag": "http"})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed get scheduler address")
+		}
+
+		if len(services) > 0 {
+			schedulerAddr = fmt.Sprintf("%s:%d", services[0].IP, int(services[0].Port))
+		}
+	}
+
+	if len(schedulerAddr) == 0 {
+		return nil, fmt.Errorf("scheduler address not set in environment variable or in service catalog")
+	}
+
+	nomad.SetAddr(schedulerAddr, false)
+
 	// wait for discoverer to do initial discovery
-	time.Sleep(1 * time.Second)
+	// time.Sleep(1 * time.Second)
 
 	return &Platform{
 		ordererDiscoverer: ordererDiscoverer,
+		scheduler:         nomad,
 	}, nil
+}
+
+// GetScheduler returns the scheduler
+func (t *Platform) GetScheduler() scheduler.Scheduler {
+	return t.scheduler
 }
 
 // GetOrdererDiscoverer returns the orderer discover used

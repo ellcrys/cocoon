@@ -83,7 +83,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	// update the cocoon values to match the release we are about to start
 	cocoon.LastDeployedReleaseID = release.ID
 
-	depInfo, err := api.scheduler.Deploy(cocoon.ID, release.ID, cocoon.Memory, cocoon.CPUShare)
+	depInfo, err := api.platform.GetScheduler().Deploy(cocoon.ID, release.ID, cocoon.Memory, cocoon.CPUShare)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			apiLog.Error(err.Error())

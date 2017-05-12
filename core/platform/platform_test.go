@@ -76,7 +76,9 @@ func TestPlatform(t *testing.T) {
 
 		plat, err := NewPlatform()
 		if err != nil {
-			t.Fatal("failed to initialize platform")
+			close(endCh)
+			t.Fatalf("failed to initialize platform. %s", err)
+			return
 		}
 
 		Convey("Platform", t, func() {

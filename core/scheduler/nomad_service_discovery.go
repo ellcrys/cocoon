@@ -45,6 +45,6 @@ func (d *NomadServiceDiscovery) GetByID(name string, query map[string]string) ([
 			Tags: srv.ServiceTags,
 		})
 	}
-
+	
 	return services, nil
 }
