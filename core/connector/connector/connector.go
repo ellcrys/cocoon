@@ -636,7 +636,7 @@ func (cn *Connector) getFirewallCommands(cocoonFirewall types.Firewall) []*modo.
 func (cn *Connector) configureFirewall(container *docker.APIContainers) error {
 	var errCount = 0
 	cmds := cn.getFirewallCommands(cn.spec.Release.Firewall)
-	errs, err := cn.ExecInContainer(container.ID, cmds, false, func(d []byte, stdout bool) {
+	errs, err := cn.ExecInContainer(container.ID, cmds, true, func(d []byte, stdout bool) {
 		log.Info(string(d))
 	}, func(state modo.State, task *modo.Do) {
 		switch state {
