@@ -6,8 +6,8 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
 	"github.com/imdario/mergo"
+	"github.com/mitchellh/mapstructure"
 	"github.com/ncodes/cocoon/core/common/mapdiff"
-	"github.com/ncodes/mapstructure"
 )
 
 // ResourceUsage represents resources used by a cocoon

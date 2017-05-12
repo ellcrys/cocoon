@@ -1,0 +1,20 @@
+package: github.com/ellcrys/crypto
+import:
+- package: github.com/dgrijalva/jwt-go
+  version: 9fe8afe96d32468fba230b8b22acea86251f0506
+- package: github.com/square/go-jose
+  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
+  subpackages:
+  - cipher
+  - json
+- package: github.com/stretchr/testify
+  version: e22aedd37671fb115be6c0c25129c405cb575cfd
+  subpackages:
+  - assert
+- package: gopkg.in/square/go-jose.v1
+  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ^1.6.2
+  subpackages:
+  - convey
