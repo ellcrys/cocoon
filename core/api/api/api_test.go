@@ -131,7 +131,7 @@ func TestRPCHandles(t *testing.T) {
 							Convey("Should successfully create a cocoon", func() {
 
 								id := util.UUID4()
-								r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID:       id,
 									URL:            "https://github.com/ncodes/cocoon-example-01",
 									Language:       "go",
@@ -145,7 +145,7 @@ func TestRPCHandles(t *testing.T) {
 								So(len(r.Body), ShouldNotEqual, 0)
 
 								Convey("Should fail to create cocoon with an already used id", func() {
-									r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+									r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 										CocoonID:       id,
 										URL:            "https://github.com/ncodes/cocoon-example-01",
 										Language:       "go",
@@ -186,7 +186,7 @@ func TestRPCHandles(t *testing.T) {
 							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 
 							id := util.UUID4()
-							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",
@@ -200,7 +200,7 @@ func TestRPCHandles(t *testing.T) {
 
 							Convey("Should return error if logged in identity does not own the cocoon", func() {
 								ctx := context.WithValue(context.Background(), types.CtxIdentity, "some_identity_id")
-								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								_, err = api.UpdateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID: id,
 								})
 								So(err, ShouldNotBeNil)
@@ -208,7 +208,7 @@ func TestRPCHandles(t *testing.T) {
 							})
 
 							Convey("Should return no error and update nothing if no change detected", func() {
-								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								resp, err := api.UpdateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID: id,
 								})
 								So(err, ShouldBeNil)
@@ -221,7 +221,7 @@ func TestRPCHandles(t *testing.T) {
 							})
 
 							Convey("Should return error if a field fails validation", func() {
-								_, err = api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								_, err = api.UpdateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID: id,
 									Language: "abc",
 								})
@@ -230,7 +230,7 @@ func TestRPCHandles(t *testing.T) {
 							})
 
 							Convey("Should return `cocoonUpdated` set to true if cocoon field is updated because of a change", func() {
-								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								resp, err := api.UpdateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID:       id,
 									NumSignatories: 2,
 								})
@@ -248,7 +248,7 @@ func TestRPCHandles(t *testing.T) {
 							})
 
 							Convey("Should return `newReleaseID` set if a new release is created because of a change in a release field", func() {
-								resp, err := api.UpdateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+								resp, err := api.UpdateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID: id,
 									Version:  "some_version",
 								})
@@ -269,7 +269,7 @@ func TestRPCHandles(t *testing.T) {
 
 							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 							id := util.UUID4()
-							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",
@@ -349,7 +349,7 @@ func TestRPCHandles(t *testing.T) {
 
 							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 							id := util.UUID4()
-							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",
@@ -389,7 +389,7 @@ func TestRPCHandles(t *testing.T) {
 
 							ctx := context.WithValue(context.Background(), types.CtxIdentity, identity.GetID())
 							id := util.UUID4()
-							r, err := api.CreateCocoon(ctx, &proto_api.CocoonReleasePayloadRequest{
+							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
 								URL:            "https://github.com/ncodes/cocoon-example-01",
 								Language:       "go",

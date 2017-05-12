@@ -16,7 +16,7 @@ It has these top-level messages:
 	AddSignatoriesRequest
 	RemoveSignatoriesRequest
 	AddVoteRequest
-	CocoonReleasePayloadRequest
+	ContractRequest
 	GetCocoonRequest
 	GetIdentityRequest
 	GetReleaseRequest
@@ -224,7 +224,7 @@ func (m *AddVoteRequest) GetVote() int32 {
 	return 0
 }
 
-type CocoonReleasePayloadRequest struct {
+type ContractRequest struct {
 	CocoonID       string            `protobuf:"bytes,1,opt,name=cocoonID,proto3" json:"cocoonID,omitempty" structs:"cocoonID,omitempty" mapstructure:"cocoonID,omitempty"`
 	URL            string            `protobuf:"bytes,2,opt,name=URL,proto3" json:"url,omitempty" structs:"url,omitempty" mapstructure:"url,omitempty"`
 	Language       string            `protobuf:"bytes,3,opt,name=language,proto3" json:"language,omitempty" structs:"language,omitempty" mapstructure:"language,omitempty"`
@@ -241,105 +241,105 @@ type CocoonReleasePayloadRequest struct {
 	EnableFirewall bool              `protobuf:"varint,14,opt,name=enableFirewall,proto3" json:"enableFirewall,omitempty" structs:"enableFirewall,omitempty" mapstructure:"enableFirewall,omitempty"`
 }
 
-func (m *CocoonReleasePayloadRequest) Reset()         { *m = CocoonReleasePayloadRequest{} }
-func (m *CocoonReleasePayloadRequest) String() string { return proto.CompactTextString(m) }
-func (*CocoonReleasePayloadRequest) ProtoMessage()    {}
-func (*CocoonReleasePayloadRequest) Descriptor() ([]byte, []int) {
+func (m *ContractRequest) Reset()         { *m = ContractRequest{} }
+func (m *ContractRequest) String() string { return proto.CompactTextString(m) }
+func (*ContractRequest) ProtoMessage()    {}
+func (*ContractRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptorServer, []int{7}
 }
 
-func (m *CocoonReleasePayloadRequest) GetCocoonID() string {
+func (m *ContractRequest) GetCocoonID() string {
 	if m != nil {
 		return m.CocoonID
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetURL() string {
+func (m *ContractRequest) GetURL() string {
 	if m != nil {
 		return m.URL
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetLanguage() string {
+func (m *ContractRequest) GetLanguage() string {
 	if m != nil {
 		return m.Language
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetVersion() string {
+func (m *ContractRequest) GetVersion() string {
 	if m != nil {
 		return m.Version
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetBuildParam() string {
+func (m *ContractRequest) GetBuildParam() string {
 	if m != nil {
 		return m.BuildParam
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetFirewall() []*FirewallRule {
+func (m *ContractRequest) GetFirewall() []*FirewallRule {
 	if m != nil {
 		return m.Firewall
 	}
 	return nil
 }
 
-func (m *CocoonReleasePayloadRequest) GetACL() []byte {
+func (m *ContractRequest) GetACL() []byte {
 	if m != nil {
 		return m.ACL
 	}
 	return nil
 }
 
-func (m *CocoonReleasePayloadRequest) GetMemory() int32 {
+func (m *ContractRequest) GetMemory() int32 {
 	if m != nil {
 		return m.Memory
 	}
 	return 0
 }
 
-func (m *CocoonReleasePayloadRequest) GetCPUShare() int32 {
+func (m *ContractRequest) GetCPUShare() int32 {
 	if m != nil {
 		return m.CPUShare
 	}
 	return 0
 }
 
-func (m *CocoonReleasePayloadRequest) GetLink() string {
+func (m *ContractRequest) GetLink() string {
 	if m != nil {
 		return m.Link
 	}
 	return ""
 }
 
-func (m *CocoonReleasePayloadRequest) GetNumSignatories() int32 {
+func (m *ContractRequest) GetNumSignatories() int32 {
 	if m != nil {
 		return m.NumSignatories
 	}
 	return 0
 }
 
-func (m *CocoonReleasePayloadRequest) GetSigThreshold() int32 {
+func (m *ContractRequest) GetSigThreshold() int32 {
 	if m != nil {
 		return m.SigThreshold
 	}
 	return 0
 }
 
-func (m *CocoonReleasePayloadRequest) GetEnv() map[string]string {
+func (m *ContractRequest) GetEnv() map[string]string {
 	if m != nil {
 		return m.Env
 	}
 	return nil
 }
 
-func (m *CocoonReleasePayloadRequest) GetEnableFirewall() bool {
+func (m *ContractRequest) GetEnableFirewall() bool {
 	if m != nil {
 		return m.EnableFirewall
 	}
@@ -498,7 +498,7 @@ func init() {
 	proto.RegisterType((*AddSignatoriesRequest)(nil), "proto_api.AddSignatoriesRequest")
 	proto.RegisterType((*RemoveSignatoriesRequest)(nil), "proto_api.RemoveSignatoriesRequest")
 	proto.RegisterType((*AddVoteRequest)(nil), "proto_api.AddVoteRequest")
-	proto.RegisterType((*CocoonReleasePayloadRequest)(nil), "proto_api.CocoonReleasePayloadRequest")
+	proto.RegisterType((*ContractRequest)(nil), "proto_api.ContractRequest")
 	proto.RegisterType((*GetCocoonRequest)(nil), "proto_api.GetCocoonRequest")
 	proto.RegisterType((*GetIdentityRequest)(nil), "proto_api.GetIdentityRequest")
 	proto.RegisterType((*GetReleaseRequest)(nil), "proto_api.GetReleaseRequest")
@@ -520,8 +520,8 @@ const _ = grpc.SupportPackageIsVersion4
 
 type APIClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Response, error)
-	CreateCocoon(ctx context.Context, in *CocoonReleasePayloadRequest, opts ...grpc.CallOption) (*Response, error)
-	UpdateCocoon(ctx context.Context, in *CocoonReleasePayloadRequest, opts ...grpc.CallOption) (*Response, error)
+	CreateCocoon(ctx context.Context, in *ContractRequest, opts ...grpc.CallOption) (*Response, error)
+	UpdateCocoon(ctx context.Context, in *ContractRequest, opts ...grpc.CallOption) (*Response, error)
 	GetRelease(ctx context.Context, in *GetReleaseRequest, opts ...grpc.CallOption) (*Response, error)
 	CreateIdentity(ctx context.Context, in *CreateIdentityRequest, opts ...grpc.CallOption) (*Response, error)
 	Deploy(ctx context.Context, in *DeployRequest, opts ...grpc.CallOption) (*Response, error)
@@ -552,7 +552,7 @@ func (c *aPIClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *aPIClient) CreateCocoon(ctx context.Context, in *CocoonReleasePayloadRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) CreateCocoon(ctx context.Context, in *ContractRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := grpc.Invoke(ctx, "/proto_api.API/CreateCocoon", in, out, c.cc, opts...)
 	if err != nil {
@@ -561,7 +561,7 @@ func (c *aPIClient) CreateCocoon(ctx context.Context, in *CocoonReleasePayloadRe
 	return out, nil
 }
 
-func (c *aPIClient) UpdateCocoon(ctx context.Context, in *CocoonReleasePayloadRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *aPIClient) UpdateCocoon(ctx context.Context, in *ContractRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := grpc.Invoke(ctx, "/proto_api.API/UpdateCocoon", in, out, c.cc, opts...)
 	if err != nil {
@@ -673,8 +673,8 @@ func (c *aPIClient) DeleteSessions(ctx context.Context, in *DeleteSessionsReques
 
 type APIServer interface {
 	Login(context.Context, *LoginRequest) (*Response, error)
-	CreateCocoon(context.Context, *CocoonReleasePayloadRequest) (*Response, error)
-	UpdateCocoon(context.Context, *CocoonReleasePayloadRequest) (*Response, error)
+	CreateCocoon(context.Context, *ContractRequest) (*Response, error)
+	UpdateCocoon(context.Context, *ContractRequest) (*Response, error)
 	GetRelease(context.Context, *GetReleaseRequest) (*Response, error)
 	CreateIdentity(context.Context, *CreateIdentityRequest) (*Response, error)
 	Deploy(context.Context, *DeployRequest) (*Response, error)
@@ -711,7 +711,7 @@ func _API_Login_Handler(srv interface{}, ctx context.Context, dec func(interface
 }
 
 func _API_CreateCocoon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CocoonReleasePayloadRequest)
+	in := new(ContractRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -723,13 +723,13 @@ func _API_CreateCocoon_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto_api.API/CreateCocoon",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).CreateCocoon(ctx, req.(*CocoonReleasePayloadRequest))
+		return srv.(APIServer).CreateCocoon(ctx, req.(*ContractRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _API_UpdateCocoon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CocoonReleasePayloadRequest)
+	in := new(ContractRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -741,7 +741,7 @@ func _API_UpdateCocoon_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto_api.API/UpdateCocoon",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).UpdateCocoon(ctx, req.(*CocoonReleasePayloadRequest))
+		return srv.(APIServer).UpdateCocoon(ctx, req.(*ContractRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -27,9 +27,9 @@ var updateCmd = &cobra.Command{
 			UsageError(log, cmd, `"ellcrys update" requires at least 1 argument(s)`, `ellcrys update --help`)
 		}
 
-		stopSpinner := util.Spinner("Please wait...")
+		stopSpinner := util.Spinner("Please wait")
 
-		contracts, errs := parseContract(args[0], v)
+		contracts, errs := makeContractFromFile(args[0], v)
 		if errs != nil && len(errs) > 0 {
 			stopSpinner()
 			for _, err := range errs {
@@ -40,6 +40,16 @@ var updateCmd = &cobra.Command{
 
 		stopSpinner()
 		for i, contract := range contracts {
+
+			// modify fields if corresponding flag is set
+			errs := modifyFromFlags(cmd, contract)
+			if len(errs) > 0 {
+				for _, err := range errs {
+					log.Errorf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
+				}
+				continue
+			}
+
 			err := client.UpdateCocoon(contract.CocoonID, contract)
 			if err != nil {
 				log.Fatalf("Err (Contract %d): %s", i, (common.GetRPCErrDesc(err)))
@@ -51,4 +61,5 @@ var updateCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(updateCmd)
 	updateCmd.PersistentFlags().StringP("version", "v", "master", "Set the branch name or commit hash for a github hosted contract file")
+	addContractModifierFlags(updateCmd, true)
 }

@@ -10,9 +10,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"net"
 	"strings"
 
-	"net"
+	"github.com/imdario/mergo"
 
 	"os"
 
@@ -279,4 +280,14 @@ func OnTerminate(f func(s os.Signal)) {
 		s := <-sigs
 		f(s)
 	}()
+}
+
+// MergeMapSlice merges a slice of maps into a single map with the
+// each successive maps overwriting previously available keys
+func MergeMapSlice(s []map[string]interface{}) map[string]interface{} {
+	var newMap map[string]interface{}
+	for i := 0; i < len(s); i++ {
+		mergo.MergeWithOverwrite(&newMap, s[i])
+	}
+	return newMap
 }

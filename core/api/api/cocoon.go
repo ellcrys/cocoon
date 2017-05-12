@@ -64,7 +64,7 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
-func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
+func (api *API) CreateCocoon(ctx context.Context, req *proto_api.ContractRequest) (*proto_api.Response, error) {
 
 	var err error
 	var releaseID = util.UUID4()
@@ -223,7 +223,7 @@ func updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release related fields are
 // changed.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest) (*proto_api.Response, error) {
 
 	var err error
 	var cocoonUpdated bool

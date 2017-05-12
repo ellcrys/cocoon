@@ -29,7 +29,7 @@ contracts {
     
     # Resources to allocate to the contract's cocoon
     resources {
-       resource_set = "s1"
+       set = "s1"
     }
     
     # Provide signatory information
@@ -71,5 +71,10 @@ contracts {
         "MY_VAR"  = "some value 2"
         "MY_VAR2@unpin_once,private" = "yo"
         "SOME" = "THING"
+    }
+    env {
+        "MY_VAR"  = "some value 2"
+        "MY_VAR2@unpin_once,private" = "yo"
+        "SOME" = "THING",
     }
 }

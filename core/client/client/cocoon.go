@@ -23,7 +23,7 @@ import (
 var MaxBulkObjCount = 25
 
 // CreateCocoon a new cocoon
-func CreateCocoon(cocoonPayload *proto_api.CocoonReleasePayloadRequest) error {
+func CreateCocoon(cocoonPayload *proto_api.ContractRequest) error {
 
 	ss := util.Spinner("Please wait...")
 	defer ss()
@@ -57,7 +57,7 @@ func CreateCocoon(cocoonPayload *proto_api.CocoonReleasePayloadRequest) error {
 // release. A new release is created when Release fields are
 // set/defined. No release is created if updated release fields match
 // existing fields.
-func UpdateCocoon(id string, upd *proto_api.CocoonReleasePayloadRequest) error {
+func UpdateCocoon(id string, upd *proto_api.ContractRequest) error {
 
 	stopSpinner := util.Spinner("Please wait")
 
