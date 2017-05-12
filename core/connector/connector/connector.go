@@ -394,7 +394,7 @@ func (cn *Connector) cleanContainer() error {
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + downloadDst + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + filePath + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode || true 2>/dev/null`}, AbortSeriesOnFail: false},
+		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode 2>/dev/null || true 2>/dev/null`}, AbortSeriesOnFail: false},
 	}
 
 	var errCount = 0
