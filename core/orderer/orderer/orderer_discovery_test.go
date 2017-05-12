@@ -6,7 +6,6 @@ import (
 
 	"os"
 
-	"github.com/ellcrys/util"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -31,7 +30,7 @@ func TestOrdererDiscovery(t *testing.T) {
 			discovery, err := NewDiscovery()
 			So(err, ShouldBeNil)
 
-			Convey("Should return no error", func() {
+			Convey("Tests", func() {
 				err := discovery.addOrdererService("1.1.1.1", 7000)
 				So(err, ShouldBeNil)
 				go discovery.Discover()
@@ -40,9 +39,37 @@ func TestOrdererDiscovery(t *testing.T) {
 				Convey(".GetAddrs", func() {
 					Convey("Should return a single addr", func() {
 						addr := discovery.GetAddrs()
-						util.Printify(addr)
 						So(len(addr), ShouldEqual, 1)
-						So(addr[0], ShouldEqual, "1.1.1.1:7000")
+					})
+				})
+
+				Convey(".Add", func() {
+					Convey("Should successfully add new address", func() {
+						discovery.Add("1.1.1.2:1000")
+						So(len(discovery.orderersAddr), ShouldEqual, 2)
+					})
+				})
+
+				Convey(".Len", func() {
+					Convey("Should successfully return expected length", func() {
+						So(discovery.Len(), ShouldEqual, 1)
+						discovery.Add("1.1.1.2:1000")
+						So(discovery.Len(), ShouldEqual, 2)
+					})
+				})
+
+				Convey(".GetGRPConn", func() {
+					Convey("Should return error if no address is available", func() {
+						discovery, err := NewDiscovery()
+						_, err = discovery.GetGRPConn()
+						So(err, ShouldNotBeNil)
+						So(err.Error(), ShouldEqual, "no known orderer address")
+					})
+
+					Convey("Should successfully return a client", func() {
+						c, err := discovery.GetGRPConn()
+						So(err, ShouldBeNil)
+						So(c, ShouldNotBeNil)
 					})
 				})
 			})

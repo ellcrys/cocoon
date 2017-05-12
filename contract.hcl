@@ -3,14 +3,14 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provide, a UUID v4 ID is generated. 
-    id = "u1"
+    id = "a7"
     
     # Contract source location and information
     repo {
         # The pubic github repository
         url = "https://github.com/ncodes/cocoon-example-01" 
         # The github release tag or commit id (default: latest release)
-        version = "575a4835c5eff1fb4ff5f96cd725e9a3ed577c76"
+        version = "333d46b99d6fe499586af103fd384cace04e6f84"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -29,7 +29,7 @@ contracts {
     
     # Resources to allocate to the contract's cocoon
     resources {
-       resource_set = "s1"
+       set = "s1"
     }
     
     # Provide signatory information
@@ -61,12 +61,6 @@ contracts {
             destinationPort = "80"
             protocol = "tcp"    
         }
-        
-        rule = {
-            destination = "google.com"
-            destinationPort = "80"
-            protocol = "tcp"    
-        }
     }
     
     # Set environment variable. Use flags to 
@@ -77,5 +71,10 @@ contracts {
         "MY_VAR"  = "some value 2"
         "MY_VAR2@unpin_once,private" = "yo"
         "SOME" = "THING"
+    }
+    env {
+        "MY_VAR"  = "some value 2"
+        "MY_VAR2@unpin_once,private" = "yo"
+        "SOME" = "THING",
     }
 }

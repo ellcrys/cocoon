@@ -8,8 +8,8 @@ env SCHEDULER_ADDR=104.199.69.200:4646 \
     CONSUL_ADDR=104.199.69.200:8500 \
     DEV_ORDERER_ADDR=127.0.0.1:8001 \
     ENV=production \
-    API_VERSION=1.0.0 \
-    CONNECTOR_VERSION=1.0.0 \
+    API_VERSION=0.5.0 \
+    CONNECTOR_VERSION=0.5.0 \
     go run main.go start
 ```
 

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strconv"
+
 	"github.com/ncodes/cocoon/core/client/client"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
@@ -25,7 +27,8 @@ var sigVoteCmd = &cobra.Command{
 			log.Fatal("Err: Vote value must be either 1 (Approve) or 0 (Deny)")
 		}
 
-		if err := client.AddVote(args[0], args[1], isCid); err != nil {
+		vote, _ := strconv.Atoi(args[1])
+		if err := client.AddVote(args[0], vote, isCid); err != nil {
 			log.Fatalf("Err: %s", (common.GetRPCErrDesc(err)))
 		}
 	},

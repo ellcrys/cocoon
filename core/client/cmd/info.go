@@ -23,14 +23,14 @@ var infoCmd = &cobra.Command{
   Email: ` + userSession.Email + `
 
 Client:
-  Version:     1.0.0
-  API version: 1.0.0
+  Version:     0.5.0
+  API version: 0.5.0
   Go version:  go1.8
   
 Core:
   API:         https://rpc.ellcrys.co
-  Version:     1.0.0
-  API version: 1.0.0
+  Version:     0.5.0
+  API version: 0.5.0
   Go version:  go1.8
 		`)
 	},

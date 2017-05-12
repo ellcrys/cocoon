@@ -3,11 +3,12 @@ package monitor
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/chuckpreslar/emission"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/ncodes/cocoon/core/config"
-	docker "github.com/ncodes/go-dockerclient"
-	"github.com/olebedev/emitter"
 	logging "github.com/op/go-logging"
 )
 
@@ -31,7 +32,8 @@ type Report struct {
 // other external modules to subscribe to events from it and to also emit events to
 // the module.
 type Monitor struct {
-	emitter     *emitter.Emitter
+	sync.Mutex
+	emitter     *emission.Emitter
 	containerID string
 	stop        bool
 	dckClient   *docker.Client
@@ -39,10 +41,9 @@ type Monitor struct {
 
 // NewMonitor creates a new monitor instance.
 func NewMonitor(cocoonID string) *Monitor {
-	log = config.MakeLogger("connector.monitor", fmt.Sprintf("cocoon.%s", cocoonID))
-	e := emitter.New(10)
+	log = config.MakeLogger("connector.monitor")
 	return &Monitor{
-		emitter: e,
+		emitter: emission.NewEmitter(),
 	}
 }
 
@@ -57,21 +58,15 @@ func (m *Monitor) SetDockerClient(dckClient *docker.Client) {
 }
 
 // GetEmitter returns the monitor's emitter
-func (m *Monitor) GetEmitter() *emitter.Emitter {
+func (m *Monitor) GetEmitter() *emission.Emitter {
 	return m.emitter
 }
 
 // Stop the monitor
 func (m *Monitor) Stop() {
+	m.Lock()
+	defer m.Unlock()
 	m.stop = true
-	m.emitter.Off("*")
-}
-
-// Reset resets the monitor
-func (m *Monitor) Reset() {
-	m.Stop()
-	m.emitter = emitter.New(10)
-	m.stop = false
 }
 
 // getContainerRootSize fetches the total
@@ -137,15 +132,13 @@ func (m *Monitor) Monitor() {
 			log.Error(err.Error())
 		}
 
-		// log.Debugf("Rx Bytes: %d / Tx Bytes: %d", rxBytes, txBytes)
-
 		report := Report{
 			DiskUsage: size,
 			NetRx:     rxBytes,
 			NetTx:     txBytes,
 		}
 
-		<-m.emitter.Emit("monitor.report", report)
-		time.Sleep(1 * time.Second)
+		m.emitter.Emit("monitor.report", report)
+		time.Sleep(30 * time.Second)
 	}
 }

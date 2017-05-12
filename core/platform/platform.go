@@ -6,12 +6,20 @@ import (
 
 	context "golang.org/x/net/context"
 
+	"os"
+
 	"github.com/ellcrys/util"
 	"github.com/imdario/mergo"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/orderer/orderer"
 	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
+	"github.com/ncodes/cocoon/core/scheduler"
 	"github.com/ncodes/cocoon/core/types"
+	"github.com/pkg/errors"
+)
+
+var (
+	schedulerAddr = os.Getenv("SCHEDULER_ADDR")
 )
 
 // Platform represents a collection of
@@ -19,18 +27,63 @@ import (
 // that involves identity, cocoons and other platform resources
 type Platform struct {
 	ordererDiscoverer *orderer.Discovery
+	scheduler         scheduler.Scheduler
 }
 
 // NewPlatform creates a new transaction object
 func NewPlatform() (*Platform, error) {
+
+	// configure orderer discovery sub-routine
 	ordererDiscoverer, err := orderer.NewDiscovery()
 	if err != nil {
 		return nil, err
 	}
 	go ordererDiscoverer.Discover()
+
+	// configure scheduler
+	nomad := scheduler.NewNomad()
+
+	// if scheduler address is not set, try to discovery it
+	if len(schedulerAddr) == 0 {
+
+		sd, err := nomad.GetServiceDiscoverer()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed get an instance of service discoverer")
+		}
+
+		services, err := sd.GetByID(nomad.GetName(), map[string]string{"tag": "http"})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed get scheduler address")
+		}
+
+		if len(services) > 0 {
+			schedulerAddr = fmt.Sprintf("%s:%d", services[0].IP, int(services[0].Port))
+		}
+	}
+
+	if len(schedulerAddr) == 0 {
+		return nil, fmt.Errorf("scheduler address not set in environment variable or in service catalog")
+	}
+
+	nomad.SetAddr(schedulerAddr, false)
+
+	// wait for discoverer to do initial discovery
+	// time.Sleep(1 * time.Second)
+
 	return &Platform{
 		ordererDiscoverer: ordererDiscoverer,
+		scheduler:         nomad,
 	}, nil
+}
+
+// GetScheduler returns the scheduler
+func (t *Platform) GetScheduler() scheduler.Scheduler {
+	return t.scheduler
+}
+
+// GetOrdererDiscoverer returns the orderer discover used
+func (t *Platform) GetOrdererDiscoverer() *orderer.Discovery {
+	return t.ordererDiscoverer
 }
 
 // Stop stops the orderer discoverer service
@@ -137,6 +190,10 @@ func (t *Platform) PutIdentity(ctx context.Context, identity *types.Identity) er
 		},
 	})
 
+	// put back cleared out fields
+	identity.Password = password
+	identity.ClientSessions = clientSession
+
 	return err
 }
 
@@ -196,10 +253,25 @@ func (t *Platform) GetCocoon(ctx context.Context, id string) (*types.Cocoon, err
 	return &cocoon, nil
 }
 
-// GetCocoonAndLastRelease fetches a cocoon and the last release that was added to it.
-// If lastDeployed is set, it is forced to return the last release that was deployed otherwise,
-// error is returned. Set includePrivateFields to true to return include private fields of the cocoon and release
-func (t *Platform) GetCocoonAndLastRelease(ctx context.Context, cocoonID string, lastDeployed, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
+// GetCocoonAndRelease fetches a cocoon and a release that once. Returns error if either of them are not found.
+func (t *Platform) GetCocoonAndRelease(ctx context.Context, cocoonID, releaseID string, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
+
+	cocoon, err := t.GetCocoon(ctx, cocoonID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	release, err := t.GetRelease(ctx, releaseID, includePrivateFields)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cocoon, release, nil
+}
+
+// GetCocoonAndLastActiveRelease fetches a cocoon with the release that was last deployed or last created.
+// Set includePrivateFields to true to include private fields of the cocoon and release
+func (t *Platform) GetCocoonAndLastActiveRelease(ctx context.Context, cocoonID string, includePrivateFields bool) (*types.Cocoon, *types.Release, error) {
 
 	cocoon, err := t.GetCocoon(ctx, cocoonID)
 	if err != nil {
@@ -207,14 +279,11 @@ func (t *Platform) GetCocoonAndLastRelease(ctx context.Context, cocoonID string,
 	}
 
 	var releaseID = cocoon.LastDeployedReleaseID
-	if lastDeployed && len(cocoon.LastDeployedReleaseID) == 0 {
-		return nil, nil, fmt.Errorf("cocoon has no recently deployed release")
-	}
-	if !lastDeployed && len(cocoon.Releases) > 0 {
+	if len(cocoon.LastDeployedReleaseID) == 0 {
+		if len(cocoon.Releases) == 0 {
+			return nil, nil, fmt.Errorf("cocoon has no release. Wierd")
+		}
 		releaseID = cocoon.Releases[len(cocoon.Releases)-1]
-	}
-	if len(cocoon.Releases) == 0 {
-		return nil, nil, fmt.Errorf("cocoon has no release. Wierd")
 	}
 
 	release, err := t.GetRelease(ctx, releaseID, includePrivateFields)
@@ -269,6 +338,9 @@ func (t *Platform) PutRelease(ctx context.Context, release *types.Release) error
 		},
 	})
 
+	// reassign private fields to original object
+	mergo.Merge(&release.Env, privEnv)
+
 	return err
 }
 
@@ -290,6 +362,9 @@ func (t *Platform) GetRelease(ctx context.Context, id string, includePrivateFiel
 		Ledger:   types.GetSystemPublicLedgerName(),
 	})
 	if err != nil {
+		if err != nil && common.CompareErr(err, types.ErrTxNotFound) != 0 {
+			return nil, err
+		}
 		return nil, err
 	}
 

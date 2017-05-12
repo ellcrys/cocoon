@@ -3,9 +3,11 @@ package connector
 import (
 	"time"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 
 	"fmt"
+
+	"net"
 
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -33,7 +35,8 @@ func NewHealthChecker(cocoonCodeAddr string, onDeadFunc func()) *HealthChecker {
 // if check returns err, it calls the OnDeadFunc and stops the health check.
 func (hc *HealthChecker) Start() {
 
-	logHealthChecker.Infof("Started health check on cocoon code @ %s", hc.cocoonCodeAddr)
+	_, port, _ := net.SplitHostPort(hc.cocoonCodeAddr)
+	logHealthChecker.Infof("Started cocoon code health @ %s", port)
 
 	if err := hc.check(); err != nil {
 		logHealthChecker.Infof(err.Error())

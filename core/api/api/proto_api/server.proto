@@ -5,8 +5,8 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 service API {
     rpc Login(LoginRequest) returns (Response);
-    rpc CreateCocoon(CocoonReleasePayloadRequest) returns (Response);
-    rpc UpdateCocoon(CocoonReleasePayloadRequest) returns (Response);
+    rpc CreateCocoon(ContractRequest) returns (Response);
+    rpc UpdateCocoon(ContractRequest) returns (Response);
     rpc GetRelease(GetReleaseRequest) returns (Response);
     rpc CreateIdentity(CreateIdentityRequest) returns (Response);
     rpc Deploy(DeployRequest) returns (Response);
@@ -16,21 +16,18 @@ service API {
     rpc AddSignatories(AddSignatoriesRequest) returns (Response);
     rpc AddVote(AddVoteRequest) returns (Response);
     rpc RemoveSignatories(RemoveSignatoriesRequest) returns (Response);
-    rpc FirewallAllow(FirewallAllowRequest) returns (Response);
     rpc GetLogs(GetLogsRequest) returns (Response);
+    rpc DeleteSessions(DeleteSessionsRequest) returns (Response);
+}
+
+message DeleteSessionsRequest {
+    bool all = 1;
 }
 
 message GetLogsRequest {
     string cocoonID = 1;
     int32 numLines = 2;
     string source = 3;
-}
-
-message FirewallAllowRequest {
-    string cocoonID = 1;
-    string destination = 2;
-    string destinationPort = 3;
-    string protocol = 4;    
 }
 
 message FirewallRule {
@@ -56,10 +53,10 @@ message RemoveSignatoriesRequest {
 
 message AddVoteRequest {
     string releaseID = 1;
-    string vote = 2;    
+    int32 vote = 2;    
 }
 
-message CocoonReleasePayloadRequest {
+message ContractRequest {
     string cocoonID = 1                     [(gogoproto.jsontag) = "cocoonID,omitempty", (gogoproto.moretags) = 'structs:"cocoonID,omitempty" mapstructure:"cocoonID,omitempty"']; 
     string URL = 2                          [(gogoproto.jsontag) = "url,omitempty", (gogoproto.moretags) = 'structs:"url,omitempty" mapstructure:"url,omitempty"'];
     string language = 3                     [(gogoproto.jsontag) = "language,omitempty", (gogoproto.moretags) = 'structs:"language,omitempty" mapstructure:"language,omitempty"'];
@@ -92,7 +89,7 @@ message GetReleaseRequest {
 
 message DeployRequest {
     string cocoonID = 1;
-    bool useLastDeployedReleaseID = 2; 
+    string releaseID = 2;
 }
 
 message CreateIdentityRequest {

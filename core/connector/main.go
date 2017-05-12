@@ -29,21 +29,6 @@ func init() {
 }
 
 func main() {
-	// defer profile.Start(profile.MemProfile).Stop()
-
-	// go func() {
-	// 	go func() {
-	// 		log.Info(http.ListenAndServe("localhost:6060", nil).Error())
-	// 	}()
-
-	// 	for {
-	// 		var mem runtime.MemStats
-	// 		runtime.ReadMemStats(&mem)
-	// 		log.Infof("Alloc: %d, Total Alloc: %d, HeapAlloc: %d, HeapSys: %d", mem.Alloc, mem.TotalAlloc, mem.HeapAlloc, mem.HeapSys)
-	// 		time.Sleep(10 * time.Second)
-	// 	}
-	// }()
-
 	if err := cmd.RootCmd.Execute(); err != nil {
 		log.Error(err.Error())
 		os.Exit(-1)

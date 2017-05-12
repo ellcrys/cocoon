@@ -42,6 +42,14 @@ func (b *PostgresBlockchain) Connect(dbAddr string) (interface{}, error) {
 	return b.db, nil
 }
 
+// Close the database
+func (b *PostgresBlockchain) Close() error {
+	if b.db != nil {
+		return b.db.Close()
+	}
+	return nil
+}
+
 // Init creates the chain and block tables
 func (b *PostgresBlockchain) Init() error {
 

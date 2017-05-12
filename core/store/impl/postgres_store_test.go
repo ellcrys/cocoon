@@ -1,118 +1,97 @@
 package impl
 
 import (
-	"testing"
-
+	"database/sql"
 	"fmt"
+	"os"
+	"strings"
+	"testing"
 
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
+	"github.com/ncodes/cocoon/core/blockchain/impl"
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestPosgresStore(t *testing.T) {
+var db *sql.DB
+var dbName = "test_" + strings.ToLower(util.RandString(5))
+var conStr = util.Env("STORE_CON_STR", "host=localhost user=ned sslmode=disable password=")
+var conStrWithDB = util.Env("STORE_CON_STR", "host=localhost database="+dbName+" user=ned sslmode=disable password=")
+
+func createDb(t *testing.T) error {
+	_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s;", dbName))
+	return err
+}
+
+func dropDB(t *testing.T) error {
+	_, err := db.Query(fmt.Sprintf("DROP DATABASE %s;", dbName))
+	return err
+}
+
+func init() {
+	os.Setenv("ENV", "test")
+
+	var err error
+	db, err = sql.Open("postgres", conStr)
+	if err != nil {
+		panic(fmt.Errorf("failed to connect to database: %s", err))
+	}
+}
+
+func TestPostgresStore(t *testing.T) {
+
+	defer db.Close()
+	err := createDb(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dropDB(t)
+
+	pgStore := new(PostgresStore)
+	db, err := pgStore.Connect(conStrWithDB)
+	if err != nil {
+		t.Fatal("failed to connect to pg store")
+	}
+
+	pgChain := new(impl.PostgresBlockchain)
+	_, err = pgChain.Connect(conStrWithDB)
+	if err != nil {
+		t.Fatal("failed to connect to pg blockchain")
+	}
+
+	err = pgChain.Init()
+	if err != nil {
+		t.Fatal("failed to initialize pg blockchain")
+	}
+
 	Convey("PostgresStore", t, func() {
 
-		var conStr = "host=localhost user=ned dbname=cocoon-dev sslmode=disable password="
-		pgStore := new(PostgresStore)
-		db, err := pgStore.Connect(conStr)
-		So(err, ShouldBeNil)
-		So(db, ShouldNotBeNil)
-
-		var RestDB = func() {
-			db.(*gorm.DB).DropTable(LedgerTableName, TransactionTableName)
-		}
-
-		Convey(".Connect", func() {
-			Convey("should return error when unable to connect to a postgres server", func() {
-				var conStr = "host=localhost user=wrong dbname=test sslmode=disable password=abc"
-				pgStore := new(PostgresStore)
-				db, err := pgStore.Connect(conStr)
-				So(db, ShouldBeNil)
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, `failed to connect to store backend. pq: role "wrong" does not exist`)
-			})
-		})
+		pgStore.SetBlockchainImplementation(pgChain)
 
 		Convey(".Init", func() {
-
-			Convey("when ledger table does not exists", func() {
-
-				Convey("should create ledger and transactions table and create a system ledger entry", func() {
-
-					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
-					So(ledgerEntryExists, ShouldEqual, false)
-
-					err := pgStore.Init(types.GetSystemPublicLedgerName())
-					So(err, ShouldBeNil)
-
-					ledgerEntryExists = db.(*gorm.DB).HasTable(LedgerTableName)
-					So(ledgerEntryExists, ShouldEqual, true)
-
-					ledgerEntryExists = db.(*gorm.DB).HasTable(TransactionTableName)
-					So(ledgerEntryExists, ShouldEqual, true)
-
-					Convey("ledger table must include a system ledger entry", func() {
-						var entries []types.Ledger
-						err := db.(*gorm.DB).Find(&entries).Error
-						So(err, ShouldBeNil)
-						So(len(entries), ShouldEqual, 1)
-						So(entries[0].Name, ShouldEqual, types.GetSystemPublicLedgerName())
-					})
-
-					Reset(func() {
-						RestDB()
-					})
-				})
-			})
-
-			Convey("when ledger table exists", func() {
-				Convey("should return nil with no effect", func() {
-					err := pgStore.Init(types.GetSystemPublicLedgerName())
-					So(err, ShouldBeNil)
-
-					ledgerEntryExists := db.(*gorm.DB).HasTable(LedgerTableName)
-					So(ledgerEntryExists, ShouldEqual, true)
-
-					var entries []types.Ledger
-					err = db.(*gorm.DB).Find(&entries).Error
-					So(err, ShouldBeNil)
-					So(len(entries), ShouldEqual, 1)
-					So(entries[0].Name, ShouldEqual, types.GetSystemPublicLedgerName())
-				})
-
-				Reset(func() {
-					RestDB()
-				})
-			})
-		})
-
-		Convey(".MakeLegderHash", func() {
-
-			Convey("should return expected ledger hash", func() {
-				hash := pgStore.MakeLegderHash(&types.Ledger{
-					Name:      types.GetSystemPublicLedgerName(),
-					Public:    true,
-					CreatedAt: 1488196279,
-				})
-				So(hash, ShouldEqual, "2f97bb39bf93e995dcb611632fbb72424722b5e6090a0bc483846e46128eb74b")
-			})
-
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
+			So(err, ShouldBeNil)
+			var entries []types.Ledger
+			err = db.(*gorm.DB).Find(&entries).Error
+			So(err, ShouldBeNil)
+			So(len(entries), ShouldEqual, 2)
+			So(entries[0].Name, ShouldEqual, types.GetSystemPublicLedgerName())
+			So(entries[1].Name, ShouldEqual, types.GetSystemPrivateLedgerName())
 		})
 
 		Convey(".MakeTxKey", func() {
 			Convey("should create expected tx key", func() {
-				key := pgStore.MakeTxKey("namespace", "accounts")
-				So(key, ShouldEqual, "namespace.accounts")
+				key := types.MakeTxKey("namespace", "accounts")
+				So(key, ShouldEqual, "namespace;accounts")
 			})
 		})
 
 		Convey(".GetActualKeyFromTxKey", func() {
 			Convey("should return expected key", func() {
-				txKey := pgStore.MakeTxKey("namespace", "accounts")
-				key := pgStore.GetActualKeyFromTxKey(txKey)
+				txKey := types.MakeTxKey("namespace", "accounts")
+				key := types.GetActualKeyFromTxKey(txKey)
 				So(key, ShouldEqual, "accounts")
 			})
 		})
@@ -120,42 +99,32 @@ func TestPosgresStore(t *testing.T) {
 		Convey(".CreateLedger", func() {
 
 			var ledgerName = util.RandString(10)
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
-			So(err, ShouldBeNil)
 
-			Convey("should successfully create a ledger entry", func() {
-
-				ledger, err := pgStore.CreateLedger(ledgerName, true, true)
+			Convey("should successfully create a ledger", func() {
+				ledger, err := pgStore.CreateLedger(util.RandString(10), ledgerName, true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 				So(ledger.Chained, ShouldEqual, true)
 				So(ledger.Public, ShouldEqual, true)
 
-				ledger, err = pgStore.CreateLedger(util.RandString(10), true, true)
+				ledger, err = pgStore.CreateLedger(util.RandString(10), util.RandString(10), true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
 				Convey("should return error since a ledger with same name already exists", func() {
-					_, err := pgStore.CreateLedger(ledgerName, false, false)
+					_, err := pgStore.CreateLedger(util.RandString(10), ledgerName, false, false)
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, `ledger with matching name already exists`)
 				})
 			})
-
-			Reset(func() {
-				RestDB()
-			})
 		})
 
 		Convey(".CreateLedgerThen", func() {
-
 			var ledgerName = util.RandString(10)
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
-			So(err, ShouldBeNil)
 
 			Convey("should fail to create a ledger if thenFunction returns an error", func() {
 				var ErrFromThenFunc = fmt.Errorf("thenFunc error")
-				ledger, err := pgStore.CreateLedgerThen(ledgerName, true, true, func() error {
+				ledger, err := pgStore.CreateLedgerThen("cocoon_id", ledgerName, true, true, func() error {
 					return ErrFromThenFunc
 				})
 				So(err, ShouldNotBeNil)
@@ -164,7 +133,7 @@ func TestPosgresStore(t *testing.T) {
 			})
 
 			Convey("should successfully create a ledger if then function does not return error", func() {
-				ledger, err := pgStore.CreateLedgerThen(ledgerName, true, true, func() error {
+				ledger, err := pgStore.CreateLedgerThen(util.RandString(5), ledgerName, true, true, func() error {
 					return nil
 				})
 				So(err, ShouldBeNil)
@@ -172,15 +141,11 @@ func TestPosgresStore(t *testing.T) {
 				So(ledger.Chained, ShouldEqual, true)
 				So(ledger.Public, ShouldEqual, true)
 			})
-
-			Reset(func() {
-				RestDB()
-			})
 		})
 
 		Convey(".GetLedger", func() {
 
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when ledger does not exist", func() {
@@ -191,34 +156,32 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("should return existing ledger", func() {
 				name := util.RandString(10)
-				ledger, err := pgStore.CreateLedger(name, true, true)
+				ledger, err := pgStore.CreateLedger("abc", name, true, true)
 				So(err, ShouldBeNil)
 				So(ledger, ShouldNotBeNil)
 
 				found, err := pgStore.GetLedger(name)
 				So(found, ShouldNotBeNil)
 				So(err, ShouldBeNil)
-				So(found.Hash, ShouldEqual, ledger.Hash)
-			})
-
-			Reset(func() {
-				RestDB()
+				So(found.Number, ShouldEqual, ledger.Number)
+				So(found.CocoonID, ShouldEqual, ledger.CocoonID)
 			})
 		})
 
 		Convey(".Put", func() {
 
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("expects new transaction to be the first and only transaction", func() {
 				ledger := util.Sha256("ledger_name")
-				_, err := pgStore.CreateLedger(ledger, true, true)
+				_, err := pgStore.CreateLedger(util.RandString(5), ledger, true, true)
 				So(err, ShouldBeNil)
 
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
-				err = pgStore.Put(ledger, []*types.Transaction{tx})
+				txs, err := pgStore.Put(ledger, []*types.Transaction{tx})
 				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 1)
 
 				var allTx []types.Transaction
 				err = db.(*gorm.DB).Find(&allTx).Error
@@ -232,27 +195,22 @@ func TestPosgresStore(t *testing.T) {
 					So(allTx[0].Key, ShouldEqual, "key")
 					So(allTx[0].Value, ShouldEqual, "value")
 				})
-
-			})
-
-			Reset(func() {
-				RestDB()
 			})
 		})
 
 		Convey(".PutThen", func() {
 
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
 			So(err, ShouldBeNil)
 
-			ledger := util.Sha256("ledger_name")
-			_, err = pgStore.CreateLedger(ledger, true, true)
+			ledger := util.RandString(5)
+			_, err = pgStore.CreateLedger(util.RandString(5), ledger, true, true)
 			So(err, ShouldBeNil)
 
 			Convey("Should fail if thenFunc returns error", func() {
 				var ErrThenFunc = fmt.Errorf("thenFunc error")
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
-				err = pgStore.PutThen(ledger, []*types.Transaction{tx}, func() error {
+				_, err := pgStore.PutThen(ledger, []*types.Transaction{tx}, func([]*types.Transaction) error {
 					return ErrThenFunc
 				})
 				So(err, ShouldResemble, ErrThenFunc)
@@ -260,60 +218,19 @@ func TestPosgresStore(t *testing.T) {
 
 			Convey("Should successfully add transaction if thenFunc does not return error", func() {
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "key", Value: "value"}
-				err = pgStore.PutThen(ledger, []*types.Transaction{tx}, func() error {
+				txs, err := pgStore.PutThen(ledger, []*types.Transaction{tx}, func([]*types.Transaction) error {
 					return nil
 				})
 				So(err, ShouldBeNil)
-
-				var allTx []types.Transaction
-				err = db.(*gorm.DB).Find(&allTx).Error
-				So(err, ShouldBeNil)
-				So(len(allTx), ShouldEqual, 1)
-			})
-
-			Reset(func() {
-				RestDB()
-			})
-		})
-
-		Convey(".GetByID", func() {
-
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
-			So(err, ShouldBeNil)
-
-			Convey("should return nil when transaction does not exist", func() {
-				tx, err := pgStore.GetByID(types.GetSystemPublicLedgerName(), "unknown_id")
-				So(tx, ShouldBeNil)
-				So(err, ShouldBeNil)
-			})
-
-			Convey("should return an expected transaction", func() {
-				txID := util.Sha256(util.UUID4())
-				tx := &types.Transaction{ID: txID, Key: "key", Value: "value"}
-
-				ledger := util.Sha256(util.RandString(5))
-				_, err := pgStore.CreateLedger(ledger, true, true)
-				So(err, ShouldBeNil)
-
-				err = pgStore.Put(ledger, []*types.Transaction{tx})
-				So(err, ShouldBeNil)
-
-				tx2, err := pgStore.GetByID(ledger, txID)
-				So(err, ShouldBeNil)
-				So(tx2, ShouldNotBeNil)
-				So(tx2.Key, ShouldEqual, tx.Key)
-				So(tx2.Value, ShouldEqual, tx.Value)
-				So(tx2.Hash, ShouldNotBeEmpty)
-			})
-
-			Reset(func() {
-				RestDB()
+				So(len(txs), ShouldEqual, 1)
+				So(txs[0].Err, ShouldBeEmpty)
+				So(txs[0].ID, ShouldEqual, tx.ID)
 			})
 		})
 
 		Convey(".Get", func() {
 
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("should return nil when transaction does not exist", func() {
@@ -326,28 +243,26 @@ func TestPosgresStore(t *testing.T) {
 				key := util.UUID4()
 
 				ledger := util.Sha256(util.RandString(5))
-				_, err = pgStore.CreateLedger(ledger, true, true)
+				_, err = pgStore.CreateLedger(util.RandString(5), ledger, true, true)
 				So(err, ShouldBeNil)
 
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: key, Value: "value"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx})
-				So(tx, ShouldNotBeNil)
+				txs, err := pgStore.Put(ledger, []*types.Transaction{tx})
 				So(err, ShouldBeNil)
+				So(len(txs), ShouldEqual, 1)
+				So(txs[0].Err, ShouldBeEmpty)
+				So(txs[0].ID, ShouldEqual, tx.ID)
 
 				tx2, err := pgStore.Get(ledger, key)
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 				So(tx2.Hash, ShouldEqual, tx.Hash)
 			})
-
-			Reset(func() {
-				RestDB()
-			})
 		})
 
 		Convey(".GetRange", func() {
 
-			err := pgStore.Init(types.GetSystemPublicLedgerName())
+			err := pgStore.Init(types.GetSystemPublicLedgerName(), types.GetSystemPrivateLedgerName())
 			So(err, ShouldBeNil)
 
 			Convey("Should successfully return expected transactions and exclude end key when `includeEndKey` is false", func() {
@@ -356,7 +271,7 @@ func TestPosgresStore(t *testing.T) {
 				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
 				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
 				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				_, err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -371,7 +286,7 @@ func TestPosgresStore(t *testing.T) {
 				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
 				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
 				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				_, err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -386,7 +301,7 @@ func TestPosgresStore(t *testing.T) {
 				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ben", Value: "110"}
 				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.glen", Value: "200"}
 				tx4 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "z", Value: "200"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
+				_, err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3, tx4})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -400,7 +315,7 @@ func TestPosgresStore(t *testing.T) {
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
 				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "ben.account", Value: "110"}
 				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "glen.account", Value: "200"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
+				_, err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -414,7 +329,7 @@ func TestPosgresStore(t *testing.T) {
 				tx := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "account.ken", Value: "100"}
 				tx2 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "ben.account", Value: "110"}
 				tx3 := &types.Transaction{ID: util.Sha256(util.UUID4()), Key: "glen.account", Value: "200"}
-				err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
+				_, err := pgStore.Put(ledger, []*types.Transaction{tx, tx2, tx3})
 				So(tx, ShouldNotBeNil)
 				So(err, ShouldBeNil)
 
@@ -428,14 +343,6 @@ func TestPosgresStore(t *testing.T) {
 				So(len(txs), ShouldEqual, 1)
 				So(txs[0].Key, ShouldEqual, "glen.account")
 			})
-
-			Reset(func() {
-				RestDB()
-			})
-		})
-
-		Reset(func() {
-			RestDB()
 		})
 	})
 }

@@ -1,11 +1,11 @@
-package golang
+package stub
 
 import (
 	"fmt"
 	"net"
 	"testing"
 
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 	// . "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/grpc"
 )

@@ -58,3 +58,38 @@ func (api *API) Login(ctx context.Context, req *proto_api.LoginRequest) (*proto_
 		Body:   []byte(ss),
 	}, nil
 }
+
+// DeleteSessions deletes all identity sessions or the sessions specified in IDs
+func (api *API) DeleteSessions(ctx context.Context, req *proto_api.DeleteSessionsRequest) (*proto_api.Response, error) {
+
+	var err error
+	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
+	var currentSessionToken = ctx.Value(types.CtxSessionID).(string)
+
+	identity, err := api.platform.GetIdentity(ctx, loggedInIdentity)
+	if err != nil {
+		return nil, err
+	}
+
+	if !req.All {
+		newSessions := []string{}
+		for _, sID := range identity.ClientSessions {
+			if sID != currentSessionToken {
+				newSessions = append(newSessions, sID)
+			}
+		}
+		identity.ClientSessions = newSessions
+	} else {
+		identity.ClientSessions = nil
+	}
+
+	err = api.platform.PutIdentity(ctx, identity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to put identity: %s", err)
+	}
+
+	return &proto_api.Response{
+		Status: 200,
+		Body:   []byte("success"),
+	}, nil
+}

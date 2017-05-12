@@ -38,3 +38,10 @@ func toIntOr(v interface{}, def int) int {
 	}
 	return v.(int)
 }
+
+func toInt32Or(v interface{}, def int32) int32 {
+	if v == nil {
+		return def
+	}
+	return v.(int32)
+}

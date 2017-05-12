@@ -3,6 +3,8 @@ package connector
 import (
 	"testing"
 
+	"github.com/ncodes/cocoon/core/types"
+	"github.com/ncodes/modo"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,8 +20,8 @@ func (ml *MyLang) GetImage() string {
 func (ml *MyLang) GetDownloadDestination() string {
 	return ""
 }
-func (ml *MyLang) GetBuildScript() string {
-	return ""
+func (ml *MyLang) GetBuildScript() *modo.Do {
+	return nil
 }
 
 func (ml *MyLang) GetCopyDestination() string {
@@ -30,7 +32,7 @@ func (ml *MyLang) GetSourceRootDir() string {
 	return ""
 }
 
-func (ml *MyLang) GetRunScript() []string {
+func (ml *MyLang) GetRunCommand() *modo.Do {
 	return nil
 }
 
@@ -49,8 +51,7 @@ func TestLauncher(t *testing.T) {
 	Convey("Connector", t, func() {
 
 		Convey("AddLanguage", func() {
-			lc, err := NewConnector(&Request{}, make(chan bool))
-			So(err, ShouldBeNil)
+			lc := NewConnector(nil, &types.Spec{}, make(chan bool))
 			Convey("should successfully add new language and return nil", func() {
 				err := lc.AddLanguage(&MyLang{})
 				So(err, ShouldBeNil)
@@ -64,10 +65,9 @@ func TestLauncher(t *testing.T) {
 		})
 
 		Convey("GetLanguage", func() {
-			lc, err := NewConnector(&Request{}, make(chan bool))
-			So(err, ShouldBeNil)
+			lc := NewConnector(nil, &types.Spec{}, make(chan bool))
 			l := new(MyLang)
-			err = lc.AddLanguage(l)
+			err := lc.AddLanguage(l)
 			So(err, ShouldBeNil)
 
 			Convey("should return 1 language", func() {

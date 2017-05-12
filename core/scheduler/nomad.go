@@ -5,7 +5,6 @@ import (
 
 	"os"
 
-	"github.com/ellcrys/crypto"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/hashicorp/consul/api"
@@ -13,7 +12,7 @@ import (
 	"github.com/ncodes/cocoon/core/config"
 )
 
-var log = config.MakeLogger("nomad", "nomad")
+var log = config.MakeLogger("nomad")
 
 // SupportedCocoonCodeLang defines the supported chaincode language
 var SupportedCocoonCodeLang = []string{"go"}
@@ -67,7 +66,7 @@ func makeLinkToServiceTag(linkID string) string {
 }
 
 // Deploy a cocoon code to the scheduler
-func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, memory, cpuShare int) (*DeploymentInfo, error) {
+func (sc *Nomad) Deploy(jobID, releaseID string, memory, cpuShare int) (*DeploymentInfo, error) {
 
 	var err error
 
@@ -75,20 +74,14 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, m
 		return nil, fmt.Errorf("job id is required")
 	}
 
-	log.Debugf("Deploying cocoon code with language=%s, url=%s, version=%s", lang, url, version)
+	log.Debugf("Deploying cocoon=%s, release=%s", jobID, releaseID)
 
-	if len(buildParams) > 0 {
-		buildParams = crypto.ToBase64([]byte(buildParams))
-	}
-
+	// define job specification
 	job := NewJob("master", jobID, 1)
 	job.GetSpec().Region = "global"
 	job.GetSpec().Datacenters = []string{"dc1"}
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["ENV"] = os.Getenv("ENV")
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_URL"] = url
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_VERSION"] = version
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_CODE_LANG"] = lang
-	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_BUILD_PARAMS"] = buildParams
+	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_RELEASE"] = releaseID
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.CPU = cpuShare
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.DiskMB = 1000
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = common.Round(0.3 * float64(memory))
@@ -108,15 +101,7 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, m
 		}
 	}
 
-	// if cocoon linkID is provided, set env variable and also add id to
-	// the service tag. This will allow us to discover the link via consul service discovery.
-	// Tag format is `link_to:the_id`
-	if len(linkID) > 0 {
-		job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_LINK"] = linkID
-		curTags := job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags
-		job.GetSpec().TaskGroups[0].Tasks[0].Services[0].Tags = append(curTags, makeLinkToServiceTag(linkID))
-	}
-
+	// deploy job specification
 	jobSpec, _ := util.ToJSON(job)
 	resp, status, err := sc.deployJob(string(jobSpec))
 	if err != nil {
@@ -125,14 +110,8 @@ func (sc *Nomad) Deploy(jobID, lang, url, version, buildParams, linkID string, m
 		return nil, fmt.Errorf("system: failed to deploy job spec. %s", resp)
 	}
 
-	var jobInfo map[string]interface{}
-	if err = util.FromJSON([]byte(resp), &jobInfo); err != nil {
-		return nil, fmt.Errorf("system: %s", resp)
-	}
-
 	return &DeploymentInfo{
-		ID:     jobID,
-		EvalID: jobInfo["EvalID"].(string),
+		ID: jobID,
 	}, nil
 }
 
@@ -194,7 +173,6 @@ func Getenv(env, defaultVal string) string {
 
 // GetServiceDiscoverer returns an instance of the nomad service discovery
 func (sc *Nomad) GetServiceDiscoverer() (ServiceDiscovery, error) {
-	log.Debug("Getting service discoverer")
 	cfg := api.DefaultConfig()
 	cfg.Address = util.Env("CONSUL_ADDR", cfg.Address)
 	client, err := api.NewClient(cfg)

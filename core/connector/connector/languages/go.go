@@ -1,4 +1,4 @@
-package connector
+package languages
 
 import (
 	"os"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
+	"github.com/ncodes/cocoon/core/types"
+	"github.com/ncodes/modo"
 )
 
 // SupportedVendorTool includes a list of supported vendor packaging tool
@@ -20,7 +22,7 @@ var SupportedVendorTool = []string{
 
 // Go defines a deployment helper for go cocoon.
 type Go struct {
-	req         *Request
+	spec        *types.Spec
 	name        string
 	image       string
 	userHome    string
@@ -32,13 +34,13 @@ type Go struct {
 
 // NewGo returns a new instance a golang
 // cocoon code deployment helper.
-func NewGo(req *Request) *Go {
+func NewGo(spec *types.Spec) *Go {
 	g := &Go{
 		name:      "go",
 		image:     "ncodes/launch-go",
 		userHome:  "/home",
 		imgGoPath: "/go",
-		req:       req,
+		spec:      spec,
 		env:       map[string]string{},
 	}
 	g.setUserHomeDir()
@@ -75,15 +77,15 @@ func (g *Go) SetRunEnv(env map[string]string) {
 // GetDownloadDestination returns the location to save
 // the downloaded go cocoon code source on the connector
 func (g *Go) GetDownloadDestination() string {
-	u, _ := urlx.Parse(g.req.URL)
+	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
-	return path.Join(g.userHome, "/ccode/sources/", g.req.ID, repoID)
+	return path.Join(g.userHome, "/ccode/sources/", g.spec.ID, repoID)
 }
 
 // GetCopyDestination returns the location in
 // the container where the source code will be copied to
 func (g *Go) GetCopyDestination() string {
-	u, _ := urlx.Parse(g.req.URL)
+	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.imgGoPath, "src/github.com/", strings.Split(repoID, "/")[0])
 }
@@ -91,13 +93,13 @@ func (g *Go) GetCopyDestination() string {
 // GetSourceRootDir returns the root directory of the cocoon source code
 // in container.
 func (g *Go) GetSourceRootDir() string {
-	u, _ := urlx.Parse(g.req.URL)
+	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.imgGoPath, "src/github.com/", repoID)
 }
 
 // RequiresBuild returns true if cocoon codes written in
-// go language requires a build process.
+// go language spec a build process.
 // During development, If DEV_RUN_ROOT_BIN env is set, it will return false as
 // the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
@@ -122,16 +124,15 @@ func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 	return nil
 }
 
-// GetBuildScript will return the script required
-// to create an executable
-func (g *Go) GetBuildScript() string {
+// GetBuildScript will return the command to build
+// the source code and generate a binary.
+func (g *Go) GetBuildScript() *modo.Do {
 
 	cmds := []string{
-		// change dir to cocoon source root directory
-		fmt.Sprintf("cd %s", g.GetSourceRootDir()),
+		"cd " + g.GetSourceRootDir(),
 	}
 
-	// add pre-build commands
+	// add the command to run package manager vendor operation
 	if len(g.buildParams) > 0 {
 		if pkgMgr := g.buildParams["pkgMgr"]; pkgMgr != nil {
 			switch pkgMgr {
@@ -143,35 +144,73 @@ func (g *Go) GetBuildScript() string {
 		}
 	}
 
-	// build the source
+	// build source
 	cmds = append(cmds, "go build -v -o /bin/ccode")
 
-	// run the commands
-	return strings.Join(util.RemoveEmptyInStringSlice(cmds), " && ")
+	return &modo.Do{
+		Cmd: []string{
+			"bash",
+			"-c",
+			strings.Join(cmds, "&&"),
+		},
+	}
 }
 
-// GetRunScript returns the script required to start the
+// GetRunCommand returns the command to start the
+// cocoon code for this language. If DEV_RUN_ROOT_BIN env is set, it will run any
+// ccode binary located in the mount destination.
+func (g *Go) GetRunCommand() *modo.Do {
+	cmds := []string{}
+
+	// add environment variables
+	for k, v := range g.env {
+		cmds = append(cmds, fmt.Sprintf("export %s='%s'", k, v))
+	}
+
+	// if DEV_RUN_ROOT_BIN is set (for development only), run 'ccode' binary that is expected to be in source root
+	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
+		cmds = append(cmds, "cd "+g.GetSourceRootDir()) // move into source root director
+		cmds = append(cmds, "./ccode")
+		return &modo.Do{
+			Cmd: []string{
+				"bash",
+				"-c",
+				strings.Join(cmds, "&&"),
+			},
+		}
+	}
+	cmds = append(cmds, "ccode")
+	return &modo.Do{
+		Cmd: []string{
+			"bash",
+			"-c",
+			strings.Join(cmds, "&&"),
+		},
+	}
+}
+
+// GetRunCommand returns the script required to start the
 // cocoon code according to the build and installation process
 // of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
 // ccode binary located in the mount destination.
-func (g *Go) GetRunScript() []string {
+// func (g *Go) GetRunCommand() []string {
 
-	// prepare environment variables
-	env := []string{}
-	for k, v := range g.env {
-		env = append(env, fmt.Sprintf("export %s='%s'", k, v))
-	}
+// 	// prepare environment variables
+// 	env := []string{}
+// 	for k, v := range g.env {
+// 		env = append(env, fmt.Sprintf("export %s='%s'", k, v))
+// 	}
 
-	script := []string{
-		"bash",
-		"-c",
-		strings.Join(env, " && ") + " && ccode",
-	}
+// 	script := []string{
+// 		"bash",
+// 		"-c",
+// 		strings.Join(env, " && ") + " && ccode",
+// 	}
 
-	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
-	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
-		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetSourceRootDir())}
-	}
+// 	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
+// 	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
+// 		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetSourceRootDir())}
+// 	}
 
-	return script
-}
+// 	return script
+// }

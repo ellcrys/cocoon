@@ -1,25 +1,27 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/config"
 	"github.com/ncodes/cocoon/core/connector/connector"
+	"github.com/ncodes/cocoon/core/connector/connector/languages"
 	"github.com/ncodes/cocoon/core/connector/router"
 	"github.com/ncodes/cocoon/core/connector/server"
+	"github.com/ncodes/cocoon/core/platform"
 	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/ncodes/cocoon/core/types"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 var (
-	log       = config.MakeLogger("connector", fmt.Sprintf("cocoon_%s", os.Getenv("COCOON_ID")))
-	routerLog = config.MakeLogger("connector.routerHelper", "routerHelper")
+	log       = config.MakeLogger("connector")
+	routerLog = config.MakeLogger("connector.router_helper")
 
 	// default connector RPC Addr
 	defaultConnectorRPCAddr = util.Env("DEV_ADDR_CONNECTOR_RPC", ":8002")
@@ -28,55 +30,37 @@ var (
 	defaultConnectorHTTPAddr = util.Env("DEV_ADDR_CONNECTOR_HTTP", ":8900")
 
 	// default cocoon code RPC ADDR
-	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", ":8004")
-
-	// Signals channel
-	sigs = make(chan os.Signal, 1)
+	defaultCocoonCodeRPCAddr = util.Env("DEV_ADDR_COCOON_CODE_RPC", "127.0.0.1:8004")
 )
 
 func init() {
 	config.ConfigureLogger()
 }
 
-// creates a deployment request with argument
-// fetched from the environment.
-func getRequest() (*connector.Request, error) {
+// Pull the cocoon specification
+func getSpec(pf *platform.Platform) (*types.Spec, error) {
 
-	// get cocoon code github link and language
-	ccID := os.Getenv("COCOON_ID")
-	ccURL := os.Getenv("COCOON_CODE_URL")
-	ccVersion := os.Getenv("COCOON_CODE_VERSION")
-	ccLang := os.Getenv("COCOON_CODE_LANG")
-	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
-	buildParam := os.Getenv("COCOON_BUILD_PARAMS")
-	ccLink := os.Getenv("COCOON_LINK")
+	ctx, cc := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cc()
 
-	if ccID == "" {
-		return nil, fmt.Errorf("Cocoon code id not set @ $COCOON_ID")
-	} else if ccURL == "" {
-		return nil, fmt.Errorf("Cocoon code url not set @ $COCOON_CODE_URL")
-	} else if ccLang == "" {
-		return nil, fmt.Errorf("Cocoon code url not set @ $COCOON_CODE_LANG")
+	cocoon, release, err := pf.GetCocoonAndRelease(ctx, os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"), true)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get spec")
 	}
 
-	return &connector.Request{
-		ID:          ccID,
-		URL:         ccURL,
-		Version:     ccVersion,
-		Lang:        ccLang,
+	diskLimit := util.Env("COCOON_DISK_LIMIT", "300")
+	return &types.Spec{
+		ID:          cocoon.ID,
+		URL:         release.URL,
+		Version:     release.Version,
+		Lang:        release.Language,
 		DiskLimit:   common.MBToByte(util.ToInt64(diskLimit)),
-		BuildParams: buildParam,
-		Link:        ccLink,
+		BuildParams: release.BuildParam,
+		Link:        release.Link,
+		ReleaseID:   release.ID,
+		Cocoon:      cocoon,
+		Release:     release,
 	}, nil
-}
-
-// onTerminate calls a function when a terminate or interrupt signal is received.
-func onTerminate(f func(s os.Signal)) {
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		s := <-sigs
-		f(s)
-	}()
 }
 
 // startCmd represents the connector command
@@ -89,22 +73,26 @@ var startCmd = &cobra.Command{
 		if missingEnv := common.HasEnv([]string{
 			"ROUTER_DOMAIN",
 			"COCOON_ID",
-			"COCOON_CODE_URL",
-			"COCOON_CODE_LANG",
+			"COCOON_RELEASE",
+			"COCOON_CONTAINER_NAME",
 		}...); len(missingEnv) > 0 {
 			log.Fatalf("The following environment variables must be set: %v", missingEnv)
 		}
 
-		log.Info("Connector has started")
-
-		// get deployment request from environment and validate it
-		log.Info("Collecting and validating launch request")
-		req, err := getRequest()
+		platform, err := platform.NewPlatform()
 		if err != nil {
-			log.Error(err.Error())
+			log.Fatalf("Failed to initialize platform: %s", err)
 			return
 		}
-		log.Infof("Ready to launch cocoon code with id = %s", req.ID)
+
+		log.Infof("Connector initialized [cocoon=%s, release=%s]", os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"))
+		log.Infof("Fetching cocoon specification")
+		spec, err := getSpec(platform)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+
+		log.Infof("Launching...")
 
 		connectorRPCAddr := scheduler.Getenv("ADDR_RPC", defaultConnectorRPCAddr)
 		connectorHTTPAddr := scheduler.Getenv("ADDR_HTTP", defaultConnectorHTTPAddr)
@@ -117,42 +105,42 @@ var startCmd = &cobra.Command{
 			log.Fatal("Ensure consul is running at 127.0.0.1:8500. Use CONSUL_ADDR to set alternative consul address")
 		}
 
+		// initialize connector
 		waitCh := make(chan bool, 1)
-		cn, err := connector.NewConnector(req, waitCh)
-		if err != nil {
-			log.Fatal(err.Error())
-			return
-		}
+		cn := connector.NewConnector(platform, spec, waitCh)
 		cn.SetRouterHelper(routerHelper)
 		cn.SetAddrs(connectorRPCAddr, cocoonCodeRPCAddr)
-		cn.AddLanguage(connector.NewGo(req))
+		cn.AddLanguage(languages.NewGo(spec))
 
 		// start grpc API server
 		rpcServerStartedCh := make(chan bool)
 		rpcServer := server.NewRPC(cn)
-		go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
-		<-rpcServerStartedCh
 
 		// start http server
 		httpServerStartedCh := make(chan bool)
 		httpServer := server.NewHTTP(rpcServer)
+
+		go rpcServer.Start(connectorRPCAddr, rpcServerStartedCh)
+		<-rpcServerStartedCh
+
 		go httpServer.Start(connectorHTTPAddr, httpServerStartedCh)
 		<-httpServerStartedCh
 
 		// listen to terminate request
-		onTerminate(func(s os.Signal) {
-			log.Info("Terminate signal received. Stopping connector")
+		common.OnTerminate(func(s os.Signal) {
+			log.Info("Terminate signal received")
+			log.Info("Stopping cocoon code")
 			rpcServer.Stop()
-
 			// allow some time for logs to be read by the connector
 			time.Sleep(2 * time.Second)
-
+			log.Info("Stopping connector")
 			cn.Stop(false)
 		})
 
 		// launch the deployed cocoon code
 		go cn.Launch(connectorRPCAddr, cocoonCodeRPCAddr)
 		<-waitCh
+
 		log.Info("Connector stopped")
 	},
 }

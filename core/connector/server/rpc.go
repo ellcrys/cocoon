@@ -10,6 +10,7 @@ import (
 	"github.com/ncodes/cocoon/core/connector/server/handlers"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
 	logging "github.com/op/go-logging"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -28,7 +29,7 @@ type RPC struct {
 
 // NewRPC creates a new grpc API server
 func NewRPC(connector *connector.Connector) *RPC {
-	log = config.MakeLogger("connector.rpc", "")
+	log = config.MakeLogger("connector.rpc")
 	server := new(RPC)
 	server.connector = connector
 	server.ledgerOps = handlers.NewLedgerOperationHandler(log, connector)
@@ -45,7 +46,12 @@ func (rpc *RPC) GetConnector() *connector.Connector {
 // Start starts the API service
 func (rpc *RPC) Start(addr string, startedCh chan bool) {
 
-	_, port, _ := net.SplitHostPort(addr)
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "failed to parse address"))
+		startedCh <- false
+		return
+	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s", addr))
 	if err != nil {
@@ -53,7 +59,7 @@ func (rpc *RPC) Start(addr string, startedCh chan bool) {
 	}
 
 	time.AfterFunc(2*time.Second, func() {
-		log.Infof("Started GRPC API server @ %s", addr)
+		log.Infof("Started GRPC API server @ :%s", port)
 		startedCh <- true
 		time.Sleep(1 * time.Second)
 	})

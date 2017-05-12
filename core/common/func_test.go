@@ -14,13 +14,14 @@ import (
 	"github.com/ncodes/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 	context "golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 func TestFunc(t *testing.T) {
 	Convey("Func", t, func() {
 		Convey(".GetRPCErrDesc", func() {
 			Convey("Should remove rpc error = 2 from error", func() {
-				bs := GetRPCErrDesc(errors.New("rpc error: code = 2 desc = something bad happened"))
+				bs := GetRPCErrDesc(grpc.Errorf(1, "something bad happened"))
 				So(string(bs), ShouldEqual, "something bad happened")
 			})
 		})
@@ -183,10 +184,22 @@ func TestFunc(t *testing.T) {
 			So(token, ShouldEqual, "abc")
 		})
 
-		Convey("HasEnv", func() {
+		Convey(".HasEnv", func() {
 			So(HasEnv("VAR_A", "VAR_B"), ShouldResemble, []string{"VAR_A", "VAR_B"})
 			os.Setenv("VAR_A", "stuff")
 			So(HasEnv("VAR_A", "VAR_B"), ShouldResemble, []string{"VAR_B"})
+		})
+
+		Convey(".MergeMapSlice", func() {
+			s := []map[string]interface{}{
+				{"name": "Ben", "age": 10, "skill": "running"},
+				{"name": "Glen", "age": 15},
+			}
+			newMap := MergeMapSlice(s)
+			So(newMap, ShouldHaveLength, 3)
+			So(newMap["name"], ShouldEqual, "Glen")
+			So(newMap["age"], ShouldEqual, 15)
+			So(newMap["skill"], ShouldEqual, "running")
 		})
 	})
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
+	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
@@ -47,30 +48,24 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 		}
 	}
 
-	// don't continue if cocoon has no release (this should never happen)
-	if len(cocoon.Releases) == 0 {
-		return nil, fmt.Errorf("No release to run. Wierd")
+	// when release id isn't provided, use the most recently created release
+	if len(req.ReleaseID) == 0 {
+		// don't continue if cocoon has no release (this should never happen)
+		if len(cocoon.Releases) == 0 {
+			return nil, fmt.Errorf("No release to run. Wierd")
+		}
+		req.ReleaseID = cocoon.Releases[len(cocoon.Releases)-1]
 	}
 
-	var releaseToDeploy = cocoon.Releases[len(cocoon.Releases)-1]
-
-	// if user wants to use the last deployed release, set the release request id to the last deployed release id
-	// otherwise, if the cocoon does not have a last deployed release, return error
-	if req.UseLastDeployedReleaseID && len(cocoon.LastDeployedReleaseID) != 0 {
-		apiLog.Infof("Using last deployed release for cocoon = [%s]", cocoon.ID)
-		releaseToDeploy = cocoon.LastDeployedReleaseID
-	} else if req.UseLastDeployedReleaseID {
-		return nil, fmt.Errorf("this cocoon does not have a recently approved and deployed release yet")
-	}
-
-	apiLog.Debugf("Deploying release = %s", releaseToDeploy)
+	apiLog.Debugf("Deploying release = %s", req.ReleaseID)
 
 	// get the release
-	release, err := api.platform.GetRelease(ctx, releaseToDeploy, true)
-	if err != nil && err != types.ErrTxNotFound {
+	release, err := api.platform.GetRelease(ctx, req.ReleaseID, true)
+	if err != nil {
+		if common.CompareErr(err, types.ErrTxNotFound) == 0 {
+			return nil, fmt.Errorf("release (%s) does not exist", req.ReleaseID)
+		}
 		return nil, fmt.Errorf("failed to get release. %s", err)
-	} else if err == types.ErrTxNotFound {
-		return nil, fmt.Errorf("release (%s) does not exist", releaseToDeploy)
 	}
 
 	// If the number of signatories is greater than 1 and the number of approval
@@ -88,7 +83,7 @@ func (api *API) Deploy(ctx context.Context, req *proto_api.DeployRequest) (*prot
 	// update the cocoon values to match the release we are about to start
 	cocoon.LastDeployedReleaseID = release.ID
 
-	depInfo, err := api.scheduler.Deploy(cocoon.ID, release.Language, release.URL, release.Version, release.BuildParam, release.Link, cocoon.Memory, cocoon.CPUShare)
+	depInfo, err := api.platform.GetScheduler().Deploy(cocoon.ID, release.ID, cocoon.Memory, cocoon.CPUShare)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "system") {
 			apiLog.Error(err.Error())

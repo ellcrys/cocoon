@@ -1,6 +1,6 @@
 // Package golang includes The runtime, which is just a stub that connects the cocoon code to the connector's RPC
 // server. The runtime provides access to APIs for various operations.
-package golang
+package stub
 
 import (
 	"fmt"
@@ -9,15 +9,14 @@ import (
 	"strconv"
 	"time"
 
-	"strings"
-
 	"github.com/ellcrys/util"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/runtime/golang/config"
-	"github.com/ncodes/cocoon/core/runtime/golang/proto_runtime"
+	"github.com/ncodes/cocoon/core/stub/config"
+	"github.com/ncodes/cocoon/core/stub/proto_runtime"
 	"github.com/ncodes/cocoon/core/types"
 	"github.com/op/go-logging"
+	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -110,13 +109,13 @@ func Run(cc CocoonCode) {
 
 	serverDone = make(chan bool, 1)
 
-	bindPort := strings.Split(serverAddr, ":")[1]
-	lis, err := net.Listen("tcp", net.JoinHostPort("", bindPort))
+	_, port, _ := net.SplitHostPort(serverAddr)
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("failed to listen on port=%s", bindPort)
+		log.Fatalf("%+v", errors.Wrapf(err, "failed to listen on allocated port"))
 	}
 
-	log.Infof("Started stub service at port=%s", bindPort)
+	log.Info("Started stub service started")
 	server := grpc.NewServer()
 	proto_runtime.RegisterStubServer(server, defaultServer)
 	go startServer(server, lis)
@@ -131,7 +130,7 @@ func Run(cc CocoonCode) {
 	// run Init() after 1 second to give time for connector to connect
 	time.AfterFunc(1*time.Second, func() {
 		if err = cc.OnInit(); err != nil {
-			log.Errorf("cocoode OnInit() returned error: %s", err)
+			log.Errorf("OnInit() Panicked: %+v", err)
 			Stop(2)
 		} else {
 			running = true
@@ -147,7 +146,7 @@ func Run(cc CocoonCode) {
 func startServer(server *grpc.Server, lis net.Listener) {
 	err := server.Serve(lis)
 	if err != nil {
-		log.Errorf("server has stopped: %s", err)
+		log.Errorf("server has stopped: %+v", err)
 		Stop(1)
 	}
 }

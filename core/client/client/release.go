@@ -22,7 +22,7 @@ import (
 // the id is taken to be a cocoon id and as such the vote is added
 // to the latest release. A positive vote is denoted with 1 or 0 for
 // negative.
-func AddVote(id, vote string, isCocoonID bool) error {
+func AddVote(id string, vote int, isCocoonID bool) error {
 
 	userSession, err := GetUserSessionToken()
 	if err != nil {
@@ -85,7 +85,7 @@ func AddVote(id, vote string, isCocoonID bool) error {
 
 	_, err = client.AddVote(ctx, &proto_api.AddVoteRequest{
 		ReleaseID: releaseID,
-		Vote:      vote,
+		Vote:      int32(vote),
 	})
 	if err != nil {
 		stopSpinner()
@@ -99,9 +99,9 @@ func AddVote(id, vote string, isCocoonID bool) error {
 
 	voteTxt := ""
 	switch vote {
-	case "1":
+	case 1:
 		voteTxt = "Approve"
-	case "0":
+	case 0:
 		voteTxt = "Deny"
 	}
 

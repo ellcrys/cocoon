@@ -2,15 +2,18 @@ package common
 
 import (
 	"fmt"
+	"os/signal"
 	"regexp"
+	"syscall"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"net"
 	"strings"
 
-	"net"
+	"github.com/imdario/mergo"
 
 	"os"
 
@@ -267,4 +270,24 @@ func HasEnv(envs ...string) []string {
 		}
 	}
 	return notSet
+}
+
+// OnTerminate calls a function when a terminate or interrupt signal is received.
+func OnTerminate(f func(s os.Signal)) {
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-sigs
+		f(s)
+	}()
+}
+
+// MergeMapSlice merges a slice of maps into a single map with the
+// each successive maps overwriting previously available keys
+func MergeMapSlice(s []map[string]interface{}) map[string]interface{} {
+	var newMap map[string]interface{}
+	for i := 0; i < len(s); i++ {
+		mergo.MergeWithOverwrite(&newMap, s[i])
+	}
+	return newMap
 }

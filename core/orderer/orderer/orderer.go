@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = config.MakeLogger("orderer", "orderer")
+var log = config.MakeLogger("orderer")
 
 // SetLogLevel sets the log level of the logger
 func SetLogLevel(l logging.Level) {
@@ -62,7 +62,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 
 		if od.blockchain == nil {
 			log.Error("Blockchain implementation not set")
-			od.Stop(1)
+			od.Stop()
 			return
 		}
 
@@ -71,7 +71,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 			_, err = od.blockchain.Connect(storeConStr)
 			if err != nil {
 				log.Info(err.Error(), storeConStr)
-				od.Stop(1)
+				od.Stop()
 				return
 			}
 		}
@@ -80,14 +80,14 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		err = od.blockchain.Init()
 		if err != nil {
 			log.Info(err.Error())
-			od.Stop(1)
+			od.Stop()
 			return
 		}
 
 		// initialize store
 		if od.store == nil {
 			log.Error("Store implementation not set")
-			od.Stop(1)
+			od.Stop()
 			return
 		}
 
@@ -95,7 +95,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		_, err := od.store.Connect(storeConStr)
 		if err != nil {
 			log.Info(err.Error())
-			od.Stop(1)
+			od.Stop()
 			return
 		}
 
@@ -109,7 +109,7 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 		err = od.store.Init(sysPubLedger, sysPrivLedger)
 		if err != nil {
 			log.Info(err.Error())
-			od.Stop(1)
+			od.Stop()
 			return
 		}
 
@@ -122,12 +122,12 @@ func (od *Orderer) Start(addr, storeConStr string, endedCh chan bool) {
 	od.server.Serve(lis)
 }
 
-// Stop stops the orderer and returns an exit code.
-func (od *Orderer) Stop(exitCode int) int {
+// Stop stops the orderer
+func (od *Orderer) Stop() {
 	od.server.Stop()
 	od.store.Close()
+	od.blockchain.Close()
 	close(od.endedCh)
-	return exitCode
 }
 
 // SetStore sets the store implementation to use.

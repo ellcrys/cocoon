@@ -7,7 +7,6 @@ import (
 
 	"os"
 
-	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/kr/pretty"
@@ -61,11 +60,6 @@ func (s *PostgresStore) Connect(dbAddr string) (interface{}, error) {
 	return s.db, nil
 }
 
-// MakeLegderHash takes a ledger and computes a hash
-func (s *PostgresStore) MakeLegderHash(ledger *types.Ledger) string {
-	return util.Sha256(fmt.Sprintf("%s;%t;%d", ledger.Name, ledger.Public, ledger.CreatedAt))
-}
-
 // Init initializes the types. Creates the necessary tables such as the
 // the tables and public and private system ledgers
 func (s *PostgresStore) Init(systemPublicLedgerName, systemPrivateLedgerName string) error {
@@ -90,6 +84,7 @@ func (s *PostgresStore) Init(systemPublicLedgerName, systemPrivateLedgerName str
 		[]interface{}{systemPublicLedgerName, true},   // public
 		[]interface{}{systemPrivateLedgerName, false}, // private
 	}
+
 	for _, ledger := range systemLedgers {
 		var c int
 		if err := s.db.Model(&types.Ledger{}).Where("name = ?", ledger[0].(string)).Count(&c).Error; err != nil {
@@ -110,7 +105,7 @@ func (s *PostgresStore) Init(systemPublicLedgerName, systemPrivateLedgerName str
 // Will only work in a test environment (Test Only!!!)
 func Destroy(dbAddr string) error {
 
-	if os.Getenv("APP_ENV") != "test" {
+	if os.Getenv("ENV") != "test" {
 		return fmt.Errorf("Cowardly refusing to do it! Can only call Destroy() in test environment")
 	}
 
@@ -126,7 +121,7 @@ func Destroy(dbAddr string) error {
 // Will only work in a test environment (Test Only!!!)
 func Clear(dbAddr string) error {
 
-	if os.Getenv("APP_ENV") != "test" {
+	if os.Getenv("ENV") != "test" {
 		return fmt.Errorf("Cowardly refusing to do it! Can only call Destroy() in test environment")
 	}
 

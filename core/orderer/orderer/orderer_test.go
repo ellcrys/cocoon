@@ -24,7 +24,7 @@ var dbname = "test_db_" + util.RandString(5)
 var storeConStr = util.Env("STORE_CON_STR", "host=localhost user=ned dbname="+dbname+" sslmode=disable password=")
 
 func init() {
-	os.Setenv("APP_ENV", "test")
+	os.Setenv("ENV", "test")
 	os.Setenv("DEV_MEM_LOCK", "true") // If we don't do this, we must have consul running
 }
 

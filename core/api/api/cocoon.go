@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	"os"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
 	"github.com/jinzhu/copier"
 	"github.com/ncodes/cocoon/core/api/api/proto_api"
+	"github.com/ncodes/cocoon/core/api/archiver"
 	"github.com/ncodes/cocoon/core/common"
 	"github.com/ncodes/cocoon/core/types"
 	context "golang.org/x/net/context"
@@ -61,7 +64,7 @@ func (api *API) watchCocoonStatus(ctx context.Context, cocoon *types.Cocoon, cal
 
 // CreateCocoon creates a new cocoon and initial release. The new
 // cocoon is also added to the identity's list of cocoons
-func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
+func (api *API) CreateCocoon(ctx context.Context, req *proto_api.ContractRequest) (*proto_api.Response, error) {
 
 	var err error
 	var releaseID = util.UUID4()
@@ -76,40 +79,6 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	cocoon.IdentityID = loggedInIdentity
 	cocoon.Signatories = append(cocoon.Signatories, cocoon.IdentityID)
 	cocoon.CreatedAt = now.UTC().Format(time.RFC3339Nano)
-
-	// ensure a similar cocoon does not exist
-	_, err = api.platform.GetCocoon(ctx, cocoon.ID)
-	if err != nil && err != types.ErrCocoonNotFound {
-		return nil, err
-	} else if err == nil {
-		return nil, fmt.Errorf("cocoon with the same id already exists")
-	}
-
-	if err := ValidateCocoon(&cocoon); err != nil {
-		return nil, err
-	}
-
-	err = api.platform.PutCocoon(ctx, &cocoon)
-	if err != nil {
-		return nil, err
-	}
-
-	// if a link cocoon id is provided, ensure the linked cocoon exists
-	// and is owned by the currently logged in identity
-	if len(req.Link) > 0 {
-		cocoonToLinkTo, err := api.platform.GetCocoon(ctx, req.Link)
-		if err != nil {
-			if err != types.ErrCocoonNotFound {
-				return nil, err
-			} else if err == types.ErrCocoonNotFound {
-				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", req.Link)
-			}
-		}
-		// ensure logged in user owns the cocoon being linked
-		if loggedInIdentity != cocoonToLinkTo.IdentityID {
-			return nil, fmt.Errorf("link: Permission denied. Cannot create a native link to a cocoon you did not create")
-		}
-	}
 
 	// create new release
 	var release types.Release
@@ -132,6 +101,44 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 		release.Firewall = nil
 	}
 
+	// ensure a similar cocoon does not exist
+	_, err = api.platform.GetCocoon(ctx, cocoon.ID)
+	if err != nil && err != types.ErrCocoonNotFound {
+		return nil, err
+	} else if err == nil {
+		return nil, fmt.Errorf("cocoon with the same id already exists")
+	}
+
+	if err := ValidateCocoon(&cocoon); err != nil {
+		return nil, err
+	}
+
+	if err := ValidateRelease(&release); err != nil {
+		return nil, err
+	}
+
+	// if a link cocoon id is provided, ensure the linked cocoon exists
+	// and is owned by the currently logged in identity
+	if len(req.Link) > 0 {
+		cocoonToLinkTo, err := api.platform.GetCocoon(ctx, req.Link)
+		if err != nil {
+			if err != types.ErrCocoonNotFound {
+				return nil, err
+			} else if err == types.ErrCocoonNotFound {
+				return nil, fmt.Errorf("link: cannot link to a non-existing cocoon %s", req.Link)
+			}
+		}
+		// ensure logged in user owns the cocoon being linked
+		if loggedInIdentity != cocoonToLinkTo.IdentityID {
+			return nil, fmt.Errorf("link: Permission denied. Cannot create a native link to a cocoon you did not create")
+		}
+	}
+
+	err = api.platform.PutCocoon(ctx, &cocoon)
+	if err != nil {
+		return nil, err
+	}
+
 	err = api.platform.PutRelease(ctx, &release)
 	if err != nil {
 		return nil, err
@@ -146,6 +153,21 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	err = api.platform.PutIdentity(ctx, identity)
 	if err != nil {
 		return nil, err
+	}
+
+	// archive release
+	if env := os.Getenv("ENV"); env == "production" || env == "development" {
+		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create persister")
+		}
+		err = archiver.NewArchiver(
+			archiver.NewGitObject(release.URL, release.Version),
+			persister,
+		).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive release: %s", err)
+		}
 	}
 
 	return &proto_api.Response{
@@ -167,7 +189,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 //
 // "unpin_once": This flag is the same as "unpin" except that final variable will still have a "pin" flag
 // which is useful if there is need to persist the new update to future releases.
-func (api *API) updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
+func updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
 
 	// get new Env containing pinned variables
 	pinnedVarsFromLastRelease := lastReleaseEnv.GetByFlag("pin")
@@ -201,11 +223,12 @@ func (api *API) updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
 // UpdateCocoon updates a cocoon and optionally creates a new
 // release. A new release is created when Release related fields are
 // changed.
-func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePayloadRequest) (*proto_api.Response, error) {
+func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest) (*proto_api.Response, error) {
 
 	var err error
 	var cocoonUpdated bool
 	var releaseUpdated bool
+	var versionUpdated bool
 	var now = time.Now()
 	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
@@ -251,7 +274,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
 
 	// process special "pin", "unpin" and "unpin_once" environment flags
-	api.updateReleaseEnv(release.Env, releaseUpd.Env)
+	updateReleaseEnv(release.Env, releaseUpd.Env)
 
 	// Resolve firewall rules destination if firewall is enabled.
 	// Otherwise, set firewall to nil
@@ -270,6 +293,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 	// if so, apply the new update
 	if diffs := release.Difference(releaseUpd); diffs[0] != nil {
 		releaseUpdated = true
+		versionUpdated = release.Version != releaseUpd.Version
 		release = &releaseUpd
 		release.CreatedAt = now.UTC().Format(time.RFC3339Nano)
 		release.ID = util.UUID4()
@@ -304,6 +328,21 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.CocoonReleasePa
 		}
 	}
 
+	// archive release version if it changed
+	if env := os.Getenv("ENV"); versionUpdated && (env == "production" || env == "development") {
+		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create persister")
+		}
+		err = archiver.NewArchiver(
+			archiver.NewGitObject(release.URL, release.Version),
+			persister,
+		).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive release: %s", err)
+		}
+	}
+
 	value, _ := util.ToJSON(&finalResp)
 
 	return &proto_api.Response{
@@ -332,7 +371,7 @@ func (api *API) GetCocoon(ctx context.Context, req *proto_api.GetCocoonRequest) 
 // we check with the scheduler to know if the cocoon code was deployed successfully.
 func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 
-	sd, err := api.scheduler.GetServiceDiscoverer()
+	sd, err := api.platform.GetScheduler().GetServiceDiscoverer()
 	if err != nil {
 		return "", fmt.Errorf("failed to get service discovery from scheduler: %s", err)
 	}
@@ -346,7 +385,7 @@ func (api *API) GetCocoonStatus(cocoonID string) (string, error) {
 	if len(s) == 0 {
 
 		// check with the scheduler to know status of the cocoon deployment
-		dStatus, err := api.scheduler.GetDeploymentStatus(cocoonID)
+		dStatus, err := api.platform.GetScheduler().GetDeploymentStatus(cocoonID)
 		if err != nil {
 			if err.Error() != "not found" {
 				return CocoonStatusStopped, nil
@@ -372,7 +411,7 @@ func (api *API) stopCocoon(ctx context.Context, id string) error {
 	}
 
 	apiLog.Info("Calling scheduler to stop cocoon = ", id)
-	err = api.scheduler.Stop(id)
+	err = api.platform.GetScheduler().Stop(id)
 	if err != nil {
 		apiLog.Error(err.Error())
 		return fmt.Errorf("failed to stop cocoon")
@@ -434,6 +473,8 @@ func (api *API) AddSignatories(ctx context.Context, req *proto_api.AddSignatorie
 	if loggedInIdentity != cocoon.IdentityID {
 		return nil, types.ErrPermissionNotGrant
 	}
+
+	req.IDs = util.UniqueStringSlice(req.IDs)
 
 	// convert email to ID
 	for i, id := range req.IDs {
@@ -521,10 +562,10 @@ func (api *API) AddVote(ctx context.Context, req *proto_api.AddVoteRequest) (*pr
 		return nil, fmt.Errorf("You have already cast a vote for this release")
 	}
 
-	if req.Vote == "1" {
+	if req.Vote == 1 {
 		release.SigApproved++
 	}
-	if req.Vote == "0" {
+	if req.Vote == 0 {
 		release.SigDenied++
 	}
 
@@ -585,9 +626,4 @@ func (api *API) RemoveSignatories(ctx context.Context, req *proto_api.RemoveSign
 		Status: 200,
 		Body:   cocoon.ToJSON(),
 	}, nil
-}
-
-// FirewallAllow an 'allow' firewall rule to a cocoon
-func (api *API) FirewallAllow(ctx context.Context, req *proto_api.FirewallAllowRequest) (*proto_api.Response, error) {
-	return nil, fmt.Errorf("not implemented")
 }
