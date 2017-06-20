@@ -7,7 +7,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/hashicorp/consul/api"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // LockTTL defines max time to live of a lock.

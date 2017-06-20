@@ -6,7 +6,7 @@ import (
 
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"gopkg.in/oleiade/lane.v1"
 )

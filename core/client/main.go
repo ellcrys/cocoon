@@ -21,9 +21,9 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/ncodes/cocoon/core/client/cmd"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/client/cmd"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
 	logging "github.com/op/go-logging"
 )
 

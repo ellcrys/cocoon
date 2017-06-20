@@ -1,7 +1,7 @@
 package connector
 
 import (
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/pkg/errors"
 
 	"golang.org/x/net/context"

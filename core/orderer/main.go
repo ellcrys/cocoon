@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/franela/goreq"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/orderer/cmd"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/orderer/cmd"
 	logging "github.com/op/go-logging"
 )
 

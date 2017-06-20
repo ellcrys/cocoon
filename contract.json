@@ -1,32 +1,30 @@
 {
-    "contracts": [
-        {
-            "id": "cocoon.2",
-            "repo": {
-                "url": "https://github.com/ncodes/cocoon-example-01",
-                "version": "",
-                "language": "go",
-                "link": ""
-            },
-            "build": {
-                "pkgMgr": "glide"
-            },
-            "resources": {
-                "memory": "1g",
-                "cpuShare": "1x"
-            },
-            "signatories": {
-                "max": 1,
-                "threshold": 1
-            },
-            "acl": {
-                "*": "allow deny-create-ledger"
-            },
-            "firewall": {
-                "destination": "google.com",
-                "destinationPort": "80",
-                "protocol": "tcp"
-            }
+    "contracts": [{
+        "id": "cocoon.2",
+        "repo": {
+            "url": "https://github.com/ellcrys/cocoon-example-01",
+            "version": "",
+            "language": "go",
+            "link": ""
+        },
+        "build": {
+            "pkgMgr": "glide"
+        },
+        "resources": {
+            "memory": "1g",
+            "cpuShare": "1x"
+        },
+        "signatories": {
+            "max": 1,
+            "threshold": 1
+        },
+        "acl": {
+            "*": "allow deny-create-ledger"
+        },
+        "firewall": {
+            "destination": "google.com",
+            "destinationPort": "80",
+            "protocol": "tcp"
         }
-    ]
+    }]
 }

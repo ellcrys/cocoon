@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"

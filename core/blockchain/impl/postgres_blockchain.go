@@ -7,8 +7,8 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // ChainTableName is the name of the table holding all chain information

@@ -47,7 +47,7 @@ job "connector" {
       env {
         COCOON_ID = "abc"
         CONTAINER_ID = "abc"
-        COCOON_CODE_URL = "https://github.com/ncodes/cocoon-example-01"
+        COCOON_CODE_URL = "https://github.com/ellcrys/cocoon-example-01"
         COCOON_CODE_TAG = ""
         COCOON_CODE_LANG = "go"
         COCOON_BUILD_PARAMS = "eyAicGtnX21nciI6ICJnbGlkZSIgfQ=="

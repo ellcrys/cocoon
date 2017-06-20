@@ -7,14 +7,14 @@ import (
 	"os"
 
 	"github.com/ellcrys/util"
-	b_impl "github.com/ncodes/cocoon/core/blockchain/impl"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/lock/consul"
-	"github.com/ncodes/cocoon/core/lock/memory"
-	"github.com/ncodes/cocoon/core/orderer/orderer"
-	"github.com/ncodes/cocoon/core/scheduler"
-	"github.com/ncodes/cocoon/core/store/impl"
+	b_impl "github.com/ellcrys/cocoon/core/blockchain/impl"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/lock/consul"
+	"github.com/ellcrys/cocoon/core/lock/memory"
+	"github.com/ellcrys/cocoon/core/orderer/orderer"
+	"github.com/ellcrys/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/store/impl"
 	"github.com/spf13/cobra"
 )
 

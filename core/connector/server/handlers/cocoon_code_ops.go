@@ -3,9 +3,9 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/stub/proto_runtime"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/cocoon/core/stub/proto_runtime"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

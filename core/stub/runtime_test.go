@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/ncodes/cocoon/core/stub/proto_runtime"
+	"github.com/ellcrys/cocoon/core/stub/proto_runtime"
 	// . "github.com/smartystreets/goconvey/convey"
 	"google.golang.org/grpc"
 )

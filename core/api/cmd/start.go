@@ -6,10 +6,10 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
-	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/api/api"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/scheduler"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )

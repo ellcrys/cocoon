@@ -3,7 +3,7 @@ package stub
 import (
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/stub/proto_runtime"
+	"github.com/ellcrys/cocoon/core/stub/proto_runtime"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )

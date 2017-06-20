@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // ErrObjectLocked reprents an error about an object or transaction locked by another process

@@ -10,10 +10,10 @@ import (
 	"database/sql"
 
 	"github.com/ellcrys/util"
-	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
-	"github.com/ncodes/cocoon/core/orderer/orderer"
-	"github.com/ncodes/cocoon/core/store/impl"
-	"github.com/ncodes/cocoon/core/types"
+	blkch_impl "github.com/ellcrys/cocoon/core/blockchain/impl"
+	"github.com/ellcrys/cocoon/core/orderer/orderer"
+	"github.com/ellcrys/cocoon/core/store/impl"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"golang.org/x/net/context"
 

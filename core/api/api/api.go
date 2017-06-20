@@ -10,10 +10,10 @@ import (
 
 	"github.com/chuckpreslar/emission"
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/platform"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/platform"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	"google.golang.org/grpc"
 )

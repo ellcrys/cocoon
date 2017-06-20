@@ -3,8 +3,8 @@ package api
 import (
 	"time"
 
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ncodes/cstructs"
 	"golang.org/x/crypto/bcrypt"
 	context "golang.org/x/net/context"

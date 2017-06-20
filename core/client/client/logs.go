@@ -10,9 +10,9 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/fatih/color"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // MinimumLogLines defines the minimum number of lines of logs to return

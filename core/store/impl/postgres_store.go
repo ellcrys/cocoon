@@ -10,8 +10,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/kr/pretty"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 )
 

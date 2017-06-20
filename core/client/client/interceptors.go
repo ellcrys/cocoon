@@ -6,7 +6,7 @@ import (
 
 	"github.com/ellcrys/util"
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/ncodes/cocoon/core/api/api"
+	"github.com/ellcrys/cocoon/core/api/api"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"

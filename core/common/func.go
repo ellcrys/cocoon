@@ -18,9 +18,9 @@ import (
 	"os"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/ncodes/cocoon/core/lock/consul"
-	"github.com/ncodes/cocoon/core/lock/memory"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/lock/consul"
+	"github.com/ellcrys/cocoon/core/lock/memory"
+	"github.com/ellcrys/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
 

@@ -9,10 +9,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 func init() {

@@ -11,7 +11,7 @@ import (
 
 	"os"
 
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"

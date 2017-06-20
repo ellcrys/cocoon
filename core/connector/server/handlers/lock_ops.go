@@ -7,10 +7,10 @@ import (
 
 	"strings"
 
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/connector"
-	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/connector/connector"
+	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 	context "golang.org/x/net/context"
 )

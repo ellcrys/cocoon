@@ -12,11 +12,11 @@ import (
 	"database/sql"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	blkch_impl "github.com/ncodes/cocoon/core/blockchain/impl"
-	"github.com/ncodes/cocoon/core/orderer/orderer"
-	"github.com/ncodes/cocoon/core/store/impl"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	blkch_impl "github.com/ellcrys/cocoon/core/blockchain/impl"
+	"github.com/ellcrys/cocoon/core/orderer/orderer"
+	"github.com/ellcrys/cocoon/core/store/impl"
+	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 
 	"strings"
@@ -132,7 +132,7 @@ func TestRPCHandles(t *testing.T) {
 								id := util.UUID4()
 								r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 									CocoonID:       id,
-									URL:            "https://github.com/ncodes/cocoon-example-01",
+									URL:            "https://github.com/ellcrys/cocoon-example-01",
 									Language:       "go",
 									Memory:         512,
 									NumSignatories: 1,
@@ -146,7 +146,7 @@ func TestRPCHandles(t *testing.T) {
 								Convey("Should fail to create cocoon with an already used id", func() {
 									r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 										CocoonID:       id,
-										URL:            "https://github.com/ncodes/cocoon-example-01",
+										URL:            "https://github.com/ellcrys/cocoon-example-01",
 										Language:       "go",
 										Memory:         512,
 										CPUShare:       100,
@@ -187,7 +187,7 @@ func TestRPCHandles(t *testing.T) {
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
-								URL:            "https://github.com/ncodes/cocoon-example-01",
+								URL:            "https://github.com/ellcrys/cocoon-example-01",
 								Language:       "go",
 								Memory:         512,
 								NumSignatories: 1,
@@ -270,7 +270,7 @@ func TestRPCHandles(t *testing.T) {
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
-								URL:            "https://github.com/ncodes/cocoon-example-01",
+								URL:            "https://github.com/ellcrys/cocoon-example-01",
 								Language:       "go",
 								Memory:         512,
 								NumSignatories: 2,
@@ -350,7 +350,7 @@ func TestRPCHandles(t *testing.T) {
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
-								URL:            "https://github.com/ncodes/cocoon-example-01",
+								URL:            "https://github.com/ellcrys/cocoon-example-01",
 								Language:       "go",
 								Memory:         512,
 								NumSignatories: 2,
@@ -390,7 +390,7 @@ func TestRPCHandles(t *testing.T) {
 							id := util.UUID4()
 							r, err := api.CreateCocoon(ctx, &proto_api.ContractRequest{
 								CocoonID:       id,
-								URL:            "https://github.com/ncodes/cocoon-example-01",
+								URL:            "https://github.com/ellcrys/cocoon-example-01",
 								Language:       "go",
 								Memory:         512,
 								NumSignatories: 2,

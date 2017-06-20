@@ -10,8 +10,8 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/hashicorp/consul/api"
-	"github.com/ncodes/cocoon/core/config"
-	"github.com/ncodes/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/scheduler"
 )
 
 var discoveryLog = config.MakeLogger("orderer.discovery")

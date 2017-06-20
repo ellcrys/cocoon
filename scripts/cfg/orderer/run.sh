@@ -5,10 +5,10 @@ VERSION=$ORDERER_VERSION
 
 # Fetch and build Orderer from source in dev/test environemtn
 if [ $ENV != "production" ]; then
-    repoParent="/go/src/github.com/ncodes"
+    repoParent="/go/src/github.com/ellcrys"
     mkdir -p $repoParent
     cd $repoParent
-    git clone --depth=1 -b $VERSION https://github.com/ncodes/cocoon
+    git clone --depth=1 -b $VERSION https://github.com/ellcrys/cocoon
     cd cocoon 
     git checkout $VERSION
     govendor fetch -v +out

@@ -10,11 +10,11 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/imdario/mergo"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/orderer/orderer"
-	"github.com/ncodes/cocoon/core/orderer/proto_orderer"
-	"github.com/ncodes/cocoon/core/scheduler"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/orderer/orderer"
+	"github.com/ellcrys/cocoon/core/orderer/proto_orderer"
+	"github.com/ellcrys/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/pkg/errors"
 )
 

@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/connector/server/proto_connector"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 var (

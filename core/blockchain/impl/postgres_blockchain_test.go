@@ -10,7 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

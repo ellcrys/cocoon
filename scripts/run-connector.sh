@@ -7,7 +7,7 @@ printf "> Starting Cocoon [env=$ENV]\n"
 # Fetch and build connector from source in dev/test environemtn
 if [ $ENV != "production" ]; then
     branch=$VERSION
-    repoOwner=github.com/ncodes
+    repoOwner=github.com/ellcrys
     repoOwnerDir=$GOPATH/src/$repoOwner
     mkdir -p $repoOwnerDir
     cd $repoOwnerDir

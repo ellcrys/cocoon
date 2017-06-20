@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/common"
 )
 
 // GetLogs fetches logs

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/config"
 	"google.golang.org/grpc"
 )
 

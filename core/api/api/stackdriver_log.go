@@ -5,7 +5,7 @@ import (
 
 	"cloud.google.com/go/logging/logadmin"
 	ptype "github.com/golang/protobuf/ptypes/struct"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	context "golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )

@@ -12,12 +12,12 @@ import (
 	"github.com/goware/urlx"
 	"github.com/hashicorp/hcl"
 	"github.com/jinzhu/copier"
-	c_util "github.com/ncodes/cocoon-util"
-	"github.com/ncodes/cocoon/core/api/api"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/acl"
-	"github.com/ncodes/cocoon/core/types"
+	c_util "github.com/ellcrys/cocoon-util"
+	"github.com/ellcrys/cocoon/core/api/api"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/connector/server/acl"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/spf13/cobra"
 )
 

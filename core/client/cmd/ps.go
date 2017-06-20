@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/ncodes/cocoon/core/client/client"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/client/client"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
 	logging "github.com/op/go-logging"
 	"github.com/spf13/cobra"
 )

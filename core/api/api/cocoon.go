@@ -10,10 +10,10 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/fatih/structs"
 	"github.com/jinzhu/copier"
-	"github.com/ncodes/cocoon/core/api/api/proto_api"
-	"github.com/ncodes/cocoon/core/api/archiver"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/api/api/proto_api"
+	"github.com/ellcrys/cocoon/core/api/archiver"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 	context "golang.org/x/net/context"
 )
 

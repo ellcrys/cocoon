@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ncodes/cocoon/core/client/client"
+	"github.com/ellcrys/cocoon/core/client/client"
 	"github.com/spf13/cobra"
 )
 

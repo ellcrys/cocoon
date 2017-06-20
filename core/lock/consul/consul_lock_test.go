@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

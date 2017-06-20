@@ -10,7 +10,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ncodes/modo"
 )
 

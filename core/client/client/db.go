@@ -8,7 +8,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/ellcrys/util"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // ProjectName is the official name of the project

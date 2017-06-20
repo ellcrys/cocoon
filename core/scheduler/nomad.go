@@ -8,8 +8,8 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/hashicorp/consul/api"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
 )
 
 var log = config.MakeLogger("nomad")

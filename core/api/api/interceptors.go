@@ -6,8 +6,8 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/ellcrys/util"
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 	context "golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

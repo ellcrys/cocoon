@@ -7,11 +7,11 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/util"
-	cocoon_util "github.com/ncodes/cocoon-util"
-	"github.com/ncodes/cocoon/core/common"
-	"github.com/ncodes/cocoon/core/connector/server/acl"
-	"github.com/ncodes/cocoon/core/scheduler"
-	"github.com/ncodes/cocoon/core/types"
+	cocoon_util "github.com/ellcrys/cocoon-util"
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/connector/server/acl"
+	"github.com/ellcrys/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/types"
 )
 
 // ValidateCocoon validates a cocoon to be created

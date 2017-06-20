@@ -8,7 +8,7 @@ import (
 
 	"github.com/chuckpreslar/emission"
 	docker "github.com/fsouza/go-dockerclient"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/config"
 	logging "github.com/op/go-logging"
 )
 

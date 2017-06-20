@@ -7,8 +7,8 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/franela/goreq"
-	"github.com/ncodes/cocoon/core/cmd"
-	"github.com/ncodes/cocoon/core/config"
+	"github.com/ellcrys/cocoon/core/cmd"
+	"github.com/ellcrys/cocoon/core/config"
 	"github.com/op/go-logging"
 )
 

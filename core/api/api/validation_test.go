@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/ellcrys/util"
-	"github.com/ncodes/cocoon/core/scheduler"
-	"github.com/ncodes/cocoon/core/types"
+	"github.com/ellcrys/cocoon/core/scheduler"
+	"github.com/ellcrys/cocoon/core/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -94,7 +94,7 @@ func TestValidation(t *testing.T) {
 			err = ValidateRelease(&types.Release{
 				ID:       util.UUID4(),
 				CocoonID: "cocoon-123",
-				URL:      "https://github.com/ncodes/cocoon-example-01",
+				URL:      "https://github.com/ellcrys/cocoon-example-01",
 			})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "language is required")
@@ -102,7 +102,7 @@ func TestValidation(t *testing.T) {
 			err = ValidateRelease(&types.Release{
 				ID:       util.UUID4(),
 				CocoonID: "cocoon-123",
-				URL:      "https://github.com/ncodes/cocoon-example-01",
+				URL:      "https://github.com/ellcrys/cocoon-example-01",
 				Language: "abc",
 			})
 			So(err, ShouldNotBeNil)
@@ -111,7 +111,7 @@ func TestValidation(t *testing.T) {
 			err = ValidateRelease(&types.Release{
 				ID:         util.UUID4(),
 				CocoonID:   "cocoon-123",
-				URL:        "https://github.com/ncodes/cocoon-example-01",
+				URL:        "https://github.com/ellcrys/cocoon-example-01",
 				Language:   scheduler.SupportedCocoonCodeLang[0],
 				BuildParam: "non json",
 			})
