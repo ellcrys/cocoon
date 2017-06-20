@@ -1,9 +1,9 @@
 ### Cocoon 
 
 Cocoon is an opinionated smart contract or self-executing application executor. It is the engine that powers
-Ellcrys smart contract platform providing the ability to build, run and interact with isolated, multi-signature
+Ellcrys' smart contract platform providing the ability to build, run and interact with isolated, multi-signature
  and immutable applications. Cocoon takes advantage of existing technologies such as Docker, Nomad, Postgres and more
-to provide a fast, scalable and easy to use smart contract platform.
+to provide a fast, scalable and easy to use smart contract engine.
 
 #### Is Cocoon another Ethereum?
 
@@ -31,6 +31,6 @@ to support Javascript, Ruby, PHP and Python soon.
 
 - **Multi-Signature Support**: Build contract applications owned and controlled by more that one entity.
 - **Immutable Contracts**: Contract applications are cloned from Github, versioned and archived forever. 
-- **Multi-Language Interface**: The Cocoon's design exposes an interface that allows us to provide support for any modern day language. 
+- **Multi-Language Interface**: The Cocoon's design exposes an interface that allows us to provide support for any modern day languages. 
 - **Scalability**: Launch multiple instances of a contract application. Incoming requests will be shared between these instances. System resource allocation can be adjusted at any time.  
-- **Storage**: Contract applications are provided with the ability to store data into a ACID-complaint database service. 
+- **Storage**: Contract applications are provided with the ability to store data on an ACID-complaint database service. 
