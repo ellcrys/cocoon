@@ -8,16 +8,16 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/ellcrys/util"
-	"github.com/hashicorp/consul/api"
 	"github.com/ellcrys/cocoon/core/config"
 	"github.com/ellcrys/cocoon/core/scheduler"
+	"github.com/ellcrys/util"
+	"github.com/hashicorp/consul/api"
 )
 
 var discoveryLog = config.MakeLogger("orderer.discovery")
 
 // DiscoveryInterval is the time between each discovery checks
-var DiscoveryInterval = time.Second * 15
+var DiscoveryInterval = time.Second * 5
 
 // Discovery defines a structure for fetching a list of addresses of orderers
 // accessible in the cluster.
