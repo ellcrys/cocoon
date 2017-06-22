@@ -54,7 +54,7 @@ job "api" {
       env {
           ENV = "production"    
           API_VERSION = "0.5.0-b2"            
-          CONNECTOR_VERSION = "0.5.0-b4"
+          CONNECTOR_VERSION = "0.5.0-b5"
           GCP_PROJECT_ID = "visiontest-1281"
           REPO_ARCHIVE_BKT = "gitsources"
           CONSUL_ADDR = "localhost:8500"
