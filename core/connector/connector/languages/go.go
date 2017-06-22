@@ -8,9 +8,9 @@ import (
 
 	"fmt"
 
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ncodes/modo"
 )
 
@@ -103,7 +103,7 @@ func (g *Go) GetSourceRootDir() string {
 // During development, If DEV_RUN_ROOT_BIN env is set, it will return false as
 // the run command will find and find the ccode binary in the repo root.
 func (g *Go) RequiresBuild() bool {
-	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
+	if runRootBin := os.Getenv("DEV_RUN_ROOT_BIN"); len(runRootBin) > 0 && runRootBin == "true" {
 		return false
 	}
 	return true
@@ -168,7 +168,7 @@ func (g *Go) GetRunCommand() *modo.Do {
 	}
 
 	// if DEV_RUN_ROOT_BIN is set (for development only), run 'ccode' binary that is expected to be in source root
-	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
+	if runRootBin := os.Getenv("DEV_RUN_ROOT_BIN"); len(runRootBin) > 0 && runRootBin == "true" {
 		cmds = append(cmds, "cd "+g.GetSourceRootDir()) // move into source root director
 		cmds = append(cmds, "./ccode")
 		return &modo.Do{
@@ -188,29 +188,3 @@ func (g *Go) GetRunCommand() *modo.Do {
 		},
 	}
 }
-
-// GetRunCommand returns the script required to start the
-// cocoon code according to the build and installation process
-// of the language. If DEV_RUN_ROOT_BIN env is set, it will run the
-// ccode binary located in the mount destination.
-// func (g *Go) GetRunCommand() []string {
-
-// 	// prepare environment variables
-// 	env := []string{}
-// 	for k, v := range g.env {
-// 		env = append(env, fmt.Sprintf("export %s='%s'", k, v))
-// 	}
-
-// 	script := []string{
-// 		"bash",
-// 		"-c",
-// 		strings.Join(env, " && ") + " && ccode",
-// 	}
-
-// 	// run ccode in the repo root if DEV_RUN_ROOT_BIN is set (for development only)
-// 	if len(os.Getenv("DEV_RUN_ROOT_BIN")) > 0 {
-// 		script = []string{"bash", "-c", fmt.Sprintf("cd %s && ./ccode", g.GetSourceRootDir())}
-// 	}
-
-// 	return script
-// }

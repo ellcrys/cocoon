@@ -1,9 +1,12 @@
 package connector
 
 import (
+	"fmt"
+
 	"github.com/ellcrys/cocoon/core/types"
 	"github.com/pkg/errors"
 
+	"github.com/dustin/go-humanize"
 	"golang.org/x/net/context"
 )
 
@@ -43,5 +46,6 @@ func (cn *Connector) persistNetUsage(ctx context.Context) (uint64, uint64, error
 		return 0, 0, errors.Wrapf(err, "failed update cocoon's network usage: %s", err)
 	}
 
+	fmt.Println("Net In: ", humanize.Bytes(uint64(cocoon.ResourceUsage.NetIn)), " Net Out: ", humanize.Bytes(uint64(cocoon.ResourceUsage.NetOut)))
 	return cocoon.ResourceUsage.NetIn, cocoon.ResourceUsage.NetOut, nil
 }

@@ -11,9 +11,6 @@ import (
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
-	"github.com/ellcrys/util"
-	docker "github.com/fsouza/go-dockerclient"
-	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ellcrys/cocoon/core/api/api"
 	"github.com/ellcrys/cocoon/core/api/archiver"
 	"github.com/ellcrys/cocoon/core/config"
@@ -23,6 +20,9 @@ import (
 	"github.com/ellcrys/cocoon/core/orderer/orderer"
 	"github.com/ellcrys/cocoon/core/platform"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
+	docker "github.com/fsouza/go-dockerclient"
+	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ncodes/modo"
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"
@@ -262,7 +262,7 @@ func (cn *Connector) HookToMonitor() {
 
 		// shutdown cocoon code if hard limit is exceeded (TODO: we would instead prevent any further outbound or inbound traffic)
 		if (totalInbound + totalOutbound) >= 5000000000 {
-			log.Errorf("Total bandwidth used has reached the had limit of 5GB")
+			log.Errorf("Total bandwidth used has reached the max limit of 5GB")
 			cn.shutdown()
 			return
 		}
