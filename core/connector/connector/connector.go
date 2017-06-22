@@ -250,22 +250,27 @@ func (cn *Connector) prepareContainer() (*docker.APIContainers, error) {
 // HookToMonitor is where all listeners to the monitor are attached.
 func (cn *Connector) HookToMonitor() {
 	cn.monitor.GetEmitter().On("monitor.report", func(report monitor.Report) {
-		cn.resourceUsage = &report
+
+		if cn.resourceUsage == nil {
+			cn.resourceUsage = &report
+		}
+
+		cn.updateResourceUsage(report)
 
 		// save network usage
-		ctx, cc := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cc()
-		totalInbound, totalOutbound, err := cn.persistNetUsage(ctx)
-		if err != nil {
-			log.Errorf("%+v", err)
-		}
+		// ctx, cc := context.WithTimeout(context.Background(), 1*time.Second)
+		// defer cc()
+		// totalInbound, totalOutbound, err := cn.persistNetUsage(ctx)
+		// if err != nil {
+		// 	log.Errorf("%+v", err)
+		// }
 
-		// shutdown cocoon code if hard limit is exceeded (TODO: we would instead prevent any further outbound or inbound traffic)
-		if (totalInbound + totalOutbound) >= 5000000000 {
-			log.Errorf("Total bandwidth used has reached the max limit of 5GB")
-			cn.shutdown()
-			return
-		}
+		// // shutdown cocoon code if hard limit is exceeded (TODO: we would instead prevent any further outbound or inbound traffic)
+		// if (totalInbound + totalOutbound) >= 5000000000 {
+		// 	log.Errorf("Total bandwidth used has reached the max limit of 5GB")
+		// 	cn.shutdown()
+		// 	return
+		// }
 
 		// log.Debugf("Rx Bytes: %d / Tx Bytes: %d", report.NetRx, report.NetTx)
 		cn.RestartIfDiskAllocExceeded(report.DiskUsage)

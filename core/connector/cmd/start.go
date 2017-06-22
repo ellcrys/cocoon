@@ -84,7 +84,7 @@ var startCmd = &cobra.Command{
 			log.Fatalf("Failed to initialize platform: %s", err)
 			return
 		}
-
+		
 		log.Infof("Connector initialized [cocoon=%s, release=%s]", os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"))
 		log.Infof("Fetching cocoon specification")
 		spec, err := getSpec(platform)
