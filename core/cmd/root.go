@@ -13,8 +13,8 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "cocoon",
-	Short: "A blockchain-inspired, shared ledger and smart contract platform",
-	Long:  `A blockchain-inspired, shared ledger and smart contract platform`,
+	Short: "Ellcrys is a smart contract execution platform built on existing, tried and trusted technologies.",
+	Long:  `Ellcrys is a smart contract execution platform built on existing, tried and trusted technologies.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },

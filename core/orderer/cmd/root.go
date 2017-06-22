@@ -27,8 +27,8 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "orderer",
-	Short: "Provides access to the blockchain-inspired ledger",
-	Long:  `Provides access to the blockchain-inspired ledger`,
+	Short: "Provides access to the ledger",
+	Long:  `Provides access to the ledger`,
 	Run: func(cmd *cobra.Command, args []string) {
 		showVersion, _ := cmd.Flags().GetBool("version")
 		if showVersion {
