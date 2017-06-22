@@ -188,7 +188,7 @@ func NewJob(version, id string, count int) *NomadJob {
 					Count: count,
 					Meta: map[string]string{
 						"VERSION":   version,
-						"REPO_USER": "ncodes",
+						"REPO_USER": "ellcrys",
 					},
 					Tasks: []Task{
 						Task{
@@ -206,7 +206,7 @@ func NewJob(version, id string, count int) *NomadJob {
 								Args:    []string{"/local/run-connector.sh"},
 							},
 							Env: map[string]string{
-								"ROUTER_DOMAIN":         "whatbay.co",
+								"ROUTER_DOMAIN":         "ellcrys.io",
 								"VERSION":               "${NOMAD_META_VERSION}",
 								"ENV":                   "",
 								"COCOON_ID":             id,

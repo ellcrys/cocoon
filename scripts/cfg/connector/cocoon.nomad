@@ -19,7 +19,7 @@ job "cocoon" {
 
     meta {
         VERSION = "master"
-        REPO_USER = "ncodes"
+        REPO_USER = "ellcrys"
     }
     
     restart {
@@ -96,7 +96,7 @@ job "cocoon" {
       config {
         network_mode = "bridge"
         force_pull = true
-        image = "ncodes/launch-go:latest"  
+        image = "ellcrys/launch-go:latest"  
         command = "bash"
         args = ["-c", "echo 'Hello Human. I am alive'; tail -f /dev/null"]
       }

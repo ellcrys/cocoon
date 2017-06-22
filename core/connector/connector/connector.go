@@ -13,7 +13,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ellcrys/util"
 	docker "github.com/fsouza/go-dockerclient"
-	cutil "github.com/ellcrys/cocoon-util"
+	cutil "github.com/ncodes/cocoon-util"
 	"github.com/ellcrys/cocoon/core/api/api"
 	"github.com/ellcrys/cocoon/core/api/archiver"
 	"github.com/ellcrys/cocoon/core/config"
