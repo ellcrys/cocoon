@@ -3,8 +3,19 @@ logLevel = "DEBUG"
 defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
   [entryPoints.http]
   address = ":80"
+
+[acme]
+  storage = "acme.json"
+  email = "hello@ellcrys.co"
+  entryPoint = "https"
+  onDemand = true
+  OnHostRule = true
+  caServer = "https://acme-staging.api.letsencrypt.org/directory"
 
 [web]
   address = ":8070"
