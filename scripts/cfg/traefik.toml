@@ -10,7 +10,7 @@ defaultEntryPoints = ["http", "https"]
   address = ":80"
 
 [acme]
-  storage = "/acme/acme.json"
+  storage = "acme.json"
   email = "hello@ellcrys.co"
   entryPoint = "https"
   onDemand = true
