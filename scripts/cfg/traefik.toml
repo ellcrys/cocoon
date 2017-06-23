@@ -8,6 +8,8 @@ defaultEntryPoints = ["http", "https"]
     [entryPoints.https.tls]
   [entryPoints.http]
   address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
 
 [acme]
   storage = "traefik/acme/account"
