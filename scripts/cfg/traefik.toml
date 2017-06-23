@@ -10,12 +10,11 @@ defaultEntryPoints = ["http", "https"]
   address = ":80"
 
 [acme]
-  storage = "acme.json"
+  storage = "traefik/acme/account"
   email = "hello@ellcrys.co"
   entryPoint = "https"
   onDemand = true
   OnHostRule = true
-#  caServer = "https://acme-staging.api.letsencrypt.org/directory"
   acmeLogging = true
 
 [[acme.domains]]
