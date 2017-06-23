@@ -18,6 +18,9 @@ defaultEntryPoints = ["http", "https"]
 #  caServer = "https://acme-staging.api.letsencrypt.org/directory"
   acmeLogging = true
 
+[[acme.domains]]
+   main = "ellcrys.io"
+
 [web]
   address = ":8070"
 
@@ -25,3 +28,4 @@ defaultEntryPoints = ["http", "https"]
   endpoint = "127.0.0.1:8500"
   watch = true
   prefix = "traefik"
+
