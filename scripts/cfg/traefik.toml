@@ -15,7 +15,7 @@ defaultEntryPoints = ["http", "https"]
   entryPoint = "https"
   onDemand = true
   OnHostRule = true
-#  caServer = "https://acme-staging.api.letsencrypt.org/directory"
+ caServer = "https://acme-staging.api.letsencrypt.org/directory"
 
 [web]
   address = ":8070"
