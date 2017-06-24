@@ -116,11 +116,36 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		return
 	}
 
-	cocoonCodeContainer, err := cn.prepareContainer()
-	if err != nil {
-		log.Errorf("%+v", errors.Wrap(err, ""))
-		cn.Stop(true)
-		return
+	// when DEV_SKIP_PREPARE is set, no need to prepare the container, download source
+	// code from archive etc. Simply get the container and more on. This is intend for use
+	// in development environment to save network bandwidth and time.
+	if os.Getenv("DEV_SKIP_PREPARE") != "true" {
+		cn.container, err = cn.prepareContainer()
+		if err != nil {
+			log.Errorf("%+v", errors.Wrap(err, ""))
+			cn.Stop(true)
+			return
+		}
+	} else { // development mode
+		// get the existing, prepared container
+		containerName := util.Env("COCOON_CONTAINER_NAME", "")
+		cn.container, err = cn.getContainer(containerName)
+		if err != nil {
+			log.Errorf("failed to check whether cocoon code is already active. %s ", err.Error())
+			cn.Stop(true)
+			return
+		} else if cn.container == nil {
+			log.Errorf("cocoon code container has not been started")
+			cn.Stop(true)
+			return
+		}
+
+		// clean container
+		if err := cn.devCleanFirewallAndCCode(); err != nil {
+			log.Errorf(err.Error())
+			cn.Stop(true)
+			return
+		}
 	}
 
 	log.Info("Preparing cocoon code environment variables")
@@ -145,7 +170,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	go cn.monitor.Monitor()
 
 	go func() {
-		if err = cn.run(cocoonCodeContainer); err != nil {
+		if err = cn.run(cn.container); err != nil {
 			log.Errorf("%+v", errors.Wrap(err, ""))
 			cn.Stop(true)
 			return
@@ -193,7 +218,7 @@ func (cn *Connector) prepareContainer() (*docker.APIContainers, error) {
 
 	var containerName = util.Env("COCOON_CONTAINER_NAME", "")
 	if len(containerName) == 0 {
-		return nil, fmt.Errorf("container name is unknown")
+		return nil, fmt.Errorf("container name is not set")
 	}
 
 	// ensure cocoon code isn't already launched on a container
@@ -385,6 +410,42 @@ func (cn *Connector) fetchSource() error {
 	}
 
 	return cn.fetchGitSourceFromArchive()
+}
+
+// devCleanFirewallAndCCode resets the firewall and kills running cocoon code.
+// Intended for use in development mode where full container clean operation is not
+// desirable.
+func (cn *Connector) devCleanFirewallAndCCode() error {
+
+	cmds := []*modo.Do{
+		&modo.Do{Cmd: []string{"bash", "-c", "iptables -F; iptables -P INPUT ACCEPT; iptables -P OUTPUT ACCEPT; iptables -P FORWARD ACCEPT"}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode 2>/dev/null || true 2>/dev/null`}, AbortSeriesOnFail: false},
+	}
+
+	var errCount = 0
+	errs, err := cn.ExecInContainer(cn.container.ID, cmds, true, func(d []byte, stdout bool) {
+		fetchLog.Info(string(d))
+	}, func(state modo.State, task *modo.Do) {
+		switch state {
+		case modo.Begin:
+			log.Infof("Cleaning cocoon code container [dev mode]")
+		case modo.After:
+			if task.ExitCode != 0 {
+				errCount++
+			}
+		case modo.End:
+			if errCount == 0 {
+				fetchLog.Info("Cleaning complete. Cocoon code container is squeaky clean! [dev mode]")
+			}
+		}
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to clean cocoon code container [dev mode]")
+	} else if len(errs) > 0 {
+		return errors.Wrap(errs[0], "[clean]")
+	}
+
+	return nil
 }
 
 // cleanContainer removes build directories, previously
