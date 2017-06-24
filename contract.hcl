@@ -3,14 +3,14 @@ contracts {
     
     # A unique ID (ex: com.mywebsite.com.myname).
     # If not provided, a UUID v4 ID is generated. 
-    id = "test"
+    id = "local"
     
     # Contract source location and information
     repo {
         # The pubic github repository
-        url = "https://github.com/ellcrys/cocoon-example-01" 
+        url = "https://github.com/ellcrys/contract-example" 
         # The github release tag or commit id (default: latest release)
-        version = "671c36d509c127e2708737b0a78591e5a1977ec7"
+        version = "c38b4022ad70dbaa4b97dc713712afc64a2ef9fc"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
@@ -22,10 +22,10 @@ contracts {
     }
     
     # Provide build information if the contract code requires it
-    build {
-        # The package manager to use (supported: glide, govendor)
-        pkgMgr = "govendor"
-    }
+    // build {
+    //     # The package manager to use (supported: glide, govendor)
+    //     pkgMgr = "govendor"
+    // }
     
     # Resources to allocate to the contract's cocoon
     resources {

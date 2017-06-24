@@ -37,7 +37,7 @@ type Go struct {
 func NewGo(spec *types.Spec) *Go {
 	g := &Go{
 		name:      "go",
-		image:     "ncodes/launch-go",
+		image:     "ellcrys/launch-go",
 		userHome:  "/home",
 		imgGoPath: "/go",
 		spec:      spec,
@@ -74,25 +74,25 @@ func (g *Go) SetRunEnv(env map[string]string) {
 	}
 }
 
-// GetDownloadDestination returns the location to save
+// GetDownloadDir returns the location to save
 // the downloaded go cocoon code source on the connector
-func (g *Go) GetDownloadDestination() string {
+func (g *Go) GetDownloadDir() string {
 	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.userHome, "/ccode/sources/", g.spec.ID, repoID)
 }
 
-// GetCopyDestination returns the location in
+// GetCopyDir returns the location in
 // the container where the source code will be copied to
-func (g *Go) GetCopyDestination() string {
+func (g *Go) GetCopyDir() string {
 	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.imgGoPath, "src/github.com/", strings.Split(repoID, "/")[0])
 }
 
-// GetSourceRootDir returns the root directory of the cocoon source code
+// GetSourceDir returns the root directory of the cocoon source code
 // in container.
-func (g *Go) GetSourceRootDir() string {
+func (g *Go) GetSourceDir() string {
 	u, _ := urlx.Parse(g.spec.URL)
 	repoID := strings.Trim(u.Path, "/")
 	return path.Join(g.imgGoPath, "src/github.com/", repoID)
@@ -124,12 +124,12 @@ func (g *Go) SetBuildParams(buildParams map[string]interface{}) error {
 	return nil
 }
 
-// GetBuildScript will return the command to build
+// GetBuildCommand will return the command to build
 // the source code and generate a binary.
-func (g *Go) GetBuildScript() *modo.Do {
+func (g *Go) GetBuildCommand() *modo.Do {
 
 	cmds := []string{
-		"cd " + g.GetSourceRootDir(),
+		"cd " + g.GetSourceDir(),
 	}
 
 	// add the command to run package manager vendor operation
@@ -169,7 +169,7 @@ func (g *Go) GetRunCommand() *modo.Do {
 
 	// if DEV_RUN_ROOT_BIN is set (for development only), run 'ccode' binary that is expected to be in source root
 	if runRootBin := os.Getenv("DEV_RUN_ROOT_BIN"); len(runRootBin) > 0 && runRootBin == "true" {
-		cmds = append(cmds, "cd "+g.GetSourceRootDir()) // move into source root director
+		cmds = append(cmds, "cd "+g.GetSourceDir()) // move into source root director
 		cmds = append(cmds, "./ccode")
 		return &modo.Do{
 			Cmd: []string{

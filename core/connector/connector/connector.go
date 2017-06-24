@@ -132,6 +132,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 		"COCOON_RPC_ADDR":     cn.cocoonCodeRPCAddr,
 		"COCOON_LINK":         cn.spec.Link,
 		"COCOON_CODE_VERSION": cn.spec.Version,
+		"SOURCE_DIR":          cn.lang.GetSourceDir(),
 	}
 
 	// include the environment variable of the release
@@ -391,13 +392,13 @@ func (cn *Connector) fetchSource() error {
 func (cn *Connector) cleanContainer() error {
 
 	// build directories and path
-	downloadDst := cn.lang.GetDownloadDestination()
+	downloadDst := cn.lang.GetDownloadDir()
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
 
 	cmds := []*modo.Do{
 		&modo.Do{Cmd: []string{"bash", "-c", "iptables -F; iptables -P INPUT ACCEPT; iptables -P OUTPUT ACCEPT; iptables -P FORWARD ACCEPT"}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + downloadDst + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + filePath + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode 2>/dev/null || true 2>/dev/null`}, AbortSeriesOnFail: false},
 	}
@@ -439,15 +440,15 @@ func (cn *Connector) fetchGitSourceFromArchive() error {
 	)
 
 	// determine download directory
-	downloadDst := cn.lang.GetDownloadDestination()
+	downloadDst := cn.lang.GetDownloadDir()
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
 
 	cmds := []*modo.Do{
 		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + downloadDst + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null`}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null`}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `mv ` + downloadDst + `/* ` + cn.lang.GetSourceRootDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `mv ` + downloadDst + `/* ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
 	}
 
 	var errCount = 0
@@ -516,7 +517,7 @@ func (cn *Connector) ExecInContainer(id string, commands []*modo.Do, privileged 
 // build starts up the container and builds the cocoon code
 // according to the build script provided by the language.
 func (cn *Connector) build(container *docker.APIContainers) error {
-	errs, err := cn.ExecInContainer(container.ID, []*modo.Do{cn.lang.GetBuildScript()}, false, func(d []byte, stdout bool) {
+	errs, err := cn.ExecInContainer(container.ID, []*modo.Do{cn.lang.GetBuildCommand()}, false, func(d []byte, stdout bool) {
 		buildLog.Info(string(d))
 	}, func(state modo.State, task *modo.Do) {
 		switch state {

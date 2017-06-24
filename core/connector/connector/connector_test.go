@@ -17,18 +17,18 @@ func (ml *MyLang) GetName() string {
 func (ml *MyLang) GetImage() string {
 	return ""
 }
-func (ml *MyLang) GetDownloadDestination() string {
+func (ml *MyLang) GetDownloadDir() string {
 	return ""
 }
-func (ml *MyLang) GetBuildScript() *modo.Do {
+func (ml *MyLang) GetBuildCommand() *modo.Do {
 	return nil
 }
 
-func (ml *MyLang) GetCopyDestination() string {
+func (ml *MyLang) GetCopyDir() string {
 	return ""
 }
 
-func (ml *MyLang) GetSourceRootDir() string {
+func (ml *MyLang) GetSourceDir() string {
 	return ""
 }
 
