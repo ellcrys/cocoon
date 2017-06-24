@@ -268,6 +268,9 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest
 	var releaseUpd types.Release
 	releaseUpd.Merge(structs.New(release).Map())
 	copier.Copy(&releaseUpd, req)
+	if len(req.ACL) > 0 {
+		releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
+	}
 
 	// process special "pin", "unpin" and "unpin_once" environment flags
 	updateReleaseEnv(release.Env, releaseUpd.Env)
