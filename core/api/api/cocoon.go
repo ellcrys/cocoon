@@ -7,13 +7,13 @@ import (
 	"os"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/ellcrys/util"
-	"github.com/fatih/structs"
-	"github.com/jinzhu/copier"
 	"github.com/ellcrys/cocoon/core/api/api/proto_api"
 	"github.com/ellcrys/cocoon/core/api/archiver"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
+	"github.com/fatih/structs"
+	"github.com/jinzhu/copier"
 	context "golang.org/x/net/context"
 )
 
@@ -226,9 +226,6 @@ func updateReleaseEnv(lastReleaseEnv, latestEnv types.Env) {
 func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest) (*proto_api.Response, error) {
 
 	var err error
-	var cocoonUpdated bool
-	var releaseUpdated bool
-	var versionUpdated bool
 	var now = time.Now()
 	var loggedInIdentity = ctx.Value(types.CtxIdentity).(string)
 
@@ -247,6 +244,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest
 
 	// check if the existing cocoon differ from the updated cocoon
 	// if so, apply the new update
+	cocoonUpdated := false
 	if diffs := cocoon.Difference(cocoonUpd); diffs[0] != nil {
 		cocoonUpdated = true
 		cocoon = &cocoonUpd
@@ -266,12 +264,10 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest
 		return nil, err
 	}
 
-	releaseUpd := release.Clone()
-	releaseUpd.Merge(structs.New(req).Map())
-	releaseUpd.Env = req.Env
-	releaseUpd.BuildParam = req.BuildParam
-	releaseUpd.Link = req.Link
-	releaseUpd.ACL = types.NewACLMapFromByte(req.ACL)
+	// copy release and apply changes to new release object
+	var releaseUpd types.Release
+	releaseUpd.Merge(structs.New(release).Map())
+	copier.Copy(&releaseUpd, req)
 
 	// process special "pin", "unpin" and "unpin_once" environment flags
 	updateReleaseEnv(release.Env, releaseUpd.Env)
@@ -291,6 +287,8 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest
 
 	// check if the existing release differ from the updated release
 	// if so, apply the new update
+	releaseUpdated := false
+	versionUpdated := false
 	if diffs := release.Difference(releaseUpd); diffs[0] != nil {
 		releaseUpdated = true
 		versionUpdated = release.Version != releaseUpd.Version
