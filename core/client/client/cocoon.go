@@ -10,11 +10,11 @@ import (
 
 	"sync"
 
-	"github.com/ellcrys/util"
 	"github.com/ellcrys/cocoon/core/api/api"
 	"github.com/ellcrys/cocoon/core/api/api/proto_api"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeonx/timeago"
 )
