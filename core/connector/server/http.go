@@ -13,11 +13,13 @@ import (
 
 	"net"
 
+	"fmt"
+
 	"github.com/asaskevich/govalidator"
-	"github.com/ellcrys/util"
-	"github.com/gorilla/mux"
 	"github.com/ellcrys/cocoon/core/config"
 	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
+	"github.com/ellcrys/util"
+	"github.com/gorilla/mux"
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
@@ -45,44 +47,6 @@ type InvokeError struct {
 // Success describes a successful response from a cocoon code
 type Success struct {
 	Body []byte `json:"body"`
-}
-
-// HTTP defines a structure for an HTTP server
-// that provides REST API services.
-type HTTP struct {
-	rpc *RPC
-}
-
-// NewHTTP creates an new http server instance
-func NewHTTP(rpc *RPC) *HTTP {
-	httpLog = config.MakeLogger("connector.http")
-	return &HTTP{rpc}
-}
-
-// getRouter returns the router
-func (s *HTTP) getRouter() *mux.Router {
-	r := mux.NewRouter()
-	g := r.PathPrefix("/v1").Subrouter()
-	g.HandleFunc("/invoke", s.invokeCocoonCode)
-	return r
-}
-
-// Start starts the http server. Passes true to the startedCh channel
-// when started
-func (s *HTTP) Start(addr string, startedCh chan bool) error {
-	_, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		log.Errorf("%+v", errors.Wrap(err, "failed to parse address"))
-		startedCh <- false
-		return err
-	}
-
-	time.AfterFunc(2*time.Second, func() {
-		httpLog.Infof("Started HTTP API server @ :%s", port)
-		startedCh <- true
-	})
-
-	return http.ListenAndServe(addr, s.getRouter())
 }
 
 // headerToMap converts http.Header to a map[string]string.
@@ -133,6 +97,81 @@ func prepareInvokeHeader(w http.ResponseWriter, r *http.Request) http.Header {
 		header.Set("Form", string(formValToJSON))
 	}
 	return header
+}
+
+// HTTP defines a structure for an HTTP server
+// that provides REST API services.
+type HTTP struct {
+	rpc *RPC
+}
+
+// NewHTTP creates an new http server instance
+func NewHTTP(rpc *RPC) *HTTP {
+	httpLog = config.MakeLogger("connector.http")
+	return &HTTP{rpc}
+}
+
+// getRouter returns the router
+func (s *HTTP) getRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/", s.index)
+
+	// v1 API routes
+	v1 := r.PathPrefix("/v1").Subrouter()
+	v1.HandleFunc("/invoke", s.invokeCocoonCode)
+
+	// static files
+	static := r.PathPrefix("/static").Subrouter()
+	static.HandleFunc("/metadata.json", s.getManifest)
+	return r
+}
+
+// Start starts the http server. Passes true to the startedCh channel
+// when started
+func (s *HTTP) Start(addr string, startedCh chan bool) error {
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "failed to parse address"))
+		startedCh <- false
+		return err
+	}
+
+	time.AfterFunc(2*time.Second, func() {
+		httpLog.Infof("Started HTTP API server @ :%s", port)
+		startedCh <- true
+	})
+
+	return http.ListenAndServe(addr, s.getRouter())
+}
+
+// index page
+func (s *HTTP) index(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Hello!")
+}
+
+// getManifest fetches the cocoon code manifest file content
+func (s *HTTP) getManifest(w http.ResponseWriter, r *http.Request) {
+
+	ctx, cc := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cc()
+	resp, err := s.rpc.cocoonCodeOps.Handle(ctx, &proto_connector.CocoonCodeOperation{
+		ID:       util.UUID4(),
+		Function: "_GET_MANIFEST",
+		Params:   nil,
+		Header:   nil,
+	})
+	if err != nil {
+		w.WriteHeader(500)
+		json.NewEncoder(w).Encode(InvokeError{
+			Error: true,
+			Code:  "code_error",
+			Msg:   err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(200)
+	fmt.Fprint(w, string(resp.GetBody()))
 }
 
 // invokeCocoonCode handles cocoon code invocation
@@ -196,7 +235,7 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(InvokeError{
 			Error: true,
 			Code:  "2",
-			Msg:   "Invalid ID. ID must be a UUIDv4 value",
+			Msg:   "invalid ID. ID must be a UUIDv4 value",
 		})
 		return
 	}
@@ -207,7 +246,7 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(InvokeError{
 			Error: true,
 			Code:  "3",
-			Msg:   "Function is required",
+			Msg:   "function is required",
 		})
 		return
 	}
