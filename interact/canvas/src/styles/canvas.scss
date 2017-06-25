@@ -1,0 +1,28 @@
+html, body, #root{
+  height:100%;
+}
+
+.canvas {
+    height: 100%;
+    margin: auto;
+}
+
+.canvas.xs {
+    width: auto;
+    position: relative;
+    height: 100%;
+}
+
+.canvas.sm {
+    width: 768px;
+    min-height: 300px;
+}
+
+.canvas.md {
+    width: 769px;
+    min-height: 300px;
+}
+
+.canvas.lg {
+    width: 1000px;
+}
