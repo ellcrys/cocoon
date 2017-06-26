@@ -120,9 +120,6 @@ func (s *HTTP) getRouter() *mux.Router {
 	v1 := r.PathPrefix("/v1").Subrouter()
 	v1.HandleFunc("/invoke", s.invokeCocoonCode)
 
-	// static files
-	static := r.PathPrefix("/static").Subrouter()
-	static.HandleFunc("/metadata.json", s.getManifest)
 	return r
 }
 
@@ -146,36 +143,19 @@ func (s *HTTP) Start(addr string, startedCh chan bool) error {
 
 // index page
 func (s *HTTP) index(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
 	fmt.Fprint(w, "Hello!")
-}
-
-// getManifest fetches the cocoon code manifest file content
-func (s *HTTP) getManifest(w http.ResponseWriter, r *http.Request) {
-
-	ctx, cc := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cc()
-	resp, err := s.rpc.cocoonCodeOps.Handle(ctx, &proto_connector.CocoonCodeOperation{
-		ID:       util.UUID4(),
-		Function: "_GET_MANIFEST",
-		Params:   nil,
-		Header:   nil,
-	})
-	if err != nil {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(InvokeError{
-			Error: true,
-			Code:  "code_error",
-			Msg:   err.Error(),
-		})
-		return
-	}
-
-	w.WriteHeader(200)
-	fmt.Fprint(w, string(resp.GetBody()))
 }
 
 // invokeCocoonCode handles cocoon code invocation
 func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
 
 	var err error
 	var resp *proto_connector.Response
@@ -277,7 +257,10 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	json.NewEncoder(w).Encode(Success{
 		Body: resp.GetBody(),
 	})

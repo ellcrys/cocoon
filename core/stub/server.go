@@ -54,8 +54,8 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 		ID: params.GetID(),
 	}
 
-	// system functions starts with _
-	if params.GetFunction()[0] == '_' {
+	// system functions starts with @@
+	if len(params.Function) >= 2 && params.Function[0:2] == "@@" {
 		err = recoverPanic(func() error {
 			result, err = server.SystemInvoke(ctx, params)
 			if err != nil {
@@ -95,10 +95,11 @@ func (server *stubServer) getManifest() (md []byte, err error) {
 // SystemInvoke handles invocation request for system functions
 func (server *stubServer) SystemInvoke(ctx context.Context, params *proto_runtime.InvokeParam) ([]byte, error) {
 	switch params.GetFunction() {
-	case "_GET_MANIFEST":
+	case "@@GET_MANIFEST":
 		return server.getManifest()
+	default:
+		return nil, fmt.Errorf("function '%s' is unknown", params.Function)
 	}
-	return nil, fmt.Errorf("not implemented")
 }
 
 // Stop calls the stop method of the code
