@@ -1,3 +1,8 @@
+view {
+    display: inline-block;
+}
+
+/******************** Flexbox Appliers Classes ************************/
 .flex-direction-row {
     display: flex;
     flex-direction: row;

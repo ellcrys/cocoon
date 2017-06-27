@@ -12,7 +12,24 @@
         "ontext",
         "flexbox",
         "flexify",
-        "nowrap"
+        "nowrap",
+        "justifycontent",
+        "alignitems",
+        "aligncontent",
+        "alignself",
+        "paddingtop",
+        "paddingright",
+        "paddingbottom",
+        "paddingleft",
+        "minheight",
+        "maxheight",
+        "margintop",
+        "marginright",
+        "marginbottom",
+        "marginleft",
+        "Nord",
+        "minwidth",
+        "maxwidth"
     ],
     // flagWords - list of words to be always considered incorrect
     // This is useful for offensive words and common spelling errors.
