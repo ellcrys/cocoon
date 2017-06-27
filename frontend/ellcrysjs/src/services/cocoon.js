@@ -1,8 +1,11 @@
 // @flow
 import Service from './service'
 import uuid from 'uuid4'
-import {FetchHandleResponse,FetchHandleJSON} from '../util/util'
+import {FetchHandleResponse} from '../util/util'
 import base64 from 'base-64'
+import type {View} from '../flow_types/view'
+import _ from 'lodash'
+import {HTTPError, InvokeError} from '../errors/errors'
 
 // Cocoon defines a structure for interacting with a cocoon
 class Cocoon extends Service {
@@ -32,10 +35,10 @@ class Cocoon extends Service {
                 method: 'POST', 
                 headers: new Headers({ "Content-Type": "application/json" }),
                 body: JSON.stringify({ id: id, "function": func, params: params })
-            })).then(FetchHandleResponse).then(FetchHandleJSON).then(function (data) {
+            })).then(FetchHandleResponse).then(function (data) {
                 resolve(data)
-            }).catch(function(err){
-                reject(err)
+            }).catch(function(err: HTTPError){
+                reject(new InvokeError(err.status, err.body))
             })
         })
     }
@@ -50,7 +53,29 @@ class Cocoon extends Service {
                 var manifest = JSON.parse(base64.decode(data.body))
                 resolve(manifest)
             }).catch(function (err) {
-                reject(new Error(`failed to get manifest: ${err.message}`))
+                console.error("failed to get manifest")
+                reject(err)
+            })
+        })
+    }
+    
+    /*
+     * Get a view
+     * 
+     * @param {string} f                The function to invoke
+     * @param {Array<string>} params    The function parameters
+     * @returns {Promise<View|InvokeError>}
+     * @memberof Cocoon
+     */
+    getView(f: string, params: Array<string>|void): Promise<View|InvokeError> {
+        return new Promise((resolve, reject) => {
+            this.invoke(uuid(), f, params).then(function (data) {
+                let view = {}
+                let err = _.attempt(() => {view = JSON.parse(base64.decode(data.body))})
+                if (_.isError(err)) return reject(new Error("invalid view received"))
+                return resolve(view)
+            }).catch(function (err: InvokeError) {
+                reject(err)
             })
         })
     }

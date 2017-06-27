@@ -2,23 +2,26 @@
 import React from 'react';
 import Base from '../base/Base'
 import Navigation from '../navigation/Navigation';
-import Content from '../content/Content';
 import {connect} from 'react-redux';
+import { Route } from 'react-router'
 import {mapStateToProps, matchDispatchToProps} from './mappings'
+import type {Manifest, Func} from '../../flow_types/manifest'
+import FunctionView from '../function-view/FunctionView';
 
 
 type State = {
-    manifest?: {}
+    manifest?: Manifest
 }
 
 type PropTypes = {
-    updateManifest: (newManifest: {}) => void
+    updateManifest: (newManifest: {}) => void,
+    manifest: Manifest
 }
 
 // Canvas is the wrapper for all view elements
 class Canvas extends Base {
     state: State
-    propTypes: PropTypes
+    props: PropTypes
     
     constructor(props: {}){
         super(props)
@@ -34,10 +37,38 @@ class Canvas extends Base {
         }
     }
     
+    /**
+     * Create function component
+     * 
+     * @param {Func} f 
+     * @returns 
+     * @memberof Canvas
+     */
+    createFuncComponent(f: Func) {
+        return () => { 
+            return <FunctionView Func={f} /> 
+        }
+    } 
+    
+    /**
+     * Create dynamic routes from functions included in the manifest
+     * @returns 
+     * @memberof Canvas
+     */
+    createFunctionRoutes() {
+        if (!this.props.manifest) return;
+        return this.props.manifest.functions.map((f: Func) => {
+            return <Route path={"/" + f.name} component={this.createFuncComponent(f)} key={f.name}/>
+        })
+    }
+    
     render() {
         return <div className="canvas lg">
-            <Navigation /> 
-            <Content />
+            <Navigation/>
+            <div>
+                <Route exact path="/" component={FunctionView}/>
+                {this.createFunctionRoutes()}
+            </div>
         </div>
     }
 }

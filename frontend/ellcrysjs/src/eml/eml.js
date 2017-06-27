@@ -1,26 +1,21 @@
+// @flow
 import FlexboxBrowser from './flexbox.browser'
-import parse5 from 'parse5'
 import cheerio from 'cheerio'
 import {Parser} from 'html-to-react'
 
 class CardML extends FlexboxBrowser {
     
-    validTags = ["card"]
+    validTags = ["view"]
     
     // isValidTag checks whether a tag is a valid cml tag
-    isValidTag(tag) {
+    isValidTag(tag: string): boolean {
         return this.validTags.indexOf(tag) !== -1
-    }
-    
-    // parseFragment parses a markup and returns a parse5.Document.
-    parseFragment(markup) {
-        return parse5.parseFragment(markup)
     }
     
     // parse takes a card markup, validates it and returns 
     // a react component
-    parse(markup) {
-        const $ = cheerio.load(markup)
+    parse(markup: string) : any {
+        const $ = (cheerio.load(markup):any)
         const _parse = (select) => {
             $(select).each((i, el) => {
                 if (el.type === 'tag') {

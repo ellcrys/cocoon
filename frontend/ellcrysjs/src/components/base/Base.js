@@ -1,19 +1,27 @@
 // @flow
 import { Component } from 'react';
-import CardML from '../../cardml/cardml'
+import EML from '../../eml/eml'
 import Cocoon from '../../services/cocoon'
+import {InvokeError} from '../../errors/errors'
+
+type State = any
+type Props = any
 
 // Base is the base component
-class Base<PropType,StateType> extends Component<void, PropType, StateType> {
-    propTypes: PropType
-    state: StateType
-    cml: CardML
+class Base extends Component {
+    state: State
+    props: Props
+    eml: EML
     cocoon: Cocoon
     
     constructor(props: {}){
         super(props)
-        this.cml = new CardML()
+        this.eml = new EML()
         this.cocoon = new Cocoon()
+    }
+    
+    isInvokeError(err: any) {
+        return err instanceof InvokeError
     }
 }
 

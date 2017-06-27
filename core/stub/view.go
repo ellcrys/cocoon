@@ -11,6 +11,8 @@ import (
 	"github.com/hoisie/mustache"
 )
 
+// TODO: Write test
+
 var (
 	// ErrViewNotFound indicates an unknown view file
 	ErrViewNotFound = fmt.Errorf("view file not found")
