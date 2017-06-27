@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
-	"github.com/ellcrys/util"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/connector/server/proto_connector"
 	"github.com/ellcrys/cocoon/core/stub/config"
 	"github.com/ellcrys/cocoon/core/stub/proto_runtime"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
 	context "golang.org/x/net/context"
@@ -64,6 +65,12 @@ var (
 
 	// The cocoon code currently running
 	ccode CocoonCode
+
+	// SourceDir is the root directory of the running cocoon code
+	SourceDir = os.Getenv("SOURCE_DIR")
+
+	// ViewDir is the directory where view files are stored
+	ViewDir = path.Join(SourceDir, "/static/views")
 )
 
 // GetLogger returns the stubs logger.
