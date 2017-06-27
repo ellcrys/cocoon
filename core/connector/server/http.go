@@ -157,6 +157,11 @@ func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
 
+	// return 200 for options request
+	if r.Method == http.MethodOptions {
+		return
+	}
+
 	var err error
 	var resp *proto_connector.Response
 	var invokeRequest InvokeRequest

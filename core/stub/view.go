@@ -30,7 +30,7 @@ func (v *View) ToJSON() []byte {
 	return buffer.Bytes()
 }
 
-// Render creates a View from a view file and
+// Render creates a View from am eml view file and
 // a data source. Data source can be a map or a struct type.
 // The created View is json encoded.
 func Render(name string, dataSource interface{}) ([]byte, error) {
@@ -38,7 +38,7 @@ func Render(name string, dataSource interface{}) ([]byte, error) {
 		return nil, ErrViewNotFound
 	}
 
-	content, err := RenderString(name, dataSource)
+	content, err := ioutil.ReadFile(path.Join(ViewDir, name+".html"))
 	if err != nil {
 		return nil, err
 	}
@@ -48,18 +48,12 @@ func Render(name string, dataSource interface{}) ([]byte, error) {
 	}).ToJSON(), nil
 }
 
-// RenderString parses a view file and returns view
-func RenderString(name string, dataSource interface{}) (content []byte, err error) {
-	if !HasView(name) {
-		return nil, ErrViewNotFound
-	}
-
-	content, err = ioutil.ReadFile(path.Join(ViewDir, name+".html"))
-	if err != nil {
-		return nil, err
-	}
-
-	return
+// RenderString creates a view from an eml component and a data source.
+// Data source can be a map or a struct type.The created View is json encoded.
+func RenderString(eml string, dataSource interface{}) (content []byte, err error) {
+	return (&View{
+		Markup: mustache.Render(string(eml), dataSource),
+	}).ToJSON(), nil
 }
 
 // HasView checks whether a view exists
