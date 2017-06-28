@@ -463,7 +463,7 @@ func (cn *Connector) cleanContainer() error {
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + downloadDst + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + filePath + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + os.Getenv("SHARED_DIR") + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + path.Join(os.Getenv("SHARED_DIR"), "/*") + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode 2>/dev/null || true 2>/dev/null`}, AbortSeriesOnFail: false},
 	}
 
@@ -497,7 +497,7 @@ func (cn *Connector) cleanContainer() error {
 // The contents of shared directory will not be available to the cocoon code.
 func (cn *Connector) deleteSharedDirContents() (err error) {
 	if sharedDir := os.Getenv("SHARED_DIR"); sharedDir != "" {
-		err = exec.Command("rm", "-rf", sharedDir+"/*").Run()
+		err = exec.Command("rm", "-rf", path.Join(sharedDir, "/*")).Run()
 	}
 	return
 }
@@ -759,6 +759,9 @@ func (cn *Connector) Stop(failed bool) error {
 		cn.healthCheck.Stop()
 	}
 
+	log.Debug("Deleting shared directory contents")
+	cn.deleteSharedDirContents()
+
 	return nil
 }
 
@@ -768,9 +771,6 @@ func (cn *Connector) Stop(failed bool) error {
 func (cn *Connector) shutdown() error {
 
 	cn.Stop(true)
-
-	log.Debug("Deleting shared directory contents")
-	cn.deleteSharedDirContents()
 
 	// ask platform to stop cocoon on the scheduler to prevent a restart
 	if err := cn.Platform.GetScheduler().Stop(cn.spec.ID); err != nil {
