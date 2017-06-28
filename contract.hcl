@@ -22,14 +22,14 @@ contracts {
     }
     
     # Provide build information if the contract code requires it
-    // build {
-    //     # The package manager to use (supported: glide, govendor)
-    //     pkgMgr = "govendor"
-    // }
+    build {
+        # The package manager to use (supported: glide, govendor)
+        pkgMgr = "govendor"
+    }
     
     # Resources to allocate to the contract's cocoon
     resources {
-       set = "s1"
+       set = "s2"
     }
     
     # Provide signatory information
