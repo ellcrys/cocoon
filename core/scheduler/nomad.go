@@ -84,8 +84,8 @@ func (sc *Nomad) Deploy(jobID, releaseID string, memory, cpuShare int) (*Deploym
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_RELEASE"] = releaseID
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.CPU = cpuShare
 	job.GetSpec().TaskGroups[0].Tasks[0].Resources.DiskMB = 1000
-	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = common.Round(0.3 * float64(memory))
-	job.GetSpec().TaskGroups[0].Tasks[1].Resources.MemoryMB = common.Round(0.7 * float64(memory))
+	job.GetSpec().TaskGroups[0].Tasks[0].Resources.MemoryMB = common.Round(0.5 * float64(memory))
+	job.GetSpec().TaskGroups[0].Tasks[1].Resources.MemoryMB = common.Round(0.5 * float64(memory))
 	job.GetSpec().TaskGroups[0].EphemeralDisk.SizeMB = 4000
 	job.GetSpec().TaskGroups[0].Tasks[0].Env["COCOON_DISK_LIMIT"] = "4000"
 
