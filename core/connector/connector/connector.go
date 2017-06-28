@@ -522,7 +522,7 @@ func (cn *Connector) fetchGitSourceFromArchive() error {
 		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`wget %s -O %s &> /dev/null`, repoTarURL, filePath)}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`tar -xvf %s -C %s --strip-components 1 &> /dev/null`, filePath, downloadDst)}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mv %s/* %s`, downloadDst, cn.lang.GetSourceDir())}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mv %s/static %s`, cn.lang.GetSourceDir(), os.Getenv("SHARED_DIR"))}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mv %s/static %s 2>/dev/null`, cn.lang.GetSourceDir(), os.Getenv("SHARED_DIR"))}, AbortSeriesOnFail: true},
 	}
 
 	var errCount = 0
