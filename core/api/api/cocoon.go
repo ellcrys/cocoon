@@ -330,7 +330,7 @@ func (api *API) UpdateCocoon(ctx context.Context, req *proto_api.ContractRequest
 	}
 
 	// archive release version if it changed
-	if env := os.Getenv("ENV"); versionUpdated && (env == "production" || env == "development" || env == "env") {
+	if env := os.Getenv("ENV"); versionUpdated && (env == "production" || env == "development" || env == "dev") {
 		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create persister")
