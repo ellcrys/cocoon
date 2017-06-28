@@ -39,4 +39,3 @@ fi
 # start connector
 printf "> Running Connector\n"
 exec connector start
-printf "> Connector Stopped"
