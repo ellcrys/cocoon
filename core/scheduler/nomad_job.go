@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
+	"github.com/kr/pretty"
 )
 
 // Job defines a nomad job specification
@@ -38,7 +39,7 @@ type TaskGroup struct {
 	Name          string
 	Count         int
 	Constraints   []string
-	Tasks         []Task
+	Tasks         []*Task
 	EphemeralDisk EphemeralDisk
 	RestartPolicy RestartPolicy
 	Meta          map[string]string
@@ -192,8 +193,8 @@ func NewJob(version, id string, count int) *NomadJob {
 						"VERSION":   version,
 						"REPO_USER": "ellcrys",
 					},
-					Tasks: []Task{
-						Task{
+					Tasks: []*Task{
+						&Task{
 							Name:   "connector",
 							Driver: "docker",
 							Config: Config{
@@ -253,7 +254,7 @@ func NewJob(version, id string, count int) *NomadJob {
 							},
 							DispatchPayload: DispatchPayload{},
 						},
-						Task{
+						&Task{
 							Name:   "code",
 							Driver: "docker",
 							Config: Config{
@@ -331,6 +332,7 @@ func (j *NomadJob) AssignSharedVolume() string {
 		task.Config.Volumes = append(task.Config.Volumes, v)
 		task.Env["SHARED_DIR"] = sharedDir
 		task.Env["STATIC_DIR"] = sharedDir
+		pretty.Println(task.Config.Volumes)
 	}
 	return v
 }
