@@ -36,7 +36,7 @@ func NewHealthChecker(cocoonCodeAddr string, onDeadFunc func()) *HealthChecker {
 func (hc *HealthChecker) Start() {
 
 	_, port, _ := net.SplitHostPort(hc.cocoonCodeAddr)
-	logHealthChecker.Infof("Started cocoon code health @ %s", port)
+	logHealthChecker.Infof("Started cocoon code health check @ %s", port)
 
 	if err := hc.check(); err != nil {
 		logHealthChecker.Infof(err.Error())
