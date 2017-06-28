@@ -32,10 +32,11 @@ else
     mv connector $GOPATH/bin/connector
     printf "Checksum: $(shasum $GOPATH/bin/connector)\n"
     
-    # Give the cocoon container some time to start
+    # Give the cocoon code container some time to start
     sleep 5
 fi
 
 # start connector
 printf "> Running Connector\n"
 exec connector start
+printf "> Connector Stopped"
