@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"fmt"
+
+	"github.com/ellcrys/util"
 )
 
 // Job defines a nomad job specification
@@ -317,4 +319,18 @@ func (j *NomadJob) GetSpec() *Job {
 //SetVersion set the connectors version
 func (j *NomadJob) SetVersion(v string) {
 	j.GetSpec().TaskGroups[0].Meta["VERSION"] = v
+}
+
+// AssignSharedVolume adds a shared volume on all tasks.
+// The shared directory is added to the environment of all tasks.
+// Shared volumes will be located in the tmp directory of the host
+func (j *NomadJob) AssignSharedVolume() string {
+	sharedDir := "/shared"
+	v := fmt.Sprintf("/tmp/cocoon_shared/%s:%s", util.UUID4(), sharedDir)
+	for _, task := range j.Job.TaskGroups[0].Tasks {
+		task.Config.Volumes = append(task.Config.Volumes, v)
+		task.Env["SHARED_DIR"] = sharedDir
+		task.Env["STATIC_DIR"] = sharedDir
+	}
+	return v
 }

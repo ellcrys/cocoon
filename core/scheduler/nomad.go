@@ -5,11 +5,11 @@ import (
 
 	"os"
 
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/config"
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/hashicorp/consul/api"
-	"github.com/ellcrys/cocoon/core/common"
-	"github.com/ellcrys/cocoon/core/config"
 )
 
 var log = config.MakeLogger("nomad")
@@ -100,6 +100,10 @@ func (sc *Nomad) Deploy(jobID, releaseID string, memory, cpuShare int) (*Deploym
 			}}},
 		}
 	}
+
+	// set shared volume
+	job.AssignSharedVolume()
+	log.Debug("Shared directory assigned")
 
 	// deploy job specification
 	jobSpec, _ := util.ToJSON(job)
