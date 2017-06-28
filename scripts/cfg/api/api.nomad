@@ -53,7 +53,7 @@ job "api" {
       
       env {
           ENV = "dev"    
-          API_VERSION = "0.5.0-b7"            
+          API_VERSION = "master"            
           CONNECTOR_VERSION = "0.5.0-b6"
           GCP_PROJECT_ID = "visiontest-1281"
           REPO_ARCHIVE_BKT = "gitsources"
