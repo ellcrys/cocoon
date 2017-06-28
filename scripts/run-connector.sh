@@ -18,10 +18,8 @@ if [ $ENV != "production" ]; then
     # build the binary
     printf "> Building connector\n"
     cd cocoon
-    printf "> Sleeping\n"
-    sleep 3600
-    # govendor fetch -v +out
-    # go build -v -o $GOPATH/bin/connector core/connector/main.go
+    govendor fetch -v +out
+    go build -v -o $GOPATH/bin/connector core/connector/main.go
 else
     # Fetch pre-built binary 
     fileName="connector_${VERSION}.zip"
