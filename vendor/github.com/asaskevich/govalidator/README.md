@@ -47,19 +47,16 @@ Here's some code to explain it:
 type exampleStruct struct {
   Name  string ``
   Email string `valid:"email"`
-}
 
 // this, however, will only fail when Email is empty or an invalid email address:
 type exampleStruct2 struct {
   Name  string `valid:"-"`
   Email string `valid:"email"`
-}
 
 // lastly, this will only fail when Email is an invalid email address but not when it's empty:
 type exampleStruct2 struct {
   Name  string `valid:"-"`
   Email string `valid:"email,optional"`
-}
 ```
 
 #### Recent breaking changes (see [#123](https://github.com/asaskevich/govalidator/pull/123))
@@ -96,7 +93,6 @@ govalidator.CustomTypeTagMap.Set("customByteArrayValidator", CustomTypeValidator
 func Abs(value float64) float64
 func BlackList(str, chars string) string
 func ByteLength(str string, params ...string) bool
-func Range(str string, params ...string) bool
 func StringLength(str string, params ...string) bool
 func StringMatches(s string, params ...string) bool
 func CamelCaseToUnderscore(str string) string
@@ -136,7 +132,6 @@ func IsISBN13(str string) bool
 func IsISO3166Alpha2(str string) bool
 func IsISO3166Alpha3(str string) bool
 func IsInt(str string) bool
-func IsIn(str string, params ...string) bool
 func IsJSON(str string) bool
 func IsLatitude(str string) bool
 func IsLongitude(str string) bool
@@ -174,9 +169,6 @@ func LeftTrim(str, chars string) string
 func Map(array []interface{}, iterator ResultIterator) []interface{}
 func Matches(str, pattern string) bool
 func NormalizeEmail(str string) (string, error)
-func PadBoth(str string, padStr string, padLen int) string
-func PadLeft(str string, padStr string, padLen int)  string
-func PadRight(str string, padStr string, padLen int) string
 func RemoveTags(s string) string
 func ReplacePattern(str, pattern, replace string) string
 func Reverse(s string) string
@@ -258,65 +250,59 @@ For completely custom validators (interface-based), see below.
 
 Here is a list of available validators for struct fields (validator - used function):
 ```go
-"email":          IsEmail,
-"url":            IsURL,
-"dialstring":     IsDialString,
-"requrl":         IsRequestURL,
-"requri":         IsRequestURI,
 "alpha":          IsAlpha,
-"utfletter":      IsUTFLetter,
 "alphanum":       IsAlphanumeric,
-"utfletternum":   IsUTFLetterNumeric,
-"numeric":        IsNumeric,
-"utfnumeric":     IsUTFNumeric,
-"utfdigit":       IsUTFDigit,
+"ascii":          IsASCII,
+"base64":         IsBase64,
+"creditcard":     IsCreditCard,
+"datauri":        IsDataURI,
+"dialstring":     IsDialString,
+"dns":            IsDNSName,
+"email":          IsEmail,
+"float":          IsFloat,
+"fullwidth":      IsFullWidth,
+"halfwidth":      IsHalfWidth,
 "hexadecimal":    IsHexadecimal,
 "hexcolor":       IsHexcolor,
-"rgbcolor":       IsRGBcolor,
-"lowercase":      IsLowerCase,
-"uppercase":      IsUpperCase,
+"host":           IsHost,
 "int":            IsInt,
-"float":          IsFloat,
+"ip":             IsIP,
+"ipv4":           IsIPv4,
+"ipv6":           IsIPv6,
+"isbn10":         IsISBN10,
+"isbn13":         IsISBN13,
+"json":           IsJSON,
+"latitude":       IsLatitude,
+"longitude":      IsLongitude,
+"lowercase":      IsLowerCase,
+"mac":            IsMAC,
+"multibyte":      IsMultibyte,
 "null":           IsNull,
+"numeric":        IsNumeric,
+"port":           IsPort,
+"printableascii": IsPrintableASCII,
+"requri":         IsRequestURI,
+"requrl":         IsRequestURL,
+"rgbcolor":       IsRGBcolor,
+"ssn":            IsSSN,
+"semver":         IsSemver,
+"uppercase":      IsUpperCase,
+"url":            IsURL,
+"utfdigit":       IsUTFDigit,
+"utfletter":      IsUTFLetter,
+"utfletternum":   IsUTFLetterNumeric,
+"utfnumeric":     IsUTFNumeric,
 "uuid":           IsUUID,
 "uuidv3":         IsUUIDv3,
 "uuidv4":         IsUUIDv4,
 "uuidv5":         IsUUIDv5,
-"creditcard":     IsCreditCard,
-"isbn10":         IsISBN10,
-"isbn13":         IsISBN13,
-"json":           IsJSON,
-"multibyte":      IsMultibyte,
-"ascii":          IsASCII,
-"printableascii": IsPrintableASCII,
-"fullwidth":      IsFullWidth,
-"halfwidth":      IsHalfWidth,
 "variablewidth":  IsVariableWidth,
-"base64":         IsBase64,
-"datauri":        IsDataURI,
-"ip":             IsIP,
-"port":           IsPort,
-"ipv4":           IsIPv4,
-"ipv6":           IsIPv6,
-"dns":            IsDNSName,
-"host":           IsHost,
-"mac":            IsMAC,
-"latitude":       IsLatitude,
-"longitude":      IsLongitude,
-"ssn":            IsSSN,
-"semver":         IsSemver,
-"rfc3339":        IsRFC3339,
-"ISO3166Alpha2":  IsISO3166Alpha2,
-"ISO3166Alpha3":  IsISO3166Alpha3,
 ```
 Validators with parameters
 
 ```go
-"range(min|max)": Range,
 "length(min|max)": ByteLength,
-"runelength(min|max)": RuneLength,
 "matches(pattern)": StringMatches,
-"in(string1|string2|...|stringN)": IsIn,
 ```
 
 And here is small example of usage:

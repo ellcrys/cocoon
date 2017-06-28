@@ -466,16 +466,13 @@ func (c *Client) do(method, path string, doOptions doOptions) (*http.Response, e
 	} else if method == "POST" {
 		req.Header.Set("Content-Type", "plain/text")
 	}
-
 	for k, v := range doOptions.headers {
 		req.Header.Set(k, v)
 	}
-
 	ctx := doOptions.context
 	if ctx == nil {
 		ctx = context.Background()
 	}
-
 	resp, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {

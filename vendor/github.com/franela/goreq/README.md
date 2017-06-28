@@ -1,5 +1,4 @@
-[![Build Status](https://img.shields.io/travis/franela/goreq/master.svg)](https://travis-ci.org/franela/goreq)
-[![GoDoc](https://godoc.org/github.com/franela/goreq?status.svg)](https://godoc.org/github.com/franela/goreq)
+[![Build Status](https://travis-ci.org/franela/goreq.png?branch=master)](https://travis-ci.org/franela/goreq)
 
 GoReq
 =======
@@ -15,7 +14,6 @@ Simple and sane HTTP request library for Go language.
 - [What can I do with it?](#user-content-what-can-i-do-with-it)
   - [Making requests with different methods](#user-content-making-requests-with-different-methods)
   - [GET](#user-content-get)
-    - [Tags](#user-content-tags)
   - [POST](#user-content-post)
     - [Sending payloads in the Body](#user-content-sending-payloads-in-the-body)
   - [Specifiying request headers](#user-content-specifiying-request-headers)
@@ -121,71 +119,6 @@ res, err := goreq.Request{
 
 The sample above will send `http://localhost:3000/?limit=3&field=somefield&field=someotherfield`
 
-### Tags
-
-Struct field `url` tag is mainly used as the request parameter name.
-Tags can be comma separated multiple values, 1st value is for naming and rest has special meanings.
-
-- special tag for 1st value
-    - `-`: value is ignored if set this
-
-- special tag for rest 2nd value
-    - `omitempty`: zero-value is ignored if set this
-    - `squash`: the fields of embedded struct is used for parameter
-
-#### Tag Examples
-
-```go
-type Place struct {
-    Country string `url:"country"`
-    City    string `url:"city"`
-    ZipCode string `url:"zipcode,omitempty"`
-}
-
-type Person struct {
-    Place `url:",squash"`
-
-    FirstName string `url:"first_name"`
-    LastName  string `url:"last_name"`
-    Age       string `url:"age,omitempty"`
-    Password  string `url:"-"`
-}
-
-johnbull := Person{
-	Place: Place{ // squash the embedded struct value
-		Country: "UK",
-		City:    "London",
-		ZipCode: "SW1",
-	},
-	FirstName: "John",
-	LastName:  "Doe",
-	Age:       "35",
-	Password:  "my-secret", // ignored for parameter
-}
-
-goreq.Request{
-	Uri:         "http://localhost/",
-	QueryString: johnbull,
-}.Do()
-// =>  `http://localhost/?first_name=John&last_name=Doe&age=35&country=UK&city=London&zip_code=SW1`
-
-
-// age and zipcode will be ignored because of `omitempty`
-// but firstname isn't.
-samurai := Person{
-	Place: Place{ // squash the embedded struct value
-		Country: "Japan",
-		City:    "Tokyo",
-	},
-	LastName: "Yagyu",
-}
-
-goreq.Request{
-	Uri:         "http://localhost/",
-	QueryString: samurai,
-}.Do()
-// =>  `http://localhost/?first_name=&last_name=yagyu&country=Japan&city=Tokyo`
-```
 
 
 #### POST
@@ -218,7 +151,7 @@ res, err := goreq.Request{
 We think that most of the times the request headers that you use are: ```Host```, ```Content-Type```, ```Accept``` and ```User-Agent```. This is why we decided to make it very easy to set these headers.
 
 ```go
-res, err := goreq.Request{
+res, err := Request{
     Uri: "http://www.google.com",
     Host: "foobar.com",
     Accept: "application/json",
@@ -230,7 +163,7 @@ res, err := goreq.Request{
 But sometimes you need to set other headers. You can still do it.
 
 ```go
-req := goreq.Request{ Uri: "http://www.google.com" }
+req := Request{ Uri: "http://www.google.com" }
 
 req.AddHeader("X-Custom", "somevalue")
 
@@ -240,7 +173,7 @@ req.Do()
 Alternatively you can use the `WithHeader` function to keep the syntax short
 
 ```go
-res, err = goreq.Request{ Uri: "http://www.google.com" }.WithHeader("X-Custom", "somevalue").Do()
+res, err = Request{ Uri: "http://www.google.com" }.WithHeader("X-Custom", "somevalue").Do()
 ```
 
 ## Cookie support
@@ -249,7 +182,7 @@ Cookies can be either set at the request level by sending a [CookieJar](http://g
 or you can use goreq's one-liner WithCookie method as shown below
 
 ```go
-res, err := goreq.Request{
+res, err := Request{
     Uri: "http://www.google.com",
 }.
 WithCookie(&http.Cookie{Name: "c1", Value: "v1"}).
@@ -324,7 +257,7 @@ res.Body.FromJsonTo(&item)
 ## Sending/Receiving Compressed Payloads
 GoReq supports gzip, deflate and zlib compression of requests' body and transparent decompression of responses provided they have a correct `Content-Encoding` header.
 
-##### Using gzip compression:
+#####Using gzip compression:
 ```go
 res, err := goreq.Request{
     Method: "POST",
@@ -333,7 +266,7 @@ res, err := goreq.Request{
     Compression: goreq.Gzip(),
 }.Do()
 ```
-##### Using deflate/zlib compression:
+#####Using deflate/zlib compression:
 ```go
 res, err := goreq.Request{
     Method: "POST",
@@ -342,7 +275,7 @@ res, err := goreq.Request{
     Compression: goreq.Deflate(),
 }.Do()
 ```
-##### Using compressed responses:
+#####Using compressed responses:
 If servers replies a correct and matching `Content-Encoding` header (gzip requires `Content-Encoding: gzip` and deflate `Content-Encoding: deflate`) goreq transparently decompresses the response so the previous example should always work:
 ```go
 type Item struct {
@@ -410,7 +343,7 @@ Content-Type:
 To get the Request:
 
 ```go
-req := goreq.Request{
+req := Request{
         Host: "foobar.com",
 }
 

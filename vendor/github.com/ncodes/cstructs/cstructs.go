@@ -11,7 +11,6 @@ import (
 // Copy copies the value of fields from src to similar
 // fields of dest
 func Copy(src interface{}, dest interface{}) error {
-
 	if !structs.IsStruct(src) {
 		return fmt.Errorf("src is not a struct")
 	} else if !structs.IsStruct(dest) {

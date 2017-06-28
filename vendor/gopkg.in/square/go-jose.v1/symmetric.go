@@ -28,7 +28,7 @@ import (
 	"hash"
 	"io"
 
-	"gopkg.in/square/go-jose.v1/cipher"
+	"github.com/square/go-jose/cipher"
 )
 
 // Random reader (stubbed out in tests)

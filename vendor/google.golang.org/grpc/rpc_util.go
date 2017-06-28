@@ -41,12 +41,10 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
-	"sync"
 	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
@@ -62,24 +60,16 @@ type Compressor interface {
 	Type() string
 }
 
-type gzipCompressor struct {
-	pool sync.Pool
-}
-
 // NewGZIPCompressor creates a Compressor based on GZIP.
 func NewGZIPCompressor() Compressor {
-	return &gzipCompressor{
-		pool: sync.Pool{
-			New: func() interface{} {
-				return gzip.NewWriter(ioutil.Discard)
-			},
-		},
-	}
+	return &gzipCompressor{}
+}
+
+type gzipCompressor struct {
 }
 
 func (c *gzipCompressor) Do(w io.Writer, p []byte) error {
-	z := c.pool.Get().(*gzip.Writer)
-	z.Reset(w)
+	z := gzip.NewWriter(w)
 	if _, err := z.Write(p); err != nil {
 		return err
 	}
@@ -99,7 +89,6 @@ type Decompressor interface {
 }
 
 type gzipDecompressor struct {
-	pool sync.Pool
 }
 
 // NewGZIPDecompressor creates a Decompressor based on GZIP.
@@ -108,26 +97,11 @@ func NewGZIPDecompressor() Decompressor {
 }
 
 func (d *gzipDecompressor) Do(r io.Reader) ([]byte, error) {
-	var z *gzip.Reader
-	switch maybeZ := d.pool.Get().(type) {
-	case nil:
-		newZ, err := gzip.NewReader(r)
-		if err != nil {
-			return nil, err
-		}
-		z = newZ
-	case *gzip.Reader:
-		z = maybeZ
-		if err := z.Reset(r); err != nil {
-			d.pool.Put(z)
-			return nil, err
-		}
+	z, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
 	}
-
-	defer func() {
-		z.Close()
-		d.pool.Put(z)
-	}()
+	defer z.Close()
 	return ioutil.ReadAll(z)
 }
 
@@ -142,7 +116,6 @@ type callInfo struct {
 	trailerMD metadata.MD
 	peer      *peer.Peer
 	traceInfo traceInfo // in trace.go
-	creds     credentials.PerRPCCredentials
 }
 
 var defaultCallInfo = callInfo{failFast: true}
@@ -205,15 +178,6 @@ func Peer(peer *peer.Peer) CallOption {
 func FailFast(failFast bool) CallOption {
 	return beforeCall(func(c *callInfo) error {
 		c.failFast = failFast
-		return nil
-	})
-}
-
-// PerRPCCredentials returns a CallOption that sets credentials.PerRPCCredentials
-// for a call.
-func PerRPCCredentials(creds credentials.PerRPCCredentials) CallOption {
-	return beforeCall(func(c *callInfo) error {
-		c.creds = creds
 		return nil
 	})
 }

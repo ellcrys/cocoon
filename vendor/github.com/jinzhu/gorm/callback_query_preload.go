@@ -4,17 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
 // preloadCallback used to preload associations
 func preloadCallback(scope *Scope) {
-
-	if _, ok := scope.Get("gorm:auto_preload"); ok {
-		autoPreload(scope)
-	}
-
 	if scope.Search.preload == nil || scope.HasError() {
 		return
 	}
@@ -82,25 +76,6 @@ func preloadCallback(scope *Scope) {
 				}
 			}
 		}
-	}
-}
-
-func autoPreload(scope *Scope) {
-	for _, field := range scope.Fields() {
-		if field.Relationship == nil {
-			continue
-		}
-
-		if val, ok := field.TagSettings["PRELOAD"]; ok {
-			if preload, err := strconv.ParseBool(val); err != nil {
-				scope.Err(errors.New("invalid preload option"))
-				return
-			} else if !preload {
-				continue
-			}
-		}
-
-		scope.Search.Preload(field.Name)
 	}
 }
 

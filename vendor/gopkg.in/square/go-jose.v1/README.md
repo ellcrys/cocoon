@@ -1,9 +1,6 @@
 # Go JOSE 
 
-[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/gopkg.in/square/go-jose.v1) [![license](http://img.shields.io/badge/license-apache_2.0-blue.svg?style=flat)](https://raw.githubusercontent.com/square/go-jose/master/LICENSE)
-[![release](https://img.shields.io/github/release/square/go-jose.svg?style=flat)](https://github.com/square/go-jose/releases)
-[![build](https://travis-ci.org/square/go-jose.svg?branch=master)](https://travis-ci.org/square/go-jose)
-[![coverage](https://coveralls.io/repos/github/square/go-jose/badge.svg?branch=master)](https://coveralls.io/r/square/go-jose)
+[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/gopkg.in/square/go-jose.v1) [![license](http://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/square/go-jose/master/LICENSE) [![build](https://travis-ci.org/square/go-jose.svg?branch=master)](https://travis-ci.org/square/go-jose) [![coverage](https://coveralls.io/repos/github/square/go-jose/badge.svg?branch=master)](https://coveralls.io/r/square/go-jose)
 
 Package jose aims to provide an implementation of the Javascript Object Signing
 and Encryption set of standards. For the moment, it mainly focuses on encryption
@@ -34,8 +31,9 @@ for dealing with JOSE messages in a shell.
 standard library which uses case-sensitive matching for member names (instead
 of [case-insensitive matching](https://www.ietf.org/mail-archive/web/json/current/msg03763.html)).
 This is to avoid differences in interpretation of messages between go-jose and
-libraries in other languages. If you do not like this behavior, you can use the
-`std_json` build tag to disable it (though we do not recommend doing so).
+libraries in other languages. See [issue #73](https://github.com/square/go-jose/issues/73)
+for more info. If you do not like this behavior, you can use the `std_json`
+build tag to disable it (though we do not recommend doing so).
 
 ### Versions
 

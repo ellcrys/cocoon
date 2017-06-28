@@ -62,9 +62,6 @@ func (p *page) leafPageElement(index uint16) *leafPageElement {
 
 // leafPageElements retrieves a list of leaf nodes.
 func (p *page) leafPageElements() []leafPageElement {
-	if p.count == 0 {
-		return nil
-	}
 	return ((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&p.ptr)))[:]
 }
 
@@ -75,9 +72,6 @@ func (p *page) branchPageElement(index uint16) *branchPageElement {
 
 // branchPageElements retrieves a list of branch nodes.
 func (p *page) branchPageElements() []branchPageElement {
-	if p.count == 0 {
-		return nil
-	}
 	return ((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&p.ptr)))[:]
 }
 
@@ -117,13 +111,13 @@ type leafPageElement struct {
 // key returns a byte slice of the node key.
 func (n *leafPageElement) key() []byte {
 	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
-	return (*[maxAllocSize]byte)(unsafe.Pointer(&buf[n.pos]))[:n.ksize:n.ksize]
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&buf[n.pos]))[:n.ksize]
 }
 
 // value returns a byte slice of the node value.
 func (n *leafPageElement) value() []byte {
 	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
-	return (*[maxAllocSize]byte)(unsafe.Pointer(&buf[n.pos+n.ksize]))[:n.vsize:n.vsize]
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&buf[n.pos+n.ksize]))[:n.vsize]
 }
 
 // PageInfo represents human readable information about a page.
@@ -145,33 +139,12 @@ func (a pgids) merge(b pgids) pgids {
 	// Return the opposite slice if one is nil.
 	if len(a) == 0 {
 		return b
-	}
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return a
 	}
-	merged := make(pgids, len(a)+len(b))
-	mergepgids(merged, a, b)
-	return merged
-}
 
-// mergepgids copies the sorted union of a and b into dst.
-// If dst is too small, it panics.
-func mergepgids(dst, a, b pgids) {
-	if len(dst) < len(a)+len(b) {
-		panic(fmt.Errorf("mergepgids bad len %d < %d + %d", len(dst), len(a), len(b)))
-	}
-	// Copy in the opposite slice if one is nil.
-	if len(a) == 0 {
-		copy(dst, b)
-		return
-	}
-	if len(b) == 0 {
-		copy(dst, a)
-		return
-	}
-
-	// Merged will hold all elements from both lists.
-	merged := dst[:0]
+	// Create a list to hold all elements from both lists.
+	merged := make(pgids, 0, len(a)+len(b))
 
 	// Assign lead to the slice with a lower starting value, follow to the higher value.
 	lead, follow := a, b
@@ -193,5 +166,7 @@ func mergepgids(dst, a, b pgids) {
 	}
 
 	// Append what's left in follow.
-	_ = append(merged, follow...)
+	merged = append(merged, follow...)
+
+	return merged
 }

@@ -25,8 +25,6 @@ import (
 	"math/big"
 	"regexp"
 	"strings"
-
-	"gopkg.in/square/go-jose.v1/json"
 )
 
 var stripWhitespaceRegex = regexp.MustCompile("\\s")
@@ -47,7 +45,7 @@ func base64URLDecode(data string) ([]byte, error) {
 // Helper function to serialize known-good objects.
 // Precondition: value is not a nil pointer.
 func mustSerializeJSON(value interface{}) []byte {
-	out, err := json.Marshal(value)
+	out, err := MarshalJSON(value)
 	if err != nil {
 		panic(err)
 	}
@@ -148,12 +146,12 @@ func newBufferFromInt(num uint64) *byteBuffer {
 }
 
 func (b *byteBuffer) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.base64())
+	return MarshalJSON(b.base64())
 }
 
 func (b *byteBuffer) UnmarshalJSON(data []byte) error {
 	var encoded string
-	err := json.Unmarshal(data, &encoded)
+	err := UnmarshalJSON(data, &encoded)
 	if err != nil {
 		return err
 	}

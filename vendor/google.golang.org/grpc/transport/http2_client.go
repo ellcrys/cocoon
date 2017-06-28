@@ -101,8 +101,6 @@ type http2Client struct {
 	// The scheme used: https if TLS is on, http otherwise.
 	scheme string
 
-	isSecure bool
-
 	creds []credentials.PerRPCCredentials
 
 	// Boolean to keep track of reading activity on transport.
@@ -183,10 +181,7 @@ func newHTTP2Client(ctx context.Context, addr TargetInfo, opts ConnectOptions) (
 			conn.Close()
 		}
 	}(conn)
-	var (
-		isSecure bool
-		authInfo credentials.AuthInfo
-	)
+	var authInfo credentials.AuthInfo
 	if creds := opts.TransportCredentials; creds != nil {
 		scheme = "https"
 		conn, authInfo, err = creds.ClientHandshake(ctx, addr.Addr, conn)
@@ -196,7 +191,6 @@ func newHTTP2Client(ctx context.Context, addr TargetInfo, opts ConnectOptions) (
 			temp := isTemporary(err)
 			return nil, connectionErrorf(temp, err, "transport: %v", err)
 		}
-		isSecure = true
 	}
 	kp := opts.KeepaliveParams
 	// Validate keepalive parameters.
@@ -236,7 +230,6 @@ func newHTTP2Client(ctx context.Context, addr TargetInfo, opts ConnectOptions) (
 		scheme:            scheme,
 		state:             reachable,
 		activeStreams:     make(map[uint32]*Stream),
-		isSecure:          isSecure,
 		creds:             opts.PerRPCCredentials,
 		maxStreams:        defaultMaxStreamsClient,
 		streamsQuota:      newQuotaPool(defaultMaxStreamsClient),
@@ -341,13 +334,10 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 	if t.authInfo != nil {
 		pr.AuthInfo = t.authInfo
 	}
+	userCtx := ctx
 	ctx = peer.NewContext(ctx, pr)
-	var (
-		authData = make(map[string]string)
-		audience string
-	)
-	// Create an audience string only if needed.
-	if len(t.creds) > 0 || callHdr.Creds != nil {
+	authData := make(map[string]string)
+	for _, c := range t.creds {
 		// Construct URI required to get auth request metadata.
 		var port string
 		if pos := strings.LastIndex(t.target, ":"); pos != -1 {
@@ -358,37 +348,15 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 		}
 		pos := strings.LastIndex(callHdr.Method, "/")
 		if pos == -1 {
-			pos = len(callHdr.Method)
+			return nil, streamErrorf(codes.InvalidArgument, "transport: malformed method name: %q", callHdr.Method)
 		}
-		audience = "https://" + callHdr.Host + port + callHdr.Method[:pos]
-	}
-	for _, c := range t.creds {
+		audience := "https://" + callHdr.Host + port + callHdr.Method[:pos]
 		data, err := c.GetRequestMetadata(ctx, audience)
 		if err != nil {
-			return nil, streamErrorf(codes.Internal, "transport: %v", err)
+			return nil, streamErrorf(codes.InvalidArgument, "transport: %v", err)
 		}
 		for k, v := range data {
-			// Capital header names are illegal in HTTP/2.
-			k = strings.ToLower(k)
 			authData[k] = v
-		}
-	}
-	callAuthData := make(map[string]string)
-	// Check if credentials.PerRPCCredentials were provided via call options.
-	// Note: if these credentials are provided both via dial options and call
-	// options, then both sets of credentials will be applied.
-	if callCreds := callHdr.Creds; callCreds != nil {
-		if !t.isSecure && callCreds.RequireTransportSecurity() {
-			return nil, streamErrorf(codes.Unauthenticated, "transport: cannot send secure credentials on an insecure conneciton")
-		}
-		data, err := callCreds.GetRequestMetadata(ctx, audience)
-		if err != nil {
-			return nil, streamErrorf(codes.Internal, "transport: %v", err)
-		}
-		for k, v := range data {
-			// Capital header names are illegal in HTTP/2
-			k = strings.ToLower(k)
-			callAuthData[k] = v
 		}
 	}
 	t.mu.Lock()
@@ -433,6 +401,7 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 		return nil, ErrConnClosing
 	}
 	s := t.newStream(ctx, callHdr)
+	s.clientStatsCtx = userCtx
 	t.activeStreams[s.id] = s
 	// If the number of active streams change from 0 to 1, then check if keepalive
 	// has gone dormant. If so, wake it up.
@@ -468,10 +437,9 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 	}
 
 	for k, v := range authData {
-		t.hEnc.WriteField(hpack.HeaderField{Name: k, Value: encodeMetadataHeader(k, v)})
-	}
-	for k, v := range callAuthData {
-		t.hEnc.WriteField(hpack.HeaderField{Name: k, Value: encodeMetadataHeader(k, v)})
+		// Capital header names are illegal in HTTP/2.
+		k = strings.ToLower(k)
+		t.hEnc.WriteField(hpack.HeaderField{Name: k, Value: v})
 	}
 	var (
 		hasMD      bool
@@ -546,7 +514,7 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 			LocalAddr:   t.localAddr,
 			Compression: callHdr.SendCompress,
 		}
-		t.statsHandler.HandleRPC(s.ctx, outHeader)
+		t.statsHandler.HandleRPC(s.clientStatsCtx, outHeader)
 	}
 	t.writableChan <- 0
 	return s, nil
@@ -834,6 +802,11 @@ func (t *http2Client) handleData(f *http2.DataFrame) {
 		return
 	}
 	if size > 0 {
+		if f.Header().Flags.Has(http2.FlagDataPadded) {
+			if w := t.fc.onRead(uint32(size) - uint32(len(f.Data()))); w > 0 {
+				t.controlBuf.put(&windowUpdate{0, w})
+			}
+		}
 		s.mu.Lock()
 		if s.state == streamDone {
 			s.mu.Unlock()
@@ -852,9 +825,6 @@ func (t *http2Client) handleData(f *http2.DataFrame) {
 			return
 		}
 		if f.Header().Flags.Has(http2.FlagDataPadded) {
-			if w := t.fc.onRead(uint32(size) - uint32(len(f.Data()))); w > 0 {
-				t.controlBuf.put(&windowUpdate{0, w})
-			}
 			if w := s.fc.onRead(uint32(size) - uint32(len(f.Data()))); w > 0 {
 				t.controlBuf.put(&windowUpdate{s.id, w})
 			}
@@ -1002,16 +972,18 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 	}
 	s.bytesReceived = true
 	var state decodeState
-	if err := state.decodeResponseHeader(frame); err != nil {
-		s.mu.Lock()
-		if !s.headerDone {
-			close(s.headerChan)
-			s.headerDone = true
+	for _, hf := range frame.Fields {
+		if err := state.processHeaderField(hf); err != nil {
+			s.mu.Lock()
+			if !s.headerDone {
+				close(s.headerChan)
+				s.headerDone = true
+			}
+			s.mu.Unlock()
+			s.write(recvMsg{err: err})
+			// Something wrong. Stops reading even when there is remaining.
+			return
 		}
-		s.mu.Unlock()
-		s.write(recvMsg{err: err})
-		// Something wrong. Stops reading even when there is remaining.
-		return
 	}
 
 	endStream := frame.StreamEnded()
@@ -1023,13 +995,13 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 					Client:     true,
 					WireLength: int(frame.Header().Length),
 				}
-				t.statsHandler.HandleRPC(s.ctx, inHeader)
+				t.statsHandler.HandleRPC(s.clientStatsCtx, inHeader)
 			} else {
 				inTrailer := &stats.InTrailer{
 					Client:     true,
 					WireLength: int(frame.Header().Length),
 				}
-				t.statsHandler.HandleRPC(s.ctx, inTrailer)
+				t.statsHandler.HandleRPC(s.clientStatsCtx, inTrailer)
 			}
 		}
 	}()

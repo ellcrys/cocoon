@@ -35,7 +35,6 @@ package grpc
 
 import (
 	"fmt"
-	"net"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -61,10 +60,6 @@ type BalancerConfig struct {
 	// use to dial to a remote load balancer server. The Balancer implementations
 	// can ignore this if it does not need to talk to another party securely.
 	DialCreds credentials.TransportCredentials
-	// Dialer is the custom dialer the Balancer implementation can use to dial
-	// to a remote load balancer server. The Balancer implementations
-	// can ignore this if it doesn't need to talk to remote balancer.
-	Dialer func(context.Context, string) (net.Conn, error)
 }
 
 // BalancerGetOptions configures a Get call.
