@@ -1,3 +1,4 @@
+# Sample cocoon job file.
 job "cocoon" {
   datacenters = ["dc1"]
   region = "global"
@@ -37,7 +38,8 @@ job "cocoon" {
         privileged = true
         force_pull = true
         volumes = [
-            "/var/run/docker.sock:/var/run/docker.sock"
+            "/var/run/docker.sock:/var/run/docker.sock",
+            "/tmp/cocoon_shared/uuid/:/shared"
         ]
         image = "${NOMAD_META_REPO_USER}/cocoon-launcher:latest"  
         command = "bash"
