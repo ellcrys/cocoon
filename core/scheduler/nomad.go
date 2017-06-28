@@ -10,6 +10,7 @@ import (
 	"github.com/ellcrys/util"
 	"github.com/franela/goreq"
 	"github.com/hashicorp/consul/api"
+	"github.com/kr/pretty"
 )
 
 var log = config.MakeLogger("nomad")
@@ -104,6 +105,7 @@ func (sc *Nomad) Deploy(jobID, releaseID string, memory, cpuShare int) (*Deploym
 	// set shared volume
 	job.AssignSharedVolume()
 	log.Debug("Shared directory assigned")
+	pretty.Println(job.Job)
 
 	// deploy job specification
 	jobSpec, _ := util.ToJSON(job)
