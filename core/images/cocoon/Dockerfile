@@ -1,4 +1,4 @@
 # Base image for a cocoon. 
-FROM ncodes/cocoon-go:latest
+FROM ellcrys/cocoon-go:latest
 
 CMD ["bash"]

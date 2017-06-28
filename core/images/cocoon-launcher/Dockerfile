@@ -1,4 +1,4 @@
-FROM ncodes/cocoon:latest
+FROM ellcrys/cocoon:latest
 
 # add dependencies
 #RUN echo "deb http://http.debian.net/debian wheezy-backports main" >> /etc/apt/sources.list
@@ -9,4 +9,4 @@ RUN go get -u github.com/kardianos/govendor
 # create working directorys
 WORKDIR src
 WORKDIR github.com
-WORKDIR ncodes
+WORKDIR ellcrys

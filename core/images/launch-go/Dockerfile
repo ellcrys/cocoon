@@ -1,4 +1,4 @@
-FROM ncodes/cocoon-go:latest
+FROM ellcrys/cocoon-go:latest
 
 # add dependencies
 RUN apt-get update
