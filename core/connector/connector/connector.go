@@ -517,11 +517,12 @@ func (cn *Connector) fetchGitSourceFromArchive() error {
 	filePath := path.Join(downloadDst, fmt.Sprintf("%s.tar.gz", cn.spec.ID))
 
 	cmds := []*modo.Do{
-		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + downloadDst + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `mkdir -p ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `wget ` + repoTarURL + ` -O ` + filePath + ` &> /dev/null`}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `tar -xvf ` + filePath + ` -C ` + downloadDst + ` --strip-components 1 &> /dev/null`}, AbortSeriesOnFail: true},
-		&modo.Do{Cmd: []string{"bash", "-c", `mv ` + downloadDst + `/* ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mkdir -p %s`, downloadDst) + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mkdir -p %s`, cn.lang.GetSourceDir()) + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`wget %s -O %s &> /dev/null`, repoTarURL, filePath)}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`tar -xvf %s -C %s --strip-components 1 &> /dev/null`, filePath, downloadDst)}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mv %s/* %s`, downloadDst, cn.lang.GetSourceDir())}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", fmt.Sprintf(`mv %s/static %s`, cn.lang.GetSourceDir(), os.Getenv("SHARED_DIR"))}, AbortSeriesOnFail: true},
 	}
 
 	var errCount = 0
