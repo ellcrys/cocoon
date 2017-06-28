@@ -156,7 +156,7 @@ func (api *API) CreateCocoon(ctx context.Context, req *proto_api.ContractRequest
 	}
 
 	// archive release
-	if env := os.Getenv("ENV"); env == "production" || env == "development" {
+	if env := os.Getenv("ENV"); env == "production" || env == "development" || env == "dev" {
 		persister, err := archiver.NewGStoragePersister(archiver.MakeArchiveName(cocoon.ID, release.Version))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create persister")
