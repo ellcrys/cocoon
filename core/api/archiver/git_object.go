@@ -5,7 +5,7 @@ import (
 
 	"github.com/ellcrys/util"
 	"github.com/goware/urlx"
-	cutil "github.com/ncodes/cocoon-util"
+	cutil "github.com/ellcrys/cocoon-util"
 	"github.com/pkg/errors"
 )
 

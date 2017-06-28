@@ -1,0 +1,10 @@
+package: github.com/ncodes/util
+import:
+- package: github.com/ellcrys/util
+- package: github.com/franela/goreq
+- package: github.com/goware/urlx
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ^1.6.2
+  subpackages:
+  - convey

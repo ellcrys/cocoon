@@ -22,7 +22,7 @@ import (
 	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ellcrys/util"
 	docker "github.com/fsouza/go-dockerclient"
-	cutil "github.com/ncodes/cocoon-util"
+	cutil "github.com/ellcrys/cocoon-util"
 	"github.com/ncodes/modo"
 	logging "github.com/op/go-logging"
 	"github.com/pkg/errors"

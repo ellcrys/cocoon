@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/asaskevich/govalidator"
+	cocoon_util "github.com/ellcrys/cocoon-util"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/connector/server/acl"
 	"github.com/ellcrys/cocoon/core/scheduler"
 	"github.com/ellcrys/cocoon/core/types"
 	"github.com/ellcrys/util"
-	cocoon_util "github.com/ncodes/cocoon-util"
 )
 
 // ValidateCocoon validates a cocoon to be created

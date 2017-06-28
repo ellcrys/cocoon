@@ -12,7 +12,7 @@ import (
 	"github.com/goware/urlx"
 	"github.com/hashicorp/hcl"
 	"github.com/jinzhu/copier"
-	c_util "github.com/ncodes/cocoon-util"
+	c_util "github.com/ellcrys/cocoon-util"
 	"github.com/ellcrys/cocoon/core/api/api"
 	"github.com/ellcrys/cocoon/core/api/api/proto_api"
 	"github.com/ellcrys/cocoon/core/common"
