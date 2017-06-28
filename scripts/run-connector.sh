@@ -13,6 +13,7 @@ if [ $ENV != "production" ]; then
     cd $repoOwnerDir
     printf "> Fetching cocoon source. [branch=$branch] [dest=$repoOwnerDir]\n"
     rm -rf cocoon
+    git config --global core.compression 0
     git clone --depth=1 -b $branch https://$repoOwner/cocoon
 
     # build the binary
