@@ -4,7 +4,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ellcrys/util"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/config"
 	"github.com/ellcrys/cocoon/core/connector/connector"
@@ -14,6 +13,7 @@ import (
 	"github.com/ellcrys/cocoon/core/platform"
 	"github.com/ellcrys/cocoon/core/scheduler"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -75,6 +75,7 @@ var startCmd = &cobra.Command{
 			"COCOON_ID",
 			"COCOON_RELEASE",
 			"COCOON_CONTAINER_NAME",
+			"SHARED_DIR",
 		}...); len(missingEnv) > 0 {
 			log.Fatalf("The following environment variables must be set: %v", missingEnv)
 		}
@@ -84,7 +85,7 @@ var startCmd = &cobra.Command{
 			log.Fatalf("Failed to initialize platform: %s", err)
 			return
 		}
-		
+
 		log.Infof("Connector initialized [cocoon=%s, release=%s]", os.Getenv("COCOON_ID"), os.Getenv("COCOON_RELEASE"))
 		log.Infof("Fetching cocoon specification")
 		spec, err := getSpec(platform)
