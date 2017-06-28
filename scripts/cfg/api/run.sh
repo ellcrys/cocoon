@@ -11,8 +11,10 @@ if [ $ENV != "production" ]; then
     git clone --depth=1 -b $VERSION https://github.com/ellcrys/cocoon
     cd cocoon 
     git checkout $VERSION
-    govendor fetch -v +out
-    go build -o $GOPATH/bin/api core/api/main.go
+    echo 'sleeping'
+    sleep 3600
+    # govendor fetch -v +out
+    # go build -o $GOPATH/bin/api core/api/main.go
 else
      # Fetch pre-built binary 
     fileName="api_${VERSION}.zip"
