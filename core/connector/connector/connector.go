@@ -10,6 +10,8 @@ import (
 
 	"strings"
 
+	"os/exec"
+
 	humanize "github.com/dustin/go-humanize"
 	cutil "github.com/ellcrys/cocoon-util"
 	"github.com/ellcrys/cocoon/core/api/api"
@@ -461,6 +463,7 @@ func (cn *Connector) cleanContainer() error {
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + downloadDst + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + cn.lang.GetSourceDir() + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + filePath + ``}, AbortSeriesOnFail: true},
+		&modo.Do{Cmd: []string{"bash", "-c", `rm -rf ` + os.Getenv("SHARED_DIR") + ``}, AbortSeriesOnFail: true},
 		&modo.Do{Cmd: []string{"bash", "-c", `killall -3 ccode 2>/dev/null || true 2>/dev/null`}, AbortSeriesOnFail: false},
 	}
 
@@ -488,6 +491,15 @@ func (cn *Connector) cleanContainer() error {
 	}
 
 	return nil
+}
+
+// deleteSharedDirContents deletes the shared directory.
+// The contents of shared directory will not be available to the cocoon code.
+func (cn *Connector) deleteSharedDirContents() (err error) {
+	if sharedDir := os.Getenv("SHARED_DIR"); sharedDir != "" {
+		err = exec.Command("rm", "-rf", sharedDir+"/*").Run()
+	}
+	return
 }
 
 // fetchGitSourceFromArchive fetches the current cocoon release source from
@@ -732,15 +744,18 @@ func (cn *Connector) Stop(failed bool) error {
 
 	defer func() {
 		cn.cocoonRunning = false
+		log.Debug("Updating cocoon status to `stopped`")
 		cn.setStatus(api.CocoonStatusStopped)
 		cn.waitCh <- failed
 	}()
 
 	if cn.monitor != nil {
+		log.Debug("Stopping monitor")
 		cn.monitor.Stop()
 	}
 
 	if cn.healthCheck != nil {
+		log.Debug("Stopping health checker")
 		cn.healthCheck.Stop()
 	}
 
@@ -752,15 +767,10 @@ func (cn *Connector) Stop(failed bool) error {
 // a restart by the scheduler.
 func (cn *Connector) shutdown() error {
 
-	if cn.monitor != nil {
-		cn.monitor.Stop()
-	}
+	cn.Stop(true)
 
-	if cn.healthCheck != nil {
-		cn.healthCheck.Stop()
-	}
-
-	cn.setStatus(api.CocoonStatusStopped)
+	log.Debug("Deleting shared directory contents")
+	cn.deleteSharedDirContents()
 
 	// ask platform to stop cocoon on the scheduler to prevent a restart
 	if err := cn.Platform.GetScheduler().Stop(cn.spec.ID); err != nil {
