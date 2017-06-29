@@ -761,7 +761,8 @@ func (cn *Connector) Stop(failed bool) error {
 	}
 
 	log.Debug("Deleting shared directory contents")
-	cn.deleteSharedDirContents()
+	err := cn.deleteSharedDirContents()
+	log.Error(err.Error())
 
 	return nil
 }
