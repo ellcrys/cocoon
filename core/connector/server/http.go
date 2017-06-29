@@ -14,8 +14,6 @@ import (
 
 	"net"
 
-	"fmt"
-
 	"os"
 
 	"github.com/asaskevich/govalidator"
@@ -116,11 +114,12 @@ func NewHTTP(rpc *RPC) *HTTP {
 
 // getRouter returns the router
 func (s *HTTP) getRouter() *mux.Router {
+	staticDir := http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static"))
 	r := mux.NewRouter()
-	r.HandleFunc("/", s.index)
+	r.Handle("/", http.FileServer(staticDir))
 
 	// Add route to static files in the shared directory
-	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static"))))
+	fs := http.StripPrefix("/static/", http.FileServer(staticDir))
 	r.PathPrefix("/static/").Handler(fs)
 
 	// v1 API routes
@@ -146,15 +145,6 @@ func (s *HTTP) Start(addr string, startedCh chan bool) error {
 	})
 
 	return http.ListenAndServe(addr, s.getRouter())
-}
-
-// index page
-func (s *HTTP) index(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-	fmt.Fprint(w, "Hello!")
 }
 
 // invokeCocoonCode handles cocoon code invocation
