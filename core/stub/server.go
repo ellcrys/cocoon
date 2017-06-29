@@ -3,10 +3,6 @@ package stub
 import (
 	"fmt"
 
-	"io/ioutil"
-	"os"
-	"path"
-
 	"github.com/ellcrys/cocoon/core/stub/proto_runtime"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
@@ -85,18 +81,9 @@ func (server *stubServer) Invoke(ctx context.Context, params *proto_runtime.Invo
 	return resp, nil
 }
 
-// getManifest fetches the content of manifest.json
-func (server *stubServer) getManifest() (md []byte, err error) {
-	manifestFile := path.Join(os.Getenv("SOURCE_DIR"), "manifest.json")
-	md, err = ioutil.ReadFile(manifestFile)
-	return
-}
-
 // SystemInvoke handles invocation request for system functions
 func (server *stubServer) SystemInvoke(ctx context.Context, params *proto_runtime.InvokeParam) ([]byte, error) {
 	switch params.GetFunction() {
-	case "@@GET_MANIFEST":
-		return server.getManifest()
 	default:
 		return nil, fmt.Errorf("function '%s' is unknown", params.Function)
 	}
