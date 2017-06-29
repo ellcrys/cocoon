@@ -497,7 +497,6 @@ func (cn *Connector) cleanContainer() error {
 // The contents of shared directory will not be available to the cocoon code.
 func (cn *Connector) deleteSharedDirContents() (err error) {
 	if sharedDir := os.Getenv("SHARED_DIR"); sharedDir != "" {
-		log.Info(path.Join(sharedDir, "/*"))
 		err = exec.Command("rm", "-rf", path.Join(sharedDir, "/*")).Run()
 	}
 	return
@@ -762,8 +761,7 @@ func (cn *Connector) Stop(failed bool) error {
 	}
 
 	log.Debug("Deleting shared directory contents")
-	err := cn.deleteSharedDirContents()
-	log.Error(err.Error())
+	cn.deleteSharedDirContents()
 
 	return nil
 }
