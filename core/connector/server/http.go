@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"path"
 	"time"
 
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"net"
 
 	"fmt"
+
+	"os"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/ellcrys/cocoon/core/config"
@@ -115,6 +118,7 @@ func NewHTTP(rpc *RPC) *HTTP {
 func (s *HTTP) getRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", s.index)
+	r.Handle("/static/", http.FileServer(http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static"))))
 
 	// v1 API routes
 	v1 := r.PathPrefix("/v1").Subrouter()
