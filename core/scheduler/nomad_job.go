@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ellcrys/util"
-	"github.com/kr/pretty"
 )
 
 // Job defines a nomad job specification
@@ -332,7 +331,6 @@ func (j *NomadJob) AssignSharedVolume() string {
 		task.Config.Volumes = append(task.Config.Volumes, v)
 		task.Env["SHARED_DIR"] = sharedDir
 		task.Env["STATIC_DIR"] = sharedDir
-		pretty.Println(task.Config.Volumes)
 	}
 	return v
 }
