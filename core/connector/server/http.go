@@ -118,7 +118,10 @@ func NewHTTP(rpc *RPC) *HTTP {
 func (s *HTTP) getRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", s.index)
-	r.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static")))))
+
+	// Add route to static files in the shared directory
+	fs := http.StripPrefix("/static/", http.FileServer(http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static"))))
+	r.PathPrefix("/static/").Handler(fs)
 
 	// v1 API routes
 	v1 := r.PathPrefix("/v1").Subrouter()
