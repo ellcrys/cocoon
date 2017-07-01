@@ -103,8 +103,7 @@ func (cn *Connector) Launch(connectorRPCAddr, cocoonCodeRPCAddr string) {
 	if devCocoonCodeRPCAddr := os.Getenv("DEV_ADDR_COCOON_CODE_RPC"); len(devCocoonCodeRPCAddr) > 0 {
 		cn.cocoonCodeRPCAddr = devCocoonCodeRPCAddr
 		log.Infof("[Dev] Will interact with cocoon code at %s", devCocoonCodeRPCAddr)
-		cn.healthCheck.Start()
-		fmt.Println("failed")
+		// cn.healthCheck.Start()
 		return
 	}
 
@@ -495,8 +494,9 @@ func (cn *Connector) cleanContainer() error {
 
 // deleteSharedDirContents deletes the shared directory.
 // The contents of shared directory will not be available to the cocoon code.
+// This will only happen in production
 func (cn *Connector) deleteSharedDirContents() (err error) {
-	if sharedDir := os.Getenv("SHARED_DIR"); sharedDir != "" {
+	if sharedDir := os.Getenv("SHARED_DIR"); sharedDir != "" && os.Getenv("DEV_KEEP_SHARED_DIR") != "true" {
 		err = exec.Command("bash", "-c", fmt.Sprintf("rm -rf %s", path.Join(sharedDir, "/*"))).Run()
 	}
 	return
@@ -657,7 +657,7 @@ func (cn *Connector) run(container *docker.APIContainers) error {
 			log.Info("Starting cocoon code")
 		case modo.Executing:
 			time.AfterFunc(2*time.Second, func() {
-				cn.healthCheck.Start()
+				// cn.healthCheck.Start()
 			})
 			cn.setStatus(api.CocoonStatusRunning)
 			if err := cn.configureRouter(); err != nil {

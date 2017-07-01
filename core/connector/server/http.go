@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path"
 	"time"
@@ -116,7 +117,6 @@ func NewHTTP(rpc *RPC) *HTTP {
 func (s *HTTP) getRouter() *mux.Router {
 	staticDir := http.Dir(path.Join(os.Getenv("SHARED_DIR"), "static"))
 	r := mux.NewRouter()
-	r.Handle("/", http.FileServer(staticDir))
 
 	// Add route to static files in the shared directory
 	fs := http.StripPrefix("/static/", http.FileServer(staticDir))
@@ -125,6 +125,12 @@ func (s *HTTP) getRouter() *mux.Router {
 	// v1 API routes
 	v1 := r.PathPrefix("/v1").Subrouter()
 	v1.HandleFunc("/invoke", s.invokeCocoonCode)
+
+	// every other route should serve the index.html file
+	r.HandleFunc("/{name:.*}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL.String())
+		http.ServeFile(w, r, path.Join(string(staticDir), "index.html"))
+	})
 
 	return r
 }
@@ -149,7 +155,6 @@ func (s *HTTP) Start(addr string, startedCh chan bool) error {
 
 // invokeCocoonCode handles cocoon code invocation
 func (s *HTTP) invokeCocoonCode(w http.ResponseWriter, r *http.Request) {
-
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
