@@ -7,11 +7,11 @@ import (
 
 	"os"
 
+	"github.com/ellcrys/cocoon/core/common"
+	"github.com/ellcrys/cocoon/core/types"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // gorm requires it
 	"github.com/kr/pretty"
-	"github.com/ellcrys/cocoon/core/common"
-	"github.com/ellcrys/cocoon/core/types"
 	logging "github.com/op/go-logging"
 )
 
@@ -343,30 +343,32 @@ func (s *PostgresStore) GetRange(ledger, startKey, endKey string, inclusive bool
 
 	var err error
 	var txs []*types.Transaction
-	var q *gorm.DB
+	var db = s.db.Debug()
+
+	sql := `SELECT DISTINCT ON (key) * FROM "transactions"  WHERE `
+	args := []interface{}{}
 
 	if len(startKey) > 0 && len(endKey) > 0 {
 		if !inclusive {
-			q = s.db.Where("ledger = ? AND (key >= ? AND key < ?)", ledger, startKey, endKey)
+			sql += `ledger = ? AND (key >= ? AND key < ?)`
+			args = append(args, ledger, startKey, endKey)
 		} else {
-			q = s.db.Where("ledger = ? AND (key >= ? OR key <= ?)", ledger, startKey+"%", endKey+"%")
+			sql += `ledger = ? AND (key >= ? OR key <= ?)`
+			args = append(args, ledger, startKey+"%", endKey+"%")
 		}
 	} else if len(startKey) > 0 && len(endKey) == 0 {
-		q = s.db.Where("ledger = ? AND key like ?", ledger, startKey+"%")
+		sql += `ledger = ? AND key like ?`
+		args = append(args, ledger, startKey+"%")
 	} else {
 		// setting endKey only is a little tricky as the call code may construct
 		// through a secondary process or rule, so add the '%' operator will most likely
 		// result in wrong query. So we just let the external decide where to put it.
-		q = s.db.Where("ledger = ? AND key like ?", ledger, endKey)
+		sql += `ledger = ? AND key like ?`
+		args = append(args, ledger, endKey)
 	}
 
-	err = q.
-		Limit(limit).
-		Offset(offset).
-		Select("DISTINCT ON (key) *").
-		Order("key").
-		Order("created_at desc").
-		Find(&txs).Error
+	args = append(args, limit, offset)
+	err = db.Raw(sql+` ORDER BY key, created_at desc LIMIT ? OFFSET ?`, args...).Scan(&txs).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("failed to get transactions. %s", err)
 	} else if err == gorm.ErrRecordNotFound {
