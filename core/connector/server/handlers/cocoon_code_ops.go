@@ -40,7 +40,7 @@ func (l *CocoonCodeOperations) Handle(ctx context.Context, op *proto_connector.C
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("invoke error: %s", common.GetRPCErrDesc(err))
+		return nil, fmt.Errorf(common.GetRPCErrDesc(err))
 	}
 
 	return &proto_connector.Response{
