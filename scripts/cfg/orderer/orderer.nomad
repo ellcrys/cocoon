@@ -53,7 +53,7 @@ job "orderer" {
       
       env {
         ENV = "production"
-        ORDERER_VERSION = "0.5.0-b6"   
+        ORDERER_VERSION = "0.5.0-b11"   
         STORE_CON_STR = "host=localhost user=postgres dbname=cocoon sslmode=disable password="
       }
 
