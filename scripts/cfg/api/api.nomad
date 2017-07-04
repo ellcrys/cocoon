@@ -52,8 +52,8 @@ job "api" {
       }
       
       env {
-          ENV = "dev"    
-          API_VERSION = "master"            
+          ENV = "production"
+          API_VERSION = "0.5.0-b11"
           CONNECTOR_VERSION = "0.5.0-b11"
           GCP_PROJECT_ID = "visiontest-1281"
           REPO_ARCHIVE_BKT = "gitsources"
