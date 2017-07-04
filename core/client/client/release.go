@@ -10,12 +10,11 @@ import (
 
 	"strings"
 
-	"github.com/ellcrys/util"
 	"github.com/ellcrys/cocoon/core/api/api/proto_api"
 	"github.com/ellcrys/cocoon/core/common"
 	"github.com/ellcrys/cocoon/core/types"
+	"github.com/ellcrys/util"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // AddVote adds a new vote to a release. If isCocoonID is true,
@@ -23,11 +22,6 @@ import (
 // to the latest release. A positive vote is denoted with 1 or 0 for
 // negative.
 func AddVote(id string, vote int, isCocoonID bool) error {
-
-	userSession, err := GetUserSessionToken()
-	if err != nil {
-		return err
-	}
 
 	var releaseID = id
 	var cocoon types.Cocoon
@@ -41,15 +35,21 @@ func AddVote(id string, vote int, isCocoonID bool) error {
 	}
 	defer conn.Close()
 
-	client := proto_api.NewAPIClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("access_token", userSession.Token))
+	conn, err = GetAPIConnection()
+	if err != nil {
+		return fmt.Errorf("unable to connect to the platform")
+	}
+	defer conn.Close()
+
+	ctx, cc := context.WithTimeout(context.Background(), ContextTimeout)
+	defer cc()
+
+	cl := proto_api.NewAPIClient(conn)
 
 	// if id is a cocoon id, get the cocoon's most recent release
 	if isCocoonID {
 
-		resp, err := client.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: id})
+		resp, err := cl.GetCocoon(ctx, &proto_api.GetCocoonRequest{ID: id})
 		if err != nil {
 			stopSpinner()
 			if common.CompareErr(err, types.ErrCocoonNotFound) == 0 {
@@ -83,7 +83,7 @@ func AddVote(id string, vote int, isCocoonID bool) error {
 
 	stopSpinner = util.Spinner("Please wait")
 
-	_, err = client.AddVote(ctx, &proto_api.AddVoteRequest{
+	_, err = cl.AddVote(ctx, &proto_api.AddVoteRequest{
 		ReleaseID: releaseID,
 		Vote:      int32(vote),
 	})
@@ -106,7 +106,7 @@ func AddVote(id string, vote int, isCocoonID bool) error {
 	}
 
 	log.Info("==> You have successfully voted")
-	log.Infof("==> Your vote: %s (%s)", vote, voteTxt)
+	log.Infof("==> You voted: %d (%s)", vote, voteTxt)
 
 	return nil
 }
