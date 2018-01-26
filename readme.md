@@ -1,3 +1,11 @@
+***
+This was a major part of our centralized prototype of the Ellcrys project. It was discontinued after we decided to go decentralized. It was dependent on Github for version control and a centralized database for storage. Here is a video I made in July 2017; [This brief video shows how a cocoon-based contract works](https://youtu.be/Ipx1X9KzWZ0)
+
+[SafeHold](https://github.com/ellcrys/safehold) was the centralized database which was supposed to be an immutable database service based on a tamper-evident data structure we called [Patchain](https://github.com/ellcrys/patchain). 
+
+[OpenMint](https://github.com/ellcrys/openmint) was the first prototype of StackMint's image analysis. It was started 2 years ago and depended on Google Vision API service. 
+***
+
 ### Cocoon 
 
 Cocoon is an opinionated smart contract or self-executing application executor. It is the engine that powers

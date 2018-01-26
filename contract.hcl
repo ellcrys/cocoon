@@ -10,7 +10,7 @@ contracts {
         # The pubic github repository
         url = "https://github.com/ellcrys/contract-example" 
         # The github release tag or commit id (default: latest release)
-        version = "bf699e05d21d77acce51ad6234e8d69a6d62132c"
+        version = "26b2427dc5092dedf13e97a16a95afeb019262ec"
         # The contract source code language
         language = "go"
         # Specify the ID of another cocoon to link to.
